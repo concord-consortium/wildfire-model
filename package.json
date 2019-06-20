@@ -105,7 +105,6 @@
   "dependencies": {
     "mobx": "^5.10.1",
     "mobx-react": "^5.4.4",
-    "mobx-state-tree": "^3.14.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6"
   }
