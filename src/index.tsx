@@ -7,7 +7,7 @@ import { createStores } from "./models/stores";
 
 import "./index.sass";
 
-const stores = createStores({ });
+const stores = createStores();
 
 ReactDOM.render(
   <Provider stores={stores}>

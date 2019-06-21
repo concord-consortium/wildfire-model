@@ -1,20 +1,11 @@
-import { UIModel, UIModelType } from "./ui";
-
-export type AppMode = "authed" | "dev" | "test" | "demo" | "qa";
+import { SimulationModel } from "./simulation";
 
 export interface IStores {
-  appMode: AppMode;
-  ui: UIModelType;
+  simulation: SimulationModel;
 }
 
-export interface ICreateStores {
-  appMode?: AppMode;
-  ui?: UIModelType;
-}
-
-export function createStores(params?: ICreateStores): IStores {
+export function createStores(): IStores {
   return {
-    appMode: params && params.appMode ? params.appMode : "dev",
-    ui: params && params.ui || UIModel.create({})
+    simulation: new SimulationModel()
   };
 }
