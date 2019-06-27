@@ -1,6 +1,7 @@
 import * as PIXI from "pixi.js";
 import { PixiComponent } from "@inlet/react-pixi";
 import { GridCell } from "../../types";
+import { BURNING, BURNT } from "../../models/simulation";
 
 interface IProps {
   gridSize: number;
@@ -20,9 +21,12 @@ export default PixiComponent<IProps, PIXI.Container>("FireLayer", {
     instance.clear();
 
     instance.lineStyle(2, 0xAAAAAA);
-    instance.beginFill(0xFF0000, 0.7);
     cells.forEach(cell => {
-      if (cell.fire) {
+      if (cell.fire === BURNING) {
+        instance.beginFill(0xFF0000, 0.6);
+        instance.drawRect(cell.x * gridSize, cell.y * gridSize, gridSize, gridSize);
+      } else if (cell.fire === BURNT) {
+        instance.beginFill(0x000000, 0.6);
         instance.drawRect(cell.x * gridSize, cell.y * gridSize, gridSize, gridSize);
       }
     });

@@ -1,6 +1,10 @@
 import { action, observable, computed, autorun } from "mobx";
 import { GridCell } from "../types";
 
+export const UNBURNT = 0;
+export const BURNING = 1;
+export const BURNT = 2;
+
 let lastTickTime = 0;
 
 export class SimulationModel {
@@ -65,7 +69,7 @@ export class SimulationModel {
     }
 
     // simple demo
-    if (timestamp - lastTickTime < 200) {
+    if (timestamp - lastTickTime < 500) {
       return;
     }
     lastTickTime = timestamp;
@@ -74,14 +78,17 @@ export class SimulationModel {
 
   // simple demo, not using wildfire model
   @action.bound private updateFire() {
-    const newFireData = new Array(this.fireData.length).fill(0);
+    const newFireData = this.fireData.slice();
 
     for (let i = 0; i < this.numCells; i++) {
-      if (this.fireData[i] === 1) {
+      if (this.fireData[i] === BURNING) {
         const neighbors = this.allNeighbors[i];
         for (const n of neighbors) {
-          newFireData[n] = 1;
+          if (this.fireData[n] === UNBURNT) {
+            newFireData[n] = BURNING;
+          }
         }
+        newFireData[i] = BURNT;
       }
     }
     this.fireData = newFireData;
