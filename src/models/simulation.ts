@@ -77,11 +77,10 @@ export class SimulationModel {
     const newFireData = new Array(this.fireData.length).fill(0);
 
     for (let i = 0; i < this.numCells; i++) {
-      const neighbors = this.allNeighbors[i];
-      for (const n of neighbors) {
-        if (this.fireData[n] > 0) {
-          newFireData[i] = 1;
-          break;
+      if (this.fireData[i] === 1) {
+        const neighbors = this.allNeighbors[i];
+        for (const n of neighbors) {
+          newFireData[n] = 1;
         }
       }
     }
