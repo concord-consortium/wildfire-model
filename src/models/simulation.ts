@@ -1,6 +1,8 @@
 import { action, observable, computed, autorun } from "mobx";
 import { GridCell } from "../types";
 
+let lastTickTime = 0;
+
 export class SimulationModel {
   @observable public columns = 5;
   @observable public rows = 5;
@@ -18,6 +20,18 @@ export class SimulationModel {
     0, 0, 0, 0, 0,
     0, 0, 0, 0, 0];
 
+  @computed get numCells() { return this.columns * this.rows; }
+
+  // cached value of getGridCellNeighbors. This might be eventually replaced with
+  // kd-tree if it's any more efficient.
+  @computed get allNeighbors() {
+    const allNeighbors = [];
+    for (let i = 0; i < this.numCells; i++) {
+      allNeighbors.push(getGridCellNeighbors(i, this.columns, this.rows));
+    }
+    return allNeighbors;
+  }
+
   @computed get cellData() {
     const cells: GridCell[] = [];
     for (let x = 0; x < this.columns; x++) {
@@ -33,8 +47,71 @@ export class SimulationModel {
     }
     return cells;
   }
+
+  @observable public simulationRunning = false;
+
+  @action.bound public start() {
+    this.simulationRunning = true;
+    this.tick();
+  }
+
+  @action.bound public stop() {
+    this.simulationRunning = false;
+  }
+
+  @action.bound public tick(timestamp = window.performance.now()) {
+    if (this.simulationRunning) {
+      requestAnimationFrame(this.tick);
+    }
+
+    // simple demo
+    if (timestamp - lastTickTime < 200) {
+      return;
+    }
+    lastTickTime = timestamp;
+    this.updateFire();
+  }
+
+  // simple demo, not using wildfire model
+  @action.bound private updateFire() {
+    const newFireData = new Array(this.fireData.length).fill(0);
+
+    for (let i = 0; i < this.numCells; i++) {
+      const neighbors = this.allNeighbors[i];
+      for (const n of neighbors) {
+        if (this.fireData[n] > 0) {
+          newFireData[i] = 1;
+          break;
+        }
+      }
+    }
+    this.fireData = newFireData;
+  }
 }
 
-export function getGridIndexForLocation(x: number, y: number, numColumns: number) {
-  return x + y * numColumns;
+export function getGridIndexForLocation(x: number, y: number, columns: number) {
+  return x + y * columns;
+}
+
+/**
+ * Returns an array of indices of all cells touching `i`, given the number of
+ * `columns` and `rows`
+ */
+function getGridCellNeighbors(i: number, columns: number, rows: number) {
+  const x = i % columns;
+  const y = Math.floor(i / columns);
+  const x1 = Math.max(0, x - 1);
+  const y1 = Math.max(0, y - 1);
+  const x2 = Math.min(columns - 1, x + 1);
+  const y2 = Math.min(rows - 1, y + 1);
+
+  const neighbors = [];
+  for (let xn = x1; xn <= x2; xn++) {
+    for (let yn = y1; yn <= y2; yn++) {
+      if (!(xn === x && yn === y)) {
+        neighbors.push(xn + yn * columns);
+      }
+    }
+  }
+  return neighbors;
 }

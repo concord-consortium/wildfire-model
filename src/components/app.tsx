@@ -12,6 +12,11 @@ interface IState {}
 @observer
 export class AppComponent extends BaseComponent<IProps, IState> {
 
+  public componentDidMount() {
+    const {simulation} = this.stores;
+    simulation.start();
+  }
+
   public render() {
     const {simulation} = this.stores;
     return (

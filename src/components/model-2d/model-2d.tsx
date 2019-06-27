@@ -13,11 +13,12 @@ interface IProps {
 const gridSize = 40;
 
 export default class Model2D extends React.Component<IProps> {
+
   public render() {
     const { columns, rows, cells } = this.props;
 
     return (
-      <Stage width={columns * gridSize} height={rows * gridSize}>
+      <Stage width={columns * gridSize} height={rows * gridSize} raf={false}>
         <BaseMap
           gridSize={gridSize}
           rows={rows}
@@ -29,4 +30,5 @@ export default class Model2D extends React.Component<IProps> {
       </Stage>
     );
   }
+
 }
