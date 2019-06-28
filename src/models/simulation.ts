@@ -17,6 +17,13 @@ export class SimulationModel {
     0, 3, 4, 3, 0,
     0, 2, 3, 2, 0];
 
+  @observable public landData = [
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0];
+
   @observable public fireData = [
     0, 0, 0, 0, 0,
     0, 0, 0, 0, 0,
@@ -44,6 +51,7 @@ export class SimulationModel {
         cells.push({
           x,
           y,
+          landType: this.landData[index],
           elevation: this.elevationData[index],
           fire: this.fireData[index]
         });
