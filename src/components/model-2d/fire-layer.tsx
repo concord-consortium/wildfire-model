@@ -20,7 +20,6 @@ export default PixiComponent<IProps, PIXI.Container>("FireLayer", {
     const { gridSize, cells } = newProps;
     instance.clear();
 
-    instance.lineStyle(2, 0xAAAAAA);
     cells.forEach(cell => {
       if (cell.fireState === BURNING) {
         instance.beginFill(0xFF0000, 0.6);

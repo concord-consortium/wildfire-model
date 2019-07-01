@@ -7,7 +7,7 @@ describe("fire model", () => {
     const sourceCell = {
       x: 0,
       y: 0,
-      landType: LandType.Forest,
+      landType: LandType.Shrub,
       elevation: 0,
       timeOfIgnition: 0,
       fireState: UNBURNT
@@ -16,7 +16,7 @@ describe("fire model", () => {
     const targetCell = {
       x: 1,
       y: 0,
-      landType: LandType.Forest,
+      landType: LandType.Shrub,
       elevation: 0,
       timeOfIgnition: 0,
       fireState: UNBURNT

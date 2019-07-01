@@ -1,11 +1,23 @@
 import { GridCell, Fuel } from "../types";
 
 export enum LandType {
-  Forest
+  Grass,
+  Shrub
 }
 
 const FuelConstants: {[key in LandType]: Fuel} = {
-  [LandType.Forest]: {
+  [LandType.Grass]: {
+    sav: 1826,
+    packingRatio: 0.00154,
+    netFuelLoad: 0.09871442,
+    heatContent: 8000,
+    moistureContent:  0.1,
+    mx: 0.15,
+    totalMineralContent: 0.0555,
+    effectiveMineralContent: 0.01,
+    fuelBedDepth: 1
+  },
+  [LandType.Shrub]: {
     sav: 1144,
     packingRatio: 0.00412,
     netFuelLoad: 0.183655,
@@ -36,16 +48,16 @@ const FuelConstants: {[key in LandType]: Fuel} = {
  * @param windSpeed Magnitude of the windspeed
  */
 export function getFireSpreadTime(sourceCell: GridCell, targetCell: GridCell, windSpeed: number) {
-  const sourceFuel = FuelConstants[sourceCell.landType];
-  const sav = sourceFuel.sav;
-  const packingRatio = sourceFuel.packingRatio;
-  const netFuelLoad = sourceFuel.netFuelLoad;
-  const heatContent = sourceFuel.heatContent;
-  const moistureContent = sourceFuel.moistureContent;
-  const mx = sourceFuel.mx;
-  const totalMineralContent = sourceFuel.totalMineralContent;
-  const effectiveMineralContent = sourceFuel.effectiveMineralContent;
-  const fuelBedDepth = sourceFuel.fuelBedDepth;
+  const fuel = FuelConstants[targetCell.landType];
+  const sav = fuel.sav;
+  const packingRatio = fuel.packingRatio;
+  const netFuelLoad = fuel.netFuelLoad;
+  const heatContent = fuel.heatContent;
+  const moistureContent = fuel.moistureContent;
+  const mx = fuel.mx;
+  const totalMineralContent = fuel.totalMineralContent;
+  const effectiveMineralContent = fuel.effectiveMineralContent;
+  const fuelBedDepth = fuel.fuelBedDepth;
 
   const slope = -0.01745329252;
 

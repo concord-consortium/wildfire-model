@@ -8,48 +8,65 @@ export const BURNT = 2;
 
 // while units are being sorted out, the time-to-ignition reported by `fire-model` may be
 // off. This is a multiplier to make the model look right until the units are correct.
-const FIXME_MULTIPLIER = 2000;
+const FIXME_MULTIPLIER = 3000;
 
 export class SimulationModel {
-  @observable public columns = 5;
-  @observable public rows = 5;
+  @observable public columns = 9;
+  @observable public rows = 9;
 
   @observable public modelStartTime = 0;
   @observable public time = 0;
 
   @observable public windSpeed = 88;
 
+  // All the data arrays below will be brought in via image import
   @observable public elevationData = [
-    3, 4, 5, 4, 3,
-    2, 4, 5, 4, 2,
-    1, 3, 4, 3, 1,
-    0, 3, 4, 3, 0,
-    0, 2, 3, 2, 0];
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0];
 
   // LandType of each cell
   @observable public landData = [
-    0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0];
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    1, 1, 0, 0, 0, 0, 0, 0, 0,
+    1, 1, 1, 0, 0, 0, 0, 0, 0,
+    1, 1, 1, 1, 0, 0, 0, 0, 0,
+    1, 1, 1, 1, 0, 0, 0, 0, 0,
+    1, 1, 1, 1, 1, 0, 0, 0, 0,
+    1, 1, 1, 1, 1, 0, 0, 0, 0,
+    1, 1, 1, 1, 1, 0, 0, 0, 0];
 
   // time of ignition, in ms. If -1, cell is not yet ignited
   // for demo, one cell will ignite in one second
   @observable public ignitionTimesData = [
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, 1000, -1,
-    -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1];
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, 1000, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1, -1];
 
   // UNBURNT / BURNING / BURNT states
   @observable public fireStateData = [
-    0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0];
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0];
 
   // total time a cell should burn. This is partially a view property, but it also allows us to be
   // more efficient by only checking burning cell's neighbors, and not spent cells neighbors. However,
@@ -82,6 +99,8 @@ export class SimulationModel {
    * this.timeToIgniteNeighbors might then look something like
    *     [[0.5, 0.7, 0.5], [1.2, ...]]
    * which means that, if cell 0 is ignited, cell 1 will ignite 0.5 seconds later.
+   *
+   * FIXEME: This is getting repeatedly called, but ought to be cacheable.
    */
   @computed get timeToIgniteNeighbors() {
     const timeToIgniteNeighbors = [];
@@ -99,8 +118,8 @@ export class SimulationModel {
 
   @computed get cellData() {
     const cells: GridCell[] = [];
-    for (let x = 0; x < this.columns; x++) {
-      for (let y = 0; y < this.rows; y++) {
+    for (let y = 0; y < this.rows; y++) {
+      for (let x = 0; x < this.columns; x++) {
         const index = getGridIndexForLocation(x, y, this.rows);
         cells.push({
           x,

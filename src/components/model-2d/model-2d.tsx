@@ -10,7 +10,7 @@ interface IProps {
   cells: GridCell[];
 }
 
-const gridSize = 40;
+const gridSize = 30;
 
 export default class Model2D extends React.Component<IProps> {
 

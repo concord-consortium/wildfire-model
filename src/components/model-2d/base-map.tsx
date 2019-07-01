@@ -1,6 +1,12 @@
 import * as PIXI from "pixi.js";
 import { PixiComponent } from "@inlet/react-pixi";
 import { GridCell } from "../../types";
+import { LandType } from "../../models/fire-model";
+
+const Colors = {
+  [LandType.Grass]: 0xFFD300,
+  [LandType.Shrub]: 0x00FF00
+};
 
 interface IProps {
   gridSize: number;
@@ -24,9 +30,8 @@ export default PixiComponent<IProps, PIXI.Container>("BaseMap", {
     instance.beginFill(0xFFFFFF);
     instance.drawRect(0, 0, columns * gridSize, rows * gridSize);
 
-    instance.lineStyle(2, 0xAAAAAA);
     cells.forEach(cell => {
-      instance.beginFill(0x00FF00, Math.min(1 / cell.elevation, 1));
+      instance.beginFill(Colors[cell.landType], Math.min(1 / cell.elevation, 1));
       instance.drawRect(cell.x * gridSize, cell.y * gridSize, gridSize, gridSize);
       instance.endFill();
     });
