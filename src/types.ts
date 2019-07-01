@@ -5,7 +5,8 @@ export interface GridCell {
   y: number;
   landType: LandType;
   elevation: number;
-  fire: number;
+  timeOfIgnition: number;
+  fireState: number;
 }
 
 export interface Fuel {

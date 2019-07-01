@@ -9,7 +9,8 @@ describe("fire model", () => {
       y: 0,
       landType: LandType.Forest,
       elevation: 0,
-      fire: UNBURNT
+      timeOfIgnition: 0,
+      fireState: UNBURNT
     };
 
     const targetCell = {
@@ -17,7 +18,8 @@ describe("fire model", () => {
       y: 0,
       landType: LandType.Forest,
       elevation: 0,
-      fire: UNBURNT
+      timeOfIgnition: 0,
+      fireState: UNBURNT
     };
 
     const spreadTime = getFireSpreadTime(sourceCell, targetCell, 88);
