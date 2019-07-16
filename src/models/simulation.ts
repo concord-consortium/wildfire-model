@@ -29,7 +29,44 @@ function populateGrid(rows: number, cols: number, baseValue: number, setValues: 
   return arr;
 }
 
+// Very confusing, quick-'n-dirty way to populate a gird with a pseudo image.
+function populateGridWithImage(rows: number, cols: number, image: number[][]): number[] {
+  const arr = [];
+  // Figure out the size of the image using the first row.
+  const imageRows = image.length;
+  const imageColumns = image[0].length;
+  const numGridCellsPerImageRowPixel = imageRows / rows;
+  const numGridCellsPerImageColPixel = imageColumns / cols;
+  // 
+  let imageRowIndex = 0;
+  let imageRowAdvance = 0.0;
+  for (let r = 0; r < rows; r++) {
+    let imageColIndex = 0;
+    let imageColAdvance = 0.0;
+    for (let c = 0; c < cols; c++) {
+      arr.push(image[imageRowIndex][imageColIndex]);  // We use baseValue to preset all the cells in the grid.
+      imageColAdvance += numGridCellsPerImageColPixel;
+      if (imageColAdvance > 1.0) {
+        imageColIndex += 1;
+        imageColAdvance -= 1.0
+      }
+      if (imageColIndex >= imageColumns)
+        imageColIndex = imageColumns - 1; // prevent overflow.
+    }
+    imageRowAdvance += numGridCellsPerImageRowPixel;
+    if (imageRowAdvance > 1) {
+      imageRowIndex += 1;
+      imageRowAdvance -= 1.0;
+    }
+    if (imageRowIndex >= imageRows)
+      imageRowIndex = imageRows - 1;
+  }
+  return arr;
+}
+
+// ---------------------------------------------------------------------------
 // The class to encapsulate the simulation.
+// ---------------------------------------------------------------------------
 
 export class SimulationModel {
   @observable public rows = simulationSize()[0];
@@ -44,23 +81,23 @@ export class SimulationModel {
   // All the data arrays below will be brought in via image import
   @observable public elevationData = populateGrid(this.rows, this.columns, 0);
 
+public landTypeImageData: number[][] = [
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+    [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+    [ 1, 0, 0, 0, 0, 0, 0, 0, 0 ],
+    [ 1, 1, 0, 0, 0, 0, 0, 0, 0 ],
+    [ 1, 1, 1, 0, 0, 0, 0, 0, 0 ],
+    [ 1, 1, 1, 1, 0, 0, 0, 0, 0 ],
+    [ 1, 1, 1, 1, 0, 0, 0, 0, 0 ],
+    [ 1, 1, 1, 1, 1, 0, 0, 0, 0 ],
+    [ 1, 1, 1, 1, 1, 0, 0, 0, 0 ],
+    [ 1, 1, 1, 0, 0, 0, 0, 0, 0 ]
+  ];
+
   // LandType of each cell -- each of these values is an index into the
   // land type array.
-  @observable public landData = populateGrid(this.rows, this.columns, 0);
-
-  // This is the original overlay for the 9x9 demo. This comment can be deleted
-  // once to the landData can be loaded from an image.
-  //
-  // @observable public landData = [
-  //   0, 0, 0, 0, 0, 0, 0, 0, 0,
-  //   0, 0, 0, 0, 0, 0, 0, 0, 0,
-  //   1, 1, 0, 0, 0, 0, 0, 0, 0,
-  //   1, 1, 1, 0, 0, 0, 0, 0, 0,
-  //   1, 1, 1, 1, 0, 0, 0, 0, 0,
-  //   1, 1, 1, 1, 0, 0, 0, 0, 0,
-  //   1, 1, 1, 1, 1, 0, 0, 0, 0,
-  //   1, 1, 1, 1, 1, 0, 0, 0, 0,
-  //   1, 1, 1, 1, 1, 0, 0, 0, 0];
+  @observable public landData = populateGridWithImage(this.rows, this.columns, this.landTypeImageData);
 
   // Time of ignition, in ms. If -1, cell is not yet ignited. For demo purposes,
   // a cell will ignite in one second (1000 mSec).
