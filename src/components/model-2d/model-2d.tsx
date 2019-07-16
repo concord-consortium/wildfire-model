@@ -10,12 +10,12 @@ interface IProps {
   cells: GridCell[];
 }
 
-const gridSize = 30;
-
 export default class Model2D extends React.Component<IProps> {
 
   public render() {
     const { columns, rows, cells } = this.props;
+    const maxDimension = Math.max(columns, rows);
+    const gridSize = (maxDimension < 25) ? 30 : Math.max(1, 800 / maxDimension);
 
     return (
       <Stage width={columns * gridSize} height={rows * gridSize} raf={false}>
