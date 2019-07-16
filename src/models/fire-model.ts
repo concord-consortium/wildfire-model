@@ -1,8 +1,8 @@
 import { GridCell, Fuel } from "../types";
 
 export enum LandType {
-  Grass,
-  Shrub
+  Grass = 0,
+  Shrub = 1
 }
 
 const FuelConstants: {[key in LandType]: Fuel} = {
@@ -79,7 +79,7 @@ export function getFireSpreadTime(sourceCell: GridCell, targetCell: GridCell, wi
   const reactionIntensity = optimumReactionVelocity * netFuelLoad * heatContent
           * moistureDampingCoefficient * mineralDampingCoefficient;
 
-  const propogatingFluxRatio = Math.pow(192 + (0.2595 * sav), -1)
+  const propagatingFluxRatio = Math.pow(192 + (0.2595 * sav), -1)
           * Math.exp((0.792 + (0.681 * Math.pow(sav, 0.5)) ) * (packingRatio + 0.1));
 
   const windFactor = c * Math.pow(windSpeed, b) * Math.pow((packingRatio / optimumPackingRatio), -e);
@@ -93,7 +93,7 @@ export function getFireSpreadTime(sourceCell: GridCell, targetCell: GridCell, wi
 
   const heatOfPreIgnition = 250 + (1116 * moistureContent);
 
-  const spreadRate = (reactionIntensity * propogatingFluxRatio * (1 + windFactor + slopeFactor))
+  const spreadRate = (reactionIntensity * propagatingFluxRatio * (1 + windFactor + slopeFactor))
           / (ovenDryBulkDensity * effectiveHeatingNumber * heatOfPreIgnition);
 
   return 1 / spreadRate;

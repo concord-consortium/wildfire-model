@@ -1,6 +1,7 @@
 import { action, observable, computed, autorun } from "mobx";
 import { GridCell } from "../types";
 import { getFireSpreadTime } from "./fire-model";
+import { simulationSize, wind, spark, spark2 } from "../utilities/url-parameters";
 
 export const UNBURNT = 0;
 export const BURNING = 1;
@@ -10,70 +11,84 @@ export const BURNT = 2;
 // off. This is a multiplier to make the model look right until the units are correct.
 const FIXME_MULTIPLIER = 3000;
 
+// As a baby step, let's create a general purpose function to create the various
+// grids, before we combine the grids into a single data structure.
+
+type CellValue = [ number, number, number];  // Row, column, & value
+
+function populateGrid(rows: number, cols: number, baseValue: number, setValues: CellValue[] = []): number[] {
+  const arr = [];
+  for (let i = 0; i < rows * cols; i++) {
+    arr.push(baseValue);  // We use baseValue to preset all the cells in the grid.
+  }
+  setValues.forEach( ([ r, c, v ]) => {
+    if ((r >= 0) && (c >= 0)) {
+      arr[r * cols + c] = v;
+    }
+  });
+  return arr;
+}
+
+// The class to encapsulate the simulation.
+
 export class SimulationModel {
-  @observable public columns = 9;
-  @observable public rows = 9;
+  @observable public rows = simulationSize()[0];
+  @observable public columns = simulationSize()[1];
 
   @observable public modelStartTime = 0;
   @observable public time = 0;
 
-  @observable public windSpeed = 88;
+  @computed get wind() { return parseInt(wind().toString(), 10); }
+  @observable public windSpeed = this.wind;
 
   // All the data arrays below will be brought in via image import
-  @observable public elevationData = [
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0];
+  @observable public elevationData = populateGrid(this.rows, this.columns, 0);
 
-  // LandType of each cell
-  @observable public landData = [
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    1, 1, 0, 0, 0, 0, 0, 0, 0,
-    1, 1, 1, 0, 0, 0, 0, 0, 0,
-    1, 1, 1, 1, 0, 0, 0, 0, 0,
-    1, 1, 1, 1, 0, 0, 0, 0, 0,
-    1, 1, 1, 1, 1, 0, 0, 0, 0,
-    1, 1, 1, 1, 1, 0, 0, 0, 0,
-    1, 1, 1, 1, 1, 0, 0, 0, 0];
+  // LandType of each cell -- each of these values is an index into the
+  // land type array.
+  @observable public landData = populateGrid(this.rows, this.columns, 0);
 
-  // time of ignition, in ms. If -1, cell is not yet ignited
-  // for demo, one cell will ignite in one second
-  @observable public ignitionTimesData = [
-    -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, 1000, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1,
-    -1, -1, -1, -1, -1, -1, -1, -1, -1];
+  // This is the original overlay for the 9x9 demo. This comment can be deleted
+  // once to the landData can be loaded from an image.
+  //
+  // @observable public landData = [
+  //   0, 0, 0, 0, 0, 0, 0, 0, 0,
+  //   0, 0, 0, 0, 0, 0, 0, 0, 0,
+  //   1, 1, 0, 0, 0, 0, 0, 0, 0,
+  //   1, 1, 1, 0, 0, 0, 0, 0, 0,
+  //   1, 1, 1, 1, 0, 0, 0, 0, 0,
+  //   1, 1, 1, 1, 0, 0, 0, 0, 0,
+  //   1, 1, 1, 1, 1, 0, 0, 0, 0,
+  //   1, 1, 1, 1, 1, 0, 0, 0, 0,
+  //   1, 1, 1, 1, 1, 0, 0, 0, 0];
+
+  // Time of ignition, in ms. If -1, cell is not yet ignited. For demo purposes,
+  // a cell will ignite in one second (1000 mSec).
+  //
+  // The following two getters are a complete hack. I couldn't force the
+  // urlValues to be numbers without this messy thing -- should fix it later.
+  //
+  // Ugh, I double hacked it... will need a better way of specifying multiple
+  // spark points.
+  @computed get sparkRow() { return parseInt(spark()[0].toString(), 10); }
+  @computed get sparkColumn() { return parseInt(spark()[1].toString(), 10); }
+  @computed get sparkRow2() { return parseInt(spark2()[0].toString(), 10); }
+  @computed get sparkColumn2() { return parseInt(spark2()[1].toString(), 10); }
+  @observable public ignitionTimesData = populateGrid(this.rows, this.columns, -1,
+    [
+      [ this.sparkRow, this.sparkColumn, 1000],
+      [ this.sparkRow2, this.sparkColumn2, 1000]
+    ]);
 
   // UNBURNT / BURNING / BURNT states
-  @observable public fireStateData = [
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0,
-    0, 0, 0, 0, 0, 0, 0, 0, 0];
+  @observable public fireStateData = populateGrid(this.rows, this.columns, UNBURNT);
 
   // total time a cell should burn. This is partially a view property, but it also allows us to be
   // more efficient by only checking burning cell's neighbors, and not spent cells neighbors. However,
   // it is not intended to affect the model's actual functioning. (e.g. cell should never be burnt out
   // before its neighbors are ignited.)
   // It would be even more efficient to get the maximum `timeToIgniteNeighbors` for a model, and use that
-  // as a seperate flag to indicate when to stop checking a cell, which would give us a smaller number
+  // as a separate flag to indicate when to stop checking a cell, which would give us a smaller number
   // of cells to check. We'd still want a separate burn time for the view.
   public cellBurnTime = 2000;
 
