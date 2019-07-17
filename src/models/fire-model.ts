@@ -60,6 +60,11 @@ export function getFireSpreadTime(sourceCell: GridCell, targetCell: GridCell, wi
   const fuelBedDepth = fuel.fuelBedDepth;
 
   const slope = -0.01745329252;
+  // This value leads me to believe the slope is in radians, given how it's used
+  // in the formula below -- tan(slope), if slope is radians, results in 0. This
+  // is used to the slopeFactor which will result in the whole slopeFactor
+  // computation to be zero -- which is no slope factor between any grid cells
+  // in the sim.
 
   const moistureContentRatio = moistureContent / mx;
   const savFactor = Math.pow(sav, 1.5);

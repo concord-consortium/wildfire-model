@@ -37,7 +37,7 @@ function populateGridWithImage(rows: number, cols: number, image: number[][]): n
   const imageColumns = image[0].length;
   const numGridCellsPerImageRowPixel = imageRows / rows;
   const numGridCellsPerImageColPixel = imageColumns / cols;
-  // 
+
   let imageRowIndex = 0;
   let imageRowAdvance = 0.0;
   for (let r = 0; r < rows; r++) {
@@ -48,18 +48,20 @@ function populateGridWithImage(rows: number, cols: number, image: number[][]): n
       imageColAdvance += numGridCellsPerImageColPixel;
       if (imageColAdvance > 1.0) {
         imageColIndex += 1;
-        imageColAdvance -= 1.0
+        imageColAdvance -= 1.0;
       }
-      if (imageColIndex >= imageColumns)
+      if (imageColIndex >= imageColumns) {
         imageColIndex = imageColumns - 1; // prevent overflow.
+      }
     }
     imageRowAdvance += numGridCellsPerImageRowPixel;
     if (imageRowAdvance > 1) {
       imageRowIndex += 1;
       imageRowAdvance -= 1.0;
     }
-    if (imageRowIndex >= imageRows)
+    if (imageRowIndex >= imageRows) {
       imageRowIndex = imageRows - 1;
+    }
   }
   return arr;
 }
@@ -105,7 +107,8 @@ public landTypeImageData: number[][] = [
   // The following two getters are a complete hack. I couldn't force the
   // urlValues to be numbers without this messy thing -- should fix it later.
   //
-  // Ugh, I double hacked it... will need a better way of specifying multiple
+  // Ugh, I double hacked it, so we can have 2 sparks to test how burn-fronts join
+  // up during the simulation... will need a better way of specifying multiple
   // spark points.
   @computed get sparkRow() { return parseInt(spark()[0].toString(), 10); }
   @computed get sparkColumn() { return parseInt(spark()[1].toString(), 10); }
@@ -129,14 +132,14 @@ public landTypeImageData: number[][] = [
   // of cells to check. We'd still want a separate burn time for the view.
   public cellBurnTime = 2000;
 
-  @computed get numCells() { return this.columns * this.rows; }
+  @computed get numCells() { return this.rows * this.columns; }
 
   // cached value of getGridCellNeighbors. This could be eventually replaced with
   // kd-tree if it's any more efficient.
   @computed get allNeighbors() {
     const allNeighbors = [];
     for (let i = 0; i < this.numCells; i++) {
-      allNeighbors.push(getGridCellNeighbors(i, this.columns, this.rows));
+      allNeighbors.push(getGridCellNeighbors(i, this.rows, this.columns));
     }
     return allNeighbors;
   }
@@ -254,23 +257,38 @@ export function getGridIndexForLocation(x: number, y: number, columns: number) {
 
 /**
  * Returns an array of indices of all cells touching `i`, given the number of
- * `columns` and `rows`
+ * `rows` and `columns`
  */
-function getGridCellNeighbors(i: number, columns: number, rows: number) {
-  const x = i % columns;
-  const y = Math.floor(i / columns);
-  const x1 = Math.max(0, x - 1);
-  const y1 = Math.max(0, y - 1);
-  const x2 = Math.min(columns - 1, x + 1);
-  const y2 = Math.min(rows - 1, y + 1);
+function getGridCellNeighbors(i: number, rows: number, columns: number) {
+
+  const rc2index = (r: number, c: number): number => {
+    // Given a 2D row & column, return a 1D index into the cell array.
+    return r * columns + c;
+  };
+
+  const index2rc = (ndx: number): [number, number] => {
+    // Given a 1D index, ndx, return the 2D row and column indices, as a tuple.
+    return [Math.floor(ndx / columns), Math.floor(ndx % columns)];
+  };
 
   const neighbors = [];
-  for (let xn = x1; xn <= x2; xn++) {
-    for (let yn = y1; yn <= y2; yn++) {
-      if (!(xn === x && yn === y)) {
-        neighbors.push(xn + yn * columns);
-      }
+  const [ row, col ] = index2rc(i);
+  for (let j = -2; j < 3; j++) {
+    for (let k = -2; k < 3; k++) {
+      if (! (                             // Skip the corner neighbors so it's        
+        (j === -2 && k === -2) ||         //  . more of an octagon burn front
+        (j === -2 && k ===  2) ||         //  . and not a square -- (as in, more)
+        (j ===  2 && k === -2) ||         //  . circular).
+        (j ===  2 && k ===  2)
+      ))
+      neighbors.push([row + j, col + k]);
     }
   }
-  return neighbors;
+
+  return neighbors
+    .filter( ([r, c]) =>                  // Return only cell indices that...
+      ! (r === row && c === col) &&       //  . are not this cell...
+      ((0 <= r) && (r < rows)) &&         //  . and are still in the grid...
+      ((0 <= c) && (c < columns)) )
+    .map( ([r, c]) => rc2index(r, c));    // ... converted to 1-D.
 }
