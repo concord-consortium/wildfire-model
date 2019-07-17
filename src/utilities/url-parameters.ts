@@ -8,9 +8,9 @@ interface QueryParams {
 }
 
 const defaultUrlParams: QueryParams = {
-  simulationSize: [9, 9],
+  simulationSize: [100, 100],
   wind: 88,
-  spark: [3, 6],
+  spark: [50, 50],
   spark2: [-1, -1]
 };
 
