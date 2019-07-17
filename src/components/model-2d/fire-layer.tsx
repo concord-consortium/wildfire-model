@@ -22,7 +22,7 @@ export default PixiComponent<IProps, PIXI.Container>("FireLayer", {
 
     cells.forEach(cell => {
       if (cell.fireState === BURNING) {
-        instance.beginFill(0xFF0000, 0.6);
+        instance.beginFill(0xFF0000, 1);
         instance.drawRect(cell.x * gridSize, cell.y * gridSize, gridSize, gridSize);
       } else if (cell.fireState === BURNT) {
         instance.beginFill(0x000000, 0.6);

@@ -71,7 +71,7 @@ function populateGridWithImage(rows: number, cols: number, image: number[][]): n
 // ---------------------------------------------------------------------------
 
 export class SimulationModel {
-  @observable public rows = simulationSize()[0];
+  /* @observable */ public rows = simulationSize()[0];
   @observable public columns = simulationSize()[1];
 
   @observable public modelStartTime = 0;
@@ -275,13 +275,14 @@ function getGridCellNeighbors(i: number, rows: number, columns: number) {
   const [ row, col ] = index2rc(i);
   for (let j = -2; j < 3; j++) {
     for (let k = -2; k < 3; k++) {
-      if (! (                             // Skip the corner neighbors so it's        
+      if (! (                             // Skip the corner neighbors so it's
         (j === -2 && k === -2) ||         //  . more of an octagon burn front
         (j === -2 && k ===  2) ||         //  . and not a square -- (as in, more)
         (j ===  2 && k === -2) ||         //  . circular).
         (j ===  2 && k ===  2)
-      ))
-      neighbors.push([row + j, col + k]);
+      )) {
+        neighbors.push([row + j, col + k]);
+      }
     }
   }
 
