@@ -9,6 +9,7 @@ function getURLParam(name: string) {
 }
 
 const DEFAULT_CONFIG = {
+  preset: "test1",
   modelWidth: 100, // km
   modelHeight: 100, // km
   spark: [50, 50], // [km, km]

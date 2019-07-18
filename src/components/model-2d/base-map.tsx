@@ -1,7 +1,7 @@
 import * as PIXI from "pixi.js";
 import { PixiComponent } from "@inlet/react-pixi";
-import { GridCell } from "../../types";
 import { LandType } from "../../models/fire-model";
+import { Cell } from "../../models/cell";
 
 const Colors = {
   [LandType.Grass]: 0xFFD300,
@@ -12,7 +12,7 @@ interface IProps {
   gridSize: number;
   columns: number;
   rows: number;
-  cells: GridCell[];
+  cells: Cell[];
 }
 
 export default PixiComponent<IProps, PIXI.Container>("BaseMap", {

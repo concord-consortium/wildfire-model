@@ -1,4 +1,5 @@
-import { GridCell, Fuel } from "../types";
+import { Fuel } from "../types";
+import {Cell} from "./cell";
 
 export enum LandType {
   Grass = 0,
@@ -47,7 +48,7 @@ const FuelConstants: {[key in LandType]: Fuel} = {
  * @param targetCell Adjacent grid cell that is currently UNBURNT
  * @param windSpeed Magnitude of the windspeed
  */
-export function getFireSpreadRate(sourceCell: GridCell, targetCell: GridCell, windSpeed: number) {
+export function getFireSpreadRate(sourceCell: Cell, targetCell: Cell, windSpeed: number) {
   const fuel = FuelConstants[targetCell.landType];
   const sav = fuel.sav;
   const packingRatio = fuel.packingRatio;

@@ -2,12 +2,12 @@ import * as React from "react";
 import { Stage } from "@inlet/react-pixi";
 import BaseMap from "./base-map";
 import FireLayer from "./fire-layer";
-import { GridCell } from "../../types";
+import {Cell} from "../../models/cell";
 
 interface IProps {
   columns: number;
   rows: number;
-  cells: GridCell[];
+  cells: Cell[];
 }
 
 export default class Model2D extends React.Component<IProps> {

@@ -1,16 +1,15 @@
 import { getFireSpreadRate, LandType } from "./fire-model";
-import { UNBURNT } from "./simulation";
+import { FireState } from "./cell";
 
-describe("fire model", () => {
-
+describe("Fire model", () => {
   it("calculates the fireSpreadTime correctly", () => {
     const sourceCell = {
       x: 0,
       y: 0,
       landType: LandType.Shrub,
       elevation: 0,
-      timeOfIgnition: 0,
-      fireState: UNBURNT
+      ignitionTime: 0,
+      fireState: FireState.Unburnt
     };
 
     const targetCell = {
@@ -18,12 +17,11 @@ describe("fire model", () => {
       y: 0,
       landType: LandType.Shrub,
       elevation: 0,
-      timeOfIgnition: 0,
-      fireState: UNBURNT
+      ignitionTime: 0,
+      fireState: FireState.Unburnt
     };
 
     const spreadTime = getFireSpreadRate(sourceCell, targetCell, 88);
     expect(spreadTime).toBeCloseTo(8.1554);
   });
-
 });

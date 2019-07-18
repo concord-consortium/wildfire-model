@@ -1,11 +1,8 @@
-import { action, observable, computed } from "mobx";
-import { GridCell } from "../types";
-import { getFireSpreadRate } from "./fire-model";
+import {action, computed, observable} from "mobx";
+import {getFireSpreadRate, LandType} from "./fire-model";
+import {Cell, CellOptions, FireState} from "./cell";
 import config from "../config";
-
-export const UNBURNT = 0;
-export const BURNING = 1;
-export const BURNT = 2;
+import {PresetData} from "../presets";
 
 const ROWS = config.modelHeight / config.gridCellSize;
 const COLUMNS = config.modelWidth / config.gridCellSize;
@@ -22,23 +19,6 @@ const CELL_BURN_TIME = 200 * CELL_SIZE;
 // Make time to ignite proportional to size of the cell.
 // If every cell is twice as big, the spread time in the end also should be slower.
 const SPREAD_TIME_RATIO = 200 * CELL_SIZE;
-
-// As a baby step, let's create a general purpose function to create the various
-// grids, before we combine the grids into a single data structure.
-type CellValue = [ number, number, number];  // Row, column, & value
-
-function populateGrid(rows: number, cols: number, baseValue: number, setValues: CellValue[] = []): number[] {
-  const arr = [];
-  for (let i = 0; i < rows * cols; i++) {
-    arr.push(baseValue);  // We use baseValue to preset all the cells in the grid.
-  }
-  setValues.forEach( ([ r, c, v ]) => {
-    if ((r >= 0) && (c >= 0)) {
-      arr[r * cols + c] = v;
-    }
-  });
-  return arr;
-}
 
 // Very confusing, quick-'n-dirty way to populate a gird with a pseudo image.
 function populateGridWithImage(rows: number, cols: number, image: number[][]): number[] {
@@ -105,43 +85,36 @@ function getGridCellNeighbors(i: number, rows: number, columns: number) {
   return result;
 }
 
-// ---------------------------------------------------------------------------
-// The class to encapsulate the simulation.
-// ---------------------------------------------------------------------------
-
 export class SimulationModel {
   public windSpeed = config.wind;
   public time = 0;
 
-  public landTypeImageData: number[][] = [
-      [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-      [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-      [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-      [ 1, 0, 0, 0, 0, 0, 0, 0, 0 ],
-      [ 1, 1, 0, 0, 0, 0, 0, 0, 0 ],
-      [ 1, 1, 1, 0, 0, 0, 0, 0, 0 ],
-      [ 1, 1, 1, 1, 0, 0, 0, 0, 0 ],
-      [ 1, 1, 1, 1, 0, 0, 0, 0, 0 ],
-      [ 1, 1, 1, 1, 1, 0, 0, 0, 0 ],
-      [ 1, 1, 1, 1, 1, 0, 0, 0, 0 ],
-      [ 1, 1, 1, 0, 0, 0, 0, 0, 0 ]
-    ];
+  @observable public cells: Cell[] = [];
+  @observable public simulationRunning = false;
 
-  // All the data arrays below will be brought in via image import
-  @observable public elevationData = populateGrid(ROWS, COLUMNS, 0);
+  constructor(preset: PresetData) {
+    const landType: LandType[] | undefined = preset.landType && populateGridWithImage(ROWS, COLUMNS, preset.landType);
+    const elevation: number[] | undefined = preset.elevation && populateGridWithImage(ROWS, COLUMNS, preset.elevation);
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLUMNS; x++) {
+        const index = getGridIndexForLocation(x, y, COLUMNS);
+        const cellOptions: CellOptions = { x, y };
+        if (landType) {
+          cellOptions.landType = landType[index];
+        }
+        if (elevation) {
+          cellOptions.elevation = elevation[index];
+        }
+        this.cells.push(new Cell(cellOptions));
+      }
+    }
 
-  // LandType of each cell -- each of these values is an index into the
-  // land type array.
-  @observable public landData = populateGridWithImage(ROWS, COLUMNS, this.landTypeImageData);
-
-  // Time of ignition, in ms. If -1, cell is not yet ignited. For demo purposes,
-  // a cell will ignite in one second (1000 mSec).
-  @observable public ignitionTimesData = populateGrid(ROWS, COLUMNS, -1,
-    [
-      [ Math.round(config.spark[0] / CELL_SIZE), Math.round(config.spark[1] / CELL_SIZE), 1]
-    ]);
-  // UNBURNT / BURNING / BURNT states
-  @observable public fireStateData = populateGrid(ROWS, COLUMNS, UNBURNT);
+    if (config.spark) {
+      const sparkX = Math.round(config.spark[0] / CELL_SIZE);
+      const sparkY = Math.round(config.spark[1] / CELL_SIZE);
+      this.cells[sparkX * COLUMNS + sparkY].ignitionTime = 1;
+    }
+  }
 
   @computed get numCells() { return ROWS * COLUMNS; }
 
@@ -174,33 +147,13 @@ export class SimulationModel {
     for (let i = 0; i < this.numCells; i++) {
       const neighbors = this.allNeighbors[i];
       const timeToIgniteMyNeighbors = neighbors.map(n =>
-        SPREAD_TIME_RATIO / getFireSpreadRate(this.cellData[i], this.cellData[n], this.windSpeed)
+        SPREAD_TIME_RATIO / getFireSpreadRate(this.cells[i], this.cells[n], this.windSpeed)
       );
       timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
     }
 
     return timeToIgniteNeighbors;
   }
-
-  @computed get cellData() {
-    const cells: GridCell[] = [];
-    for (let y = 0; y < ROWS; y++) {
-      for (let x = 0; x < COLUMNS; x++) {
-        const index = getGridIndexForLocation(x, y, COLUMNS);
-        cells.push({
-          x,
-          y,
-          landType: this.landData[index],
-          elevation: this.elevationData[index],
-          timeOfIgnition: this.ignitionTimesData[index],
-          fireState: this.fireStateData[index]
-        });
-      }
-    }
-    return cells;
-  }
-
-  @observable public simulationRunning = false;
 
   @action.bound public start() {
     this.simulationRunning = true;
@@ -217,6 +170,8 @@ export class SimulationModel {
       requestAnimationFrame(this.tick);
     }
     this.time += TIME_STEP;
+    // Explicitly update cells array. This will notify observers that cells data has been updated.
+    this.cells = this.cells.slice();
     this.updateFire();
   }
 
@@ -224,38 +179,44 @@ export class SimulationModel {
     // Run through all cells. Check the unburnt neighbors of currently-burning cells. If the current time
     // is greater than the ignition time of the cell and the delta time for the neighbor, update
     // the neighbor's ignition time.
-    // At the same time, we update the unburnt/burning/burnt states of the cells
-    const newIgnitionData = this.ignitionTimesData.slice();
-    const newFireStateData = this.fireStateData.slice();
+    // At the same time, we update the unburnt/burning/burnt states of the cells.
+    const newIgnitionData: number[] = [];
+    const newFireStateData: FireState[] = [];
 
     for (let i = 0; i < this.numCells; i++) {
-      if (this.fireStateData[i] === BURNING) {
+      if (this.cells[i].fireState === FireState.Burning) {
         const neighbors = this.allNeighbors[i];
-        const ignitionTime = this.ignitionTimesData[i];
+        const ignitionTime = this.cells[i].ignitionTime;
         const ignitionDeltas = this.timeToIgniteNeighbors[i];
 
         neighbors.forEach((n, j) => {
-          if (this.fireStateData[n] === UNBURNT && this.time >= ignitionTime + ignitionDeltas[j]) {
+          if (this.cells[n].fireState === FireState.Unburnt && this.time >= ignitionTime + ignitionDeltas[j]) {
             // time to ignite neighbor
             newIgnitionData[n] = this.time;
-            newFireStateData[n] = BURNING;
+            newFireStateData[n] = FireState.Burning;
           }
         });
 
         if (this.time - ignitionTime > CELL_BURN_TIME) {
-          newFireStateData[i] = BURNT;
+          newFireStateData[i] = FireState.Burnt;
         }
-      } else if (this.fireStateData[i] === UNBURNT &&
-        this.ignitionTimesData[i] > 0 && this.time > this.ignitionTimesData[i]) {
+      } else if (this.cells[i].fireState === FireState.Unburnt &&
+        this.cells[i].ignitionTime > 0 && this.time > this.cells[i].ignitionTime) {
         // sets any unburnt cells to burning if we are passed their ignition time.
         // although during a simulation all cells will have their state sent to BURNING through the process
         // above, this not only allows us to pre-set ignition times for testing, but will also allow us to
         // run forward or backward through a simulation
-        newFireStateData[i] = BURNING;
+        newFireStateData[i] = FireState.Burning;
       }
     }
 
-    this.ignitionTimesData = newIgnitionData;
-    this.fireStateData = newFireStateData;
+    for (let i = 0; i < this.numCells; i++) {
+      if (newFireStateData[i] !== undefined) {
+        this.cells[i].fireState = newFireStateData[i];
+      }
+      if (newIgnitionData[i] !== undefined) {
+        this.cells[i].ignitionTime = newIgnitionData[i];
+      }
+    }
   }
 }

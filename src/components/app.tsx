@@ -25,7 +25,7 @@ export class AppComponent extends BaseComponent<IProps, IState> {
         <Model2D
           columns={config.modelWidth / config.gridCellSize}
           rows={config.modelHeight / config.gridCellSize}
-          cells={simulation.cellData}
+          cells={simulation.cells}
         />
       </div>
     );
