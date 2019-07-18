@@ -47,7 +47,7 @@ const FuelConstants: {[key in LandType]: Fuel} = {
  * @param targetCell Adjacent grid cell that is currently UNBURNT
  * @param windSpeed Magnitude of the windspeed
  */
-export function getFireSpreadTime(sourceCell: GridCell, targetCell: GridCell, windSpeed: number) {
+export function getFireSpreadRate(sourceCell: GridCell, targetCell: GridCell, windSpeed: number) {
   const fuel = FuelConstants[targetCell.landType];
   const sav = fuel.sav;
   const packingRatio = fuel.packingRatio;
@@ -98,8 +98,7 @@ export function getFireSpreadTime(sourceCell: GridCell, targetCell: GridCell, wi
 
   const heatOfPreIgnition = 250 + (1116 * moistureContent);
 
-  const spreadRate = (reactionIntensity * propagatingFluxRatio * (1 + windFactor + slopeFactor))
+  return (reactionIntensity * propagatingFluxRatio * (1 + windFactor + slopeFactor))
           / (ovenDryBulkDensity * effectiveHeatingNumber * heatOfPreIgnition);
 
-  return 1 / spreadRate;
 }

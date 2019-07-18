@@ -1,4 +1,4 @@
-import { getFireSpreadTime, LandType } from "./fire-model";
+import { getFireSpreadRate, LandType } from "./fire-model";
 import { UNBURNT } from "./simulation";
 
 describe("fire model", () => {
@@ -22,8 +22,8 @@ describe("fire model", () => {
       fireState: UNBURNT
     };
 
-    const spreadTime = getFireSpreadTime(sourceCell, targetCell, 88);
-    expect(spreadTime).toBeCloseTo(0.122);
+    const spreadTime = getFireSpreadRate(sourceCell, targetCell, 88);
+    expect(spreadTime).toBeCloseTo(8.1554);
   });
 
 });
