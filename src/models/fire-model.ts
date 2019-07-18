@@ -108,7 +108,7 @@ export const getFireSpreadRate = (sourceCell: Cell, targetCell: Cell, windSpeed:
   let spreadRate = (reactionIntensity * propagatingFluxRatio * (1 + windFactor + slopeFactor))
     / (ovenDryBulkDensity * effectiveHeatingNumber * heatOfPreIgnition);
 
-  if (sourceCell.x !== targetCell.x && sourceCell.y !== targetCell.y) {
+  if (sourceCell.x !== targetCell.x || sourceCell.y !== targetCell.y) {
     spreadRate = spreadRate / dist(sourceCell, targetCell);
   }
 
