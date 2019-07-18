@@ -31,6 +31,12 @@ const FuelConstants: {[key in LandType]: Fuel} = {
   }
 };
 
+const dist = (c1: Cell, c2: Cell) => {
+  const xDiff = c1.x - c2.x;
+  const yDiff = c1.y - c2.y;
+  return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+};
+
 /**
  * The mathematical fire model is derived from
  *   https://www.fs.fed.us/rm/pubs_series/rmrs/gtr/rmrs_gtr371.pdf
@@ -99,7 +105,12 @@ export const getFireSpreadRate = (sourceCell: Cell, targetCell: Cell, windSpeed:
 
   const heatOfPreIgnition = 250 + (1116 * moistureContent);
 
-  return (reactionIntensity * propagatingFluxRatio * (1 + windFactor + slopeFactor))
-          / (ovenDryBulkDensity * effectiveHeatingNumber * heatOfPreIgnition);
+  let spreadRate = (reactionIntensity * propagatingFluxRatio * (1 + windFactor + slopeFactor))
+    / (ovenDryBulkDensity * effectiveHeatingNumber * heatOfPreIgnition);
 
+  if (sourceCell.x !== targetCell.x && sourceCell.y !== targetCell.y) {
+    spreadRate = spreadRate / dist(sourceCell, targetCell);
+  }
+
+  return spreadRate;
 };
