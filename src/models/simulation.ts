@@ -182,29 +182,25 @@ export class SimulationModel {
     const newFireStateData: FireState[] = [];
 
     for (let i = 0; i < NUM_CELLS; i++) {
-      if (this.cells[i].fireState === FireState.Burning) {
-        const neighbors = cellNeighbors[i];
-        const ignitionTime = this.cells[i].ignitionTime;
-        const ignitionDeltas = this.timeToIgniteNeighbors[i];
+      const ignitionTime = this.cells[i].ignitionTime;
+      if (this.cells[i].fireState === FireState.Burning && this.time - ignitionTime > CELL_BURN_TIME) {
+        newFireStateData[i] = FireState.Burnt;
+      } else if (this.cells[i].fireState === FireState.Unburnt && this.time > ignitionTime) {
+        // Sets any unburnt cells to burning if we are passed their ignition time.
+        // Although during a simulation all cells will have their state sent to BURNING through the process
+        // above, this not only allows us to pre-set ignition times for testing, but will also allow us to
+        // run forward or backward through a simulation.
+        newFireStateData[i] = FireState.Burning;
 
+        const neighbors = cellNeighbors[i];
+        const ignitionDeltas = this.timeToIgniteNeighbors[i];
         neighbors.forEach((n, j) => {
-          if (this.cells[n].fireState === FireState.Unburnt && this.time >= ignitionTime + ignitionDeltas[j]) {
-            // time to ignite neighbor
-            newIgnitionData[n] = this.time;
-            newFireStateData[n] = FireState.Burning;
+          if (this.cells[n].fireState === FireState.Unburnt) {
+            newIgnitionData[n] = Math.min(
+              ignitionTime + ignitionDeltas[j], newIgnitionData[n] || this.cells[n].ignitionTime
+            );
           }
         });
-
-        if (this.time - ignitionTime > CELL_BURN_TIME) {
-          newFireStateData[i] = FireState.Burnt;
-        }
-      } else if (this.cells[i].fireState === FireState.Unburnt &&
-        this.cells[i].ignitionTime > 0 && this.time > this.cells[i].ignitionTime) {
-        // sets any unburnt cells to burning if we are passed their ignition time.
-        // although during a simulation all cells will have their state sent to BURNING through the process
-        // above, this not only allows us to pre-set ignition times for testing, but will also allow us to
-        // run forward or backward through a simulation
-        newFireStateData[i] = FireState.Burning;
       }
     }
 

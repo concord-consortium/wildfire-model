@@ -20,7 +20,7 @@ export class Cell {
   public y: number;
   public landType: LandType = LandType.Grass;
   public elevation: number = 0;
-  public ignitionTime: number = -1;
+  public ignitionTime: number = Infinity;
   public fireState: FireState = FireState.Unburnt;
 
   constructor(props: CellOptions) {
