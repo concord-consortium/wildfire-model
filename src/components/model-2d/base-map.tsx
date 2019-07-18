@@ -10,8 +10,8 @@ const Colors = {
 
 interface IProps {
   gridSize: number;
-  columns: number;
-  rows: number;
+  width: number;
+  height: number;
   cells: Cell[];
 }
 
@@ -24,11 +24,11 @@ export default PixiComponent<IProps, PIXI.Container>("BaseMap", {
     // clean up before removal
   },
   applyProps: (instance: PIXI.Graphics, oldProps: IProps, newProps: IProps) => {
-    const { gridSize, columns, rows, cells } = newProps;
+    const { gridSize, width, height, cells } = newProps;
     instance.clear();
 
     instance.beginFill(0xFFFFFF);
-    instance.drawRect(0, 0, columns * gridSize, rows * gridSize);
+    instance.drawRect(0, 0, width * gridSize, height * gridSize);
 
     cells.forEach(cell => {
       instance.beginFill(Colors[cell.landType], Math.min(1 / cell.elevation, 1));

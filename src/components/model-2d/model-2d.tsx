@@ -5,24 +5,24 @@ import FireLayer from "./fire-layer";
 import {Cell} from "../../models/cell";
 
 interface IProps {
-  columns: number;
-  rows: number;
+  width: number;
+  height: number;
   cells: Cell[];
 }
 
 export default class Model2D extends React.Component<IProps> {
 
   public render() {
-    const { columns, rows, cells } = this.props;
-    const maxDimension = Math.max(columns, rows);
+    const { width, height, cells } = this.props;
+    const maxDimension = Math.max(width, height);
     const gridSize = (maxDimension < 25) ? 30 : Math.max(1, 800 / maxDimension);
 
     return (
-      <Stage width={columns * gridSize} height={rows * gridSize} raf={false}>
+      <Stage width={width * gridSize} height={height * gridSize} raf={false}>
         <BaseMap
           gridSize={gridSize}
-          rows={rows}
-          columns={columns}
+          height={height}
+          width={width}
           cells={cells} />
         <FireLayer
           gridSize={gridSize}

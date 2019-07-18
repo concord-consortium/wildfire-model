@@ -4,8 +4,9 @@ import {Cell, CellOptions, FireState} from "./cell";
 import config from "../config";
 import {PresetData} from "../presets";
 
-const ROWS = config.modelHeight / config.gridCellSize;
-const COLUMNS = config.modelWidth / config.gridCellSize;
+const HEIGHT = config.modelHeight / config.gridCellSize;
+const WIDTH = config.modelWidth / config.gridCellSize;
+const NUM_CELLS = HEIGHT * WIDTH;
 const CELL_SIZE = config.gridCellSize;
 const TIME_STEP = 16;
 // Total time a cell should burn. This is partially a view property, but it also allows us to be
@@ -21,28 +22,28 @@ const CELL_BURN_TIME = 200 * CELL_SIZE;
 const SPREAD_TIME_RATIO = 200 * CELL_SIZE;
 
 // Very confusing, quick-'n-dirty way to populate a gird with a pseudo image.
-function populateGridWithImage(rows: number, cols: number, image: number[][]): number[] {
+function populateGridWithImage(height: number, width: number, image: number[][]): number[] {
   const arr = [];
   // Figure out the size of the image using the first row.
-  const imageRows = image.length;
-  const imageColumns = image[0].length;
-  const numGridCellsPerImageRowPixel = imageRows / rows;
-  const numGridCellsPerImageColPixel = imageColumns / cols;
+  const imageHeight = image.length;
+  const imageWidth = image[0].length;
+  const numGridCellsPerImageRowPixel = imageHeight / height;
+  const numGridCellsPerImageColPixel = imageWidth / width;
 
   let imageRowIndex = 0;
   let imageRowAdvance = 0.0;
-  for (let r = 0; r < rows; r++) {
+  for (let r = 0; r < height; r++) {
     let imageColIndex = 0;
     let imageColAdvance = 0.0;
-    for (let c = 0; c < cols; c++) {
+    for (let c = 0; c < width; c++) {
       arr.push(image[imageRowIndex][imageColIndex]);  // We use baseValue to preset all the cells in the grid.
       imageColAdvance += numGridCellsPerImageColPixel;
       if (imageColAdvance > 1.0) {
         imageColIndex += 1;
         imageColAdvance -= 1.0;
       }
-      if (imageColIndex >= imageColumns) {
-        imageColIndex = imageColumns - 1; // prevent overflow.
+      if (imageColIndex >= imageWidth) {
+        imageColIndex = imageWidth - 1; // prevent overflow.
       }
     }
     imageRowAdvance += numGridCellsPerImageRowPixel;
@@ -50,37 +51,37 @@ function populateGridWithImage(rows: number, cols: number, image: number[][]): n
       imageRowIndex += 1;
       imageRowAdvance -= 1.0;
     }
-    if (imageRowIndex >= imageRows) {
-      imageRowIndex = imageRows - 1;
+    if (imageRowIndex >= imageHeight) {
+      imageRowIndex = imageHeight - 1;
     }
   }
   return arr;
 }
 
-function getGridIndexForLocation(x: number, y: number, columns: number) {
-  return x + y * columns;
+function getGridIndexForLocation(x: number, y: number, width: number) {
+  return x + y * width;
 }
 
 /**
  * Returns an array of indices of all cells touching `i`, given the number of
- * `rows` and `columns`. For this model needs, we assume that cells are neighbours only if they share one well.
+ * `height` and `width`. For this model needs, we assume that cells are neighbours only if they share one well.
  * So, every cell will only have 4 neighbours, not 8.
  */
-function getGridCellNeighbors(i: number, rows: number, columns: number) {
+function getGridCellNeighbors(i: number, height: number, width: number) {
   const result = [];
-  const x = i % columns;
-  const y = Math.floor(i / columns);
+  const x = i % width;
+  const y = Math.floor(i / width);
   if (x - 1 >= 0) {
     result.push(i - 1);
   }
-  if (x + 1 < columns) {
+  if (x + 1 < width) {
     result.push(i + 1);
   }
-  if (y + 1 < rows) {
-    result.push(i + columns);
+  if (y + 1 < height) {
+    result.push(i + width);
   }
   if (y - 1 >= 0) {
-    result.push(i - columns);
+    result.push(i - width);
   }
   return result;
 }
@@ -93,11 +94,11 @@ export class SimulationModel {
   @observable public simulationRunning = false;
 
   constructor(preset: PresetData) {
-    const landType: LandType[] | undefined = preset.landType && populateGridWithImage(ROWS, COLUMNS, preset.landType);
-    const elevation: number[] | undefined = preset.elevation && populateGridWithImage(ROWS, COLUMNS, preset.elevation);
-    for (let y = 0; y < ROWS; y++) {
-      for (let x = 0; x < COLUMNS; x++) {
-        const index = getGridIndexForLocation(x, y, COLUMNS);
+    const landType: LandType[] | undefined = preset.landType && populateGridWithImage(HEIGHT, WIDTH, preset.landType);
+    const elevation: number[] | undefined = preset.elevation && populateGridWithImage(HEIGHT, WIDTH, preset.elevation);
+    for (let y = 0; y < HEIGHT; y++) {
+      for (let x = 0; x < WIDTH; x++) {
+        const index = getGridIndexForLocation(x, y, WIDTH);
         const cellOptions: CellOptions = { x, y };
         if (landType) {
           cellOptions.landType = landType[index];
@@ -112,18 +113,16 @@ export class SimulationModel {
     if (config.spark) {
       const sparkX = Math.round(config.spark[0] / CELL_SIZE);
       const sparkY = Math.round(config.spark[1] / CELL_SIZE);
-      this.cells[sparkX * COLUMNS + sparkY].ignitionTime = 1;
+      this.cells[sparkX * WIDTH + sparkY].ignitionTime = 1;
     }
   }
-
-  @computed get numCells() { return ROWS * COLUMNS; }
 
   // cached value of getGridCellNeighbors. This could be eventually replaced with
   // kd-tree if it's any more efficient.
   @computed get allNeighbors() {
     const allNeighbors = [];
-    for (let i = 0; i < this.numCells; i++) {
-      allNeighbors.push(getGridCellNeighbors(i, ROWS, COLUMNS));
+    for (let i = 0; i < NUM_CELLS; i++) {
+      allNeighbors.push(getGridCellNeighbors(i, HEIGHT, WIDTH));
     }
     return allNeighbors;
   }
@@ -144,14 +143,13 @@ export class SimulationModel {
   @computed get timeToIgniteNeighbors() {
     const timeToIgniteNeighbors = [];
 
-    for (let i = 0; i < this.numCells; i++) {
+    for (let i = 0; i < NUM_CELLS; i++) {
       const neighbors = this.allNeighbors[i];
       const timeToIgniteMyNeighbors = neighbors.map(n =>
         SPREAD_TIME_RATIO / getFireSpreadRate(this.cells[i], this.cells[n], this.windSpeed)
       );
       timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
     }
-
     return timeToIgniteNeighbors;
   }
 
@@ -183,7 +181,7 @@ export class SimulationModel {
     const newIgnitionData: number[] = [];
     const newFireStateData: FireState[] = [];
 
-    for (let i = 0; i < this.numCells; i++) {
+    for (let i = 0; i < NUM_CELLS; i++) {
       if (this.cells[i].fireState === FireState.Burning) {
         const neighbors = this.allNeighbors[i];
         const ignitionTime = this.cells[i].ignitionTime;
@@ -210,7 +208,7 @@ export class SimulationModel {
       }
     }
 
-    for (let i = 0; i < this.numCells; i++) {
+    for (let i = 0; i < NUM_CELLS; i++) {
       if (newFireStateData[i] !== undefined) {
         this.cells[i].fireState = newFireStateData[i];
       }

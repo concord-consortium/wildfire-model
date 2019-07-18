@@ -95,7 +95,7 @@ Run `npm test` to run jest tests. Run `npm run test:full` to run jest and Cypres
 ##### Cypress Run Options
 
 Inside of your `package.json` file:
-1. `--browser browser-name`: define browser for running tests
+1. `--bheighter bheighter-name`: define bheighter for running tests
 2. `--group group-name`: assign a group name for tests running
 3. `--spec`: define the spec files to run
 4. `--headed`: show cypress test runner GUI while running test (will exit by default when done)
@@ -106,7 +106,7 @@ Inside of your `package.json` file:
 
 ##### Cypress Run Examples
 
-1. `cypress run --browser chrome` will run cypress in a chrome browser
+1. `cypress run --bheighter chrome` will run cypress in a chrome bheighter
 2. `cypress run --headed --no-exit` will open cypress test runner when tests begin to run, and it will remain open when tests are finished running.
 3. `cypress run --spec 'cypress/integration/examples/smoke-test.js'` will point to a smoke-test file rather than running all of the test files for a project.
 

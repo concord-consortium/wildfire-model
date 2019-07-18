@@ -23,8 +23,8 @@ export class AppComponent extends BaseComponent<IProps, IState> {
     return (
       <div className="app">
         <Model2D
-          columns={config.modelWidth / config.gridCellSize}
-          rows={config.modelHeight / config.gridCellSize}
+          width={config.modelWidth / config.gridCellSize}
+          height={config.modelHeight / config.gridCellSize}
           cells={simulation.cells}
         />
       </div>
