@@ -8,7 +8,10 @@ const HEIGHT = config.modelHeight / config.gridCellSize;
 const WIDTH = config.modelWidth / config.gridCellSize;
 const NUM_CELLS = HEIGHT * WIDTH;
 const CELL_SIZE = config.gridCellSize;
-const TIME_STEP = 16;
+const TIME_STEP = config.timeStep;
+// Make time to ignite proportional to size of the cell.
+// If every cell is twice as big, the spread time in the end also should be slower.
+const SPREAD_TIME_RATIO = config.fireSpreadTimeRatio * CELL_SIZE;
 // Total time a cell should burn. This is partially a view property, but it also allows us to be
 // more efficient by only checking burning cell's neighbors, and not spent cells neighbors. However,
 // it is not intended to affect the model's actual functioning. (e.g. cell should never be burnt out
@@ -16,31 +19,29 @@ const TIME_STEP = 16;
 // It would be even more efficient to get the maximum `timeToIgniteNeighbors` for a model, and use that
 // as a separate flag to indicate when to stop checking a cell, which would give us a smaller number
 // of cells to check. We'd still want a separate burn time for the view.
-const CELL_BURN_TIME = 200 * CELL_SIZE;
-// Make time to ignite proportional to size of the cell.
-// If every cell is twice as big, the spread time in the end also should be slower.
-const SPREAD_TIME_RATIO = 200 * CELL_SIZE;
+const CELL_BURN_TIME = SPREAD_TIME_RATIO;
+
+const getGridIndexForLocation = (x: number, y: number, width: number) => {
+  return x + y * width;
+};
 
 /**
  * Returns an array of indices of all cells touching `i`, given the number of
  * `height` and `width`. For this model needs, we assume that cells are neighbours only if they share one well.
  * So, every cell will only have 4 neighbours, not 8.
  */
-const getGridCellNeighbors = (i: number, height: number, width: number) => {
+const getGridCellNeighbors = (i: number, width: number, height: number) => {
+  // dist variable says how many neighbouring cells will we consider.
+  const dist = config.neighborsDist;
   const result = [];
   const x = i % width;
   const y = Math.floor(i / width);
-  if (x - 1 >= 0) {
-    result.push(i - 1);
-  }
-  if (x + 1 < width) {
-    result.push(i + 1);
-  }
-  if (y + 1 < height) {
-    result.push(i + width);
-  }
-  if (y - 1 >= 0) {
-    result.push(i - width);
+  for (let nx = x - dist; nx <= x + dist; nx += 1) {
+    for (let ny = y - dist; ny <= y + dist; ny += 1) {
+      if ((nx !== x || ny !== y) && nx >= 0 && nx < width && ny >= 0 && ny < height) {
+        result.push(getGridIndexForLocation(nx, ny, width));
+      }
+    }
   }
   return result;
 };
@@ -49,7 +50,7 @@ const getGridCellNeighbors = (i: number, height: number, width: number) => {
 const cellNeighbors = (() => {
   const result = [];
   for (let i = 0; i < NUM_CELLS; i++) {
-    result.push(getGridCellNeighbors(i, HEIGHT, WIDTH));
+    result.push(getGridCellNeighbors(i, WIDTH, HEIGHT));
   }
   return result;
 })();
@@ -114,14 +115,10 @@ const populateGridWithImage = (height: number, width: number, image: number[][])
   return arr;
 };
 
-const getGridIndexForLocation = (x: number, y: number, width: number) => {
-  return x + y * width;
-};
-
 export class SimulationModel {
-  public windSpeed = config.wind;
-  public time = 0;
   public timeToIgniteNeighbors: number[][];
+  @observable public windSpeed = config.wind;
+  @observable public time = 0;
 
   @observable public cells: Cell[] = [];
   @observable public simulationRunning = false;

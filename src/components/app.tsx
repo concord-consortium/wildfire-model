@@ -27,6 +27,7 @@ export class AppComponent extends BaseComponent<IProps, IState> {
           height={config.modelHeight / config.gridCellSize}
           cells={simulation.cells}
         />
+        <div>Time: { simulation.time }</div>
       </div>
     );
   }

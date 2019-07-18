@@ -17,8 +17,13 @@ const DEFAULT_CONFIG = {
   modelWidth: 100, // km
   modelHeight: 100, // km
   spark: [50, 50], // [km, km]
-  gridCellSize: 1, // note that modelWidth % gridCellSize and modelHeight % gridCellSize should always be 0!
-  wind: 88
+  // Note that modelWidth % gridCellSize and modelHeight % gridCellSize should always be 0!
+  gridCellSize: 1,
+  timeStep: 16,
+  wind: 88,
+  neighborsDist: 1,
+  // Used for mapping of the fireSpreadRate to (model) time.
+  fireSpreadTimeRatio: 500
 };
 
 const urlConfig: any = {};
