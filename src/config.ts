@@ -1,4 +1,4 @@
-function getURLParam(name: string) {
+const getURLParam = (name: string) => {
   const url = (self || window).location.href;
   name = name.replace(/[[]]/g, "\\$&");
   const regex = new RegExp(`[?&]${name}(=([^&#]*)|&|#|$)`);
@@ -6,7 +6,11 @@ function getURLParam(name: string) {
   if (!results) return null;
   if (!results[2]) return true;
   return decodeURIComponent(results[2].replace(/\+/g, " "));
-}
+};
+
+const isArray = (value: any) => {
+  return typeof value === "string" && value.match(/^\[.*\]$/);
+};
 
 const DEFAULT_CONFIG = {
   preset: "test1",
@@ -18,10 +22,6 @@ const DEFAULT_CONFIG = {
 };
 
 const urlConfig: any = {};
-
-function isArray(value: any) {
-  return typeof value === "string" && value.match(/^\[.*\]$/);
-}
 
 Object.keys(DEFAULT_CONFIG).forEach((key) => {
   const urlValue: any = getURLParam(key);

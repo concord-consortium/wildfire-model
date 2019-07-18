@@ -1,4 +1,4 @@
-import {action, computed, observable} from "mobx";
+import {action, observable} from "mobx";
 import {getFireSpreadRate, LandType} from "./fire-model";
 import {Cell, CellOptions, FireState} from "./cell";
 import config from "../config";
@@ -21,8 +21,64 @@ const CELL_BURN_TIME = 200 * CELL_SIZE;
 // If every cell is twice as big, the spread time in the end also should be slower.
 const SPREAD_TIME_RATIO = 200 * CELL_SIZE;
 
+/**
+ * Returns an array of indices of all cells touching `i`, given the number of
+ * `height` and `width`. For this model needs, we assume that cells are neighbours only if they share one well.
+ * So, every cell will only have 4 neighbours, not 8.
+ */
+const getGridCellNeighbors = (i: number, height: number, width: number) => {
+  const result = [];
+  const x = i % width;
+  const y = Math.floor(i / width);
+  if (x - 1 >= 0) {
+    result.push(i - 1);
+  }
+  if (x + 1 < width) {
+    result.push(i + 1);
+  }
+  if (y + 1 < height) {
+    result.push(i + width);
+  }
+  if (y - 1 >= 0) {
+    result.push(i - width);
+  }
+  return result;
+};
+
+// cached value of getGridCellNeighbors.
+const cellNeighbors = (() => {
+  const result = [];
+  for (let i = 0; i < NUM_CELLS; i++) {
+    result.push(getGridCellNeighbors(i, HEIGHT, WIDTH));
+  }
+  return result;
+})();
+
+/**
+ * Returns 2d array of times it takes each cell to ignite each neighbor.
+ *
+ * For instance, for a 5x5 array, cellNeighbors will be a 2d array:
+ *     [[1, 5, 6], [0, 2, 5, 6,7], ...]
+ * describing cell 0 as being neighbors with cells 1, 5, 6, etc.
+ *
+ * timeToIgniteNeighbors might then look something like
+ *     [[0.5, 0.7, 0.5], [1.2, ...]]
+ * which means that, if cell 0 is ignited, cell 1 will ignite 0.5 seconds later.
+ */
+const calculateTimeToIgniteNeighbors = (cells: Cell[], windSpeed: number) => {
+  const timeToIgniteNeighbors = [];
+  for (let i = 0; i < NUM_CELLS; i++) {
+    const neighbors = cellNeighbors[i];
+    const timeToIgniteMyNeighbors = neighbors.map(n =>
+      SPREAD_TIME_RATIO / getFireSpreadRate(cells[i], cells[n], windSpeed)
+    );
+    timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
+  }
+  return timeToIgniteNeighbors;
+};
+
 // Very confusing, quick-'n-dirty way to populate a gird with a pseudo image.
-function populateGridWithImage(height: number, width: number, image: number[][]): number[] {
+const populateGridWithImage = (height: number, width: number, image: number[][]): number[] => {
   const arr = [];
   // Figure out the size of the image using the first row.
   const imageHeight = image.length;
@@ -56,39 +112,16 @@ function populateGridWithImage(height: number, width: number, image: number[][])
     }
   }
   return arr;
-}
+};
 
-function getGridIndexForLocation(x: number, y: number, width: number) {
+const getGridIndexForLocation = (x: number, y: number, width: number) => {
   return x + y * width;
-}
-
-/**
- * Returns an array of indices of all cells touching `i`, given the number of
- * `height` and `width`. For this model needs, we assume that cells are neighbours only if they share one well.
- * So, every cell will only have 4 neighbours, not 8.
- */
-function getGridCellNeighbors(i: number, height: number, width: number) {
-  const result = [];
-  const x = i % width;
-  const y = Math.floor(i / width);
-  if (x - 1 >= 0) {
-    result.push(i - 1);
-  }
-  if (x + 1 < width) {
-    result.push(i + 1);
-  }
-  if (y + 1 < height) {
-    result.push(i + width);
-  }
-  if (y - 1 >= 0) {
-    result.push(i - width);
-  }
-  return result;
-}
+};
 
 export class SimulationModel {
   public windSpeed = config.wind;
   public time = 0;
+  public timeToIgniteNeighbors: number[][];
 
   @observable public cells: Cell[] = [];
   @observable public simulationRunning = false;
@@ -109,48 +142,15 @@ export class SimulationModel {
         this.cells.push(new Cell(cellOptions));
       }
     }
+    // It's enough to calculate this just once, as long as none of the land properties or wind speed can be changed.
+    // This will change in the future when user is able to set land properties or wind speed dynamically.
+    this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(this.cells, this.windSpeed);
 
     if (config.spark) {
       const sparkX = Math.round(config.spark[0] / CELL_SIZE);
       const sparkY = Math.round(config.spark[1] / CELL_SIZE);
       this.cells[sparkX * WIDTH + sparkY].ignitionTime = 1;
     }
-  }
-
-  // cached value of getGridCellNeighbors. This could be eventually replaced with
-  // kd-tree if it's any more efficient.
-  @computed get allNeighbors() {
-    const allNeighbors = [];
-    for (let i = 0; i < NUM_CELLS; i++) {
-      allNeighbors.push(getGridCellNeighbors(i, HEIGHT, WIDTH));
-    }
-    return allNeighbors;
-  }
-
-  /**
-   * 2d array of times it takes each cell to ignite each neighbor.
-   *
-   * For instance, for a 5x5 array, this.allNeighbors will be a 2d array:
-   *     [[1, 5, 6], [0, 2, 5, 6,7], ...]
-   * describing cell 0 as being neighbors with cells 1, 5, 6, etc.
-   *
-   * this.timeToIgniteNeighbors might then look something like
-   *     [[0.5, 0.7, 0.5], [1.2, ...]]
-   * which means that, if cell 0 is ignited, cell 1 will ignite 0.5 seconds later.
-   *
-   * FIXEME: This is getting repeatedly called, but ought to be cacheable.
-   */
-  @computed get timeToIgniteNeighbors() {
-    const timeToIgniteNeighbors = [];
-
-    for (let i = 0; i < NUM_CELLS; i++) {
-      const neighbors = this.allNeighbors[i];
-      const timeToIgniteMyNeighbors = neighbors.map(n =>
-        SPREAD_TIME_RATIO / getFireSpreadRate(this.cells[i], this.cells[n], this.windSpeed)
-      );
-      timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
-    }
-    return timeToIgniteNeighbors;
   }
 
   @action.bound public start() {
@@ -183,7 +183,7 @@ export class SimulationModel {
 
     for (let i = 0; i < NUM_CELLS; i++) {
       if (this.cells[i].fireState === FireState.Burning) {
-        const neighbors = this.allNeighbors[i];
+        const neighbors = cellNeighbors[i];
         const ignitionTime = this.cells[i].ignitionTime;
         const ignitionDeltas = this.timeToIgniteNeighbors[i];
 

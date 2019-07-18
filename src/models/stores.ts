@@ -6,8 +6,8 @@ export interface IStores {
   simulation: SimulationModel;
 }
 
-export function createStores(): IStores {
+export const createStores = (): IStores => {
   return {
     simulation: new SimulationModel(presets[config.preset])
   };
-}
+};
