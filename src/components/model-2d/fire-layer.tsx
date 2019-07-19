@@ -3,7 +3,7 @@ import {PixiComponent} from "@inlet/react-pixi";
 import {Cell, FireState} from "../../models/cell";
 
 interface IProps {
-  gridSize: number;
+  cellSize: number;
   cells: Cell[];
 }
 
@@ -16,16 +16,16 @@ export default PixiComponent<IProps, PIXI.Container>("FireLayer", {
     // clean up before removal
   },
   applyProps: (instance: PIXI.Graphics, oldProps: IProps, newProps: IProps) => {
-    const { gridSize, cells } = newProps;
+    const { cellSize, cells } = newProps;
     instance.clear();
 
     cells.forEach(cell => {
       if (cell.fireState === FireState.Burning) {
         instance.beginFill(0xFF0000, 1);
-        instance.drawRect(cell.x * gridSize, cell.y * gridSize, gridSize, gridSize);
+        instance.drawRect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
       } else if (cell.fireState === FireState.Burnt) {
         instance.beginFill(0x000000, 1);
-        instance.drawRect(cell.x * gridSize, cell.y * gridSize, gridSize, gridSize);
+        instance.drawRect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
       }
     });
     instance.endFill();

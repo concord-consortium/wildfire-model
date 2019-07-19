@@ -1,7 +1,6 @@
 import { inject, observer } from "mobx-react";
 import * as React from "react";
 import { BaseComponent, IBaseProps } from "./base";
-import config from "../config";
 
 import "./app.sass";
 import Model2D from "./model-2d/model-2d";
