@@ -34,7 +34,11 @@ const FuelConstants: {[key in LandType]: Fuel} = {
 const dist = (c1: Cell, c2: Cell) => {
   const xDiff = c1.x - c2.x;
   const yDiff = c1.y - c2.y;
-  return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+  if (xDiff === 0 || yDiff === 0) {
+    return Math.abs(xDiff + yDiff);
+  } else {
+    return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+  }
 };
 
 /**
