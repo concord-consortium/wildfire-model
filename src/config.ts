@@ -21,6 +21,7 @@ const DEFAULT_CONFIG = {
   gridCellSize: 1,
   timeStep: 16,
   wind: 88,
+  neighborsDist: 3,
   // Used for mapping of the fireSpreadRate to (model) time.
   fireSpreadTimeRatio: 500,
   view: "land"

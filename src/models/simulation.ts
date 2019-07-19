@@ -9,15 +9,7 @@ const WIDTH = config.modelWidth / config.gridCellSize;
 const NUM_CELLS = HEIGHT * WIDTH;
 const CELL_SIZE = config.gridCellSize;
 const TIME_STEP = config.timeStep;
-const NEIGHBOR_INDICES = [
-  // 8 fields directly around:
-  [-1, -1], [-1, 0], [-1, 1],
-  [0, -1], [0, 1],
-  [1, -1], [1, 0], [1, 1],
-  // 8 L-shaped fields (so we can maintain round shape of the fire front):
-  [-2, 1], [-1, 2], [1, 2], [2, 1],
-  [-2, -1], [-1, -2], [1, -2], [2, -1]
-];
+
 // Make time to ignite proportional to size of the cell.
 // If every cell is twice as big, the spread time in the end also should be slower.
 const SPREAD_TIME_RATIO = config.fireSpreadTimeRatio * CELL_SIZE;
@@ -40,16 +32,18 @@ const getGridIndexForLocation = (x: number, y: number, width: number) => {
  * So, every cell will only have 4 neighbours, not 8.
  */
 const getGridCellNeighbors = (i: number, width: number, height: number) => {
-  const result: number[] = [];
+  // dist variable says how many neighbouring cells will we consider.
+  const dist = config.neighborsDist;
+  const result = [];
   const x = i % width;
   const y = Math.floor(i / width);
-  NEIGHBOR_INDICES.forEach(offset => {
-    const nx = x + offset[0];
-    const ny = y + offset[1];
-    if ((nx !== x || ny !== y) && nx >= 0 && nx < width && ny >= 0 && ny < height) {
-      result.push(getGridIndexForLocation(nx, ny, width));
+  for (let nx = x - dist; nx <= x + dist; nx += 1) {
+    for (let ny = y - dist; ny <= y + dist; ny += 1) {
+      if ((nx !== x || ny !== y) && nx >= 0 && nx < width && ny >= 0 && ny < height) {
+        result.push(getGridIndexForLocation(nx, ny, width));
+      }
     }
-  });
+  }
   return result;
 };
 
