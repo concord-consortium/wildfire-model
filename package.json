@@ -5,7 +5,9 @@
   "main": "index.js",
   "jest": {
     "testURL": "https://wildfire-model.unexisting.url.com",
-    "setupTestFrameworkScriptFile": "<rootDir>src/setupTests.js",
+    "setupFilesAfterEnv": [
+      "<rootDir>src/setupTests.js"
+    ],
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
     },
@@ -90,7 +92,7 @@
     "sass-loader": "^7.1.0",
     "script-loader": "^0.7.2",
     "style-loader": "^0.23.1",
-    "ts-jest": "^23.10.5",
+    "ts-jest": "^24.0.2",
     "ts-loader": "^5.4.5",
     "ts-node": "^7.0.1",
     "tslint": "^5.17.0",
@@ -105,8 +107,8 @@
   },
   "dependencies": {
     "@inlet/react-pixi": "^0.6.0",
-    "mobx": "^5.10.1",
-    "mobx-react": "^5.4.4",
+    "mobx": "^5.13.0",
+    "mobx-react": "^6.1.1",
     "pixi.js": "^4.8.7",
     "query-string": "^6.2.0",
     "react": "^16.8.6",

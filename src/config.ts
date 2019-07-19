@@ -1,4 +1,4 @@
-function getURLParam(name: string) {
+const getURLParam = (name: string) => {
   const url = (self || window).location.href;
   name = name.replace(/[[]]/g, "\\$&");
   const regex = new RegExp(`[?&]${name}(=([^&#]*)|&|#|$)`);
@@ -6,21 +6,28 @@ function getURLParam(name: string) {
   if (!results) return null;
   if (!results[2]) return true;
   return decodeURIComponent(results[2].replace(/\+/g, " "));
-}
+};
+
+const isArray = (value: any) => {
+  return typeof value === "string" && value.match(/^\[.*\]$/);
+};
 
 const DEFAULT_CONFIG = {
+  preset: "test1",
   modelWidth: 100, // km
   modelHeight: 100, // km
   spark: [50, 50], // [km, km]
-  gridCellSize: 1, // note that modelWidth % gridCellSize and modelHeight % gridCellSize should always be 0!
-  wind: 88
+  // Note that modelWidth % gridCellSize and modelHeight % gridCellSize should always be 0!
+  gridCellSize: 1,
+  timeStep: 16,
+  wind: 88,
+  neighborsDist: 3,
+  // Used for mapping of the fireSpreadRate to (model) time.
+  fireSpreadTimeRatio: 500,
+  view: "land"
 };
 
 const urlConfig: any = {};
-
-function isArray(value: any) {
-  return typeof value === "string" && value.match(/^\[.*\]$/);
-}
 
 Object.keys(DEFAULT_CONFIG).forEach((key) => {
   const urlValue: any = getURLParam(key);

@@ -1,14 +1,3 @@
-import { LandType } from "./models/fire-model";
-
-export interface GridCell {
-  x: number;
-  y: number;
-  landType: LandType;
-  elevation: number;
-  timeOfIgnition: number;
-  fireState: number;
-}
-
 export interface Fuel {
   sav: number;
   packingRatio: number;

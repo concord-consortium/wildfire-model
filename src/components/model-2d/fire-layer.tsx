@@ -1,11 +1,10 @@
 import * as PIXI from "pixi.js";
-import { PixiComponent } from "@inlet/react-pixi";
-import { GridCell } from "../../types";
-import { BURNING, BURNT } from "../../models/simulation";
+import {PixiComponent} from "@inlet/react-pixi";
+import {Cell, FireState} from "../../models/cell";
 
 interface IProps {
   gridSize: number;
-  cells: GridCell[];
+  cells: Cell[];
 }
 
 export default PixiComponent<IProps, PIXI.Container>("FireLayer", {
@@ -21,10 +20,10 @@ export default PixiComponent<IProps, PIXI.Container>("FireLayer", {
     instance.clear();
 
     cells.forEach(cell => {
-      if (cell.fireState === BURNING) {
+      if (cell.fireState === FireState.Burning) {
         instance.beginFill(0xFF0000, 1);
         instance.drawRect(cell.x * gridSize, cell.y * gridSize, gridSize, gridSize);
-      } else if (cell.fireState === BURNT) {
+      } else if (cell.fireState === FireState.Burnt) {
         instance.beginFill(0x000000, 1);
         instance.drawRect(cell.x * gridSize, cell.y * gridSize, gridSize, gridSize);
       }

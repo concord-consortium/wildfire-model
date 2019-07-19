@@ -1,4 +1,5 @@
-import { GridCell, Fuel } from "../types";
+import { Fuel } from "../types";
+import {Cell} from "./cell";
 
 export enum LandType {
   Grass = 0,
@@ -30,6 +31,16 @@ const FuelConstants: {[key in LandType]: Fuel} = {
   }
 };
 
+const dist = (c1: Cell, c2: Cell) => {
+  const xDiff = c1.x - c2.x;
+  const yDiff = c1.y - c2.y;
+  if (xDiff === 0 || yDiff === 0) {
+    return Math.abs(xDiff + yDiff);
+  } else {
+    return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
+  }
+};
+
 /**
  * The mathematical fire model is derived from
  *   https://www.fs.fed.us/rm/pubs_series/rmrs/gtr/rmrs_gtr371.pdf
@@ -47,7 +58,7 @@ const FuelConstants: {[key in LandType]: Fuel} = {
  * @param targetCell Adjacent grid cell that is currently UNBURNT
  * @param windSpeed Magnitude of the windspeed
  */
-export function getFireSpreadRate(sourceCell: GridCell, targetCell: GridCell, windSpeed: number) {
+export const getFireSpreadRate = (sourceCell: Cell, targetCell: Cell, windSpeed: number) => {
   const fuel = FuelConstants[targetCell.landType];
   const sav = fuel.sav;
   const packingRatio = fuel.packingRatio;
@@ -99,6 +110,5 @@ export function getFireSpreadRate(sourceCell: GridCell, targetCell: GridCell, wi
   const heatOfPreIgnition = 250 + (1116 * moistureContent);
 
   return (reactionIntensity * propagatingFluxRatio * (1 + windFactor + slopeFactor))
-          / (ovenDryBulkDensity * effectiveHeatingNumber * heatOfPreIgnition);
-
-}
+    / (ovenDryBulkDensity * effectiveHeatingNumber * heatOfPreIgnition) / dist(sourceCell, targetCell);
+};
