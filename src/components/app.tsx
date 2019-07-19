@@ -22,11 +22,7 @@ export class AppComponent extends BaseComponent<IProps, IState> {
     const {simulation} = this.stores;
     return (
       <div className="app">
-        <Model2D
-          width={config.modelWidth / config.gridCellSize}
-          height={config.modelHeight / config.gridCellSize}
-          cells={simulation.cells}
-        />
+        <Model2D />
         <div>Time: { simulation.time }</div>
       </div>
     );
