@@ -3,7 +3,6 @@ import { Stage } from "@inlet/react-pixi";
 import BaseMap from "./base-map";
 import FireLayer from "./fire-layer";
 import {inject, observer} from "mobx-react";
-import config from "../../config";
 import {BaseComponent, IBaseProps} from "../base";
 
 interface IProps extends IBaseProps {}
@@ -14,22 +13,22 @@ interface IState {}
 export default class Model2D extends BaseComponent<IProps, IState> {
 
   public render() {
-    const { cells, time } = this.stores.simulation;
-    const width = config.modelWidth / config.gridCellSize;
-    const height = config.modelHeight / config.gridCellSize;
-    const maxDimension = Math.max(width, height);
-    const gridSize = (maxDimension < 25) ? 30 : Math.max(1, 800 / maxDimension);
+    const { cells, time, gridWidth, gridHeight } = this.stores.simulation;
+    const { view } = this.stores.ui;
+    const maxDimension = Math.max(gridWidth, gridHeight);
+    const cellSize = (maxDimension < 25) ? 30 : Math.max(1, 800 / maxDimension);
     return (
-      <Stage width={width * gridSize} height={height * gridSize} raf={false}>
+      <Stage width={gridHeight * cellSize} height={gridHeight * cellSize} raf={false}>
         <BaseMap
-          gridSize={gridSize}
-          height={height}
-          width={width}
+          cellSize={cellSize}
+          height={gridHeight}
+          width={gridWidth}
           cells={cells}
           time={time}
+          view={view}
         />
         <FireLayer
-          gridSize={gridSize}
+          cellSize={cellSize}
           cells={cells}
         />
       </Stage>

@@ -1,3 +1,37 @@
+export interface ISimulationConfig {
+  modelWidth: number; // km
+  modelHeight: number; // km
+  // Note that modelWidth % cellSize and modelHeight % cellSize should always be 0!
+  cellSize: number; // km
+  // Spark position, in km.
+  spark: number[];
+  timeStep: number;
+  windSpeed: number;
+  neighborsDist: number;
+  // Used for mapping of the fireSpreadRate to (model) time.
+  fireSpreadTimeRatio: number;
+}
+
+export interface IUrlConfig extends ISimulationConfig {
+  preset: string;
+  view: "land" | "ignitionTime";
+}
+
+export const defaultConfig: IUrlConfig = {
+  preset: "test1",
+  modelWidth: 100,
+  modelHeight: 100,
+  cellSize: 1,
+  spark: [50, 50],
+  timeStep: 16,
+  windSpeed: 88,
+  neighborsDist: 3,
+  fireSpreadTimeRatio: 500,
+  view: "land"
+};
+
+export const urlConfig: any = {};
+
 const getURLParam = (name: string) => {
   const url = (self || window).location.href;
   name = name.replace(/[[]]/g, "\\$&");
@@ -12,24 +46,8 @@ const isArray = (value: any) => {
   return typeof value === "string" && value.match(/^\[.*\]$/);
 };
 
-const DEFAULT_CONFIG = {
-  preset: "test1",
-  modelWidth: 100, // km
-  modelHeight: 100, // km
-  spark: [50, 50], // [km, km]
-  // Note that modelWidth % gridCellSize and modelHeight % gridCellSize should always be 0!
-  gridCellSize: 1,
-  timeStep: 16,
-  wind: 88,
-  neighborsDist: 3,
-  // Used for mapping of the fireSpreadRate to (model) time.
-  fireSpreadTimeRatio: 500,
-  view: "land"
-};
-
-const urlConfig: any = {};
-
-Object.keys(DEFAULT_CONFIG).forEach((key) => {
+// Populate `urlConfig` with values read from URL.
+Object.keys(defaultConfig).forEach((key) => {
   const urlValue: any = getURLParam(key);
   if (urlValue === true || urlValue === "true") {
     urlConfig[key] = true;
@@ -51,5 +69,4 @@ Object.keys(DEFAULT_CONFIG).forEach((key) => {
   }
 });
 
-const finalConfig = Object.assign({}, DEFAULT_CONFIG, urlConfig);
-export default finalConfig;
+export const urlConfigWithDefaultValues: IUrlConfig = Object.assign({}, defaultConfig, urlConfig);

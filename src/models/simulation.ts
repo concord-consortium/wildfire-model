@@ -1,26 +1,8 @@
 import {action, observable} from "mobx";
 import {getFireSpreadRate, LandType} from "./fire-model";
 import {Cell, CellOptions, FireState} from "./cell";
-import config from "../config";
-import {PresetData} from "../presets";
-
-const HEIGHT = config.modelHeight / config.gridCellSize;
-const WIDTH = config.modelWidth / config.gridCellSize;
-const NUM_CELLS = HEIGHT * WIDTH;
-const CELL_SIZE = config.gridCellSize;
-const TIME_STEP = config.timeStep;
-
-// Make time to ignite proportional to size of the cell.
-// If every cell is twice as big, the spread time in the end also should be slower.
-const SPREAD_TIME_RATIO = config.fireSpreadTimeRatio * CELL_SIZE;
-// Total time a cell should burn. This is partially a view property, but it also allows us to be
-// more efficient by only checking burning cell's neighbors, and not spent cells neighbors. However,
-// it is not intended to affect the model's actual functioning. (e.g. cell should never be burnt out
-// before its neighbors are ignited.)
-// It would be even more efficient to get the maximum `timeToIgniteNeighbors` for a model, and use that
-// as a separate flag to indicate when to stop checking a cell, which would give us a smaller number
-// of cells to check. We'd still want a separate burn time for the view.
-const CELL_BURN_TIME = SPREAD_TIME_RATIO;
+import {urlConfig, defaultConfig, ISimulationConfig} from "../config";
+import {IPresetConfig} from "../presets";
 
 const getGridIndexForLocation = (x: number, y: number, width: number) => {
   return x + y * width;
@@ -28,17 +10,15 @@ const getGridIndexForLocation = (x: number, y: number, width: number) => {
 
 /**
  * Returns an array of indices of all cells touching `i`, given the number of
- * `height` and `width`. For this model needs, we assume that cells are neighbours only if they share one well.
- * So, every cell will only have 4 neighbours, not 8.
+ * `height` and `width`. `neighborsDist` variable says how many neighbouring cells will we consider
+ * (or how wide is the neighbor rectangle).
  */
-const getGridCellNeighbors = (i: number, width: number, height: number) => {
-  // dist variable says how many neighbouring cells will we consider.
-  const dist = config.neighborsDist;
+const getGridCellNeighbors = (i: number, width: number, height: number, neighborsDist: number) => {
   const result = [];
   const x = i % width;
   const y = Math.floor(i / width);
-  for (let nx = x - dist; nx <= x + dist; nx += 1) {
-    for (let ny = y - dist; ny <= y + dist; ny += 1) {
+  for (let nx = x - neighborsDist; nx <= x + neighborsDist; nx += 1) {
+    for (let ny = y - neighborsDist; ny <= y + neighborsDist; ny += 1) {
       if ((nx !== x || ny !== y) && nx >= 0 && nx < width && ny >= 0 && ny < height) {
         result.push(getGridIndexForLocation(nx, ny, width));
       }
@@ -47,14 +27,13 @@ const getGridCellNeighbors = (i: number, width: number, height: number) => {
   return result;
 };
 
-// cached value of getGridCellNeighbors.
-const cellNeighbors = (() => {
+const calculateCellNeighbors = (width: number, height: number, neighborsDist: number) => {
   const result = [];
-  for (let i = 0; i < NUM_CELLS; i++) {
-    result.push(getGridCellNeighbors(i, WIDTH, HEIGHT));
+  for (let i = 0; i < width * height; i++) {
+    result.push(getGridCellNeighbors(i, width, height, neighborsDist));
   }
   return result;
-})();
+};
 
 /**
  * Returns 2d array of times it takes each cell to ignite each neighbor.
@@ -67,12 +46,16 @@ const cellNeighbors = (() => {
  *     [[0.5, 0.7, 0.5], [1.2, ...]]
  * which means that, if cell 0 is ignited, cell 1 will ignite 0.5 seconds later.
  */
-const calculateTimeToIgniteNeighbors = (cells: Cell[], windSpeed: number) => {
+const calculateTimeToIgniteNeighbors = (
+  cells: Cell[], cellNeighbors: number[][], windSpeed: number, config: ISimulationConfig
+) => {
   const timeToIgniteNeighbors = [];
-  for (let i = 0; i < NUM_CELLS; i++) {
+  for (let i = 0; i < cells.length; i++) {
     const neighbors = cellNeighbors[i];
     const timeToIgniteMyNeighbors = neighbors.map(n =>
-      SPREAD_TIME_RATIO / getFireSpreadRate(cells[i], cells[n], windSpeed)
+      // Make time to ignite proportional to size of the cell.
+      // If every cell is twice as big, the spread time in the end also should be slower.
+      config.fireSpreadTimeRatio * config.cellSize / getFireSpreadRate(cells[i], cells[n], windSpeed)
     );
     timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
   }
@@ -118,18 +101,32 @@ const populateGridWithImage = (height: number, width: number, image: number[][])
 
 export class SimulationModel {
   public timeToIgniteNeighbors: number[][];
-  @observable public windSpeed = config.wind;
+  public config: IPresetConfig;
+  public cellNeighbors: number[][];
+  @observable public gridWidth: number;
+  @observable public gridHeight: number;
+  @observable public windSpeed: number;
   @observable public time = 0;
-
   @observable public cells: Cell[] = [];
   @observable public simulationRunning = false;
 
-  constructor(preset: PresetData) {
-    const landType: LandType[] | undefined = preset.landType && populateGridWithImage(HEIGHT, WIDTH, preset.landType);
-    const elevation: number[] | undefined = preset.elevation && populateGridWithImage(HEIGHT, WIDTH, preset.elevation);
-    for (let y = 0; y < HEIGHT; y++) {
-      for (let x = 0; x < WIDTH; x++) {
-        const index = getGridIndexForLocation(x, y, WIDTH);
+  constructor(presetConfig: Partial<IPresetConfig>) {
+    // Configuration are joined together. Default values can be replaced by preset, and preset values can be replaced
+    // by URL parameters.
+    const config: IPresetConfig = Object.assign({}, defaultConfig, presetConfig, urlConfig);
+
+    this.config = config;
+    this.gridWidth = config.modelWidth / config.cellSize;
+    this.gridHeight = config.modelHeight / config.cellSize;
+    this.windSpeed = config.windSpeed;
+
+    const landType: LandType[] | undefined =
+      config.landType && populateGridWithImage(this.gridHeight, this.gridWidth, config.landType);
+    const elevation: number[] | undefined =
+      config.elevation && populateGridWithImage(this.gridHeight, this.gridWidth, config.elevation);
+    for (let y = 0; y < this.gridHeight; y++) {
+      for (let x = 0; x < this.gridWidth; x++) {
+        const index = getGridIndexForLocation(x, y, this.gridWidth);
         const cellOptions: CellOptions = { x, y };
         if (landType) {
           cellOptions.landType = landType[index];
@@ -140,14 +137,16 @@ export class SimulationModel {
         this.cells.push(new Cell(cellOptions));
       }
     }
+    // It's enough to calculate this just once, as grid won't change.
+    this.cellNeighbors = calculateCellNeighbors(this.gridWidth, this.gridHeight, this.config.neighborsDist);
     // It's enough to calculate this just once, as long as none of the land properties or wind speed can be changed.
     // This will change in the future when user is able to set land properties or wind speed dynamically.
-    this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(this.cells, this.windSpeed);
+    this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(this.cells, this.cellNeighbors, this.windSpeed, config);
 
     if (config.spark) {
-      const sparkX = Math.round(config.spark[0] / CELL_SIZE);
-      const sparkY = Math.round(config.spark[1] / CELL_SIZE);
-      this.cells[sparkX * WIDTH + sparkY].ignitionTime = 1;
+      const sparkX = Math.round(config.spark[0] / this.config.cellSize);
+      const sparkY = Math.round(config.spark[1] / this.config.cellSize);
+      this.cells[sparkX * this.gridWidth + sparkY].ignitionTime = 1;
     }
   }
 
@@ -165,23 +164,32 @@ export class SimulationModel {
     if (this.simulationRunning) {
       requestAnimationFrame(this.tick);
     }
-    this.time += TIME_STEP;
+    this.time += this.config.timeStep;
     // Explicitly update cells array. This will notify observers that cells data has been updated.
     this.cells = this.cells.slice();
     this.updateFire();
   }
 
   @action.bound private updateFire() {
+    const numCells = this.cells.length;
     // Run through all cells. Check the unburnt neighbors of currently-burning cells. If the current time
     // is greater than the ignition time of the cell and the delta time for the neighbor, update
     // the neighbor's ignition time.
     // At the same time, we update the unburnt/burning/burnt states of the cells.
     const newIgnitionData: number[] = [];
     const newFireStateData: FireState[] = [];
+    // Total time a cell should burn. This is partially a view property, but it also allows us to be
+    // more efficient by only checking burning cell's neighbors, and not spent cells neighbors. However,
+    // it is not intended to affect the model's actual functioning. (e.g. cell should never be burnt out
+    // before its neighbors are ignited.)
+    // It would be even more efficient to get the maximum `timeToIgniteNeighbors` for a model, and use that
+    // as a separate flag to indicate when to stop checking a cell, which would give us a smaller number
+    // of cells to check. We'd still want a separate burn time for the view.
+    const cellBurnTime = this.config.fireSpreadTimeRatio * this.config.cellSize;
 
-    for (let i = 0; i < NUM_CELLS; i++) {
+    for (let i = 0; i < numCells; i++) {
       const ignitionTime = this.cells[i].ignitionTime;
-      if (this.cells[i].fireState === FireState.Burning && this.time - ignitionTime > CELL_BURN_TIME) {
+      if (this.cells[i].fireState === FireState.Burning && this.time - ignitionTime > cellBurnTime) {
         newFireStateData[i] = FireState.Burnt;
       } else if (this.cells[i].fireState === FireState.Unburnt && this.time > ignitionTime) {
         // Sets any unburnt cells to burning if we are passed their ignition time.
@@ -190,7 +198,7 @@ export class SimulationModel {
         // run forward or backward through a simulation.
         newFireStateData[i] = FireState.Burning;
 
-        const neighbors = cellNeighbors[i];
+        const neighbors = this.cellNeighbors[i];
         const ignitionDeltas = this.timeToIgniteNeighbors[i];
         neighbors.forEach((n, j) => {
           if (this.cells[n].fireState === FireState.Unburnt) {
@@ -202,7 +210,7 @@ export class SimulationModel {
       }
     }
 
-    for (let i = 0; i < NUM_CELLS; i++) {
+    for (let i = 0; i < numCells; i++) {
       if (newFireStateData[i] !== undefined) {
         this.cells[i].fireState = newFireStateData[i];
       }
