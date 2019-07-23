@@ -43,7 +43,7 @@ export default PixiComponent<IProps, PIXI.Container>("BaseMap", {
           instance.beginFill(0xffa500, 1);
         }
       }
-      instance.drawRect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
+      instance.drawRect(cell.x * cellSize, (height - 1 - cell.y) * cellSize, cellSize, cellSize);
       instance.endFill();
     });
   },
