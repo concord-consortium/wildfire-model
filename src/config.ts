@@ -6,7 +6,8 @@ export interface ISimulationConfig {
   // Spark position, in km.
   spark: number[];
   timeStep: number;
-  windSpeed: number;
+  windSpeed: number; // mph
+  windDirection: number; // degrees, 0 is northern wind
   neighborsDist: number;
   // Used for mapping of the fireSpreadRate to (model) time.
   fireSpreadTimeRatio: number;
@@ -24,7 +25,8 @@ export const defaultConfig: IUrlConfig = {
   cellSize: 1,
   spark: [50, 50],
   timeStep: 16,
-  windSpeed: 88,
+  windSpeed: 0, // mph
+  windDirection: 0, // radians, northern wind
   neighborsDist: 3,
   fireSpreadTimeRatio: 500,
   view: "land"

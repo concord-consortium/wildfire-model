@@ -1,5 +1,5 @@
 import {action, observable} from "mobx";
-import {getFireSpreadRate, LandType} from "./fire-model";
+import {getFireSpreadRate, LandType, IWindProps} from "./fire-model";
 import {Cell, CellOptions, FireState} from "./cell";
 import {urlConfig, defaultConfig, ISimulationConfig} from "../config";
 import {IPresetConfig} from "../presets";
@@ -47,7 +47,7 @@ const calculateCellNeighbors = (width: number, height: number, neighborsDist: nu
  * which means that, if cell 0 is ignited, cell 1 will ignite 0.5 seconds later.
  */
 const calculateTimeToIgniteNeighbors = (
-  cells: Cell[], cellNeighbors: number[][], windSpeed: number, config: ISimulationConfig
+  cells: Cell[], cellNeighbors: number[][], wind: IWindProps, config: ISimulationConfig
 ) => {
   const timeToIgniteNeighbors = [];
   for (let i = 0; i < cells.length; i++) {
@@ -55,7 +55,7 @@ const calculateTimeToIgniteNeighbors = (
     const timeToIgniteMyNeighbors = neighbors.map(n =>
       // Make time to ignite proportional to size of the cell.
       // If every cell is twice as big, the spread time in the end also should be slower.
-      config.fireSpreadTimeRatio * config.cellSize / getFireSpreadRate(cells[i], cells[n], windSpeed)
+      config.fireSpreadTimeRatio * config.cellSize / getFireSpreadRate(cells[i], cells[n], wind)
     );
     timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
   }
@@ -103,9 +103,9 @@ export class SimulationModel {
   public timeToIgniteNeighbors: number[][];
   public config: IPresetConfig;
   public cellNeighbors: number[][];
+  @observable public wind: IWindProps;
   @observable public gridWidth: number;
   @observable public gridHeight: number;
-  @observable public windSpeed: number;
   @observable public time = 0;
   @observable public cells: Cell[] = [];
   @observable public simulationRunning = false;
@@ -118,7 +118,10 @@ export class SimulationModel {
     this.config = config;
     this.gridWidth = config.modelWidth / config.cellSize;
     this.gridHeight = config.modelHeight / config.cellSize;
-    this.windSpeed = config.windSpeed;
+    this.wind = {
+      speed: config.windSpeed,
+      direction: config.windDirection
+    };
 
     const landType: LandType[] | undefined =
       config.landType && populateGridWithImage(this.gridHeight, this.gridWidth, config.landType);
@@ -141,7 +144,7 @@ export class SimulationModel {
     this.cellNeighbors = calculateCellNeighbors(this.gridWidth, this.gridHeight, this.config.neighborsDist);
     // It's enough to calculate this just once, as long as none of the land properties or wind speed can be changed.
     // This will change in the future when user is able to set land properties or wind speed dynamically.
-    this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(this.cells, this.cellNeighbors, this.windSpeed, config);
+    this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(this.cells, this.cellNeighbors, this.wind, config);
 
     if (config.spark) {
       const sparkX = Math.round(config.spark[0] / this.config.cellSize);

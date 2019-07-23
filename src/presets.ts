@@ -6,19 +6,27 @@ export interface IPresetConfig extends ISimulationConfig {
 }
 
 const presets: {[key: string]: Partial<IPresetConfig>} = {
-  test1: {
+  basic: {
     modelWidth: 100,
     modelHeight: 100,
     cellSize: 1,
     spark: [49, 49],
     landType: [
-      [ 0, 0, 0, 0 ],
-      [ 0, 0, 0, 0 ],
-      [ 0, 0, 0, 0 ],
-      [ 0, 0, 0, 0 ],
+      [ 0 ]
     ]
   },
-  test2: {
+  basicWithWind: {
+    modelWidth: 100,
+    modelHeight: 100,
+    cellSize: 1,
+    spark: [49, 49],
+    windSpeed: 1,
+    windDirection: 0,
+    landType: [
+      [ 0 ]
+    ]
+  },
+  landTypes: {
     modelWidth: 100,
     modelHeight: 100,
     cellSize: 1,
