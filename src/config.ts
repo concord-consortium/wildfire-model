@@ -1,9 +1,9 @@
 export interface ISimulationConfig {
-  modelWidth: number; // km
-  modelHeight: number; // km
+  modelWidth: number; // ft
+  modelHeight: number; // ft
   // Note that modelWidth % cellSize and modelHeight % cellSize should always be 0!
-  cellSize: number; // km
-  // Spark position, in km.
+  cellSize: number; // ft
+  // Spark position, in ft.
   spark: number[];
   timeStep: number;
   windSpeed: number; // mph
