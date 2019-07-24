@@ -3,6 +3,7 @@ import {getFireSpreadRate, LandType, IWindProps} from "./fire-model";
 import {Cell, CellOptions, FireState} from "./cell";
 import {urlConfig, defaultConfig, ISimulationConfig} from "../config";
 import {IPresetConfig} from "../presets";
+import {populateGrid} from "../utils";
 
 const getGridIndexForLocation = (x: number, y: number, width: number) => {
   return x + y * width;
@@ -55,48 +56,11 @@ const calculateTimeToIgniteNeighbors = (
     const timeToIgniteMyNeighbors = neighbors.map(n =>
       // Make time to ignite proportional to size of the cell.
       // If every cell is twice as big, the spread time in the end also should be slower.
-      config.fireSpreadTimeRatio * config.cellSize / getFireSpreadRate(cells[i], cells[n], wind)
+      config.fireSpreadTimeRatio * config.cellSize / getFireSpreadRate(cells[i], cells[n], wind, config.cellSize)
     );
     timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
   }
   return timeToIgniteNeighbors;
-};
-
-// Very confusing, quick-'n-dirty way to populate a gird with a pseudo image.
-const populateGridWithImage = (height: number, width: number, image: number[][]): number[] => {
-  const arr = [];
-  // Figure out the size of the image using the first row.
-  const imageHeight = image.length;
-  const imageWidth = image[0].length;
-  const numGridCellsPerImageRowPixel = imageHeight / height;
-  const numGridCellsPerImageColPixel = imageWidth / width;
-
-  let imageRowIndex = 0;
-  let imageRowAdvance = 0.0;
-  for (let r = 0; r < height; r++) {
-    let imageColIndex = 0;
-    let imageColAdvance = 0.0;
-    for (let c = 0; c < width; c++) {
-      arr.push(image[imageRowIndex][imageColIndex]);  // We use baseValue to preset all the cells in the grid.
-      imageColAdvance += numGridCellsPerImageColPixel;
-      if (imageColAdvance > 1.0) {
-        imageColIndex += 1;
-        imageColAdvance -= 1.0;
-      }
-      if (imageColIndex >= imageWidth) {
-        imageColIndex = imageWidth - 1; // prevent overflow.
-      }
-    }
-    imageRowAdvance += numGridCellsPerImageRowPixel;
-    if (imageRowAdvance > 1) {
-      imageRowIndex += 1;
-      imageRowAdvance -= 1.0;
-    }
-    if (imageRowIndex >= imageHeight) {
-      imageRowIndex = imageHeight - 1;
-    }
-  }
-  return arr;
 };
 
 export class SimulationModel {
@@ -124,9 +88,9 @@ export class SimulationModel {
     };
 
     const landType: LandType[] | undefined =
-      config.landType && populateGridWithImage(this.gridHeight, this.gridWidth, config.landType);
+      config.landType && populateGrid(this.gridHeight, this.gridWidth, config.landType);
     const elevation: number[] | undefined =
-      config.elevation && populateGridWithImage(this.gridHeight, this.gridWidth, config.elevation);
+      config.elevation && populateGrid(this.gridHeight, this.gridWidth, config.elevation);
     for (let y = 0; y < this.gridHeight; y++) {
       for (let x = 0; x < this.gridWidth; x++) {
         const index = getGridIndexForLocation(x, y, this.gridWidth);
