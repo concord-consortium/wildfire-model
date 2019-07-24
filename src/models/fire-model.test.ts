@@ -1,6 +1,8 @@
 import { getFireSpreadRate, LandType, getDirectionFactor } from "./fire-model";
 import { FireState } from "./cell";
 
+const cellSize = 1;
+
 const sourceCell = {
   x: 0,
   y: 1,
@@ -14,7 +16,9 @@ const targetCell = {
   x: 0,
   y: 0,
   landType: LandType.Shrub,
-  elevation: 0,
+  // Why such elevation? Note that spreadsheet uses value for slope -1deg => Math.PI / 180.
+  // Ensure that we use the same slope here (so calculate elevation accordingly).
+  elevation: Math.tan(Math.PI / 180) * cellSize,
   ignitionTime: 0,
   fireState: FireState.Unburnt
 };
@@ -26,27 +30,29 @@ describe("getFireSpreadRate", () => {
     // cells F13:
     // Wind speed in the spreadsheet uses feet/min, but we use mph here for better readability.
     // Also, note that target cell lies perfectly aligned with wind direction (northern).
-    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 1, direction: 0})).toBeCloseTo(8.1554);
+    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 1, direction: 0}, cellSize)).toBeCloseTo(8.1554);
     // cells F14:
-    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 0})).toBeCloseTo(13.979);
+    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 0}, cellSize)).toBeCloseTo(13.979);
     // cells F32:
-    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 20, direction: 0})).toBeCloseTo(148.517);
+    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 20, direction: 0}, cellSize)).toBeCloseTo(148.517);
   });
 
   it("takes into account wind direction", () => {
-    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 0})).toBeCloseTo(13.979);
-    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 90})).toBeCloseTo(3.55);
-    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: -90})).toBeCloseTo(3.55);
-    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 180})).toBeCloseTo(2.035);
+    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 0}, cellSize)).toBeCloseTo(13.979);
+    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 90}, cellSize)).toBeCloseTo(3.559);
+    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: -90}, cellSize)).toBeCloseTo(3.559);
+    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 180}, cellSize)).toBeCloseTo(2.035);
   });
+
 });
 
 describe("getDirectionFactor", () => {
-  it("takes into account wind direction", () => {
-    // Max factor should be 1 when wind is aligned with cell centers vector.
-    expect(getDirectionFactor(sourceCell, targetCell, 100, 0)).toBeCloseTo(1);
-    expect(getDirectionFactor(sourceCell, targetCell, 100, 90)).toBeCloseTo(0.37);
-    expect(getDirectionFactor(sourceCell, targetCell, 100, -90)).toBeCloseTo(0.37);
-    expect(getDirectionFactor(sourceCell, targetCell, 100, 180)).toBeCloseTo(0.23);
+  it("takes into account direction of the max fire spread", () => {
+    // Max factor should be 1 when max fire spread is aligned with center of the cells.
+    // Note that max fire spread angle is an angle from positive X axis.
+    expect(getDirectionFactor(sourceCell, targetCell, 100, -Math.PI / 2)).toBeCloseTo(1);
+    expect(getDirectionFactor(sourceCell, targetCell, 100, 0)).toBeCloseTo(0.37);
+    expect(getDirectionFactor(sourceCell, targetCell, 100, Math.PI)).toBeCloseTo(0.37);
+    expect(getDirectionFactor(sourceCell, targetCell, 100, Math.PI / 2)).toBeCloseTo(0.23);
   });
 });

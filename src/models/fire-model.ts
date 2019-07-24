@@ -59,19 +59,19 @@ const dist = (c1: Cell, c2: Cell) => {
  * section "6.2 Fire Spread from a Single Ignition Point", page 88.
  *
  * Returns multiplier that should be applied to the max fire spread rate to calculate final value in given direction.
+ *
+ * @param maxSpreadDirection angle from positive X axis
  */
 export const getDirectionFactor =
-  (sourceCell: Cell, targetCell: Cell, effectiveWindSpeed: number, windDirection: number) => {
+  (sourceCell: Cell, targetCell: Cell, effectiveWindSpeed: number, maxSpreadDirection: number) => {
   // Note that wind speed in our model is usually defined in feet/min. However, this formula is using miles per hour.
   const effectiveWindSpeedMPH = effectiveWindSpeed / 88;
   const Z = 1 + 0.25 * effectiveWindSpeedMPH;
   const e = Math.pow(Math.pow(Z, 2) - 1, 0.5) / Z;
 
-  // 0 degrees is northern wind, so wind vector is pointing down (south). 90 deg should be eastern wind.
-  const windVector = (new Vector2(0, -1)).rotateAround(ORIGIN, -windDirection * Math.PI / 180);
   const cellCentersVector = new Vector2(targetCell.x - sourceCell.x, targetCell.y - sourceCell.y);
-  // Angle between cells centers and wind vector. 0 means cells lay exactly in wind direction.
-  const relativeAngle = Math.abs(cellCentersVector.angle() - windVector.angle());
+  // Angle between cells centers and direction of max fire spread.
+  const relativeAngle = Math.abs(cellCentersVector.angle() - maxSpreadDirection);
 
   return (1 - e) / (1 - e * Math.cos(relativeAngle));
 };
@@ -92,8 +92,9 @@ export const getDirectionFactor =
  * @param sourceCell Grid cell that is currently BURNING
  * @param targetCell Adjacent grid cell that is currently UNBURNT
  * @param wind Wind properties, speed and direction
+ * @param cellSize cell size in feet
  */
-export const getFireSpreadRate = (sourceCell: Cell, targetCell: Cell, wind: IWindProps) => {
+export const getFireSpreadRate = (sourceCell: Cell, targetCell: Cell, wind: IWindProps, cellSize: number) => {
   const fuel = FuelConstants[targetCell.landType];
   const sav = fuel.sav;
   const packingRatio = fuel.packingRatio;
@@ -104,13 +105,6 @@ export const getFireSpreadRate = (sourceCell: Cell, targetCell: Cell, wind: IWin
   const totalMineralContent = fuel.totalMineralContent;
   const effectiveMineralContent = fuel.effectiveMineralContent;
   const fuelBedDepth = fuel.fuelBedDepth;
-
-  const slope = -0.01745329252;
-  // This value leads me to believe the slope is in radians, given how it's used
-  // in the formula below -- tan(slope), if slope is radians, results in 0. This
-  // is used to the slopeFactor which will result in the whole slopeFactor
-  // computation to be zero -- which is no slope factor between any grid cells
-  // in the sim.
 
   const moistureContentRatio = moistureContent / mx;
   const savFactor = Math.pow(sav, 1.5);
@@ -133,15 +127,6 @@ export const getFireSpreadRate = (sourceCell: Cell, targetCell: Cell, wind: IWin
   const propagatingFluxRatio = Math.pow(192 + (0.2595 * sav), -1)
           * Math.exp((0.792 + (0.681 * Math.pow(sav, 0.5)) ) * (packingRatio + 0.1));
 
-  const windSpeedFtPerMin = wind.speed * 88;
-  const windFactor = c * Math.pow(windSpeedFtPerMin, b) * Math.pow((packingRatio / optimumPackingRatio), -e);
-  const slopeFactor = 5.275 * Math.pow(packingRatio, -0.3) * Math.pow(Math.tan(slope), 2);
-
-  // Effective wind speed is defined in a bit strange way. It uses inverted wind factor equation to get effective
-  // wind speed using sum of wind factor and slope factor.
-  const effectiveWindSpeed = Math.pow((windFactor + slopeFactor) /
-          (c * Math.pow(packingRatio / optimumPackingRatio, -e)), 1 / b);
-
   const fuelLoad = netFuelLoad / (1 - totalMineralContent);
   const ovenDryBulkDensity = fuelLoad / fuelBedDepth;
 
@@ -149,7 +134,50 @@ export const getFireSpreadRate = (sourceCell: Cell, targetCell: Cell, wind: IWin
 
   const heatOfPreIgnition = 250 + (1116 * moistureContent);
 
-  const directionFactor = getDirectionFactor(sourceCell, targetCell, effectiveWindSpeed, wind.direction);
-  return (reactionIntensity * propagatingFluxRatio * (1 + windFactor + slopeFactor)) * directionFactor
-    / (ovenDryBulkDensity * effectiveHeatingNumber * heatOfPreIgnition) / dist(sourceCell, targetCell);
+  // r0 is rate of spread without considering wind and slope.
+  const r0 = reactionIntensity * propagatingFluxRatio /
+             (ovenDryBulkDensity * effectiveHeatingNumber * heatOfPreIgnition);
+
+  const windSpeedFtPerMin = wind.speed * 88;
+  const windFactor = c * Math.pow(windSpeedFtPerMin, b) * Math.pow((packingRatio / optimumPackingRatio), -e);
+
+  const distInFt = dist(sourceCell, targetCell) * cellSize;
+  const elevationDiffInFt = targetCell.elevation - sourceCell.elevation;
+  const slopeTan = elevationDiffInFt / distInFt;
+  const slopeFactor = 5.275 * Math.pow(packingRatio, -0.3) * Math.pow(slopeTan, 2);
+
+  // Now, follow calculations from section "6.1 Fire Behavior in the Direction of Maximum Spread", p. 85.
+  // Note that "t" is assumed to be 1 to simplify calculations. Note that instead of assuming that slope vector
+  // is (ds, 0) and calculating angle between upslope vector and wind vector, we just use real angles, but set lengths
+  // correctly and use vector addition. It makes calculations more concise.
+
+  // 0 degrees is northern wind, so wind vector is pointing down (south). 90 deg should be eastern wind.
+  const windVector = (new Vector2(0, -1)).rotateAround(ORIGIN, -wind.direction * Math.PI / 180);
+  const upslopeVector = targetCell.elevation >= sourceCell.elevation ?
+          new Vector2(targetCell.x - sourceCell.x, targetCell.y - sourceCell.y) :
+          new Vector2(sourceCell.x - targetCell.x, sourceCell.y - targetCell.y);
+
+  const dw = r0 * windFactor; // * t (but t = 1)
+  windVector.setLength(dw);
+
+  const ds = r0 * slopeFactor; // * t (but t = 1)
+  upslopeVector.setLength(ds);
+
+  const maxSpreadRateVector = (new Vector2()).addVectors(upslopeVector, windVector);
+
+  // rh is max spread rate that already includes wind and slope factors. See table 26, page 86.
+  // Note that dh = maxSpreadRateVector.length();
+  const rh = r0 + maxSpreadRateVector.length();
+
+  // Effective wind factor can be calculated from rh and r0. It's an abstract value that includes
+  // both wind and slope effects. See table 26, page 86.
+  const effectiveWindFactor = rh / r0 - 1;
+
+  // Effective wind speed is calculated using inverted wind factor equation where we use effective wind factor.
+  // It's an abstract value that includes both wind and slope effects.
+  const effectiveWindSpeed = Math.pow(effectiveWindFactor /
+          (c * Math.pow(packingRatio / optimumPackingRatio, -e)), 1 / b);
+
+  const directionFactor = getDirectionFactor(sourceCell, targetCell, effectiveWindSpeed, maxSpreadRateVector.angle());
+  return rh * directionFactor / distInFt;
 };
