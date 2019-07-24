@@ -4,6 +4,7 @@ import {Cell, FireState} from "../../models/cell";
 
 interface IProps {
   cellSize: number;
+  height: number;
   cells: Cell[];
 }
 
@@ -16,16 +17,16 @@ export default PixiComponent<IProps, PIXI.Container>("FireLayer", {
     // clean up before removal
   },
   applyProps: (instance: PIXI.Graphics, oldProps: IProps, newProps: IProps) => {
-    const { cellSize, cells } = newProps;
+    const { cellSize, cells, height } = newProps;
     instance.clear();
 
     cells.forEach(cell => {
       if (cell.fireState === FireState.Burning) {
         instance.beginFill(0xFF0000, 1);
-        instance.drawRect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
+        instance.drawRect(cell.x * cellSize, (height - 1 - cell.y) * cellSize, cellSize, cellSize);
       } else if (cell.fireState === FireState.Burnt) {
         instance.beginFill(0x000000, 1);
-        instance.drawRect(cell.x * cellSize, cell.y * cellSize, cellSize, cellSize);
+        instance.drawRect(cell.x * cellSize, (height - 1 - cell.y) * cellSize, cellSize, cellSize);
       }
     });
     instance.endFill();

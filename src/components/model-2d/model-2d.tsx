@@ -30,6 +30,7 @@ export default class Model2D extends BaseComponent<IProps, IState> {
         <FireLayer
           cellSize={cellSize}
           cells={cells}
+          height={gridHeight}
         />
       </Stage>
     );

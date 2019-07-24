@@ -1,9 +1,18 @@
 import { Fuel } from "../types";
 import {Cell} from "./cell";
+import { Vector2 } from "three";
 
 export enum LandType {
   Grass = 0,
   Shrub = 1
+}
+
+export interface IWindProps {
+  // Wind speed in mph.
+  speed: number;
+  // Angle in degrees following this definition: https://en.wikipedia.org/wiki/Wind_direction
+  // 0 is northern wind, 90 is eastern wind.
+  direction: number;
 }
 
 const FuelConstants: {[key in LandType]: Fuel} = {
@@ -31,6 +40,9 @@ const FuelConstants: {[key in LandType]: Fuel} = {
   }
 };
 
+// Helper vector used repeatedly in other calculations.
+const ORIGIN = new Vector2(0, 0);
+
 const dist = (c1: Cell, c2: Cell) => {
   const xDiff = c1.x - c2.x;
   const yDiff = c1.y - c2.y;
@@ -39,6 +51,29 @@ const dist = (c1: Cell, c2: Cell) => {
   } else {
     return Math.sqrt(xDiff * xDiff + yDiff * yDiff);
   }
+};
+
+/**
+ * The mathematical model is derived from
+ *   https://www.fs.fed.us/rm/pubs_series/rmrs/gtr/rmrs_gtr371.pdf
+ * section "6.2 Fire Spread from a Single Ignition Point", page 88.
+ *
+ * Returns multiplier that should be applied to the max fire spread rate to calculate final value in given direction.
+ */
+export const getDirectionFactor =
+  (sourceCell: Cell, targetCell: Cell, effectiveWindSpeed: number, windDirection: number) => {
+  // Note that wind speed in our model is usually defined in feet/min. However, this formula is using miles per hour.
+  const effectiveWindSpeedMPH = effectiveWindSpeed / 88;
+  const Z = 1 + 0.25 * effectiveWindSpeedMPH;
+  const e = Math.pow(Math.pow(Z, 2) - 1, 0.5) / Z;
+
+  // 0 degrees is northern wind, so wind vector is pointing down (south). 90 deg should be eastern wind.
+  const windVector = (new Vector2(0, -1)).rotateAround(ORIGIN, -windDirection * Math.PI / 180);
+  const cellCentersVector = new Vector2(targetCell.x - sourceCell.x, targetCell.y - sourceCell.y);
+  // Angle between cells centers and wind vector. 0 means cells lay exactly in wind direction.
+  const relativeAngle = Math.abs(cellCentersVector.angle() - windVector.angle());
+
+  return (1 - e) / (1 - e * Math.cos(relativeAngle));
 };
 
 /**
@@ -56,9 +91,9 @@ const dist = (c1: Cell, c2: Cell) => {
  *
  * @param sourceCell Grid cell that is currently BURNING
  * @param targetCell Adjacent grid cell that is currently UNBURNT
- * @param windSpeed Magnitude of the windspeed
+ * @param wind Wind properties, speed and direction
  */
-export const getFireSpreadRate = (sourceCell: Cell, targetCell: Cell, windSpeed: number) => {
+export const getFireSpreadRate = (sourceCell: Cell, targetCell: Cell, wind: IWindProps) => {
   const fuel = FuelConstants[targetCell.landType];
   const sav = fuel.sav;
   const packingRatio = fuel.packingRatio;
@@ -98,9 +133,14 @@ export const getFireSpreadRate = (sourceCell: Cell, targetCell: Cell, windSpeed:
   const propagatingFluxRatio = Math.pow(192 + (0.2595 * sav), -1)
           * Math.exp((0.792 + (0.681 * Math.pow(sav, 0.5)) ) * (packingRatio + 0.1));
 
-  const windFactor = c * Math.pow(windSpeed, b) * Math.pow((packingRatio / optimumPackingRatio), -e);
-
+  const windSpeedFtPerMin = wind.speed * 88;
+  const windFactor = c * Math.pow(windSpeedFtPerMin, b) * Math.pow((packingRatio / optimumPackingRatio), -e);
   const slopeFactor = 5.275 * Math.pow(packingRatio, -0.3) * Math.pow(Math.tan(slope), 2);
+
+  // Effective wind speed is defined in a bit strange way. It uses inverted wind factor equation to get effective
+  // wind speed using sum of wind factor and slope factor.
+  const effectiveWindSpeed = Math.pow((windFactor + slopeFactor) /
+          (c * Math.pow(packingRatio / optimumPackingRatio, -e)), 1 / b);
 
   const fuelLoad = netFuelLoad / (1 - totalMineralContent);
   const ovenDryBulkDensity = fuelLoad / fuelBedDepth;
@@ -109,6 +149,7 @@ export const getFireSpreadRate = (sourceCell: Cell, targetCell: Cell, windSpeed:
 
   const heatOfPreIgnition = 250 + (1116 * moistureContent);
 
-  return (reactionIntensity * propagatingFluxRatio * (1 + windFactor + slopeFactor))
+  const directionFactor = getDirectionFactor(sourceCell, targetCell, effectiveWindSpeed, wind.direction);
+  return (reactionIntensity * propagatingFluxRatio * (1 + windFactor + slopeFactor)) * directionFactor
     / (ovenDryBulkDensity * effectiveHeatingNumber * heatOfPreIgnition) / dist(sourceCell, targetCell);
 };
