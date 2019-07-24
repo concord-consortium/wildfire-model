@@ -89,8 +89,9 @@ export class SimulationModel {
 
     const landType: LandType[] | undefined =
       config.landType && populateGrid(this.gridHeight, this.gridWidth, config.landType);
+    // Interpolate elevation values.
     const elevation: number[] | undefined =
-      config.elevation && populateGrid(this.gridHeight, this.gridWidth, config.elevation);
+      config.elevation && populateGrid(this.gridHeight, this.gridWidth, config.elevation, true);
     for (let y = 0; y < this.gridHeight; y++) {
       for (let x = 0; x < this.gridWidth; x++) {
         const index = getGridIndexForLocation(x, y, this.gridWidth);
