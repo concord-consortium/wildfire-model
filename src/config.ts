@@ -26,7 +26,7 @@ export const defaultConfig: IUrlConfig = {
   spark: [50, 50],
   timeStep: 16,
   windSpeed: 0, // mph
-  windDirection: 0, // radians, northern wind
+  windDirection: 0, // degrees, northern wind
   neighborsDist: 3,
   fireSpreadTimeRatio: 500,
   view: "land"
