@@ -13,7 +13,7 @@ interface IState {}
 export default class Model2D extends BaseComponent<IProps, IState> {
 
   public render() {
-    const { cells, time, gridWidth, gridHeight } = this.stores.simulation;
+    const { cells, time, gridWidth, gridHeight, config } = this.stores.simulation;
     const { view } = this.stores.ui;
     const maxDimension = Math.max(gridWidth, gridHeight);
     const cellSize = (maxDimension < 25) ? 30 : Math.max(1, 800 / maxDimension);
@@ -23,6 +23,7 @@ export default class Model2D extends BaseComponent<IProps, IState> {
           cellSize={cellSize}
           height={gridHeight}
           width={gridWidth}
+          maxElevation={config.heightmapMaxElevation}
           cells={cells}
           time={time}
           view={view}

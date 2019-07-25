@@ -12,6 +12,7 @@ interface IProps {
   cellSize: number;
   width: number;
   height: number;
+  maxElevation: number;
   cells: Cell[];
   time: number;
   view: string;
@@ -26,7 +27,7 @@ export default PixiComponent<IProps, PIXI.Container>("BaseMap", {
     // clean up before removal
   },
   applyProps: (instance: PIXI.Graphics, oldProps: IProps, newProps: IProps) => {
-    const { cellSize, width, height, cells, time, view } = newProps;
+    const { cellSize, width, height, cells, time, view, maxElevation } = newProps;
     instance.clear();
 
     instance.beginFill(0xFFFFFF);
@@ -34,7 +35,7 @@ export default PixiComponent<IProps, PIXI.Container>("BaseMap", {
 
     cells.forEach(cell => {
       if (view === "land") {
-        instance.beginFill(Colors[cell.landType], Math.min(1 / cell.elevation, 1));
+        instance.beginFill(Colors[cell.landType], 1 - cell.elevation / maxElevation);
       } else if (view === "ignitionTime") {
         const remainingTime = cell.ignitionTime - time;
         if (remainingTime > 0) {
