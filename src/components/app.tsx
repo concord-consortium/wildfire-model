@@ -22,7 +22,7 @@ export class AppComponent extends BaseComponent<IProps, IState> {
     return (
       <div className="app">
         <Model2D />
-        <div>Time: { simulation.time }</div>
+        <div>Time: { simulation.time.toFixed(1) } min</div>
       </div>
     );
   }

@@ -93,6 +93,8 @@ export const getDirectionFactor =
  * @param targetCell Adjacent grid cell that is currently UNBURNT
  * @param wind Wind properties, speed and direction
  * @param cellSize cell size in feet
+ *
+ * @return fire spread rate in ft/min
  */
 export const getFireSpreadRate = (sourceCell: Cell, targetCell: Cell, wind: IWindProps, cellSize: number) => {
   const fuel = FuelConstants[targetCell.landType];

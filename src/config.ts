@@ -5,12 +5,14 @@ export interface ISimulationConfig {
   cellSize: number; // ft
   // Spark position, in ft.
   spark: number[];
-  timeStep: number;
+  timeStep: number; // minutes
   windSpeed: number; // mph
   windDirection: number; // degrees, 0 is northern wind
   neighborsDist: number;
-  // Used for mapping of the fireSpreadRate to (model) time.
-  fireSpreadTimeRatio: number;
+  // In min - note that larger cells will burn the same amount of time. Cell doesn't burn from edge to edge, but
+  // its whole area is supposed to burn at the same time. We might consider whether it should be different for
+  // different fuel types.
+  cellBurnTime: number;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -24,11 +26,11 @@ export const defaultConfig: IUrlConfig = {
   modelHeight: 100,
   cellSize: 1,
   spark: [50, 50],
-  timeStep: 16,
+  timeStep: 0.1, // minutes
   windSpeed: 0, // mph
   windDirection: 0, // degrees, northern wind
   neighborsDist: 3,
-  fireSpreadTimeRatio: 500,
+  cellBurnTime: 1, // minute
   view: "land"
 };
 

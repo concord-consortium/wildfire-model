@@ -54,9 +54,7 @@ const calculateTimeToIgniteNeighbors = (
   for (let i = 0; i < cells.length; i++) {
     const neighbors = cellNeighbors[i];
     const timeToIgniteMyNeighbors = neighbors.map(n =>
-      // Make time to ignite proportional to size of the cell.
-      // If every cell is twice as big, the spread time in the end also should be slower.
-      config.fireSpreadTimeRatio * config.cellSize / getFireSpreadRate(cells[i], cells[n], wind, config.cellSize)
+      1 / getFireSpreadRate(cells[i], cells[n], wind, config.cellSize)
     );
     timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
   }
@@ -146,18 +144,10 @@ export class SimulationModel {
     // At the same time, we update the unburnt/burning/burnt states of the cells.
     const newIgnitionData: number[] = [];
     const newFireStateData: FireState[] = [];
-    // Total time a cell should burn. This is partially a view property, but it also allows us to be
-    // more efficient by only checking burning cell's neighbors, and not spent cells neighbors. However,
-    // it is not intended to affect the model's actual functioning. (e.g. cell should never be burnt out
-    // before its neighbors are ignited.)
-    // It would be even more efficient to get the maximum `timeToIgniteNeighbors` for a model, and use that
-    // as a separate flag to indicate when to stop checking a cell, which would give us a smaller number
-    // of cells to check. We'd still want a separate burn time for the view.
-    const cellBurnTime = this.config.fireSpreadTimeRatio * this.config.cellSize;
 
     for (let i = 0; i < numCells; i++) {
       const ignitionTime = this.cells[i].ignitionTime;
-      if (this.cells[i].fireState === FireState.Burning && this.time - ignitionTime > cellBurnTime) {
+      if (this.cells[i].fireState === FireState.Burning && this.time - ignitionTime > this.config.cellBurnTime) {
         newFireStateData[i] = FireState.Burnt;
       } else if (this.cells[i].fireState === FireState.Unburnt && this.time > ignitionTime) {
         // Sets any unburnt cells to burning if we are passed their ignition time.
