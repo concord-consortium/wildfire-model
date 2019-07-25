@@ -47,13 +47,13 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     spark: [50000, 50000],
     windSpeed: 1,
     windDirection: 0,
-    heightmapMaxElevation: 3000,
+    heightmapMaxElevation: 10000,
     landType: [
       [ 0 ]
     ],
     elevation: [
-      [ 3000, 0 ],
-      [ 3000, 0 ]
+      [ 10000, 0 ],
+      [ 10000, 0 ]
     ]
   },
   hills: {
