@@ -49,3 +49,56 @@ export const populateGrid = (width: number, height: number, image: number[][], i
   }
   return arr;
 };
+
+// Returns transformed image data.
+export const getImageData = (
+  imgSrc: string,
+  // Function that transfers [r, g, b, a] array into single value
+  transform: (rgba: [number, number, number, number]) => number,
+  // Final callback when data is ready and processed.
+  callback: (imgData: number[][]) => void) => {
+  interface IImageLoadedEvent {
+    target: EventTarget | null;
+  }
+
+  const imageLoaded = (event: IImageLoadedEvent) => {
+    const img = event.target as HTMLImageElement;
+    const canvas = document.createElement("canvas");
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext("2d");
+    if (ctx === null) {
+      throw new Error("can't get 2d canvas context");
+    }
+    ctx.drawImage(img, 0, 0, img.width, img.height);
+    const rawData: ImageData = ctx.getImageData(0, 0, img.width, img.height);
+    const data: number[][] = [];
+
+    for (let y = 0; y < rawData.height; y += 1) {
+      const row: number[] = [];
+      data.push(row);
+      for (let x = 0; x < rawData.width * 4; x += 4) {
+        const rIdx = y * (rawData.width * 4) + x;
+        row.push(transform([
+          rawData.data[rIdx],
+          rawData.data[rIdx + 1],
+          rawData.data[rIdx + 2],
+          rawData.data[rIdx + 3]
+        ]));
+      }
+    }
+    callback(data);
+  };
+
+  // Load image first.
+  const imgage = document.createElement("img");
+  imgage.src = imgSrc;
+  if (imgage.complete) {
+    imageLoaded({target: imgage});
+  } else {
+    imgage.addEventListener("load", imageLoaded);
+    imgage.addEventListener("error", () => {
+      throw new Error(`Cannot load image ${imgSrc}`);
+    });
+  }
+};
