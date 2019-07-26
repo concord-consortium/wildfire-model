@@ -23,8 +23,6 @@ export class AppComponent extends BaseComponent<IProps, IState> {
         <div className={css.modelInfo}>
           <div>Model Dimensions: { config.modelWidth } ft x { config.modelHeight } ft</div>
           <div>Highest Point Possible: { config.heightmapMaxElevation } ft</div>
-          <div>Wind Speed: { config.windSpeed } mph</div>
-          <div>Wind Direction: { config.windDirection }°</div>
           <div>Time Elapsed: { timeInDays.toFixed(1) } days</div>
         </div>
         <Model2D />

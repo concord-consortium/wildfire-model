@@ -68,6 +68,17 @@ const windSpeedMarks = [
   }
 ];
 
+const moistureContentMarks = [
+  {
+    value: 0,
+    label: "Low"
+  },
+  {
+    value: 0.2,
+    label: "High"
+  }
+];
+
 @inject("stores")
 @observer
 export class BottomBar extends BaseComponent<IProps, IState> {
@@ -124,7 +135,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               <span><RestartIcon/> Restart</span>
             </Button>
           </div>
-          <div className={`${css.widgetGroup} ${css.stopStart}`}>
+          <div className={`${css.widgetGroup} ${css.startStop}`}>
             <Button
               onClick={sim.simulationRunning ? sim.stop : sim.start}
               disabled={!sim.ready}
@@ -135,8 +146,8 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               { sim.simulationRunning ? <span><PauseIcon/> Stop</span> : <span><StartIcon /> Start</span> }
             </Button>
           </div>
-          <div className={`${css.widgetGroup}`}>
-            <div className={css.windDirection}>
+          <div className={css.widgetGroup}>
+            <div className={`${css.slider} ${css.windDirection}`}>
               <div>Wind Direction (° from North)</div>
               <Slider
                 min={0}
@@ -149,8 +160,8 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               />
             </div>
           </div>
-          <div className={`${css.widgetGroup}`}>
-            <div className={css.windSpeed}>
+          <div className={css.widgetGroup}>
+            <div className={css.slider}>
               <div>Wind Speed (mph)</div>
               <Slider
                 min={0}
@@ -160,6 +171,20 @@ export class BottomBar extends BaseComponent<IProps, IState> {
                 step={0.1}
                 marks={windSpeedMarks}
                 onChange={this.handleWindSpeedChange}
+              />
+            </div>
+          </div>
+          <div className={css.widgetGroup}>
+            <div className={css.slider}>
+              <div>Moisture Content</div>
+              <Slider
+                min={0}
+                max={0.2}
+                disabled={sim.simulationStarted}
+                value={sim.moistureContent}
+                step={0.01}
+                marks={moistureContentMarks}
+                onChange={this.handleMoistureContentChange}
               />
             </div>
           </div>
@@ -193,5 +218,9 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   public handleWindSpeedChange = (event: any, value: number | number[]) => {
     this.stores.simulation.setWindSpeed(value as number);
+  }
+
+  public handleMoistureContentChange = (event: any, value: number | number[]) => {
+    this.stores.simulation.setMoistureContent(value as number);
   }
 }

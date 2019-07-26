@@ -49,13 +49,13 @@ const calculateCellNeighbors = (width: number, height: number, neighborsDist: nu
  * which means that, if cell 0 is ignited, cell 1 will ignite 0.5 seconds later.
  */
 const calculateTimeToIgniteNeighbors = (
-  cells: Cell[], cellNeighbors: number[][], wind: IWindProps, config: ISimulationConfig
+  cells: Cell[], cellNeighbors: number[][], wind: IWindProps, config: ISimulationConfig, moistureContent: number
 ) => {
   const timeToIgniteNeighbors = [];
   for (let i = 0; i < cells.length; i++) {
     const neighbors = cellNeighbors[i];
     const timeToIgniteMyNeighbors = neighbors.map(n =>
-      1 / getFireSpreadRate(cells[i], cells[n], wind, config.cellSize)
+      1 / getFireSpreadRate(cells[i], cells[n], wind, config.cellSize, moistureContent)
     );
     timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
   }
@@ -68,6 +68,7 @@ export class SimulationModel {
   public cellNeighbors: number[][];
   @observable public dataReady = false;
   @observable public wind: IWindProps;
+  @observable public moistureContent: number;
   @observable public spark: Vector2 | null;
   @observable public gridWidth: number;
   @observable public gridHeight: number;
@@ -105,6 +106,7 @@ export class SimulationModel {
       speed: config.windSpeed,
       direction: config.windDirection
     };
+    this.moistureContent = config.moistureContent;
     if (config.spark) {
       this.setSpark(Math.round(config.spark[0] / config.cellSize), Math.round(config.spark[1] / config.cellSize));
     } else {
@@ -178,7 +180,7 @@ export class SimulationModel {
       // It's enough to calculate this just once, as long as none of the land properties or wind speed can be changed.
       // This will change in the future when user is able to set land properties or wind speed dynamically.
       this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(
-        this.cells, this.cellNeighbors, this.wind, this.config
+        this.cells, this.cellNeighbors, this.wind, this.config, this.moistureContent
       );
       // Use spark to start the simulation.
       this.cells[this.spark!.y * this.gridWidth + this.spark!.x].ignitionTime = 0;
@@ -230,6 +232,10 @@ export class SimulationModel {
 
   @action.bound public setWindSpeed(speed: number) {
     this.wind.speed = speed;
+  }
+
+  @action.bound public setMoistureContent(value: number) {
+    this.moistureContent = value;
   }
 
   @action.bound private updateFire() {
