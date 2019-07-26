@@ -1,16 +1,20 @@
 export interface ISimulationConfig {
-  modelWidth: number; // km
-  modelHeight: number; // km
+  modelWidth: number; // ft
+  modelHeight: number; // ft
   // Note that modelWidth % cellSize and modelHeight % cellSize should always be 0!
-  cellSize: number; // km
-  // Spark position, in km.
+  cellSize: number; // ft
+  // Spark position, in ft.
   spark: number[];
-  timeStep: number;
+  timeStep: number; // minutes
   windSpeed: number; // mph
   windDirection: number; // degrees, 0 is northern wind
   neighborsDist: number;
-  // Used for mapping of the fireSpreadRate to (model) time.
-  fireSpreadTimeRatio: number;
+  // In min - note that larger cells will burn the same amount of time. Cell doesn't burn from edge to edge, but
+  // its whole area is supposed to burn at the same time. We might consider whether it should be different for
+  // different fuel types.
+  cellBurnTime: number;
+  // Max elevation of 100% white points in heightmap (image used for elevation data).
+  heightmapMaxElevation: number; // ft
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -20,15 +24,16 @@ export interface IUrlConfig extends ISimulationConfig {
 
 export const defaultConfig: IUrlConfig = {
   preset: "test1",
-  modelWidth: 100,
-  modelHeight: 100,
-  cellSize: 1,
-  spark: [50, 50],
-  timeStep: 16,
+  modelWidth: 100000,
+  modelHeight: 100000,
+  cellSize: 1000,
+  spark: [50000, 50000],
+  timeStep: 60, // minutes
   windSpeed: 0, // mph
   windDirection: 0, // degrees, northern wind
   neighborsDist: 3,
-  fireSpreadTimeRatio: 500,
+  cellBurnTime: 2000, // minutes
+  heightmapMaxElevation: 3000,
   view: "land"
 };
 
