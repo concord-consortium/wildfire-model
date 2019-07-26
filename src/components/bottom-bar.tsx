@@ -5,6 +5,7 @@ import CCLogo from "../assets/cc-logo.svg";
 import CCLogoSmall from "../assets/cc-logo-small.svg";
 import screenfull from "screenfull";
 import Button from "@material-ui/core/Button";
+import Slider from "@material-ui/core/Slider";
 import PauseIcon from "../assets/pause.svg";
 import StartIcon from "../assets/start.svg";
 import ReloadIcon from "../assets/reload.svg";
@@ -28,6 +29,44 @@ const toggleFullscreen = () => {
     screenfull.exit();
   }
 };
+
+const windDirectionMarks = [
+  {
+    value: 0,
+    label: "0"
+  },
+  {
+    value: 90,
+    label: "90"
+  },
+  {
+    value: 180,
+    label: "180"
+  },
+  {
+    value: 270,
+    label: "270"
+  },
+  {
+    value: 360,
+    label: "360"
+  },
+];
+
+const windSpeedMarks = [
+  {
+    value: 0,
+    label: "0"
+  },
+  {
+    value: 5,
+    label: "5"
+  },
+  {
+    value: 10,
+    label: "10"
+  }
+];
 
 @inject("stores")
 @observer
@@ -96,6 +135,34 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               { sim.simulationRunning ? <span><PauseIcon/> Stop</span> : <span><StartIcon /> Start</span> }
             </Button>
           </div>
+          <div className={`${css.widgetGroup}`}>
+            <div className={css.windDirection}>
+              <div>Wind Direction (° from North)</div>
+              <Slider
+                min={0}
+                max={360}
+                disabled={sim.simulationStarted}
+                value={sim.wind.direction}
+                step={1}
+                marks={windDirectionMarks}
+                onChange={this.handleWindDirectionChange}
+              />
+            </div>
+          </div>
+          <div className={`${css.widgetGroup}`}>
+            <div className={css.windSpeed}>
+              <div>Wind Speed (mph)</div>
+              <Slider
+                min={0}
+                max={10}
+                disabled={sim.simulationStarted}
+                value={sim.wind.speed}
+                step={0.1}
+                marks={windSpeedMarks}
+                onChange={this.handleWindSpeedChange}
+              />
+            </div>
+          </div>
         </div>
         {/* This empty container is necessary so the spacing works correctly */}
         <div className={css.rightContainer}>
@@ -118,5 +185,13 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   public handleReload = () => {
     this.stores.simulation.reload();
+  }
+
+  public handleWindDirectionChange = (event: any, value: number | number[]) => {
+    this.stores.simulation.setWindDirection(value as number);
+  }
+
+  public handleWindSpeedChange = (event: any, value: number | number[]) => {
+    this.stores.simulation.setWindSpeed(value as number);
   }
 }

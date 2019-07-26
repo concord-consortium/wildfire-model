@@ -147,3 +147,14 @@ $overflowHeight: 11px;
     display: none;
   }
 }
+
+.windSpeed, .windDirection {
+  width: 100px;
+  margin: 10px 18px;
+  text-align: center;
+  font-size: 12px;
+}
+
+.windDirection {
+  width: 158px;
+}

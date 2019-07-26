@@ -224,6 +224,14 @@ export class SimulationModel {
     this.spark = new Vector2(x, y);
   }
 
+  @action.bound public setWindDirection(direction: number) {
+    this.wind.direction = direction;
+  }
+
+  @action.bound public setWindSpeed(speed: number) {
+    this.wind.speed = speed;
+  }
+
   @action.bound private updateFire() {
     const numCells = this.cells.length;
     // Run through all cells. Check the unburnt neighbors of currently-burning cells. If the current time
