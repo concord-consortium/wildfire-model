@@ -130,6 +130,8 @@ export class SimulationModel {
       const landType = values[0];
       const elevation = values[1];
 
+      this.cells.length = 0;
+
       for (let y = 0; y < this.gridHeight; y++) {
         for (let x = 0; x < this.gridWidth; x++) {
           const index = getGridIndexForLocation(x, y, this.gridWidth);
@@ -153,9 +155,6 @@ export class SimulationModel {
       this.notifyCellsUpdated();
       // Mark simulation as ready as data has been downloaded.
       this.ready = true;
-
-      // Auto start, to be removed when there are UI controls to start the simulation.
-      this.start();
     });
   }
 
@@ -163,16 +162,34 @@ export class SimulationModel {
     if (!this.ready) {
       return;
     }
-    this.time = 0;
-    // It's enough to calculate this just once, as long as none of the land properties or wind speed can be changed.
-    // This will change in the future when user is able to set land properties or wind speed dynamically.
-    this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(this.cells, this.cellNeighbors, this.wind, this.config);
+    if (this.time === 0) {
+      // It's enough to calculate this just once, as long as none of the land properties or wind speed can be changed.
+      // This will change in the future when user is able to set land properties or wind speed dynamically.
+      this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(
+        this.cells, this.cellNeighbors, this.wind, this.config
+      );
+    }
     this.simulationRunning = true;
     this.tick();
   }
 
   @action.bound public stop() {
     this.simulationRunning = false;
+  }
+
+  @action.bound public restart() {
+    this.simulationRunning = false;
+    this.time = 0;
+    this.populateCellsData();
+  }
+
+  @action.bound public reload() {
+    // Reset user-controlled properties too.
+    this.wind = {
+      speed: this.config.windSpeed,
+      direction: this.config.windDirection
+    };
+    this.restart();
   }
 
   @action.bound public tick() {
