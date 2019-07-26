@@ -17,11 +17,12 @@ describe("BottomBar component", () => {
         <BottomBar />
       </Provider>
     );
-    expect(wrapper.find(Button).length).toEqual(3);
+    expect(wrapper.find(Button).length).toEqual(4);
   });
 
   it("start button is disabled until model is ready", () => {
-    stores.simulation.ready = false;
+    stores.simulation.dataReady = false;
+    expect(stores.simulation.ready).toEqual(false);
     let wrapper = mount(
       <Provider stores={stores}>
         <BottomBar />
@@ -30,7 +31,8 @@ describe("BottomBar component", () => {
     let start = wrapper.find('[data-test="start-button"]').first();
     expect(start.prop("disabled")).toEqual(true);
 
-    stores.simulation.ready = true;
+    stores.simulation.dataReady = true;
+    expect(stores.simulation.ready).toEqual(true);
     wrapper = mount(
       <Provider stores={stores}>
         <BottomBar />

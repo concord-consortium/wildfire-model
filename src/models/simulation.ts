@@ -1,9 +1,10 @@
-import {action, observable} from "mobx";
-import {getFireSpreadRate, LandType, IWindProps} from "./fire-model";
+import {action, observable, computed} from "mobx";
+import {getFireSpreadRate, IWindProps} from "./fire-model";
 import {Cell, CellOptions, FireState} from "./cell";
 import {urlConfig, defaultConfig, ISimulationConfig} from "../config";
 import {IPresetConfig} from "../presets";
 import {getImageData, populateGrid} from "../utils";
+import {Vector2} from "three";
 
 const getGridIndexForLocation = (x: number, y: number, width: number) => {
   return x + y * width;
@@ -65,12 +66,14 @@ export class SimulationModel {
   public timeToIgniteNeighbors: number[][];
   public config: IPresetConfig;
   public cellNeighbors: number[][];
-  @observable public ready = false;
+  @observable public dataReady = false;
   @observable public wind: IWindProps;
+  @observable public spark: Vector2 | null;
   @observable public gridWidth: number;
   @observable public gridHeight: number;
   @observable public time = 0;
   @observable public cells: Cell[] = [];
+  @observable public simulationStarted = false;
   @observable public simulationRunning = false;
 
   constructor(presetConfig: Partial<IPresetConfig>) {
@@ -81,18 +84,32 @@ export class SimulationModel {
     this.config = config;
     this.gridWidth = config.modelWidth / config.cellSize;
     this.gridHeight = config.modelHeight / config.cellSize;
-    this.wind = {
-      speed: config.windSpeed,
-      direction: config.windDirection
-    };
 
     // It's enough to calculate this just once, as grid won't change.
     this.cellNeighbors = calculateCellNeighbors(this.gridWidth, this.gridHeight, this.config.neighborsDist);
 
     this.populateCellsData();
+    this.setInputParamsFromConfig();
 
     // Make simulation available in browser console for manual tests.
     (window as any).sim = this;
+  }
+
+  @computed public get ready() {
+    return this.dataReady && !!this.spark;
+  }
+
+  @action.bound public setInputParamsFromConfig() {
+    const config = this.config;
+    this.wind = {
+      speed: config.windSpeed,
+      direction: config.windDirection
+    };
+    if (config.spark) {
+      this.setSpark(Math.round(config.spark[0] / config.cellSize), Math.round(config.spark[1] / config.cellSize));
+    } else {
+      this.spark = null;
+    }
   }
 
   public getLandTypeData(): Promise<number[]> {
@@ -145,16 +162,8 @@ export class SimulationModel {
           this.cells.push(new Cell(cellOptions));
         }
       }
-
-      if (this.config.spark) {
-        const sparkX = Math.round(this.config.spark[0] / this.config.cellSize);
-        const sparkY = Math.round(this.config.spark[1] / this.config.cellSize);
-        this.cells[sparkX * this.gridWidth + sparkY].ignitionTime = 1;
-      }
-
       this.notifyCellsUpdated();
-      // Mark simulation as ready as data has been downloaded.
-      this.ready = true;
+      this.dataReady = true;
     });
   }
 
@@ -162,12 +171,17 @@ export class SimulationModel {
     if (!this.ready) {
       return;
     }
+    if (!this.simulationStarted) {
+      this.simulationStarted = true;
+    }
     if (this.time === 0) {
       // It's enough to calculate this just once, as long as none of the land properties or wind speed can be changed.
       // This will change in the future when user is able to set land properties or wind speed dynamically.
       this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(
         this.cells, this.cellNeighbors, this.wind, this.config
       );
+      // Use spark to start the simulation.
+      this.cells[this.spark!.y * this.gridWidth + this.spark!.x].ignitionTime = 0;
     }
     this.simulationRunning = true;
     this.tick();
@@ -179,23 +193,22 @@ export class SimulationModel {
 
   @action.bound public restart() {
     this.simulationRunning = false;
+    this.simulationStarted = false;
     this.time = 0;
     this.populateCellsData();
   }
 
   @action.bound public reload() {
-    // Reset user-controlled properties too.
-    this.wind = {
-      speed: this.config.windSpeed,
-      direction: this.config.windDirection
-    };
     this.restart();
+    // Reset user-controlled properties too.
+    this.setInputParamsFromConfig();
   }
 
   @action.bound public tick() {
-    if (this.simulationRunning) {
-      requestAnimationFrame(this.tick);
+    if (!this.simulationRunning) {
+      return;
     }
+    requestAnimationFrame(this.tick);
     this.time += this.config.timeStep;
     this.updateFire();
     this.notifyCellsUpdated();
@@ -205,6 +218,10 @@ export class SimulationModel {
     // This is hopefully needed only temporarly. 2D view observers cells array directly instead of its content.
     // It doesn't make sense to change it, as it will be eventually replaced by 3D view.
     this.cells = this.cells.slice();
+  }
+
+  @action.bound public setSpark(x: number, y: number) {
+    this.spark = new Vector2(x, y);
   }
 
   @action.bound private updateFire() {

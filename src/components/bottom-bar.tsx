@@ -9,6 +9,7 @@ import PauseIcon from "../assets/pause.svg";
 import StartIcon from "../assets/start.svg";
 import ReloadIcon from "../assets/reload.svg";
 import RestartIcon from "../assets/restart.svg";
+import { SparkButton } from "./spark-button";
 
 import * as css from "./bottom-bar.scss";
 
@@ -63,6 +64,9 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           <CCLogoSmall className={css.logoSmall} />
         </div>
         <div className={css.mainContainer}>
+          <div className={`${css.widgetGroup}`}>
+            <SparkButton />
+          </div>
           <div className={`${css.widgetGroup} ${css.reloadRestart}`}>
             <Button
               className={css.playbackButton}

@@ -1,0 +1,34 @@
+@import "common.scss";
+
+.seasonButton {
+  width: 120px;
+  height: 100%;
+  overflow: hidden;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+
+  &.disabled{
+    opacity: 0.5 !important;
+  }
+
+  .label {
+    color: #fff;
+    width: 100px;
+    height: 51px;
+    background: #FF8F20;
+    border-radius: 8px;
+    text-transform: capitalize;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: $bottomBarBorderStyle;
+    margin-top: -4px;
+
+    &:hover {
+      box-shadow: 0 0 0 3px rgba(255,255,255,0.5)
+    }
+    &:active {
+      box-shadow: 0 0 0 3px rgba(255,255,255,1)
+    }
+  }
+}
