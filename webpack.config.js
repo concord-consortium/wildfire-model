@@ -37,20 +37,50 @@ module.exports = (env, argv) => {
           }
         },
         {
-          test: /\.(sa|sc|c)ss$/i,
+          test: /\.(sa|sc)ss$/i,
           use: [
             devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
-            'css-loader',
+            {
+              loader: 'css-loader',
+              options: {
+                modules: {
+                  localIdentName: '[name]--[local]--__wildfire-v1__'
+                },
+                sourceMap: true,
+                importLoaders: 1
+              }
+            },
             'postcss-loader',
             'sass-loader'
           ]
         },
         {
-          test: /\.(png|woff|woff2|eot|ttf|svg)$/,
+          test: /\.css$/i,
+          use: [
+            devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
+            'css-loader'
+          ]
+        },
+        {
+          test: /\.(png|woff|woff2|eot|ttf)$/,
           loader: 'url-loader',
           options: {
             limit: 8192
           }
+        },
+        {
+          test: /\.svg$/,
+          oneOf: [
+            {
+              // Do not apply SVGR import in (S)CSS files.
+              issuer: /\.scss$/,
+              use: 'url-loader'
+            },
+            {
+              issuer: /\.tsx?$/,
+              loader: '@svgr/webpack'
+            }
+          ]
         }
       ]
     },
