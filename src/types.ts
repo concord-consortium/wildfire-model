@@ -3,7 +3,6 @@ export interface Fuel {
   packingRatio: number;
   netFuelLoad: number;
   heatContent: number;
-  moistureContent: number;
   mx: number;
   totalMineralContent: number;
   effectiveMineralContent: number;

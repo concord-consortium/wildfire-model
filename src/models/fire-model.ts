@@ -21,7 +21,6 @@ const FuelConstants: {[key in LandType]: Fuel} = {
     packingRatio: 0.00154,
     netFuelLoad: 0.09871442,
     heatContent: 8000,
-    moistureContent:  0.1,
     mx: 0.15,
     totalMineralContent: 0.0555,
     effectiveMineralContent: 0.01,
@@ -32,7 +31,6 @@ const FuelConstants: {[key in LandType]: Fuel} = {
     packingRatio: 0.00412,
     netFuelLoad: 0.183655,
     heatContent: 8000,
-    moistureContent:  0.1,
     mx: 0.3,
     totalMineralContent: 0.0555,
     effectiveMineralContent: 0.01,
@@ -93,16 +91,18 @@ export const getDirectionFactor =
  * @param targetCell Adjacent grid cell that is currently UNBURNT
  * @param wind Wind properties, speed and direction
  * @param cellSize cell size in feet
+ * @param moistureContent global moisture content
  *
  * @return fire spread rate in ft/min
  */
-export const getFireSpreadRate = (sourceCell: Cell, targetCell: Cell, wind: IWindProps, cellSize: number) => {
+export const getFireSpreadRate = (
+  sourceCell: Cell, targetCell: Cell, wind: IWindProps, cellSize: number, moistureContent: number
+) => {
   const fuel = FuelConstants[targetCell.landType];
   const sav = fuel.sav;
   const packingRatio = fuel.packingRatio;
   const netFuelLoad = fuel.netFuelLoad;
   const heatContent = fuel.heatContent;
-  const moistureContent = fuel.moistureContent;
   const mx = fuel.mx;
   const totalMineralContent = fuel.totalMineralContent;
   const effectiveMineralContent = fuel.effectiveMineralContent;

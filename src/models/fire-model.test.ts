@@ -30,18 +30,18 @@ describe("getFireSpreadRate", () => {
     // cells F13:
     // Wind speed in the spreadsheet uses feet/min, but we use mph here for better readability.
     // Also, note that target cell lies perfectly aligned with wind direction (northern).
-    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 1, direction: 0}, cellSize)).toBeCloseTo(8.1554);
+    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 1, direction: 0}, cellSize, 0.1)).toBeCloseTo(8.1554);
     // cells F14:
-    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 0}, cellSize)).toBeCloseTo(13.979);
+    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 0}, cellSize, 0.1)).toBeCloseTo(13.979);
     // cells F32:
-    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 20, direction: 0}, cellSize)).toBeCloseTo(148.517);
+    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 20, direction: 0}, cellSize, 0.1)).toBeCloseTo(148.517);
   });
 
   it("takes into account wind direction", () => {
-    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 0}, cellSize)).toBeCloseTo(13.979);
-    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 90}, cellSize)).toBeCloseTo(3.559);
-    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: -90}, cellSize)).toBeCloseTo(3.559);
-    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 180}, cellSize)).toBeCloseTo(2.035);
+    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 0}, cellSize, 0.1)).toBeCloseTo(13.979);
+    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 90}, cellSize, 0.1)).toBeCloseTo(3.559);
+    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: -90}, cellSize, 0.1)).toBeCloseTo(3.559);
+    expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 180}, cellSize, 0.1)).toBeCloseTo(2.035);
   });
 
 });

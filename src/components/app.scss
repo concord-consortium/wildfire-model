@@ -1,0 +1,15 @@
+.app {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  flex-direction: column;
+}
+
+.modelInfo {
+  text-align: left;
+  position: absolute;
+  top: 10px;
+  left: 10px;
+}

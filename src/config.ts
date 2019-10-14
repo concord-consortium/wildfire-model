@@ -8,6 +8,7 @@ export interface ISimulationConfig {
   timeStep: number; // minutes
   windSpeed: number; // mph
   windDirection: number; // degrees, 0 is northern wind
+  moistureContent: number;
   neighborsDist: number;
   // In min - note that larger cells will burn the same amount of time. Cell doesn't burn from edge to edge, but
   // its whole area is supposed to burn at the same time. We might consider whether it should be different for
@@ -31,6 +32,7 @@ export const defaultConfig: IUrlConfig = {
   timeStep: 60, // minutes
   windSpeed: 0, // mph
   windDirection: 0, // degrees, northern wind
+  moistureContent: 0.1,
   neighborsDist: 3,
   cellBurnTime: 2000, // minutes
   heightmapMaxElevation: 3000,

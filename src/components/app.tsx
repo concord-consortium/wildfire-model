@@ -1,9 +1,10 @@
 import { inject, observer } from "mobx-react";
 import * as React from "react";
 import { BaseComponent, IBaseProps } from "./base";
-
-import "./app.sass";
 import Model2D from "./model-2d/model-2d";
+
+import * as css from "./app.scss";
+import {BottomBar} from "./bottom-bar";
 
 interface IProps extends IBaseProps {}
 interface IState {}
@@ -18,14 +19,14 @@ export class AppComponent extends BaseComponent<IProps, IState> {
     const timeInDays = simulation.time / 1440;
 
     return (
-      <div className="app">
-        <div>Model Dimensions: { config.modelWidth } ft x { config.modelHeight } ft</div>
-        <div>Highest Point Possible: { config.heightmapMaxElevation } ft</div>
-        <div>Wind Speed: { config.windSpeed } mph</div>
-        <div>Wind Direction: { config.windDirection }°</div>
-        <div>Time Elapsed: { timeInDays.toFixed(1) } days</div>
-        <br />
+      <div className={css.app}>
+        <div className={css.modelInfo}>
+          <div>Model Dimensions: { config.modelWidth } ft x { config.modelHeight } ft</div>
+          <div>Highest Point Possible: { config.heightmapMaxElevation } ft</div>
+          <div>Time Elapsed: { timeInDays.toFixed(1) } days</div>
+        </div>
         <Model2D />
+        <BottomBar />
       </div>
     );
   }
