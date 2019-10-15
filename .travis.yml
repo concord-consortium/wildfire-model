@@ -1,12 +1,14 @@
 sudo: false
 language: node_js
 node_js: lts/*
+addons:
+  apt:
+    packages:
+      - libgconf-2-4
 cache:
   bundler: true
   pip: true
   npm: true
-before_install:
-- pyenv local 3.6
 install:
 - travis_retry gem install s3_website -v 3.4.0
 - travis_retry pip install awscli --upgrade --user
