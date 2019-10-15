@@ -66,6 +66,7 @@ $overflowHeight: 11px;
       right: -$bottomBarBorderWidth;
     }
     margin-left: -$bottomBarBorderWidth;
+    margin-right: $bottomBarWidgetGroupSpacing;
   }
 
   // Why global .hoverable?
@@ -74,13 +75,16 @@ $overflowHeight: 11px;
     background: $hoverColor;
   }
 
+  .placeSpark {
+    margin-right: 0;
+  }
+
   .reloadRestart {
-    margin-left: 10px;
     white-space: nowrap;
   }
 
   .startStop {
-    margin-right: 10px;
+    margin-left: -$bottomBarWidgetGroupSpacing;
   }
 
   .fullscreenIcon {
@@ -99,6 +103,22 @@ $overflowHeight: 11px;
       &:hover {
         background-image: url("../assets/fullscreen-exit-dark.svg");
       }
+    }
+  }
+}
+.terrainSetupButton{
+  min-width: 60px;
+  height: 100%;
+  .terrainSetupIcon{
+    margin-left: auto;
+    margin-right: auto;
+    width: 100px;
+    height: 32px;
+    background-color: orange;
+    span{
+      display: block;
+      padding-top: 30px;
+      white-space: nowrap;
     }
   }
 }

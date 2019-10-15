@@ -10,6 +10,7 @@ import PauseIcon from "../assets/pause.svg";
 import StartIcon from "../assets/start.svg";
 import ReloadIcon from "../assets/reload.svg";
 import RestartIcon from "../assets/restart.svg";
+import { TerrainSetupButton} from "./terrain-setup-button";
 import { SparkButton } from "./spark-button";
 
 import css from "./bottom-bar.scss";
@@ -114,7 +115,24 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           <CCLogoSmall className={css.logoSmall} />
         </div>
         <div className={css.mainContainer}>
-          <div className={`${css.widgetGroup}`}>
+          <div className={css.widgetGroup}>
+            <TerrainSetupButton />
+          </div>
+          <div className={css.widgetGroup}>
+            <div className={css.slider}>
+              <div>Precipitation</div>
+              <Slider
+                min={0}
+                max={0.2}
+                disabled={sim.simulationStarted}
+                value={sim.moistureContent}
+                step={0.01}
+                marks={moistureContentMarks}
+                onChange={this.handleMoistureContentChange}
+              />
+            </div>
+          </div>
+          <div className={`${css.widgetGroup} ${css.placeSpark}`}>
             <SparkButton />
           </div>
           <div className={`${css.widgetGroup} ${css.reloadRestart}`}>
@@ -174,20 +192,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               />
             </div>
           </div>
-          <div className={css.widgetGroup}>
-            <div className={css.slider}>
-              <div>Moisture Content</div>
-              <Slider
-                min={0}
-                max={0.2}
-                disabled={sim.simulationStarted}
-                value={sim.moistureContent}
-                step={0.01}
-                marks={moistureContentMarks}
-                onChange={this.handleMoistureContentChange}
-              />
-            </div>
-          </div>
+
         </div>
         {/* This empty container is necessary so the spacing works correctly */}
         <div className={css.rightContainer}>

@@ -1,6 +1,6 @@
 @import "common.scss";
 
-.seasonButton {
+.terrainButton {
   min-width: 60px;
   height: 100%;
   overflow: hidden;
@@ -27,9 +27,9 @@
   svg {
     background: white;
     display: block;
-    height: 37px;
-    width: 30px;
-    border-radius: 16px;
-    margin: 0 auto 0 auto;
+    height: 32px;
+    width: 60px;
+    border-radius: 0px;
+    margin: 4px auto 0 auto;
   }
 }
