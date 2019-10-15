@@ -173,6 +173,15 @@ $overflowHeight: 11px;
   margin: 10px 18px;
   text-align: center;
   font-size: 12px;
+  .thumb {
+    width: 20px;
+      height: 20px;
+      margin-left: -8.5px;
+      margin-top: -8.5px;
+      &:hover, &:active {
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5)
+      }
+  }
 }
 
 .windDirection {

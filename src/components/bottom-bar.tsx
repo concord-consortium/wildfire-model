@@ -10,6 +10,7 @@ import PauseIcon from "../assets/pause.svg";
 import StartIcon from "../assets/start.svg";
 import ReloadIcon from "../assets/reload.svg";
 import RestartIcon from "../assets/restart.svg";
+import HorizontalHandle from "../assets/slider-horizontal.svg";
 import { TerrainSetupButton} from "./terrain-setup-button";
 import { SparkButton } from "./spark-button";
 
@@ -122,6 +123,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
             <div className={css.slider}>
               <div>Precipitation</div>
               <Slider
+                classes={{thumb: css.thumb }}
                 min={0}
                 max={0.2}
                 disabled={sim.simulationStarted}
@@ -129,6 +131,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
                 step={0.01}
                 marks={moistureContentMarks}
                 onChange={this.handleMoistureContentChange}
+                ThumbComponent={HorizontalHandle}
               />
             </div>
           </div>
@@ -168,6 +171,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
             <div className={`${css.slider} ${css.windDirection}`}>
               <div>Wind Direction (° from North)</div>
               <Slider
+                classes={{thumb: css.thumb }}
                 min={0}
                 max={360}
                 disabled={sim.simulationStarted}
@@ -175,6 +179,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
                 step={1}
                 marks={windDirectionMarks}
                 onChange={this.handleWindDirectionChange}
+                ThumbComponent={HorizontalHandle}
               />
             </div>
           </div>
@@ -182,6 +187,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
             <div className={css.slider}>
               <div>Wind Speed (mph)</div>
               <Slider
+                classes={{thumb: css.thumb }}
                 min={0}
                 max={10}
                 disabled={sim.simulationStarted}
@@ -189,6 +195,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
                 step={0.1}
                 marks={windSpeedMarks}
                 onChange={this.handleWindSpeedChange}
+                ThumbComponent={HorizontalHandle}
               />
             </div>
           </div>
