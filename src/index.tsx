@@ -1,6 +1,6 @@
 import { Provider } from "mobx-react";
-import * as React from "react";
-import * as ReactDOM from "react-dom";
+import React from "react";
+import ReactDOM from "react-dom";
 import { AppComponent } from "./components/app";
 import { MuiThemeProvider } from "@material-ui/core/styles";
 import { createStores } from "./models/stores";

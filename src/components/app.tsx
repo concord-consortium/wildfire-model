@@ -1,9 +1,9 @@
 import { inject, observer } from "mobx-react";
-import * as React from "react";
+import React from "react";
 import { BaseComponent, IBaseProps } from "./base";
 import Model2D from "./model-2d/model-2d";
 
-import * as css from "./app.scss";
+import css from "./app.scss";
 import {BottomBar} from "./bottom-bar";
 
 interface IProps extends IBaseProps {}

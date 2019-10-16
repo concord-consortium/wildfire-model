@@ -1,9 +1,9 @@
 import { inject, observer } from "mobx-react";
-import * as React from "react";
+import React from "react";
 import { BaseComponent, IBaseProps } from "./base";
 import Button from "@material-ui/core/Button";
 
-import * as css from "./spark-button.scss";
+import css from "./spark-button.scss";
 
 interface IProps extends IBaseProps {}
 interface IState {}

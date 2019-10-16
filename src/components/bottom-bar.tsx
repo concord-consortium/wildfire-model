@@ -1,5 +1,5 @@
 import { inject, observer } from "mobx-react";
-import * as React from "react";
+import React from "react";
 import { BaseComponent, IBaseProps } from "./base";
 import CCLogo from "../assets/cc-logo.svg";
 import CCLogoSmall from "../assets/cc-logo-small.svg";
@@ -12,7 +12,7 @@ import ReloadIcon from "../assets/reload.svg";
 import RestartIcon from "../assets/restart.svg";
 import { SparkButton } from "./spark-button";
 
-import * as css from "./bottom-bar.scss";
+import css from "./bottom-bar.scss";
 
 interface IProps extends IBaseProps {}
 interface IState {
