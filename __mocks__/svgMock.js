@@ -1,1 +1,1 @@
-module.exports = { default: 'svg-mock' };
+module.exports = 'svg-mock';
