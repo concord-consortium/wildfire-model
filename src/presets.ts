@@ -9,7 +9,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
   basic: {
     modelWidth: 100000,
     modelHeight: 100000,
-    cellSize: 1000,
+    gridWidth: 100,
     spark: [50000, 50000],
     landType: [
       [ 0 ]
@@ -18,7 +18,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
   basicWithWind: {
     modelWidth: 100000,
     modelHeight: 100000,
-    cellSize: 1000,
+    gridWidth: 100,
     spark: [50000, 50000],
     windSpeed: 1,
     windDirection: 0,
@@ -26,24 +26,24 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
       [ 0 ]
     ]
   },
-  basicWithSlope: {
+  slope45deg: {
     modelWidth: 100000,
     modelHeight: 100000,
-    cellSize: 1000,
+    gridWidth: 100,
     spark: [50000, 50000],
     heightmapMaxElevation: 3000,
     landType: [
       [ 0 ]
     ],
     elevation: [
-      [ 3000, 0 ],
-      [ 3000, 0 ]
+      [ 100000, 0 ],
+      [ 100000, 0 ]
     ]
   },
   basicWithSlopeAndWind: {
     modelWidth: 100000,
     modelHeight: 100000,
-    cellSize: 1000,
+    gridWidth: 100,
     spark: [50000, 50000],
     windSpeed: 1,
     windDirection: 0,
@@ -57,10 +57,10 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     ]
   },
   hills: {
-    modelWidth: 100000,
-    modelHeight: 100000,
-    cellSize: 1000,
-    spark: [50000, 50000],
+    modelWidth: 25000,
+    modelHeight: 25000,
+    gridWidth: 100,
+    spark: [12500, 12500],
     timeStep: 10,
     heightmapMaxElevation: 3000,
     landType: [
@@ -71,9 +71,9 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
   randomHeightmap: {
     modelWidth: 100000,
     modelHeight: 100000,
-    cellSize: 1000,
+    gridWidth: 100,
     spark: [50000, 50000],
-    heightmapMaxElevation: 3000,
+    heightmapMaxElevation: 7000,
     landType: [
       [ 0 ]
     ],
@@ -82,7 +82,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
   landTypes: {
     modelWidth: 100000,
     modelHeight: 100000,
-    cellSize: 1000,
+    gridWidth: 100,
     spark: [50000, 50000],
     landType: [
       [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
