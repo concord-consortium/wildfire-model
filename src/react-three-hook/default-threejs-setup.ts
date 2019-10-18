@@ -30,7 +30,6 @@ export const getDefRenderer = (canvas: HTMLCanvasElement) => {
 export const getDefScene = () => {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0xcac8c8);
-  // scene.add(new THREE.AmbientLight(0xffffff));
   scene.add(new THREE.HemisphereLight(0xC6C2B6, 0x3A403B, 0.75));
   const light = new THREE.PointLight(0xffffff, 0.3);
   light.position.set(0, 2, 1);

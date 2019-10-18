@@ -1,6 +1,5 @@
 import React, { createContext, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
-import { Canvas } from "./canvas";
 import { useAnimationFrame } from "./use-animation-frame";
 import { getDefCamera, getDefRenderer, getDefScene } from "./default-threejs-setup";
 
@@ -10,14 +9,12 @@ export interface IThreeContext {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   canvas: HTMLCanvasElement;
-  time: number;
 }
 
 const defaultContext = {
   scene: new THREE.Scene(),
   camera: new THREE.PerspectiveCamera(),
-  canvas: document.createElement("canvas"),
-  time: 0
+  canvas: document.createElement("canvas")
 };
 
 export const ThreeJSContext = createContext<IThreeContext>(defaultContext);
@@ -37,8 +34,7 @@ export const ThreeJSManager: React.FC<IProps> = ({
   canvasStyle = DEFAULT_CANVAS_STYLE
 }) => {
   const [threeIsReady, setThreeIsReady] = useState(false);
-  const [time, updateTime] = useState(0);
-  const canvasRef = useRef<HTMLCanvasElement>();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const sceneRef = useRef<THREE.Scene>();
   const cameraRef = useRef<THREE.PerspectiveCamera>();
   const rendererRef = useRef<THREE.Renderer>();
@@ -47,7 +43,18 @@ export const ThreeJSManager: React.FC<IProps> = ({
     scene: sceneRef.current || defaultContext.scene,
     camera: cameraRef.current || defaultContext.camera,
     canvas: canvasRef.current || defaultContext.canvas,
-    time,
+  };
+
+  const onWindowResize = () => {
+    if (canvasRef.current && cameraRef.current && rendererRef.current) {
+      canvasRef.current.style.height = canvasStyle.height;
+      canvasRef.current.style.width = canvasStyle.width;
+      const offsetWidth = canvasRef.current.offsetWidth;
+      const offsetHeight = canvasRef.current.offsetHeight;
+      rendererRef.current.setSize(offsetWidth, offsetHeight);
+      cameraRef.current.aspect = offsetWidth / offsetHeight;
+      cameraRef.current.updateProjectionMatrix();
+    }
   };
 
   // setup scene, camera, and renderer, and store references
@@ -67,21 +74,12 @@ export const ThreeJSManager: React.FC<IProps> = ({
     }
   }, []);
 
-  // update camera and renderer when dimensions change
-  let offsetWidth: number | undefined;
-  let offsetHeight: number | undefined;
-  if (canvasRef.current) {
-    offsetWidth = canvasRef.current.offsetWidth;
-    offsetHeight = canvasRef.current.offsetHeight;
-  }
-
   useEffect(() => {
-      if (canvasRef.current && cameraRef.current && rendererRef.current && offsetWidth && offsetHeight) {
-        cameraRef.current.aspect = offsetWidth / offsetHeight;
-        cameraRef.current.updateProjectionMatrix();
-        rendererRef.current.setSize(offsetWidth, offsetHeight);
-      }
-    }, [offsetWidth, offsetHeight]);
+    window.addEventListener("resize", onWindowResize);
+    return () => {
+      window.removeEventListener("resize", onWindowResize);
+    };
+  }, []);
 
   // set animation frame time value and rerender the scene
   useAnimationFrame((newTime: number) => {
@@ -92,7 +90,7 @@ export const ThreeJSManager: React.FC<IProps> = ({
 
   return (
     <>
-      <Canvas ref={canvasRef} style={canvasStyle}/>
+      <canvas ref={canvasRef} height={canvasStyle.height} width={canvasStyle.width} style={canvasStyle}/>
       {threeIsReady && (
         <ThreeJSContext.Provider value={threeContext}>
           {children}
