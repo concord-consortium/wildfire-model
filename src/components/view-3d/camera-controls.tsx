@@ -9,6 +9,7 @@ export const CameraControls = () => {
     controls.zoomSpeed = 0.5;
     controls.minDistance = 0.8;
     controls.maxDistance = 3;
+    controls.maxPolarAngle = Math.PI * 0.4; // don't let users look at the backside of the terrain
     controls.update();
   });
   return null;

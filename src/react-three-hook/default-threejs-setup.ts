@@ -7,7 +7,7 @@ export const getDefCamera = ({ offsetWidth, offsetHeight }: { offsetWidth: numbe
     0.1,
     1000,
   );
-  camera.position.copy(THREE.Object3D.DefaultUp.multiplyScalar(2));
+  camera.position.set(0, 1, 1.5);
   camera.lookAt(new THREE.Vector3(0, 0, 0));
 
   return camera;
