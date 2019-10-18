@@ -86,6 +86,9 @@ $overflowHeight: 11px;
   .startStop {
     margin-left: -$bottomBarWidgetGroupSpacing;
   }
+  .helitack{
+    margin-left: -$bottomBarWidgetGroupSpacing;
+  }
 
   .fullscreenIcon {
     margin-right: 5px;
@@ -107,14 +110,12 @@ $overflowHeight: 11px;
   }
 }
 .terrainSetupButton{
-  min-width: 60px;
   height: 100%;
   .terrainSetupIcon{
     margin-left: auto;
     margin-right: auto;
-    width: 100px;
+    width: 80px;
     height: 32px;
-    background-color: orange;
     span{
       display: block;
       padding-top: 30px;
@@ -155,6 +156,41 @@ $overflowHeight: 11px;
       fill: #797979;
     }
   }
+}
+
+.fireLineButton{
+  min-width: 60px;
+  height: 100%;
+  svg {
+    position: absolute;
+    left: 0;
+    top: 0px;
+    height: 45px;
+    width: 53px;
+    margin: $bottomBarTopPadding auto 0 3px;
+  }
+  .fireLineHighlightSvg{
+    opacity: 0;
+  }
+  &:hover{
+    .fireLineHighlightSvg{
+      opacity: 1;
+    }
+  }
+  .fireLineText{
+    position: absolute;
+    top: 45px;
+    left: 0px;
+    width: 100%;
+  }
+}
+.helitackButton{
+  min-width: 60px;
+  height: 100%;
+  color: #434343;
+  font-weight: bold;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
 }
 
 @media (max-width: 960px) {

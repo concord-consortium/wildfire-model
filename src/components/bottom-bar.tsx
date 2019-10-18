@@ -11,6 +11,8 @@ import StartIcon from "../assets/start.svg";
 import ReloadIcon from "../assets/reload.svg";
 import RestartIcon from "../assets/restart.svg";
 import HorizontalHandle from "../assets/slider-horizontal.svg";
+import FireLineIcon from "../assets/fire-line.svg";
+import FireLineHighlightIcon from "../assets/fire-line-highlight.svg";
 import { TerrainSetupButton} from "./terrain-setup-button";
 import { SparkButton } from "./spark-button";
 
@@ -167,39 +169,69 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               { sim.simulationRunning ? <span><PauseIcon/> Stop</span> : <span><StartIcon /> Start</span> }
             </Button>
           </div>
-          <div className={css.widgetGroup}>
-            <div className={`${css.slider} ${css.windDirection}`}>
-              <div>Wind Direction (° from North)</div>
-              <Slider
-                classes={{thumb: css.thumb }}
-                min={0}
-                max={360}
-                disabled={sim.simulationStarted}
-                value={sim.wind.direction}
-                step={1}
-                marks={windDirectionMarks}
-                onChange={this.handleWindDirectionChange}
-                ThumbComponent={HorizontalHandle}
-              />
-            </div>
+          <div className={`${css.widgetGroup}`}>
+            <Button
+              onClick={this.handleFireLine}
+              disabled={!sim.ready}
+              className={css.fireLineButton}
+              data-test="fire-line-button"
+              disableRipple={true}
+            >
+              <span>
+                <FireLineHighlightIcon className={css.fireLineHighlightSvg} />
+                <FireLineIcon className={css.fireLineSvg} />
+                <span className={css.fireLineText}>Fire Line</span>
+              </span>
+            </Button>
           </div>
-          <div className={css.widgetGroup}>
-            <div className={css.slider}>
-              <div>Wind Speed (mph)</div>
-              <Slider
-                classes={{thumb: css.thumb }}
-                min={0}
-                max={10}
-                disabled={sim.simulationStarted}
-                value={sim.wind.speed}
-                step={0.1}
-                marks={windSpeedMarks}
-                onChange={this.handleWindSpeedChange}
-                ThumbComponent={HorizontalHandle}
-              />
-            </div>
-          </div>
+          <div className={`${css.widgetGroup} ${css.helitack}`}>
+            <Button
+              onClick={this.handleHelitack}
+              disabled={!sim.ready}
+              className={css.helitackButton}
+              data-test="helitack-button"
+              disableRipple={true}
+            >
+              <span>Helitack</span>
 
+            </Button>
+          </div>
+          {sim.time === 2 &&
+            <div className={css.widgetGroup}>
+              <div className={`${css.slider} ${css.windDirection}`}>
+                <div>Wind Direction (° from North)</div>
+                <Slider
+                  classes={{ thumb: css.thumb }}
+                  min={0}
+                  max={360}
+                  disabled={sim.simulationStarted}
+                  value={sim.wind.direction}
+                  step={1}
+                  marks={windDirectionMarks}
+                  onChange={this.handleWindDirectionChange}
+                  ThumbComponent={HorizontalHandle}
+                />
+              </div>
+            </div>
+          }
+          {sim.time === 2 &&
+            <div className={css.widgetGroup}>
+              <div className={css.slider}>
+                <div>Wind Speed (mph)</div>
+                <Slider
+                  classes={{ thumb: css.thumb }}
+                  min={0}
+                  max={10}
+                  disabled={sim.simulationStarted}
+                  value={sim.wind.speed}
+                  step={0.1}
+                  marks={windSpeedMarks}
+                  onChange={this.handleWindSpeedChange}
+                  ThumbComponent={HorizontalHandle}
+                />
+              </div>
+            </div>
+          }
         </div>
         {/* This empty container is necessary so the spacing works correctly */}
         <div className={css.rightContainer}>
@@ -221,6 +253,15 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   }
 
   public handleReload = () => {
+    this.stores.simulation.reload();
+  }
+
+  public handleFireLine = () => {
+    // TODO: handle fire line
+    this.stores.simulation.reload();
+  }
+  public handleHelitack = () => {
+    // TODO: handle Helitack
     this.stores.simulation.reload();
   }
 

@@ -1,6 +1,6 @@
 @import "common.scss";
 
-.seasonButton {
+.sparkButton {
   min-width: 60px;
   height: 100%;
   overflow: hidden;
@@ -11,25 +11,39 @@
     opacity: 0.5 !important;
   }
 
-  &:hover svg {
-    box-shadow: 0 0 0 4px rgba(255,255,255,0.5);
-  }
-  &:active svg {
-    box-shadow: 0 0 0 4px rgba(255,255,255,1);
-  }
 
-  &:first-child {
-    border-top-left-radius: 10px;
-  }
-  &:last-child {
-    border-top-right-radius: 10px;
-  }
-  svg {
-    background: white;
-    display: block;
-    height: 37px;
+  .sparkIcon{
+    position: absolute;
+    top: 0;
     width: 30px;
-    border-radius: 16px;
-    margin: 0 auto 0 auto;
+    display: block;
+
+    margin: $bottomBarTopPadding auto 0 auto;
+    span{
+      position: absolute;
+      left: 0;
+      height: 38px;
+    }
+
+    .sparkSvg{
+      height: 38px;
+      width: 30px;
+    }
+    .sparkHighlightSvg{
+      height: 38px;
+      width: 30px;
+      opacity: 0;
+    }
+
+  }
+  .sparkText{
+    padding-top: 36px;
+  }
+  &:hover{
+    .sparkIcon{
+      .sparkHighlightSvg{
+        opacity: 1;
+      }
+    }
   }
 }

@@ -3,6 +3,7 @@ import React from "react";
 import { BaseComponent, IBaseProps } from "./base";
 import Button from "@material-ui/core/Button";
 import SparkIcon from "../assets/spark.svg";
+import SparkHighlight from "../assets/spark_highlight.svg";
 
 import css from "./spark-button.scss";
 
@@ -18,12 +19,17 @@ export class SparkButton extends BaseComponent<IProps, IState> {
     return (
       <Button
         onClick={this.placeSpark}
-        className={`${css.seasonButton} ${uiDisabled ? css.disabled : ""}`}
-        data-test="season-button"
+        className={`${css.sparkButton} ${uiDisabled ? css.disabled : ""}`}
+        data-test="spark-button"
         disableTouchRipple={true}
         disabled={uiDisabled}
       >
-        <span><SparkIcon/> Spark</span>
+        <span className={css.sparkIcon}>
+          <span><SparkHighlight className={css.sparkHighlightSvg}/></span>
+          <span><SparkIcon className={css.sparkSvg}/></span>
+
+        </span>
+        <span className={css.sparkText}>Spark</span>
 
       </Button>
     );

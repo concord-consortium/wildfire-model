@@ -17,7 +17,7 @@ describe("BottomBar component", () => {
         <BottomBar />
       </Provider>
     );
-    expect(wrapper.find(Button).length).toEqual(5);
+    expect(wrapper.find(Button).length).toEqual(7);
   });
 
   it("start button is disabled until model is ready", () => {
