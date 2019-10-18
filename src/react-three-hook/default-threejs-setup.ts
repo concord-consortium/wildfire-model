@@ -13,15 +13,41 @@ export const getDefCamera = ({ offsetWidth, offsetHeight }: { offsetWidth: numbe
   return camera;
 };
 
-export const getDefRenderer = (canvas: HTMLCanvasElement) => {
-  const context = canvas.getContext("webgl");
-  if (!context) {
-    return null;
+class FakeRenderer {
+  public domElement: HTMLCanvasElement = document.createElement("canvas");
+
+  public getSize() {
+    return {
+      width: this.domElement.width,
+      height: this.domElement.height
+    };
   }
-  const renderer = new THREE.WebGLRenderer({
-    canvas,
-    context,
-  });
+
+  public setSize(width: number, height: number) {
+    this.domElement.width = width;
+    this.domElement.height = height;
+  }
+
+  public render() {
+    // noop
+  }
+
+  public setPixelRatio() {
+    // noop
+  }
+}
+
+export const getDefRenderer = (canvas: HTMLCanvasElement) => {
+  let renderer;
+  const context = canvas.getContext("webgl");
+  if (context) {
+    renderer = new THREE.WebGLRenderer({
+      canvas,
+      context
+    });
+  } else {
+    renderer = new FakeRenderer();
+  }
   renderer.setSize(canvas.offsetWidth, canvas.offsetHeight);
   renderer.setPixelRatio(window.devicePixelRatio);
   return renderer;
