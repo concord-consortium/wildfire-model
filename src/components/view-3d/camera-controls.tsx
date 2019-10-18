@@ -7,8 +7,8 @@ export const CameraControls = () => {
     controls.enablePan = false;
     controls.rotateSpeed = 0.5;
     controls.zoomSpeed = 0.5;
-    controls.minDistance = 1.8;
-    controls.maxDistance = 10;
+    controls.minDistance = 0.8;
+    controls.maxDistance = 3;
     controls.update();
   });
   return null;

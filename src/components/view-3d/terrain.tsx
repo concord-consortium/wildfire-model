@@ -6,13 +6,17 @@ import { observer } from "mobx-react";
 import { useStores } from "../../use-stores";
 import { PlaneBufferGeometry, BufferAttribute } from "three";
 
-const HEIGHT_SCALE = 0.00000001;
+const PLANE_WIDTH = 1;
 
 export const Terrain = observer(() => {
   const { simulation } = useStores();
   const { getEntity } = useThree<THREE.Mesh>(({ scene }) => {
-    const planeGeometry = new THREE.PlaneBufferGeometry(1, 1, simulation.gridWidth, simulation.gridHeight);
+    const planeHeight = simulation.config.modelHeight * PLANE_WIDTH / simulation.config.modelWidth;
+    const planeGeometry = new THREE.PlaneBufferGeometry(
+      PLANE_WIDTH, planeHeight, simulation.gridWidth - 1, simulation.gridHeight - 1
+    );
     const planeMaterial = new THREE.MeshPhongMaterial({ color: 0x039008 });
+    planeMaterial.side = THREE.DoubleSide;
     const plane = new THREE.Mesh(planeGeometry, planeMaterial);
     plane.lookAt(THREE.Object3D.DefaultUp);
     scene.add(plane);
@@ -26,11 +30,12 @@ export const Terrain = observer(() => {
     }
     const geometry = plane.geometry as PlaneBufferGeometry;
     const posArray = geometry.attributes.position.array as number[];
+    const heightMult = PLANE_WIDTH / simulation.config.modelWidth;
     // apply height map to vertices of plane
     simulation.cells.forEach(cell => {
-      const cellIdx = cell.y * (simulation.gridHeight + 1) + cell.x;
+      const cellIdx = (simulation.gridHeight - 1 - cell.y) * (simulation.gridHeight) + cell.x;
       const yAttrIdx = cellIdx * 3 + 2;
-      posArray[yAttrIdx] = cell.elevation  * simulation.config.heightmapMaxElevation * HEIGHT_SCALE;
+      posArray[yAttrIdx] = cell.elevation * heightMult;
     });
     geometry.computeVertexNormals();
     (geometry.attributes.position as BufferAttribute).needsUpdate = true;
