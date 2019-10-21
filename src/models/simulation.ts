@@ -49,13 +49,13 @@ const calculateCellNeighbors = (width: number, height: number, neighborsDist: nu
  * which means that, if cell 0 is ignited, cell 1 will ignite 0.5 seconds later.
  */
 const calculateTimeToIgniteNeighbors = (
-  cells: Cell[], cellNeighbors: number[][], wind: IWindProps, config: ISimulationConfig, moistureContent: number
+  cells: Cell[], cellNeighbors: number[][], wind: IWindProps, cellSize: number, moistureContent: number
 ) => {
   const timeToIgniteNeighbors = [];
   for (let i = 0; i < cells.length; i++) {
     const neighbors = cellNeighbors[i];
     const timeToIgniteMyNeighbors = neighbors.map(n =>
-      1 / getFireSpreadRate(cells[i], cells[n], wind, config.cellSize, moistureContent)
+      1 / getFireSpreadRate(cells[i], cells[n], wind, cellSize, moistureContent)
     );
     timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
   }
@@ -70,6 +70,7 @@ export class SimulationModel {
   @observable public wind: IWindProps;
   @observable public moistureContent: number;
   @observable public spark: Vector2 | null;
+  @observable public cellSize: number;
   @observable public gridWidth: number;
   @observable public gridHeight: number;
   @observable public time = 0;
@@ -83,8 +84,9 @@ export class SimulationModel {
     const config: IPresetConfig = Object.assign({}, defaultConfig, presetConfig, urlConfig);
 
     this.config = config;
-    this.gridWidth = config.modelWidth / config.cellSize;
-    this.gridHeight = config.modelHeight / config.cellSize;
+    this.cellSize = config.modelWidth / config.gridWidth;
+    this.gridWidth = config.gridWidth;
+    this.gridHeight = Math.ceil(config.modelHeight / this.cellSize);
 
     // It's enough to calculate this just once, as grid won't change.
     this.cellNeighbors = calculateCellNeighbors(this.gridWidth, this.gridHeight, this.config.neighborsDist);
@@ -108,7 +110,7 @@ export class SimulationModel {
     };
     this.moistureContent = config.moistureContent;
     if (config.spark) {
-      this.setSpark(Math.round(config.spark[0] / config.cellSize), Math.round(config.spark[1] / config.cellSize));
+      this.setSpark(Math.round(config.spark[0] / this.cellSize), Math.round(config.spark[1] / this.cellSize));
     } else {
       this.spark = null;
     }
@@ -180,7 +182,7 @@ export class SimulationModel {
       // It's enough to calculate this just once, as long as none of the land properties or wind speed can be changed.
       // This will change in the future when user is able to set land properties or wind speed dynamically.
       this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(
-        this.cells, this.cellNeighbors, this.wind, this.config, this.moistureContent
+        this.cells, this.cellNeighbors, this.wind, this.cellSize, this.moistureContent
       );
       // Use spark to start the simulation.
       this.cells[this.spark!.y * this.gridWidth + this.spark!.x].ignitionTime = 0;

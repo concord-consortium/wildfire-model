@@ -117,6 +117,7 @@
     "react": "^16.10.2",
     "react-dom": "^16.10.2",
     "screenfull": "^4.2.1",
-    "three": "^0.109.0"
+    "three": "^0.109.0",
+    "three-orbitcontrols": "^2.108.1"
   }
 }

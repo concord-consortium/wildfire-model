@@ -1,7 +1,7 @@
 import { inject, observer } from "mobx-react";
 import React from "react";
 import { BaseComponent, IBaseProps } from "./base";
-import Model2D from "./model-2d/model-2d";
+import { View3D } from "./view-3d/view-3d";
 
 import css from "./app.scss";
 import {BottomBar} from "./bottom-bar";
@@ -25,7 +25,7 @@ export class AppComponent extends BaseComponent<IProps, IState> {
           <div>Highest Point Possible: { config.heightmapMaxElevation } ft</div>
           <div>Time Elapsed: { timeInDays.toFixed(1) } days</div>
         </div>
-        <Model2D />
+        <View3D />
         <BottomBar />
       </div>
     );

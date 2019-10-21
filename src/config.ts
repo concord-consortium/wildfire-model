@@ -1,8 +1,8 @@
 export interface ISimulationConfig {
   modelWidth: number; // ft
   modelHeight: number; // ft
-  // Note that modelWidth % cellSize and modelHeight % cellSize should always be 0!
-  cellSize: number; // ft
+  // Note that modelHeight % gridWidth should always be 0!
+  gridWidth: number; // ft
   // Spark position, in ft.
   spark: number[];
   timeStep: number; // minutes
@@ -27,7 +27,7 @@ export const defaultConfig: IUrlConfig = {
   preset: "test1",
   modelWidth: 100000,
   modelHeight: 100000,
-  cellSize: 1000,
+  gridWidth: 100,
   spark: [50000, 50000],
   timeStep: 60, // minutes
   windSpeed: 0, // mph
