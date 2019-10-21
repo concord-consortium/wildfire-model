@@ -48,43 +48,44 @@ const windSpeedMarks = [
 
 @inject("stores")
 @observer
-export class SparkButton extends BaseComponent<IProps, IState> {
+export class TerrainPanel extends BaseComponent<IProps, IState> {
   public render() {
     const { ui, simulation } = this.stores;
     return (
-      <div className={css.terrain}>
+      <div className={`${css.terrain} ${ui.showTerrainUI ? "" : css.disabled}`}>
+        <div className={css.header}>Terrain Setup</div>
         <div className={css.widgetGroup}>
-              <div className={`${css.slider} ${css.windDirection}`}>
-                <div>Wind Direction (° from North)</div>
-                <Slider
-                  classes={{ thumb: css.thumb }}
-                  min={0}
-                  max={360}
-                  disabled={simulation.simulationStarted}
-                  value={simulation.wind.direction}
-                  step={1}
-                  marks={windDirectionMarks}
-                  onChange={this.handleWindDirectionChange}
-                  ThumbComponent={HorizontalHandle}
-                />
-              </div>
+          <div className={`${css.slider} ${css.windDirection}`}>
+            <div>Wind Direction (° from North)</div>
+            <Slider
+              classes={{ thumb: css.thumb }}
+              min={0}
+              max={360}
+              disabled={simulation.simulationStarted}
+              value={simulation.wind.direction}
+              step={1}
+              marks={windDirectionMarks}
+              onChange={this.handleWindDirectionChange}
+              ThumbComponent={HorizontalHandle}
+            />
+          </div>
         </div>
         <div className={css.widgetGroup}>
-              <div className={css.slider}>
-                <div>Wind Speed (mph)</div>
-                <Slider
-                  classes={{ thumb: css.thumb }}
-                  min={0}
-                  max={10}
-                  disabled={simulation.simulationStarted}
-                  value={simulation.wind.speed}
-                  step={0.1}
-                  marks={windSpeedMarks}
-                  onChange={this.handleWindSpeedChange}
-                  ThumbComponent={HorizontalHandle}
-                />
-              </div>
-            </div>
+          <div className={css.slider}>
+            <div>Wind Speed (mph)</div>
+            <Slider
+              classes={{ thumb: css.thumb }}
+              min={0}
+              max={10}
+              disabled={simulation.simulationStarted}
+              value={simulation.wind.speed}
+              step={0.1}
+              marks={windSpeedMarks}
+              onChange={this.handleWindSpeedChange}
+              ThumbComponent={HorizontalHandle}
+            />
+          </div>
+        </div>
       </div>
     );
   }

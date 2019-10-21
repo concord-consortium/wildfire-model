@@ -1,0 +1,33 @@
+@import "common.scss";
+
+.terrain{
+  position: fixed;
+  top: 40px;
+  width: 512px;
+  height: 485px;
+  margin-left: auto;
+  margin-right: auto;
+  border-radius: 10px;
+  border: 1px solid silver;
+  box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.5);
+
+  background: #fff;
+
+  padding: 15px;
+  padding-top: 32px;
+
+  &.disabled{
+    display: none;
+  }
+
+  .header{
+    margin-top: -28px;
+    text-align: center;
+    font-size: 14px;
+    font-family: Lato;
+  }
+
+  .widgetGroup{
+    margin-top: 20px;
+  }
+}

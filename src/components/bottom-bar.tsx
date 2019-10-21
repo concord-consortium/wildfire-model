@@ -135,7 +135,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           </div>
           <div className={`${css.widgetGroup} ${css.startStop}`}>
             <Button
-              onClick={simulation.simulationRunning ? simulation.stop : simulation.start}
+              onClick={this.handleStart}
               disabled={!simulation.ready}
               className={css.playbackButton}
               data-test="start-button"
@@ -171,6 +171,16 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     this.setState({ fullscreen: screenfull && screenfull.isFullscreen });
   }
 
+  public handleStart = () => {
+    const { ui, simulation } = this.stores;
+    if (simulation.simulationRunning) {
+      simulation.stop();
+    } else {
+      ui.showTerrainUI = false;
+      simulation.start();
+    }
+  }
+
   public handleRestart = () => {
     this.stores.simulation.restart();
   }
@@ -194,6 +204,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   public placeSpark = () => {
     const { ui } = this.stores;
+    ui.showTerrainUI = false;
     ui.sparkPositionInteraction = !ui.sparkPositionInteraction;
   }
 
