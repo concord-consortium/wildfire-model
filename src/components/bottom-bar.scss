@@ -75,6 +75,14 @@ $overflowHeight: 11px;
     background: $hoverColor;
   }
 
+  .precipitation{
+    width: 85px;
+
+    .precipitationSlider{
+      width: 40px;
+    }
+  }
+
   .placeSpark {
     margin-right: 0;
   }
@@ -90,6 +98,10 @@ $overflowHeight: 11px;
     margin-left: -$bottomBarWidgetGroupSpacing;
   }
 
+  .terrainButton{
+    width: 100px;
+    text-align: center;
+  }
   .fullscreenIcon {
     margin-right: 5px;
     margin-top: 5px;
@@ -106,20 +118,6 @@ $overflowHeight: 11px;
       &:hover {
         background-image: url("../assets/fullscreen-exit-dark.svg");
       }
-    }
-  }
-}
-.terrainSetupButton{
-  height: 100%;
-  .terrainSetupIcon{
-    margin-left: auto;
-    margin-right: auto;
-    width: 80px;
-    height: 32px;
-    span{
-      display: block;
-      padding-top: 30px;
-      white-space: nowrap;
     }
   }
 }
@@ -158,41 +156,6 @@ $overflowHeight: 11px;
   }
 }
 
-.fireLineButton{
-  min-width: 60px;
-  height: 100%;
-  svg {
-    position: absolute;
-    left: 0;
-    top: 0px;
-    height: 45px;
-    width: 53px;
-    margin: $bottomBarTopPadding auto 0 3px;
-  }
-  .fireLineHighlightSvg{
-    opacity: 0;
-  }
-  &:hover{
-    .fireLineHighlightSvg{
-      opacity: 1;
-    }
-  }
-  .fireLineText{
-    position: absolute;
-    top: 45px;
-    left: 0px;
-    width: 100%;
-  }
-}
-.helitackButton{
-  min-width: 60px;
-  height: 100%;
-  color: #434343;
-  font-weight: bold;
-  border-bottom-left-radius: 0 !important;
-  border-bottom-right-radius: 0 !important;
-}
-
 @media (max-width: 960px) {
   .logo {
     display: none;
@@ -205,8 +168,7 @@ $overflowHeight: 11px;
 }
 
 .slider {
-  width: 100px;
-  margin: 10px 18px;
+  margin: 10px auto;
   text-align: center;
   font-size: 12px;
   .thumb {
@@ -218,8 +180,8 @@ $overflowHeight: 11px;
         box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5)
       }
   }
-}
-
-.windDirection {
-  width: 158px;
+  span{
+    margin-top: 2px;
+    font-size: 9px;
+  }
 }
