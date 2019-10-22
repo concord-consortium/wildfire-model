@@ -79,8 +79,8 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   }
 
   public render() {
-    const { ui, simulation } = this.stores;
-    const uiDisabled = simulation.simulationStarted || ui.sparkPositionInteraction;
+    const { simulation } = this.stores;
+    const uiDisabled = simulation.simulationStarted;
     return (
       <div className={css.bottomBar}>
         <div className={css.leftContainer}>
@@ -191,12 +191,12 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   public handleFireLine = () => {
     // TODO: handle fire line
-    this.stores.simulation.reload();
   }
+
   public handleHelitack = () => {
     // TODO: handle Helitack
-    this.stores.simulation.reload();
   }
+
   public handleTerrain = () => {
     const { ui } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
