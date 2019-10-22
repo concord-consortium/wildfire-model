@@ -225,7 +225,7 @@ export class SimulationModel {
   }
 
   @action.bound public setSpark(x: number, y: number) {
-    this.spark = new Vector2(x, y);
+    this.spark = new Vector2(Math.floor(x), Math.floor(y));
   }
 
   @action.bound public setWindDirection(direction: number) {
@@ -238,6 +238,10 @@ export class SimulationModel {
 
   @action.bound public setMoistureContent(value: number) {
     this.moistureContent = value;
+  }
+
+  public getElevationAt(x: number, y: number) {
+    return this.cells[y * this.gridWidth + x].elevation;
   }
 
   @action.bound private updateFire() {
