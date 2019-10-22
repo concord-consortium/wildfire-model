@@ -4,6 +4,7 @@ import { BaseComponent, IBaseProps } from "./base";
 import { View3D } from "./view-3d/view-3d";
 
 import css from "./app.scss";
+import { TerrainPanel } from "./terrain-panel";
 import {BottomBar} from "./bottom-bar";
 
 interface IProps extends IBaseProps {}
@@ -26,6 +27,7 @@ export class AppComponent extends BaseComponent<IProps, IState> {
           <div>Time Elapsed: { timeInDays.toFixed(1) } days</div>
         </div>
         <View3D />
+        <TerrainPanel />
         <BottomBar />
       </div>
     );

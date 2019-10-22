@@ -6,11 +6,22 @@ import CCLogoSmall from "../assets/cc-logo-small.svg";
 import screenfull from "screenfull";
 import Button from "@material-ui/core/Button";
 import Slider from "@material-ui/core/Slider";
-import PauseIcon from "../assets/pause.svg";
-import StartIcon from "../assets/start.svg";
-import ReloadIcon from "../assets/reload.svg";
-import RestartIcon from "../assets/restart.svg";
-import { SparkButton } from "./spark-button";
+
+import SparkIcon from "../assets/bottom-bar/spark.svg";
+import SparkHighlight from "../assets/bottom-bar/spark_highlight.svg";
+import PauseIcon from "../assets/bottom-bar/pause.svg";
+import StartIcon from "../assets/bottom-bar/start.svg";
+import ReloadIcon from "../assets/bottom-bar/reload.svg";
+import RestartIcon from "../assets/bottom-bar/restart.svg";
+import HorizontalHandle from "../assets/slider-horizontal.svg";
+import FireLineIcon from "../assets/bottom-bar/fire-line.svg";
+import FireLineHighlightIcon from "../assets/bottom-bar/fire-line_highlight.svg";
+import HelitackIcon from "../assets/bottom-bar/helitack.svg";
+import HelitackHighlightIcon from "../assets/bottom-bar/helitack_highlight.svg";
+import TerrainIcon from "../assets/bottom-bar/terrain-setup.svg";
+import TerrainHighlightIcon from "../assets/bottom-bar/terrain-setup_highlight.svg";
+
+import { IconButton } from "./icon-button";
 
 import css from "./bottom-bar.scss";
 
@@ -29,44 +40,6 @@ const toggleFullscreen = () => {
     screenfull.exit();
   }
 };
-
-const windDirectionMarks = [
-  {
-    value: 0,
-    label: "0"
-  },
-  {
-    value: 90,
-    label: "90"
-  },
-  {
-    value: 180,
-    label: "180"
-  },
-  {
-    value: 270,
-    label: "270"
-  },
-  {
-    value: 360,
-    label: "360"
-  },
-];
-
-const windSpeedMarks = [
-  {
-    value: 0,
-    label: "0"
-  },
-  {
-    value: 5,
-    label: "5"
-  },
-  {
-    value: 10,
-    label: "10"
-  }
-];
 
 const moistureContentMarks = [
   {
@@ -106,7 +79,8 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   }
 
   public render() {
-    const sim = this.stores.simulation;
+    const { simulation } = this.stores;
+    const uiDisabled = simulation.simulationStarted;
     return (
       <div className={css.bottomBar}>
         <div className={css.leftContainer}>
@@ -114,8 +88,32 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           <CCLogoSmall className={css.logoSmall} />
         </div>
         <div className={css.mainContainer}>
-          <div className={`${css.widgetGroup}`}>
-            <SparkButton />
+          <div className={`${css.widgetGroup} ${css.terrainButton}`}>
+            <IconButton icon={<TerrainIcon />} highlightIcon={<TerrainHighlightIcon />}
+              disabled={uiDisabled} buttonText="Terrain Setup" onClick={this.handleTerrain}
+            />
+          </div>
+          <div className={`${css.widgetGroup} ${css.precipitation}`}>
+            <div className={css.slider}>
+              <div>Precipitation</div>
+              <Slider
+                classes={{thumb: css.thumb }}
+                min={0}
+                max={0.2}
+                disabled={simulation.simulationStarted}
+                value={simulation.moistureContent}
+                step={0.01}
+                marks={moistureContentMarks}
+                onChange={this.handleMoistureContentChange}
+                ThumbComponent={HorizontalHandle}
+                className={css.precipitationSlider}
+              />
+            </div>
+          </div>
+          <div className={`${css.widgetGroup} ${css.placeSpark}`}>
+            <IconButton icon={<SparkIcon />} highlightIcon={<SparkHighlight />}
+              disabled={uiDisabled} buttonText="Spark" onClick={this.placeSpark}
+            />
           </div>
           <div className={`${css.widgetGroup} ${css.reloadRestart}`}>
             <Button
@@ -137,56 +135,25 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           </div>
           <div className={`${css.widgetGroup} ${css.startStop}`}>
             <Button
-              onClick={sim.simulationRunning ? sim.stop : sim.start}
-              disabled={!sim.ready}
+              onClick={this.handleStart}
+              disabled={!simulation.ready}
               className={css.playbackButton}
               data-test="start-button"
               disableRipple={true}
             >
-              { sim.simulationRunning ? <span><PauseIcon/> Stop</span> : <span><StartIcon /> Start</span> }
+              { simulation.simulationRunning ? <span><PauseIcon/> Stop</span> : <span><StartIcon /> Start</span> }
             </Button>
           </div>
-          <div className={css.widgetGroup}>
-            <div className={`${css.slider} ${css.windDirection}`}>
-              <div>Wind Direction (° from North)</div>
-              <Slider
-                min={0}
-                max={360}
-                disabled={sim.simulationStarted}
-                value={sim.wind.direction}
-                step={1}
-                marks={windDirectionMarks}
-                onChange={this.handleWindDirectionChange}
-              />
-            </div>
+
+          <div className={`${css.widgetGroup}`}>
+            <IconButton icon={<FireLineIcon />} highlightIcon={<FireLineHighlightIcon />}
+              disabled={uiDisabled} buttonText="Fire Line" onClick={this.handleFireLine}
+            />
           </div>
-          <div className={css.widgetGroup}>
-            <div className={css.slider}>
-              <div>Wind Speed (mph)</div>
-              <Slider
-                min={0}
-                max={10}
-                disabled={sim.simulationStarted}
-                value={sim.wind.speed}
-                step={0.1}
-                marks={windSpeedMarks}
-                onChange={this.handleWindSpeedChange}
-              />
-            </div>
-          </div>
-          <div className={css.widgetGroup}>
-            <div className={css.slider}>
-              <div>Moisture Content</div>
-              <Slider
-                min={0}
-                max={0.2}
-                disabled={sim.simulationStarted}
-                value={sim.moistureContent}
-                step={0.01}
-                marks={moistureContentMarks}
-                onChange={this.handleMoistureContentChange}
-              />
-            </div>
+          <div className={`${css.widgetGroup} ${css.helitack}`}>
+            <IconButton icon={<HelitackIcon />} highlightIcon={<HelitackHighlightIcon />}
+              disabled={uiDisabled} buttonText="Helitack" onClick={this.handleHelitack}
+            />
           </div>
         </div>
         {/* This empty container is necessary so the spacing works correctly */}
@@ -204,6 +171,16 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     this.setState({ fullscreen: screenfull && screenfull.isFullscreen });
   }
 
+  public handleStart = () => {
+    const { ui, simulation } = this.stores;
+    if (simulation.simulationRunning) {
+      simulation.stop();
+    } else {
+      ui.showTerrainUI = false;
+      simulation.start();
+    }
+  }
+
   public handleRestart = () => {
     this.stores.simulation.restart();
   }
@@ -212,12 +189,23 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     this.stores.simulation.reload();
   }
 
-  public handleWindDirectionChange = (event: any, value: number | number[]) => {
-    this.stores.simulation.setWindDirection(value as number);
+  public handleFireLine = () => {
+    // TODO: handle fire line
   }
 
-  public handleWindSpeedChange = (event: any, value: number | number[]) => {
-    this.stores.simulation.setWindSpeed(value as number);
+  public handleHelitack = () => {
+    // TODO: handle Helitack
+  }
+
+  public handleTerrain = () => {
+    const { ui } = this.stores;
+    ui.showTerrainUI = !ui.showTerrainUI;
+  }
+
+  public placeSpark = () => {
+    const { ui } = this.stores;
+    ui.showTerrainUI = false;
+    ui.sparkPositionInteraction = !ui.sparkPositionInteraction;
   }
 
   public handleMoistureContentChange = (event: any, value: number | number[]) => {

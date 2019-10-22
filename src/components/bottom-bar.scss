@@ -66,6 +66,7 @@ $overflowHeight: 11px;
       right: -$bottomBarBorderWidth;
     }
     margin-left: -$bottomBarBorderWidth;
+    margin-right: $bottomBarWidgetGroupSpacing;
   }
 
   // Why global .hoverable?
@@ -74,15 +75,33 @@ $overflowHeight: 11px;
     background: $hoverColor;
   }
 
+  .precipitation{
+    width: 85px;
+
+    .precipitationSlider{
+      width: 40px;
+    }
+  }
+
+  .placeSpark {
+    margin-right: 0;
+  }
+
   .reloadRestart {
-    margin-left: 10px;
     white-space: nowrap;
   }
 
   .startStop {
-    margin-right: 10px;
+    margin-left: -$bottomBarWidgetGroupSpacing;
+  }
+  .helitack{
+    margin-left: -$bottomBarWidgetGroupSpacing;
   }
 
+  .terrainButton{
+    width: 100px;
+    text-align: center;
+  }
   .fullscreenIcon {
     margin-right: 5px;
     margin-top: 5px;
@@ -149,12 +168,20 @@ $overflowHeight: 11px;
 }
 
 .slider {
-  width: 100px;
-  margin: 10px 18px;
+  margin: 10px auto;
   text-align: center;
   font-size: 12px;
-}
-
-.windDirection {
-  width: 158px;
+  .thumb {
+    width: 20px;
+      height: 20px;
+      margin-left: -8.5px;
+      margin-top: -8.5px;
+      &:hover, &:active {
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5)
+      }
+  }
+  span{
+    margin-top: 2px;
+    font-size: 9px;
+  }
 }
