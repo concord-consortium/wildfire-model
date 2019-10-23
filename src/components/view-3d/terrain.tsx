@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef } from "react";
+import React, { useEffect } from "react";
 import * as THREE from "three";
 import { BufferAttribute, Float32BufferAttribute, PlaneBufferGeometry } from "three";
 import { useThree } from "../../react-three-hook";
@@ -7,12 +7,10 @@ import { useStores } from "../../use-stores";
 import { Cell, FireState } from "../../models/cell";
 import { LandType } from "../../models/fire-model";
 import { SimulationModel } from "../../models/simulation";
-import { IThreeContext, ThreeJSContext } from "../../react-three-hook/threejs-manager";
+import { IThreeContext } from "../../react-three-hook/threejs-manager";
+import { PLANE_WIDTH, planeHeight } from "./helpers";
+import { SparkInteraction } from "./spark-interaction";
 
-import css from "./terrain.scss";
-import { UIModel } from "../../models/ui";
-
-const PLANE_WIDTH = 1;
 const LAND_COLOR = {
   [LandType.Grass]: [1, 0.83, 0, 1],
   [LandType.Shrub]: [0, 1, 0, 1],
@@ -20,14 +18,11 @@ const LAND_COLOR = {
 const BURNING_COLOR = [1, 0, 0, 1];
 const BURNT_COLOR = [0.2, 0.2, 0.2, 1];
 
-const planeHeight = (simulation: SimulationModel) =>
-  simulation.config.modelHeight * PLANE_WIDTH / simulation.config.modelWidth;
+const vertexIdx = (cell: Cell, gridWidth: number, gridHeight: number) => (gridHeight - 1 - cell.y) * gridWidth + cell.x;
 
-const cellIdx = (cell: Cell, gridWidth: number, gridHeight: number) => (gridHeight - 1 - cell.y) * gridWidth + cell.x;
-
-const setCellColor = (colArray: number[], cell: Cell, gridWidth: number, gridHeight: number) => {
-  const idx = cellIdx(cell, gridWidth, gridHeight) * 4;
-  let color = [0, 0, 0, 1];
+const setVertexColor = (colArray: number[], cell: Cell, gridWidth: number, gridHeight: number) => {
+  const idx = vertexIdx(cell, gridWidth, gridHeight) * 4;
+  let color;
   if (cell.fireState === FireState.Burning) {
     color = BURNING_COLOR;
   } else if (cell.fireState === FireState.Burnt) {
@@ -61,7 +56,7 @@ const setupElevation = (plane: THREE.Mesh, simulation: SimulationModel) => {
   const heightMult = PLANE_WIDTH / simulation.config.modelWidth;
   // Apply height map to vertices of plane.
   simulation.cells.forEach(cell => {
-    const yAttrIdx = cellIdx(cell, simulation.gridWidth, simulation.gridHeight) * 3 + 2;
+    const yAttrIdx = vertexIdx(cell, simulation.gridWidth, simulation.gridHeight) * 3 + 2;
     posArray[yAttrIdx] = cell.elevation * heightMult;
   });
   geometry.computeVertexNormals();
@@ -72,58 +67,14 @@ const updateColors = (plane: THREE.Mesh, simulation: SimulationModel) => {
   const geometry = plane.geometry as PlaneBufferGeometry;
   const colArray = geometry.attributes.color.array as number[];
   simulation.cells.forEach(cell => {
-    setCellColor(colArray, cell, simulation.gridWidth, simulation.gridHeight);
+    setVertexColor(colArray, cell, simulation.gridWidth, simulation.gridHeight);
   });
   geometry.computeVertexNormals();
   (geometry.attributes.color as BufferAttribute).needsUpdate = true;
 };
 
-interface IPlaceSparkInteractionProps {
-  ui: UIModel;
-  simulation: SimulationModel;
-  canvas: HTMLCanvasElement;
-  camera: THREE.PerspectiveCamera;
-  plane: THREE.Mesh;
-  mouseHandlers?: {
-    click: (event: MouseEvent) => void;
-  };
-}
-
-const setupPlaceSparkInteraction = (
-  { plane, simulation, ui, mouseHandlers, canvas, camera }: IPlaceSparkInteractionProps
-) => {
-  if (mouseHandlers) {
-    canvas.removeEventListener("click", mouseHandlers.click);
-    canvas.classList.remove(css.sparkActive);
-  }
-  if (ui.sparkPositionInteraction) {
-    const raycaster = new THREE.Raycaster();
-    const click = (event: MouseEvent) => {
-      const mouse = new THREE.Vector2();
-      mouse.x = (event.clientX / canvas.offsetWidth ) * 2 - 1;
-      mouse.y = -(event.clientY / canvas.offsetHeight ) * 2 + 1;
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObject(plane);
-      if (intersects.length > 0) {
-        const p = intersects[0].point;
-        simulation.setSpark(
-          (p.x / PLANE_WIDTH + 0.5) * simulation.gridWidth,
-          (-p.z / planeHeight(simulation) + 0.5) * simulation.gridHeight
-        );
-        ui.sparkPositionInteraction = false;
-      }
-    };
-    canvas.addEventListener("click", click);
-    canvas.classList.add(css.sparkActive);
-    return {
-      click
-    };
-  }
-};
-
-export const Terrain = observer(() => {
-  const { simulation, ui } = useStores();
-  const threeJSContext = useContext(ThreeJSContext);
+export const Terrain = observer(({ children }) => {
+  const { simulation } = useStores();
 
   const { getEntity } = useThree<THREE.Mesh>(setupMesh(simulation));
 
@@ -141,17 +92,10 @@ export const Terrain = observer(() => {
     }
   }, [simulation.cells]);
 
-  const mouseHandlers = useRef<{ click: (event: MouseEvent) => void }>();
-  useEffect(() => {
-    const plane = getEntity();
-    if (plane) {
-      const canvas = threeJSContext.canvas;
-      const camera = threeJSContext.camera;
-      mouseHandlers.current = setupPlaceSparkInteraction({
-        ui, simulation, canvas, camera, plane, mouseHandlers: mouseHandlers.current
-      });
-    }
-  }, [ui.sparkPositionInteraction]);
-
-  return null;
+  // Note that we don't want to conditionally render <PlaceSparkInteraction> or provide more props to it.
+  // If <PlaceSparkInteraction> subscribes to stores directly, we can avoid unnecessary re-renders of parent component
+  // (Terrain) when some properties change.
+  return <>
+    <SparkInteraction getTerrain={getEntity} />
+  </>;
 });
