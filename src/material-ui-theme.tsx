@@ -62,6 +62,21 @@ export default createMuiTheme({
           opacity: 1
         }
       }
+    },
+    MuiSlider: {
+      thumb: {
+        "width": 20,
+        "height": 20,
+        "margin-left": -8.5,
+        "margin-top": -8.5,
+        "$disabled &": {
+          opacity: 0.5,
+          width: 20,
+          height: 20,
+          marginLeft: -8.5,
+          marginTop: -8.5
+        }
+      }
     }
   }
 });
