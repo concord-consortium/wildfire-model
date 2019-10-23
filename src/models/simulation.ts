@@ -110,7 +110,7 @@ export class SimulationModel {
     };
     this.moistureContent = config.moistureContent;
     if (config.spark) {
-      this.setSpark(Math.round(config.spark[0] / this.cellSize), Math.round(config.spark[1] / this.cellSize));
+      this.setSpark(config.spark[0], config.spark[1]);
     } else {
       this.spark = null;
     }
@@ -185,7 +185,7 @@ export class SimulationModel {
         this.cells, this.cellNeighbors, this.wind, this.cellSize, this.moistureContent
       );
       // Use spark to start the simulation.
-      this.cells[this.spark!.y * this.gridWidth + this.spark!.x].ignitionTime = 0;
+      this.cellAt(this.spark!.x, this.spark!.y).ignitionTime = 0;
     }
     this.simulationRunning = true;
     this.tick();
@@ -224,8 +224,9 @@ export class SimulationModel {
     this.cells = this.cells.slice();
   }
 
+  // Coords are in model units (feet).
   @action.bound public setSpark(x: number, y: number) {
-    this.spark = new Vector2(Math.floor(x), Math.floor(y));
+    this.spark = new Vector2(x, y);
   }
 
   @action.bound public setWindDirection(direction: number) {
@@ -240,8 +241,10 @@ export class SimulationModel {
     this.moistureContent = value;
   }
 
-  public getElevationAt(x: number, y: number) {
-    return this.cells[y * this.gridWidth + x].elevation;
+  public cellAt(x: number, y: number) {
+    const gridX = Math.floor(x / this.cellSize);
+    const gridY = Math.floor(y / this.cellSize);
+    return this.cells[gridY * this.gridWidth + gridX];
   }
 
   @action.bound private updateFire() {

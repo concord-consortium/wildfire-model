@@ -8,7 +8,7 @@ import { Cell, FireState } from "../../models/cell";
 import { LandType } from "../../models/fire-model";
 import { SimulationModel } from "../../models/simulation";
 import { IThreeContext } from "../../react-three-hook/threejs-manager";
-import { PLANE_WIDTH, planeHeight } from "./helpers";
+import { ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
 import { SparkInteraction } from "./spark-interaction";
 
 const LAND_COLOR = {
@@ -37,15 +37,18 @@ const setVertexColor = (colArray: number[], cell: Cell, gridWidth: number, gridH
 };
 
 const setupMesh = (simulation: SimulationModel) => ({ scene }: IThreeContext) => {
+  const height = planeHeight(simulation);
   const planeGeometry = new THREE.PlaneBufferGeometry(
-    PLANE_WIDTH, planeHeight(simulation), simulation.gridWidth - 1, simulation.gridHeight - 1
+    PLANE_WIDTH, height, simulation.gridWidth - 1, simulation.gridHeight - 1
   );
   planeGeometry.addAttribute("color",
     new Float32BufferAttribute(new Array((simulation.gridWidth) * (simulation.gridHeight) * 4), 4)
   );
   const planeMaterial = new THREE.MeshPhongMaterial({ vertexColors: THREE.VertexColors, side: THREE.DoubleSide });
   const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
-  planeMesh.lookAt(THREE.Object3D.DefaultUp);
+  planeMesh.lookAt(new THREE.Vector3(0, 0, 1));
+  // Move plane so bottom-left corner is at (0, 0) point;
+  planeMesh.position.set(PLANE_WIDTH * 0.5, height * 0.5, 0);
   scene.add(planeMesh);
   return planeMesh;
 };
@@ -53,11 +56,11 @@ const setupMesh = (simulation: SimulationModel) => ({ scene }: IThreeContext) =>
 const setupElevation = (plane: THREE.Mesh, simulation: SimulationModel) => {
   const geometry = plane.geometry as PlaneBufferGeometry;
   const posArray = geometry.attributes.position.array as number[];
-  const heightMult = PLANE_WIDTH / simulation.config.modelWidth;
+  const mult = ftToViewUnit(simulation);
   // Apply height map to vertices of plane.
   simulation.cells.forEach(cell => {
-    const yAttrIdx = vertexIdx(cell, simulation.gridWidth, simulation.gridHeight) * 3 + 2;
-    posArray[yAttrIdx] = cell.elevation * heightMult;
+    const zAttrIdx = vertexIdx(cell, simulation.gridWidth, simulation.gridHeight) * 3 + 2;
+    posArray[zAttrIdx] = cell.elevation * mult;
   });
   geometry.computeVertexNormals();
   (geometry.attributes.position as BufferAttribute).needsUpdate = true;
@@ -73,7 +76,7 @@ const updateColors = (plane: THREE.Mesh, simulation: SimulationModel) => {
   (geometry.attributes.color as BufferAttribute).needsUpdate = true;
 };
 
-export const Terrain = observer(({ children }) => {
+export const Terrain = observer(() => {
   const { simulation } = useStores();
 
   const { getEntity } = useThree<THREE.Mesh>(setupMesh(simulation));

@@ -4,7 +4,7 @@ import { observer } from "mobx-react";
 import { useStores } from "../../use-stores";
 import { SimulationModel } from "../../models/simulation";
 import { ThreeJSContext } from "../../react-three-hook/threejs-manager";
-import { PLANE_WIDTH, planeHeight } from "./helpers";
+import { ftToViewUnit } from "./helpers";
 import { UIModel } from "../../models/ui";
 
 import css from "./spark-interaction.scss";
@@ -24,6 +24,7 @@ const setupPlaceSparkInteraction = (
   { terrain, simulation, ui, mouseHandlers, canvas, camera }: IPlaceSparkInteractionProps
 ) => {
   if (mouseHandlers) {
+    // Cleanup.
     canvas.removeEventListener("click", mouseHandlers.click);
     canvas.classList.remove(css.sparkActive);
   }
@@ -38,10 +39,8 @@ const setupPlaceSparkInteraction = (
       const intersects = raycaster.intersectObject(terrain);
       if (intersects.length > 0) {
         const p = intersects[0].point;
-        simulation.setSpark(
-          (p.x / PLANE_WIDTH + 0.5) * simulation.gridWidth,
-          (-p.z / planeHeight(simulation) + 0.5) * simulation.gridHeight
-        );
+        const ratio = ftToViewUnit(simulation);
+        simulation.setSpark(p.x / ratio, p.y / ratio);
         ui.sparkPositionInteraction = false;
       }
     };

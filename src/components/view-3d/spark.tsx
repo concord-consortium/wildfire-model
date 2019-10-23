@@ -4,19 +4,19 @@ import { useThree } from "../../react-three-hook";
 import { observer } from "mobx-react";
 import { useStores } from "../../use-stores";
 import { IThreeContext } from "../../react-three-hook/threejs-manager";
-import sparkWhite from "../../assets/cursors/spark-white.png";
+import sparkImg from "../../assets/interactions/spark.png";
+import { ftToViewUnit, PLANE_WIDTH } from "./helpers";
 
-const WIDTH = 0.04;
-const HEIGHT = WIDTH * 224 / 174;
+const SIZE = 0.06 * PLANE_WIDTH;
 
 const setupMesh = ({ scene }: IThreeContext) => {
   const image = document.createElement("img");
-  image.src = sparkWhite;
+  image.src = sparkImg;
   image.onload = () =>  { texture.needsUpdate = true; };
   const texture = new THREE.Texture(image);
   const material = new THREE.SpriteMaterial({ map: texture, color: 0xffffff });
   const sprite = new THREE.Sprite(material);
-  sprite.scale.set(WIDTH, HEIGHT, 1);
+  sprite.scale.set(SIZE, SIZE, 1);
   scene.add(sprite);
   return sprite;
 };
@@ -30,11 +30,9 @@ export const Spark = observer(() => {
     const sprite = getEntity();
     const spark = simulation.spark;
     if (simulation.dataReady && sprite && spark) {
-      const x = spark.x / simulation.gridWidth - 0.5 + 0.5 / simulation.gridWidth;
-      const z = -spark.y / simulation.gridHeight + 0.5 - 0.5 / simulation.gridWidth;
-      const heightMult = 1 / simulation.config.modelWidth;
-      const y = simulation.getElevationAt(spark.x, spark.y) * heightMult + HEIGHT * 0.5;
-      sprite.position.set(x, y, z);
+      const ratio = ftToViewUnit(simulation);
+      const z = simulation.cellAt(spark.x, spark.y).elevation * ratio + SIZE * 0.5;
+      sprite.position.set(spark.x * ratio, spark.y * ratio, z);
     }
   }, [simulation.spark, simulation.dataReady]);
 
