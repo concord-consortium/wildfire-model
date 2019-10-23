@@ -3,6 +3,7 @@ import { ThreeJSManager } from "../../react-three-hook/threejs-manager";
 import { CameraControls } from "./camera-controls";
 import { Terrain } from "./terrain";
 import { Spark } from "./spark";
+import { Lights } from "./lights";
 
 // Note that React.memo is very important here. Let's try to limit number of unnecessary React re-renders to minimum.
 // Child components should subscribe to MobX store themselves, so they'll be re-rendered individually based on the
@@ -11,6 +12,7 @@ export const View3D = React.memo(() => {
   return (
     <ThreeJSManager>
       <CameraControls/>
+      <Lights/>
       <Terrain/>
       <Spark/>
     </ThreeJSManager>
