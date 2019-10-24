@@ -109,8 +109,9 @@ export class SimulationModel {
       direction: config.windDirection
     };
     this.moistureContent = config.moistureContent;
-    config.sparks.forEach((s, idx) => {
-      this.setSpark(idx, s[0], s[1]);
+    this.sparks.length = 0;
+    config.sparks.forEach(s => {
+      this.addSpark(s[0], s[1]);
     });
   }
 
@@ -229,6 +230,12 @@ export class SimulationModel {
     this.sparks[idx] = new Vector2(x, y);
   }
 
+  @action.bound public addSpark(x: number, y: number) {
+    if (this.canAddSpark()) {
+      this.sparks.push(new Vector2(x, y));
+    }
+  }
+
   @action.bound public setWindDirection(direction: number) {
     this.wind.direction = direction;
   }
@@ -239,6 +246,11 @@ export class SimulationModel {
 
   @action.bound public setMoistureContent(value: number) {
     this.moistureContent = value;
+  }
+
+  public canAddSpark() {
+    // There's an assumption that number of sparks should be smaller than number of zones.
+    return this.sparks.length < this.config.zonesCount;
   }
 
   public cellAt(x: number, y: number) {

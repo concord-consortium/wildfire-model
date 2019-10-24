@@ -60,7 +60,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     modelWidth: 25000,
     modelHeight: 25000,
     gridWidth: 100,
-    sparks: [ [5000, 12500], [20000, 12500] ],
+    sparks: [ [5000, 12500] ],
     timeStep: 10,
     heightmapMaxElevation: 3000,
     landType: [
