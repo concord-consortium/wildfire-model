@@ -51,9 +51,17 @@ const windSpeedMarks = [
 export class TerrainPanel extends BaseComponent<IProps, IState> {
   public render() {
     const { ui, simulation } = this.stores;
+    const zones = 2; // TODO: Pull from UI or simulation store properties
+    const zoneUI = [];
+    for (let i = 0; i < zones; i++) {
+      zoneUI.push(this.generateZoneUI(i));
+    }
     return (
       <div className={`${css.terrain} ${ui.showTerrainUI ? "" : css.disabled}`}>
         <div className={css.header}>Terrain Setup</div>
+        <div className={css.zones}>
+          {zoneUI}
+        </div>
         <div className={css.widgetGroup}>
           <div className={`${css.slider} ${css.windDirection}`}>
             <div>Wind Direction (° from North)</div>
@@ -89,7 +97,17 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       </div>
     );
   }
-
+  public generateZoneUI = (zoneNumber: number) => {
+    const terrainType = <div className={css.terrainType}>Terrain Type Picker</div>;
+    const terrainPreview = <div className={css.terrainPreview}>Terrain Preview</div>;
+    return (
+      <div className={css.zone}
+        key={zoneNumber}>
+        {terrainType}
+        {terrainPreview}
+      </div>
+    );
+  }
   public handleWindDirectionChange = (event: any, value: number | number[]) => {
     this.stores.simulation.setWindDirection(value as number);
   }
