@@ -10,7 +10,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     modelWidth: 100000,
     modelHeight: 100000,
     gridWidth: 100,
-    spark: [50000, 50000],
+    sparks: [ [50000, 50000] ],
     landType: [
       [ 0 ]
     ]
@@ -19,7 +19,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     modelWidth: 100000,
     modelHeight: 100000,
     gridWidth: 100,
-    spark: [50000, 50000],
+    sparks: [ [50000, 50000] ],
     windSpeed: 1,
     windDirection: 0,
     landType: [
@@ -30,7 +30,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     modelWidth: 100000,
     modelHeight: 100000,
     gridWidth: 100,
-    spark: [50000, 50000],
+    sparks: [ [50000, 50000] ],
     heightmapMaxElevation: 3000,
     landType: [
       [ 0 ]
@@ -44,7 +44,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     modelWidth: 100000,
     modelHeight: 100000,
     gridWidth: 100,
-    spark: [50000, 50000],
+    sparks: [ [50000, 50000] ],
     windSpeed: 1,
     windDirection: 0,
     heightmapMaxElevation: 10000,
@@ -60,7 +60,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     modelWidth: 25000,
     modelHeight: 25000,
     gridWidth: 100,
-    spark: [12500, 12500],
+    sparks: [ [5000, 12500], [20000, 12500] ],
     timeStep: 10,
     heightmapMaxElevation: 3000,
     landType: [
@@ -72,7 +72,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     modelWidth: 100000,
     modelHeight: 100000,
     gridWidth: 100,
-    spark: [50000, 50000],
+    sparks: [ [50000, 50000] ],
     heightmapMaxElevation: 7000,
     landType: [
       [ 0 ]
@@ -83,7 +83,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     modelWidth: 100000,
     modelHeight: 100000,
     gridWidth: 100,
-    spark: [50000, 50000],
+    sparks: [ [50000, 50000] ],
     landType: [
       [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
       [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ],

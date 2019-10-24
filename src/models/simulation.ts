@@ -69,7 +69,7 @@ export class SimulationModel {
   @observable public dataReady = false;
   @observable public wind: IWindProps;
   @observable public moistureContent: number;
-  @observable public spark: Vector2 | null;
+  @observable public sparks: Vector2[] = [];
   @observable public cellSize: number;
   @observable public gridWidth: number;
   @observable public gridHeight: number;
@@ -99,7 +99,7 @@ export class SimulationModel {
   }
 
   @computed public get ready() {
-    return this.dataReady && !!this.spark;
+    return this.dataReady && this.sparks.length > 0;
   }
 
   @action.bound public setInputParamsFromConfig() {
@@ -109,11 +109,9 @@ export class SimulationModel {
       direction: config.windDirection
     };
     this.moistureContent = config.moistureContent;
-    if (config.spark) {
-      this.setSpark(config.spark[0], config.spark[1]);
-    } else {
-      this.spark = null;
-    }
+    config.sparks.forEach((s, idx) => {
+      this.setSpark(idx, s[0], s[1]);
+    });
   }
 
   public getLandTypeData(): Promise<number[]> {
@@ -184,8 +182,10 @@ export class SimulationModel {
       this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(
         this.cells, this.cellNeighbors, this.wind, this.cellSize, this.moistureContent
       );
-      // Use spark to start the simulation.
-      this.cellAt(this.spark!.x, this.spark!.y).ignitionTime = 0;
+      // Use sparks to start the simulation.
+      this.sparks.forEach(spark => {
+        this.cellAt(spark.x, spark.y).ignitionTime = 0;
+      });
     }
     this.simulationRunning = true;
     this.tick();
@@ -225,8 +225,8 @@ export class SimulationModel {
   }
 
   // Coords are in model units (feet).
-  @action.bound public setSpark(x: number, y: number) {
-    this.spark = new Vector2(x, y);
+  @action.bound public setSpark(idx: number, x: number, y: number) {
+    this.sparks[idx] = new Vector2(x, y);
   }
 
   @action.bound public setWindDirection(direction: number) {
