@@ -3,6 +3,7 @@ import React from "react";
 import { BaseComponent, IBaseProps } from "./base";
 import { Slider } from "@material-ui/core";
 import HorizontalHandle from "../assets/slider-horizontal.svg";
+import { TerrainTypeSelector } from "./terrain-type-selector";
 import css from "./terrain-panel.scss";
 
 interface IProps extends IBaseProps {}
@@ -98,7 +99,8 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     );
   }
   public generateZoneUI = (zoneNumber: number) => {
-    const terrainType = <div className={css.terrainType}>Terrain Type Picker</div>;
+    const terrainType = <div className={css.terrainType}>
+      <TerrainTypeSelector zone="1" terrainType="plains" onChange={this.handleTerrainTypeChange} /></div>;
     const terrainPreview = <div className={css.terrainPreview}>Terrain Preview</div>;
     return (
       <div className={css.zone}
@@ -114,5 +116,10 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
 
   public handleWindSpeedChange = (event: any, value: number | number[]) => {
     this.stores.simulation.setWindSpeed(value as number);
+  }
+
+  public handleTerrainTypeChange = (event: React.ChangeEvent<HTMLInputElement>, value: string) => {
+
+    // something like this.stores.simulation.setZoneParams()
   }
 }
