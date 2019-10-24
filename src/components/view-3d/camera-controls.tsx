@@ -4,10 +4,11 @@ import { PLANE_WIDTH, planeHeight } from "./helpers";
 import { useStores } from "../../use-stores";
 import { observer } from "mobx-react";
 import { DEFAULT_UP } from "./helpers";
+import { useEffect } from "react";
 
 export const CameraControls = observer(() => {
-  const { simulation } = useStores();
-  useThree(({ camera, canvas }) => {
+  const { simulation, ui } = useStores();
+  const { getEntity } = useThree(({ camera, canvas }) => {
     camera.up.copy(DEFAULT_UP);
 
     const controls = new OrbitControls(camera, canvas);
@@ -23,6 +24,16 @@ export const CameraControls = observer(() => {
 
     camera.position.set(PLANE_WIDTH * 0.5, planeHeight(simulation) * -1.5, PLANE_WIDTH * 1.5);
     controls.update();
+
+    return controls;
   });
+
+  useEffect(() => {
+    const controls = getEntity();
+    if (controls) {
+      controls.enableRotate = !ui.draggableObject;
+    }
+  }, [ui.draggableObject]);
+
   return null;
 });
