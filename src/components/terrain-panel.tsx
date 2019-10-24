@@ -4,6 +4,9 @@ import { BaseComponent, IBaseProps } from "./base";
 import { Slider } from "@material-ui/core";
 import HorizontalHandle from "../assets/slider-horizontal.svg";
 import { TerrainTypeSelector } from "./terrain-type-selector";
+import { VegetationSelector } from "./vegetation-selector";
+import { DroughtSelector } from "./drought-selector";
+
 import css from "./terrain-panel.scss";
 
 interface IProps extends IBaseProps {}
@@ -63,6 +66,10 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
         <div className={css.zones}>
           {zoneUI}
         </div>
+        <div className={css.vegetationSelector}>
+          <VegetationSelector zone="1" vegetationType="shrub" onChange={this.handleVegetationChange} />
+          <DroughtSelector zone="1" droughtIndex="mild" onChange={this.handleDroughtChange}/>
+        </div>
         <div className={css.widgetGroup}>
           <div className={`${css.slider} ${css.windDirection}`}>
             <div>Wind Direction (° from North)</div>
@@ -119,6 +126,14 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   }
 
   public handleTerrainTypeChange = (event: React.ChangeEvent<HTMLInputElement>, value: string) => {
+
+    // something like this.stores.simulation.setZoneParams()
+  }
+  public handleVegetationChange = (event: React.ChangeEvent<HTMLInputElement>, value: string) => {
+
+    // something like this.stores.simulation.setZoneParams()
+  }
+  public handleDroughtChange = (event: React.ChangeEvent<HTMLInputElement>, value: string) => {
 
     // something like this.stores.simulation.setZoneParams()
   }
