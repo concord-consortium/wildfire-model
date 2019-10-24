@@ -1,10 +1,10 @@
 import OrbitControls from "three-orbitcontrols";
 import { useThree } from "../../react-three-hook";
-import { PLANE_WIDTH, planeHeight } from "./helpers";
+import { DEFAULT_UP, PLANE_WIDTH, planeHeight } from "./helpers";
 import { useStores } from "../../use-stores";
 import { observer } from "mobx-react";
-import { DEFAULT_UP } from "./helpers";
 import { useEffect } from "react";
+import { Interaction } from "../../models/ui";
 
 export const CameraControls = observer(() => {
   const { simulation, ui } = useStores();
@@ -31,9 +31,9 @@ export const CameraControls = observer(() => {
   useEffect(() => {
     const controls = getEntity();
     if (controls) {
-      controls.enableRotate = !ui.draggableObject;
+      controls.enableRotate = ui.interaction !== Interaction.Dragging;
     }
-  }, [ui.draggableObject]);
+  }, [ui.interaction]);
 
   return null;
 });

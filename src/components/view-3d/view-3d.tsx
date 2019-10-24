@@ -2,7 +2,6 @@ import React from "react";
 import { ThreeJSManager } from "../../react-three-hook/threejs-manager";
 import { CameraControls } from "./camera-controls";
 import { Terrain } from "./terrain";
-import { SparksContainer } from "./spark";
 import { Lights } from "./lights";
 
 // Note that React.memo is very important here. Let's try to limit number of unnecessary React re-renders to minimum.
@@ -14,7 +13,6 @@ export const View3D = React.memo(() => {
       <CameraControls/>
       <Lights/>
       <Terrain/>
-      <SparksContainer/>
     </ThreeJSManager>
   );
 });

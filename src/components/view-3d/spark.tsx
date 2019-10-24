@@ -1,13 +1,13 @@
-import React, { useContext, useEffect } from "react";
+import React, { useEffect } from "react";
 import * as THREE from "three";
 import { useThree } from "../../react-three-hook";
 import { observer } from "mobx-react";
 import { useStores } from "../../use-stores";
-import { IThreeContext, ThreeJSContext } from "../../react-three-hook/threejs-manager";
+import { IThreeContext } from "../../react-three-hook/threejs-manager";
 import sparkImg from "../../assets/interactions/spark.png";
 import sparkHighlightImg from "../../assets/interactions/spark-highlight.png";
-import { ftToViewUnit, intersects, PLANE_WIDTH } from "./helpers";
-import { Draggable, Interaction } from "../../models/ui";
+import { ftToViewUnit, PLANE_WIDTH } from "./helpers";
+import { useInteractions } from "./use-interactions";
 
 const SIZE = 0.06 * PLANE_WIDTH;
 
@@ -30,11 +30,31 @@ const setupMesh = ({ scene }: IThreeContext) => {
   return sprite;
 };
 
-export const Spark = observer(({ sparkIdx }) => {
-  const { simulation, ui } = useStores();
-  const { canvas, camera } = useContext(ThreeJSContext);
+export const Spark = observer(({ sparkIdx, getTerrain }) => {
+  const { simulation } = useStores();
 
   const { getEntity } = useThree<THREE.Sprite>(setupMesh);
+
+  useInteractions({
+    getObject: getEntity,
+    getDragBaseObject: getTerrain,
+    onDrag: (x: number, y: number) => {
+      const ratio = ftToViewUnit(simulation);
+      simulation.setSpark(sparkIdx, x / ratio, y / ratio);
+    },
+    onMouseOver: () => {
+      const spark = getEntity();
+      if (spark) {
+        spark.material = highlightMaterial;
+      }
+    },
+    onMouseOut: () => {
+      const spark = getEntity();
+      if (spark) {
+        spark.material = defMaterial;
+      }
+    }
+  });
 
   useEffect(() => {
     const sprite = getEntity();
@@ -46,38 +66,12 @@ export const Spark = observer(({ sparkIdx }) => {
     }
   }, [simulation.sparks[sparkIdx], simulation.dataReady]);
 
-  useEffect(() => {
-    const spark = getEntity();
-    if (spark) {
-      const mouseMove = (event: MouseEvent) => {
-        const result = intersects({ event, camera, canvas, object: spark });
-        if (result) {
-          spark.material = highlightMaterial;
-          ui.setDraggableObject(Draggable.Spark, sparkIdx);
-        } else if (ui.interaction !== Interaction.Dragging
-          && ui.draggableObject === Draggable.Spark && ui.draggableObjectIdx === sparkIdx) {
-          // Why do we check (ui.interaction !== Interaction.Dragging)? If object is being dragged, cursor can
-          // temporarily leave object area. We don't want to interrupt dragging then.
-          // Also, note that it's super important to check if draggableObject is equal to currently processed object.
-          // Otherwise, this handler could "unselect" some other object when mouse pointer is leaving it.
-          spark.material = defMaterial;
-          ui.setDraggableObject(null);
-        }
-      };
-      canvas.addEventListener("mousemove", mouseMove);
-      // Cleanup function.
-      return () => {
-        canvas.removeEventListener("mousemove", mouseMove);
-      };
-    }
-  }, []);
-
   return null;
 });
 
-export const SparksContainer = observer(() => {
+export const SparksContainer = observer(({ getTerrain }) => {
   const { simulation } = useStores();
   return <>
-    { simulation.sparks.map((s, idx) => <Spark key={idx} sparkIdx={idx} />) }
+    { simulation.sparks.map((s, idx) => <Spark key={idx} sparkIdx={idx} getTerrain={getTerrain}/>) }
   </>;
 });
