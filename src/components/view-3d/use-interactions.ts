@@ -15,7 +15,9 @@ interface IUseInteractionProps {
   onMouseOut?: () => void;
 }
 
-export const useInteractions = ({ getObject, getDragBaseObject, onDrag, onMouseOver, onMouseOut }: IUseInteractionProps) => {
+export const useInteractions = ({
+  getObject, getDragBaseObject, onDrag, onMouseOver, onMouseOut
+}: IUseInteractionProps) => {
   const { ui } = useStores();
   const { canvas, camera } = useContext(ThreeJSContext);
 
