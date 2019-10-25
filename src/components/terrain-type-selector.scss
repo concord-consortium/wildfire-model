@@ -1,5 +1,29 @@
 @import "common.scss";
 
-.terrainSelector{
-  display: inline;
+.terrain{
+  width: 100%;
+
+  .terrainSelectorHeader{
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 12px;
+  }
+  .terrainSelector{
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+    display: flex;
+    flex-wrap: nowrap;
+    flex-direction: row !important;
+    justify-content: center;
+    text-align: center;
+    .terrainOption{
+      font-size: 10px;
+      flex-grow: 1;
+      span{
+        font-size: 10px !important
+      }
+    }
+  }
 }

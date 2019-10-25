@@ -12,8 +12,8 @@ interface IProps {
 
 export const TerrainTypeSelector = (({ zone, terrainType, onChange }: IProps) => {
   return (
-    <FormControl component="fieldset">
-      <FormLabel component="legend">{`Terrain Type Selector Zone ${zone}`}</FormLabel>
+    <div className={css.terrain}>
+      <div className={css.terrainSelectorHeader}>Terrain Type</div>
       <RadioGroup
         aria-label="terrain type"
         onChange={onChange}
@@ -25,18 +25,21 @@ export const TerrainTypeSelector = (({ zone, terrainType, onChange }: IProps) =>
           control={<Radio />}
           value="plains"
           label="Plains"
-          labelPlacement="bottom" />
+          className={css.terrainOption}
+          labelPlacement="end" />
         <FormControlLabel
           control={<Radio />}
           value="foothills"
           label="Foothills"
-          labelPlacement="bottom" />
+          className={css.terrainOption}
+          labelPlacement="end" />
         <FormControlLabel
           control={<Radio />}
           value="mountains"
           label="Mountains"
-          labelPlacement="bottom" />
+          className={css.terrainOption}
+          labelPlacement="end" />
       </RadioGroup>
-    </FormControl>
+    </div>
   );
 });

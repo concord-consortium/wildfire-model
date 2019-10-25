@@ -1,8 +1,8 @@
 import React from "react";
 import { VegetationType } from "../types";
-import { Radio, RadioGroup, FormLabel, FormControl, FormControlLabel } from "@material-ui/core";
-
-import * as css from "./terrain-type-selector.scss";
+import { Slider } from "@material-ui/core";
+import VerticalHandle from "../assets/slider-vertical.svg";
+import * as css from "./vegetation-selector.scss";
 
 interface IProps {
   zone: string;
@@ -12,31 +12,20 @@ interface IProps {
 
 export const VegetationSelector = (({ zone, vegetationType, onChange }: IProps) => {
   return (
-    <FormControl component="fieldset">
-      <FormLabel component="legend">{`Vegetation Type Selector Zone ${zone}`}</FormLabel>
-      <RadioGroup
-        aria-label="vegetation type"
+    <div className={css.vegetationSelector}>
+      <div className={css.header}>Vegetation Type</div>
+      <Slider
+        classes={{ thumb: css.thumb, track: css.track, rail: css.rail, disabled: css.disabled }}
+        min={0}
+        max={0.2}
+        value={0}
+        step={1}
         onChange={onChange}
-        className={`${css.vegetationSelector}`}
-        data-test="vegetation-type-selector"
-        value={vegetationType}
-      >
-        <FormControlLabel
-          control={<Radio />}
-          value="shrub"
-          label="Shrub"
-          labelPlacement="bottom" />
-        <FormControlLabel
-          control={<Radio />}
-          value="smallForest"
-          label="Small Forest"
-          labelPlacement="bottom" />
-        <FormControlLabel
-          control={<Radio />}
-          value="largeForest"
-          label="Large Forest"
-          labelPlacement="bottom" />
-      </RadioGroup>
-    </FormControl>
+        orientation="vertical"
+        ThumbComponent={VerticalHandle}
+        className={css.vegetationSlider}
+        data-test="vegetation-slider"
+      />
+    </div>
   );
 });

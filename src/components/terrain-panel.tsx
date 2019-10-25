@@ -55,22 +55,30 @@ const windSpeedMarks = [
 export class TerrainPanel extends BaseComponent<IProps, IState> {
   public render() {
     const { ui, simulation } = this.stores;
-    const zones = 2; // TODO: Pull from UI or simulation store properties
-    const zoneUI = [];
-    for (let i = 0; i < zones; i++) {
-      zoneUI.push(this.generateZoneUI(i));
-    }
+
     return (
       <div className={`${css.terrain} ${ui.showTerrainUI ? "" : css.disabled}`}>
         <div className={css.header}>Terrain Setup</div>
         <div className={css.zones}>
-          {zoneUI}
+          <div className={css.zone}>
+            <div className={css.terrainPreview}>Zone 1</div>
+          </div>
+          <div className={css.zone}>
+            <div className={css.terrainPreview}>Zone 2</div>
+          </div>
         </div>
-        <div className={css.vegetationSelector}>
-          <VegetationSelector zone="1" vegetationType="shrub" onChange={this.handleVegetationChange} />
-          <DroughtSelector zone="1" droughtIndex="mild" onChange={this.handleDroughtChange}/>
+        <div className={css.terrainSelector}>
+          <TerrainTypeSelector zone="1" terrainType="plains" onChange={this.handleTerrainTypeChange} />
         </div>
-        <div className={css.widgetGroup}>
+        <div className={css.selectors}>
+          <div className={css.selector}>
+            <VegetationSelector zone="1" vegetationType="shrub" onChange={this.handleVegetationChange} />
+          </div>
+          <div className={css.selector}>
+            <DroughtSelector zone="1" droughtIndex="mild" onChange={this.handleDroughtChange}/>
+          </div>
+        </div>
+        <div className={css.windControls}>
           <div className={`${css.slider} ${css.windDirection}`}>
             <div>Wind Direction (° from North)</div>
             <Slider
@@ -85,8 +93,6 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
               ThumbComponent={HorizontalHandle}
             />
           </div>
-        </div>
-        <div className={css.widgetGroup}>
           <div className={css.slider}>
             <div>Wind Speed (mph)</div>
             <Slider
@@ -105,18 +111,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       </div>
     );
   }
-  public generateZoneUI = (zoneNumber: number) => {
-    const terrainType = <div className={css.terrainType}>
-      <TerrainTypeSelector zone="1" terrainType="plains" onChange={this.handleTerrainTypeChange} /></div>;
-    const terrainPreview = <div className={css.terrainPreview}>Terrain Preview</div>;
-    return (
-      <div className={css.zone}
-        key={zoneNumber}>
-        {terrainType}
-        {terrainPreview}
-      </div>
-    );
-  }
+
   public handleWindDirectionChange = (event: any, value: number | number[]) => {
     this.stores.simulation.setWindDirection(value as number);
   }
