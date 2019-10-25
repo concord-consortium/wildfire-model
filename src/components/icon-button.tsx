@@ -8,14 +8,15 @@ interface IProps {
   buttonText?: string;
   onClick?: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   disabled?: boolean;
+  dataTest?: string;
 }
 
-export const IconButton = ({ icon, highlightIcon, onClick, disabled, buttonText }: IProps) => (
+export const IconButton = ({ icon, highlightIcon, onClick, disabled, buttonText, dataTest }: IProps) => (
   <Button
     onClick={onClick}
     className={`${css.iconButton} ${disabled ? css.disabled : ""}`}
-    data-test="icon-button"
     disableRipple={true}
+    data-test={dataTest ? dataTest : "icon-button"}
     disableTouchRipple={true}
     disabled={disabled}
   >

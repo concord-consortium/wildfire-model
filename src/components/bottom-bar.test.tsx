@@ -4,6 +4,7 @@ import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
 import { BottomBar } from "./bottom-bar";
 import Button from "@material-ui/core/Button";
+import css from "./bottom-bar.scss";
 
 describe("BottomBar component", () => {
   let stores = createStores();
@@ -65,6 +66,97 @@ describe("BottomBar component", () => {
       );
       wrapper.find('[data-test="reload-button"]').first().simulate("click");
       expect(stores.simulation.reload).toHaveBeenCalled();
+    });
+  });
+
+  describe("terrain button", () => {
+    it("toggles the display of the terrain dialog", () => {
+      const showUI = stores.ui.showTerrainUI;
+      const wrapper = mount(
+        <Provider stores={stores}>
+          <BottomBar />
+        </Provider>
+      );
+      // default behavior hides the UI
+      expect(stores.ui.showTerrainUI).toBe(false);
+      wrapper.find('[data-test="terrain-button"]').first().simulate("click");
+      expect(stores.ui.showTerrainUI).toBe(true);
+      wrapper.find('[data-test="terrain-button"]').first().simulate("click");
+      expect(stores.ui.showTerrainUI).toBe(false);
+    });
+  });
+
+  describe("spark button", () => {
+    // TODO: When zones are available, look up this number
+    const sparksAvailable = 1; // stores.ui.zones?
+    const wrapper = mount(
+      <Provider stores={stores}>
+        <BottomBar />
+      </Provider>
+    );
+    it("enables the user to place a starting spark", () => {
+      wrapper.find('[data-test="spark-button"]').first().simulate("click");
+      // expect (stores.)
+    });
+  });
+
+  describe("fireline button", () => {
+    // TODO: how many of these can be added?
+    const firelinesAvailable = 1;
+    const wrapper = mount(
+      <Provider stores={stores}>
+        <BottomBar />
+      </Provider>
+    );
+    it("enables the user to place a fireline", () => {
+      wrapper.find('[data-test="fireline-button"]').first().simulate("click");
+      // expect app to go into fireline mode, select start-end points
+    });
+  });
+
+  describe("helitack button", () => {
+    // TODO: how many of these do we have?
+    const helitackAvailable = 1;
+    const wrapper = mount(
+      <Provider stores={stores}>
+        <BottomBar />
+      </Provider>
+    );
+    it("enables the user to select a zone for helitack", () => {
+      wrapper.find('[data-test="helitack-button"]').first().simulate("click");
+      // expect app to give you control over a helitack drop point
+    });
+  });
+
+  describe("precipitation slider", () => {
+    const wrapper = mount(
+      <Provider stores={stores}>
+        <BottomBar />
+      </Provider>
+    );
+    stores.simulation.simulationStarted = false;
+    const precipitationSlider = wrapper.find('[data-test="precipitation-slider"]').first();
+    it("provides the user a way to change precipitation levels from low to high", () => {
+      expect(precipitationSlider.prop("disabled")).toEqual(false);
+    });
+  });
+
+  describe("controls are disabled when running", () => {
+    stores.simulation.simulationStarted = true;
+    const wrapper = mount(
+      <Provider stores={stores}>
+        <BottomBar />
+      </Provider>
+    );
+
+    const precipitationSlider = wrapper.find('[data-test="precipitation-slider"]').first();
+    const spark = wrapper.find('[data-test="spark-button"]').first();
+    const terrainButton = wrapper.find('[data-test="terrain-button"]').first();
+
+    it("is disabled while running", () => {
+      expect(precipitationSlider.prop("disabled")).toEqual(true);
+      expect(spark.prop("disabled")).toEqual(true);
+      expect(terrainButton.prop("disabled")).toEqual(true);
     });
   });
 });

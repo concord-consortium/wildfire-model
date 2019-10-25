@@ -96,7 +96,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
         <div className={css.mainContainer}>
           <div className={`${css.widgetGroup} ${css.terrainButton}`}>
             <IconButton icon={<TerrainIcon />} highlightIcon={<TerrainHighlightIcon />}
-              disabled={uiDisabled} buttonText="Terrain Setup" onClick={this.handleTerrain}
+              disabled={uiDisabled} buttonText="Terrain Setup" dataTest="terrain-button" onClick={this.handleTerrain}
             />
           </div>
           <div className={`${css.widgetGroup} ${css.precipitation}`}>
@@ -113,12 +113,13 @@ export class BottomBar extends BaseComponent<IProps, IState> {
                 onChange={this.handleMoistureContentChange}
                 ThumbComponent={HorizontalHandle}
                 className={css.precipitationSlider}
+                data-test="precipitation-slider"
               />
             </div>
           </div>
           <div className={`${css.widgetGroup} ${css.placeSpark}`}>
             <IconButton icon={<SparkIcon />} highlightIcon={<SparkHighlight />}
-              disabled={this.sparkBtnDisabled} buttonText="Spark" onClick={this.placeSpark}
+              disabled={this.sparkBtnDisabled} buttonText="Spark" dataTest="spark-button" onClick={this.placeSpark}
             />
           </div>
           <div className={`${css.widgetGroup} ${css.reloadRestart}`}>
@@ -153,12 +154,12 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
           <div className={`${css.widgetGroup}`}>
             <IconButton icon={<FireLineIcon />} highlightIcon={<FireLineHighlightIcon />}
-              disabled={uiDisabled} buttonText="Fire Line" onClick={this.handleFireLine}
+              disabled={uiDisabled} buttonText="Fire Line" dataTest="fireline-button" onClick={this.handleFireLine}
             />
           </div>
           <div className={`${css.widgetGroup} ${css.helitack}`}>
             <IconButton icon={<HelitackIcon />} highlightIcon={<HelitackHighlightIcon />}
-              disabled={uiDisabled} buttonText="Helitack" onClick={this.handleHelitack}
+              disabled={uiDisabled} buttonText="Helitack" dataTest="helitack-button" onClick={this.handleHelitack}
             />
           </div>
         </div>
