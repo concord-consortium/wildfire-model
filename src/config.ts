@@ -1,10 +1,12 @@
 export interface ISimulationConfig {
+  // Number of zones that the model is using. Zones are used to keep properties of some area of the model.
+  zonesCount: 2 | 3;
   modelWidth: number; // ft
   modelHeight: number; // ft
   // Note that modelHeight % gridWidth should always be 0!
   gridWidth: number; // ft
-  // Spark position, in ft.
-  spark: number[];
+  // Spark positions, in ft.
+  sparks: number[][];
   timeStep: number; // minutes
   windSpeed: number; // mph
   windDirection: number; // degrees, 0 is northern wind
@@ -25,10 +27,11 @@ export interface IUrlConfig extends ISimulationConfig {
 
 export const defaultConfig: IUrlConfig = {
   preset: "test1",
+  zonesCount: 2,
   modelWidth: 100000,
   modelHeight: 100000,
   gridWidth: 100,
-  spark: [50000, 50000],
+  sparks: [ [50000, 50000] ],
   timeStep: 60, // minutes
   windSpeed: 0, // mph
   windDirection: 0, // degrees, northern wind

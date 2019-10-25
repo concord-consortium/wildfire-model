@@ -4,8 +4,8 @@ import { observer } from "mobx-react";
 import { useStores } from "../../use-stores";
 import { SimulationModel } from "../../models/simulation";
 import { ThreeJSContext } from "../../react-three-hook/threejs-manager";
-import { ftToViewUnit } from "./helpers";
-import { UIModel } from "../../models/ui";
+import { ftToViewUnit, intersects } from "./helpers";
+import { Interaction, UIModel } from "../../models/ui";
 
 import css from "./spark-interaction.scss";
 
@@ -20,7 +20,7 @@ interface IPlaceSparkInteractionProps {
   };
 }
 
-const setupPlaceSparkInteraction = (
+const setupAddSparkInteraction = (
   { terrain, simulation, ui, mouseHandlers, canvas, camera }: IPlaceSparkInteractionProps
 ) => {
   if (mouseHandlers) {
@@ -28,20 +28,14 @@ const setupPlaceSparkInteraction = (
     canvas.removeEventListener("click", mouseHandlers.click);
     canvas.classList.remove(css.sparkActive);
   }
-  if (ui.sparkPositionInteraction) {
-    const raycaster = new THREE.Raycaster();
+  if (ui.interaction === Interaction.PlaceSpark) {
     const click = (event: MouseEvent) => {
-      const mouse = new THREE.Vector2();
-      // Raycaster is expecting normalized mouse position.
-      mouse.x = (event.clientX / canvas.offsetWidth ) * 2 - 1;
-      mouse.y = -(event.clientY / canvas.offsetHeight ) * 2 + 1;
-      raycaster.setFromCamera(mouse, camera);
-      const intersects = raycaster.intersectObject(terrain);
-      if (intersects.length > 0) {
-        const p = intersects[0].point;
+      const result = intersects({ event, camera, canvas, object: terrain });
+      if (result) {
+        const p = result.point;
         const ratio = ftToViewUnit(simulation);
-        simulation.setSpark(p.x / ratio, p.y / ratio);
-        ui.sparkPositionInteraction = false;
+        simulation.addSpark(p.x / ratio, p.y / ratio);
+        ui.interaction = null;
       }
     };
     canvas.addEventListener("click", click);
@@ -56,21 +50,19 @@ interface IProps {
   getTerrain: () => THREE.Mesh | undefined;
 }
 
-export const SparkInteraction: React.FC<IProps> = observer(({ getTerrain }) => {
+export const AddSparkInteraction: React.FC<IProps> = observer(({ getTerrain }) => {
   const { simulation, ui } = useStores();
-  const threeJSContext = useContext(ThreeJSContext);
+  const { canvas, camera } = useContext(ThreeJSContext);
   const mouseHandlers = useRef<{ click: (event: MouseEvent) => void }>();
 
   useEffect(() => {
     const terrain = getTerrain();
     if (terrain) {
-      const canvas = threeJSContext.canvas;
-      const camera = threeJSContext.camera;
-      mouseHandlers.current = setupPlaceSparkInteraction({
+      mouseHandlers.current = setupAddSparkInteraction({
         ui, simulation, canvas, camera, terrain, mouseHandlers: mouseHandlers.current
       });
     }
-  }, [ui.sparkPositionInteraction]);
+  }, [ui.interaction]);
 
   return null;
 });

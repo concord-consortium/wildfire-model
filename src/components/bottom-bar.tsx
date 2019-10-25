@@ -24,6 +24,7 @@ import TerrainHighlightIcon from "../assets/bottom-bar/terrain-setup_highlight.s
 import { IconButton } from "./icon-button";
 
 import css from "./bottom-bar.scss";
+import { Interaction } from "../models/ui";
 
 interface IProps extends IBaseProps {}
 interface IState {
@@ -64,6 +65,11 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   get fullscreenIconStyle() {
     return css.fullscreenIcon + (this.state.fullscreen ? ` ${css.fullscreen}` : "");
+  }
+
+  get sparkBtnDisabled() {
+    const { simulation, ui } = this.stores;
+    return ui.interaction === Interaction.PlaceSpark || !simulation.canAddSpark();
   }
 
   public componentDidMount() {
@@ -113,7 +119,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           </div>
           <div className={`${css.widgetGroup} ${css.placeSpark}`}>
             <IconButton icon={<SparkIcon />} highlightIcon={<SparkHighlight />}
-              disabled={uiDisabled} buttonText="Spark" dataTest="spark-button" onClick={this.placeSpark}
+              disabled={this.sparkBtnDisabled} buttonText="Spark" dataTest="spark-button" onClick={this.placeSpark}
             />
           </div>
           <div className={`${css.widgetGroup} ${css.reloadRestart}`}>
@@ -206,7 +212,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   public placeSpark = () => {
     const { ui } = this.stores;
     ui.showTerrainUI = false;
-    ui.sparkPositionInteraction = !ui.sparkPositionInteraction;
+    ui.interaction = Interaction.PlaceSpark;
   }
 
   public handleMoistureContentChange = (event: any, value: number | number[]) => {

@@ -9,7 +9,8 @@ import { LandType } from "../../models/fire-model";
 import { SimulationModel } from "../../models/simulation";
 import { IThreeContext } from "../../react-three-hook/threejs-manager";
 import { ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
-import { SparkInteraction } from "./spark-interaction";
+import { AddSparkInteraction } from "./add-spark-interaction";
+import { SparksContainer } from "./spark";
 
 const LAND_COLOR = {
   [LandType.Grass]: [1, 0.83, 0, 1],
@@ -99,6 +100,7 @@ export const Terrain = observer(() => {
   // If <PlaceSparkInteraction> subscribes to stores directly, we can avoid unnecessary re-renders of parent component
   // (Terrain) when some properties change.
   return <>
-    <SparkInteraction getTerrain={getEntity} />
+    <SparksContainer getTerrain={getEntity}/>
+    <AddSparkInteraction getTerrain={getEntity} />
   </>;
 });
