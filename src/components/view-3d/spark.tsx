@@ -47,6 +47,7 @@ export const Spark = observer(({ sparkIdx, getTerrain }) => {
       if (spark) {
         spark.material = highlightMaterial;
       }
+      return "grab"; // cursor
     },
     onMouseOut: () => {
       const spark = getEntity();

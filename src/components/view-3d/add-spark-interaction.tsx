@@ -7,7 +7,7 @@ import { ThreeJSContext } from "../../react-three-hook/threejs-manager";
 import { ftToViewUnit, intersects } from "./helpers";
 import { Interaction, UIModel } from "../../models/ui";
 
-import css from "./spark-interaction.scss";
+import css from "./add-spark-interaction.scss";
 
 interface IPlaceSparkInteractionProps {
   ui: UIModel;

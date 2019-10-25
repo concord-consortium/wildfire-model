@@ -5,13 +5,11 @@ import { useStores } from "../../use-stores";
 import { Interaction } from "../../models/ui";
 import { intersects } from "./helpers";
 
-import css from "./use-interactions.scss";
-
 interface IUseInteractionProps {
   getObject: () => THREE.Object3D | THREE.Sprite | undefined;
   getDragBaseObject?: () => THREE.Object3D | undefined;
   onDrag?: (x: number, y: number) => void;
-  onMouseOver?: () => void;
+  onMouseOver?: () => string | void; // optionally returns cursor style
   onMouseOut?: () => void;
 }
 
@@ -27,25 +25,39 @@ export const useInteractions = ({
     const mousemove = (event: MouseEvent) => {
       const object = getObject();
       const baseMesh = getDragBaseObject && getDragBaseObject();
-      if (onDrag && baseMesh && ui.interaction === Interaction.Dragging && hoverDetected) {
+      if (hoverDetected && onDrag && baseMesh && ui.interaction === Interaction.Dragging) {
         const result = intersects({ event, camera, canvas, object: baseMesh });
         if (result) {
           const p = result.point;
           onDrag(p.x, p.y);
         }
-      } else if (object && ui.interaction === null) {
-        // Detect dragging only if there's no other interaction active.
-        hoverDetected = intersects({ event, camera, canvas, object }) !== null;
-        if (hoverDetected) {
-          canvas.classList.add(css.grab);
-          if (onMouseOver) {
-            onMouseOver();
-          }
-        }
-        if (!hoverDetected) {
-          canvas.classList.remove(css.grab);
+      } else if (hoverDetected && object && ui.interaction === null)  {
+        const p = intersects({ event, camera, canvas, object });
+        if (p === null) {
+          hoverDetected = false;
+          ui.hoverTarget = null;
+          ui.hoverDistance = Infinity;
           if (onMouseOut) {
             onMouseOut();
+          }
+          canvas.style.cursor = "";
+        } else if (ui.hoverTarget !== object && p.distance > ui.hoverDistance) {
+          hoverDetected = false;
+          if (onMouseOut) {
+            onMouseOut();
+          }
+        }
+      } else if (!hoverDetected && object && ui.interaction === null) {
+        const p = intersects({ event, camera, canvas, object });
+        if (p !== null && p.distance < ui.hoverDistance) {
+          hoverDetected = true;
+          ui.hoverTarget = object;
+          ui.hoverDistance = p.distance;
+          if (onMouseOver) {
+            const cursor = onMouseOver();
+            if (cursor) {
+              canvas.style.cursor = cursor;
+            }
           }
         }
       }
