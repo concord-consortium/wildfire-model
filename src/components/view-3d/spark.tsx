@@ -31,11 +31,9 @@ const setupMesh = ({ scene }: IThreeContext) => {
 };
 
 export const Spark = observer(({ sparkIdx, getTerrain }) => {
-  const { simulation } = useStores();
-
+  const { simulation, ui } = useStores();
   const { getEntity } = useThree<THREE.Sprite>(setupMesh);
-
-  useInteractions({
+  const dragging = useInteractions({
     getObject: getEntity,
     getDragBaseObject: getTerrain,
     onDrag: (x: number, y: number) => {
@@ -56,6 +54,13 @@ export const Spark = observer(({ sparkIdx, getTerrain }) => {
       }
     }
   });
+
+  useEffect(() => {
+    if (ui.interaction === null) {
+      dragging.enable();
+    }
+    return dragging.disable;
+  }, [ui.interaction]);
 
   useEffect(() => {
     const sprite = getEntity();

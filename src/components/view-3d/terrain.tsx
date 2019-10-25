@@ -9,8 +9,9 @@ import { LandType } from "../../models/fire-model";
 import { SimulationModel } from "../../models/simulation";
 import { IThreeContext } from "../../react-three-hook/threejs-manager";
 import { ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
-import { AddSparkInteraction } from "./add-spark-interaction";
 import { SparksContainer } from "./spark";
+import { Interaction } from "../../models/ui";
+import { AddSparkInteraction } from "./add-spark-interaction";
 
 const LAND_COLOR = {
   [LandType.Grass]: [1, 0.83, 0, 1],
@@ -78,8 +79,7 @@ const updateColors = (plane: THREE.Mesh, simulation: SimulationModel) => {
 };
 
 export const Terrain = observer(() => {
-  const { simulation } = useStores();
-
+  const { simulation, ui } = useStores();
   const { getEntity } = useThree<THREE.Mesh>(setupMesh(simulation));
 
   useEffect(() => {
@@ -101,6 +101,6 @@ export const Terrain = observer(() => {
   // (Terrain) when some properties change.
   return <>
     <SparksContainer getTerrain={getEntity}/>
-    <AddSparkInteraction getTerrain={getEntity} />
+    { ui.interaction === Interaction.PlaceSpark && <AddSparkInteraction getTerrain={getEntity} /> }
   </>;
 });

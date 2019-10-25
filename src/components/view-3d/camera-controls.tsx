@@ -31,9 +31,9 @@ export const CameraControls = observer(() => {
   useEffect(() => {
     const controls = getEntity();
     if (controls) {
-      controls.enableRotate = ui.interaction !== Interaction.Dragging;
+      controls.enableRotate = !ui.dragging;
     }
-  }, [ui.interaction]);
+  }, [ui.dragging]);
 
   return null;
 });
