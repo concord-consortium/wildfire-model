@@ -4,7 +4,6 @@ import { DEFAULT_UP, PLANE_WIDTH, planeHeight } from "./helpers";
 import { useStores } from "../../use-stores";
 import { observer } from "mobx-react";
 import { useEffect } from "react";
-import { Interaction } from "../../models/ui";
 
 export const CameraControls = observer(() => {
   const { simulation, ui } = useStores();

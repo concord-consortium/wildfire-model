@@ -69,7 +69,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   get sparkBtnDisabled() {
     const { simulation, ui } = this.stores;
-    return ui.interaction === Interaction.PlaceSpark || !simulation.canAddSpark();
+    return ui.interaction === Interaction.PlaceSpark || !simulation.canAddSpark() || simulation.simulationStarted;
   }
 
   public componentDidMount() {
