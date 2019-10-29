@@ -40,7 +40,6 @@ describe("getFireSpreadRate", () => {
     expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: -90}, cellSize)).toBeCloseTo(3.559);
     expect(getFireSpreadRate(sourceCell, targetCell, {speed: 2, direction: 180}, cellSize)).toBeCloseTo(2.035);
   });
-
 });
 
 describe("getDirectionFactor", () => {

@@ -45,7 +45,7 @@ export const defaultConfig: IUrlConfig = {
   zones: [
     { landType: LandType.Grass, moistureContent: 0 },
     { landType: LandType.Shrub, moistureContent: 0.1 },
-    { landType: LandType.Shrub, moistureContent: 0.2 }
+    { landType: LandType.Grass, moistureContent: 0.2 }
   ]
 };
 

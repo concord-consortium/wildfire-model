@@ -1,7 +1,7 @@
 import {ISimulationConfig} from "./config";
 
 export interface IPresetConfig extends ISimulationConfig {
-  zoneIndex: number[][];
+  zoneIndex: number[][] | string;
   elevation?: number[][] | string;
 }
 
@@ -106,6 +106,13 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
       [ 1, 1, 1, 1, 1, 0, 0, 0, 0 ],
       [ 1, 1, 1, 0, 0, 0, 0, 0, 0 ]
     ]
+  },
+  zonesFromImage: {
+    modelWidth: 100000,
+    modelHeight: 100000,
+    gridWidth: 100,
+    sparks: [ [50000, 50000] ],
+    zoneIndex: "data/complexZones.png",
   }
 };
 

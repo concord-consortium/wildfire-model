@@ -3,7 +3,7 @@ import {getFireSpreadRate, IWindProps} from "./fire-model";
 import {Cell, CellOptions, FireState} from "./cell";
 import {urlConfig, defaultConfig, ISimulationConfig} from "../config";
 import {IPresetConfig} from "../presets";
-import {getImageData, populateGrid} from "../utils";
+import { getImageData, getInputData, populateGrid } from "../utils";
 import {Vector2} from "three";
 import { Zone } from "./zone";
 
@@ -118,34 +118,29 @@ export class SimulationModel {
     });
   }
 
-  public getZoneIndex(): Promise<number[]> {
-    return new Promise(resolve => {
-      const data = this.config.zoneIndex && populateGrid(this.gridHeight, this.gridWidth, this.config.zoneIndex);
-      resolve(data);
-    });
+  public getZoneIndex(): Promise<number[] | undefined> {
+    return getInputData(this.config.zoneIndex, this.gridWidth, this.gridHeight,
+      (rgba: [number, number, number, number]) => {
+        // Red is zone 1, green is zone 2, and blue is zone 3.
+        if (rgba[0] >= rgba[1] && rgba[0] >= rgba[2]) {
+          return 0;
+        }
+        if (rgba[1] >= rgba[0] && rgba[1] >= rgba[2]) {
+          return 1;
+        }
+        return 2;
+      }
+    );
   }
 
-  public getElevationData(): Promise<number[]> {
-    return new Promise(resolve => {
-      const elevation = this.config.elevation;
-      if (elevation === undefined) {
-        resolve(undefined);
-      } else if (elevation.constructor === Array) {
-        resolve(populateGrid(this.gridHeight, this.gridWidth, elevation as number[][], true));
-      } else { // elevation is a string, URL to an image
-        getImageData(
-          elevation as string,
-          (rgbg: [number, number, number, number]) => {
-            // Elevation data is supposed to black & white image, where black is the lowest point and
-            // white is the highest.
-            return rgbg[0] / 255 * this.config.heightmapMaxElevation;
-          },
-          (imageData: number[][]) => {
-            resolve(populateGrid(this.gridHeight, this.gridWidth, imageData, true));
-          }
-        );
+  public getElevationData(): Promise<number[] | undefined> {
+    return getInputData(this.config.elevation, this.gridWidth, this.gridHeight,
+      (rgba: [number, number, number, number]) => {
+        // Elevation data is supposed to black & white image, where black is the lowest point and
+        // white is the highest.
+        return rgba[0] / 255 * this.config.heightmapMaxElevation;
       }
-    });
+    );
   }
 
   @action.bound public populateCellsData() {
