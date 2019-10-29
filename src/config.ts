@@ -1,6 +1,7 @@
+import { ZoneOptions } from "./models/zone";
+import { LandType } from "./models/fire-model";
+
 export interface ISimulationConfig {
-  // Number of zones that the model is using. Zones are used to keep properties of some area of the model.
-  zonesCount: 2 | 3;
   modelWidth: number; // ft
   modelHeight: number; // ft
   // Note that modelHeight % gridWidth should always be 0!
@@ -18,16 +19,17 @@ export interface ISimulationConfig {
   cellBurnTime: number;
   // Max elevation of 100% white points in heightmap (image used for elevation data).
   heightmapMaxElevation: number; // ft
+  // Number of zones that the model is using. Zones are used to keep properties of some area of the model.
+  zonesCount: 2 | 3;
+  zones: [ZoneOptions, ZoneOptions, ZoneOptions?];
 }
 
 export interface IUrlConfig extends ISimulationConfig {
   preset: string;
-  view: "land" | "ignitionTime";
 }
 
 export const defaultConfig: IUrlConfig = {
-  preset: "test1",
-  zonesCount: 2,
+  preset: "basic",
   modelWidth: 100000,
   modelHeight: 100000,
   gridWidth: 100,
@@ -39,7 +41,12 @@ export const defaultConfig: IUrlConfig = {
   neighborsDist: 3,
   cellBurnTime: 2000, // minutes
   heightmapMaxElevation: 3000,
-  view: "land"
+  zonesCount: 2,
+  zones: [
+    { landType: LandType.Grass, moistureContent: 0 },
+    { landType: LandType.Shrub, moistureContent: 0.1 },
+    { landType: LandType.Shrub, moistureContent: 0.2 }
+  ]
 };
 
 export const urlConfig: any = {};

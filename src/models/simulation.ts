@@ -5,6 +5,7 @@ import {urlConfig, defaultConfig, ISimulationConfig} from "../config";
 import {IPresetConfig} from "../presets";
 import {getImageData, populateGrid} from "../utils";
 import {Vector2} from "three";
+import { Zone } from "./zone";
 
 const getGridIndexForLocation = (x: number, y: number, width: number) => {
   return x + y * width;
@@ -55,7 +56,7 @@ const calculateTimeToIgniteNeighbors = (
   for (let i = 0; i < cells.length; i++) {
     const neighbors = cellNeighbors[i];
     const timeToIgniteMyNeighbors = neighbors.map(n =>
-      1 / getFireSpreadRate(cells[i], cells[n], wind, cellSize, moistureContent)
+      1 / getFireSpreadRate(cells[i], cells[n], wind, cellSize)
     );
     timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
   }
@@ -74,6 +75,7 @@ export class SimulationModel {
   @observable public gridWidth: number;
   @observable public gridHeight: number;
   @observable public time = 0;
+  @observable public zones: Zone[] = [];
   @observable public cells: Cell[] = [];
   @observable public simulationStarted = false;
   @observable public simulationRunning = false;
@@ -87,6 +89,7 @@ export class SimulationModel {
     this.cellSize = config.modelWidth / config.gridWidth;
     this.gridWidth = config.gridWidth;
     this.gridHeight = Math.ceil(config.modelHeight / this.cellSize);
+    this.zones = config.zones.map(options => new Zone(options!));
 
     // It's enough to calculate this just once, as grid won't change.
     this.cellNeighbors = calculateCellNeighbors(this.gridWidth, this.gridHeight, this.config.neighborsDist);
@@ -115,9 +118,9 @@ export class SimulationModel {
     });
   }
 
-  public getLandTypeData(): Promise<number[]> {
+  public getZoneIndex(): Promise<number[]> {
     return new Promise(resolve => {
-      const data = this.config.landType && populateGrid(this.gridHeight, this.gridWidth, this.config.landType);
+      const data = this.config.zoneIndex && populateGrid(this.gridHeight, this.gridWidth, this.config.zoneIndex);
       resolve(data);
     });
   }
@@ -146,8 +149,8 @@ export class SimulationModel {
   }
 
   @action.bound public populateCellsData() {
-    Promise.all([this.getLandTypeData(), this.getElevationData()]).then(values => {
-      const landType = values[0];
+    Promise.all([this.getZoneIndex(), this.getElevationData()]).then(values => {
+      const zoneIndex = values[0];
       const elevation = values[1];
 
       this.cells.length = 0;
@@ -155,10 +158,7 @@ export class SimulationModel {
       for (let y = 0; y < this.gridHeight; y++) {
         for (let x = 0; x < this.gridWidth; x++) {
           const index = getGridIndexForLocation(x, y, this.gridWidth);
-          const cellOptions: CellOptions = { x, y };
-          if (landType) {
-            cellOptions.landType = landType[index];
-          }
+          const cellOptions: CellOptions = { x, y, zone: this.zones[zoneIndex[index]] };
           if (elevation) {
             cellOptions.elevation = elevation[index];
           }
