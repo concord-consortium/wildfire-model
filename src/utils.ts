@@ -12,8 +12,8 @@ export const populateGrid = (width: number, height: number, image: number[][], i
   // Figure out the size of the image using the first row.
   const imageHeight = image.length;
   const imageWidth = image[0].length;
-  const numGridCellsPerImageRowPixel = (imageHeight - 1) / (height - 1);
-  const numGridCellsPerImageColPixel = (imageWidth - 1) / (width - 1);
+  const numGridCellsPerImageRowPixel = interpolate ? (imageHeight - 1) / (height - 1) : imageHeight / height;
+  const numGridCellsPerImageColPixel = interpolate ? (imageWidth - 1) / (width - 1) : imageWidth / width;
 
   let imageRowIndex = imageHeight - 1;
   let imageRowAdvance = 0;
