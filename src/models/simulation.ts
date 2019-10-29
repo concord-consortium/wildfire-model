@@ -119,7 +119,7 @@ export class SimulationModel {
   }
 
   public getZoneIndex(): Promise<number[] | undefined> {
-    return getInputData(this.config.zoneIndex, this.gridWidth, this.gridHeight,
+    return getInputData(this.config.zoneIndex, this.gridWidth, this.gridHeight, false,
       (rgba: [number, number, number, number]) => {
         // Red is zone 1, green is zone 2, and blue is zone 3.
         if (rgba[0] >= rgba[1] && rgba[0] >= rgba[2]) {
@@ -134,7 +134,7 @@ export class SimulationModel {
   }
 
   public getElevationData(): Promise<number[] | undefined> {
-    return getInputData(this.config.elevation, this.gridWidth, this.gridHeight,
+    return getInputData(this.config.elevation, this.gridWidth, this.gridHeight, true,
       (rgba: [number, number, number, number]) => {
         // Elevation data is supposed to black & white image, where black is the lowest point and
         // white is the highest.
@@ -153,7 +153,7 @@ export class SimulationModel {
       for (let y = 0; y < this.gridHeight; y++) {
         for (let x = 0; x < this.gridWidth; x++) {
           const index = getGridIndexForLocation(x, y, this.gridWidth);
-          const cellOptions: CellOptions = { x, y, zone: this.zones[zoneIndex[index]] };
+          const cellOptions: CellOptions = { x, y, zone: this.zones[zoneIndex ? zoneIndex[index] : 0] };
           if (elevation) {
             cellOptions.elevation = elevation[index];
           }
