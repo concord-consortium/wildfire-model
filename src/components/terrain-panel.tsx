@@ -73,13 +73,12 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
           <div className={css.zones}>
             <div className={css.zone}>
               <div className={css.terrainPreview} style={{ backgroundImage: `url(${backgroundImage.mountain})` }}>
-                <span>Zone 1</span>
+                <span className={`${css.zoneLabel} ${css.zone1}`}>Zone 1</span>
               </div>
             </div>
             <div className={css.zone}>
                 <div className={css.terrainPreview} style={{ backgroundImage: `url(${backgroundImage.plains})` }}>
-                  <span>Zone 2</span>
-
+                <span className={`${css.zoneLabel} ${css.zone2}`}>Zone 2</span>
                 </div>
             </div>
           </div>
