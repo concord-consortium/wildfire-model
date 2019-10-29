@@ -7,6 +7,10 @@ import { TerrainTypeSelector } from "./terrain-type-selector";
 import { VegetationSelector } from "./vegetation-selector";
 import { DroughtSelector } from "./drought-selector";
 
+import foothillsImage from "../assets/terrain/foothills_sample.png";
+import mountainsImage from "../assets/terrain/mountains_sample.png";
+import plainsImage from "../assets/terrain/plains_sample.png";
+
 import css from "./terrain-panel.scss";
 
 interface IProps extends IBaseProps {}
@@ -50,12 +54,17 @@ const windSpeedMarks = [
   }
 ];
 
+const backgroundImage: { [key: string]: string } = {
+  mountain: mountainsImage,
+  foothills: foothillsImage,
+  plains: plainsImage
+};
+
 @inject("stores")
 @observer
 export class TerrainPanel extends BaseComponent<IProps, IState> {
   public render() {
     const { ui, simulation } = this.stores;
-
     return (
       <div className={`${css.terrain} ${ui.showTerrainUI ? "" : css.disabled}`}>
         <div className={css.background}>
@@ -63,10 +72,15 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
           <div className={css.instructions}>(1) Adjust variables in each zone</div>
           <div className={css.zones}>
             <div className={css.zone}>
-              <div className={css.terrainPreview}>Zone 1</div>
+              <div className={css.terrainPreview} style={{ backgroundImage: `url(${backgroundImage.mountain})` }}>
+                <span>Zone 1</span>
+              </div>
             </div>
             <div className={css.zone}>
-              <div className={css.terrainPreview}>Zone 2</div>
+                <div className={css.terrainPreview} style={{ backgroundImage: `url(${backgroundImage.plains})` }}>
+                  <span>Zone 2</span>
+
+                </div>
             </div>
           </div>
           <div className={css.terrainSelector}>

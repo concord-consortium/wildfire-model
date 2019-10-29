@@ -66,14 +66,17 @@
       margin: auto;
       background-color: #eeeeee;
       padding: 4px;
-      &:hover{
-        outline: solid 4px #ffffff;
-      }
+
       .terrainPreview{
         width: 100%;
         height: 100%;
-        background: orange;
+        border: solid 4px transparent;
+        background-size: contain;
+        &:hover{
+          border: solid 4px #ffffff;
+        }
       }
+
     }
 
   }
