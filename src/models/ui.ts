@@ -6,7 +6,8 @@ export enum Interaction {
 }
 
 export class UIModel {
-  @observable public showTerrainUI = false;
+  // @observable public view = urlConfigWithDefaultValues.view;
+  @observable public showTerrainUI = true;
   @observable public maxSparks: number;
 
   @observable public interaction: Interaction | null = null;

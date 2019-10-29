@@ -1,7 +1,7 @@
 import { inject, observer } from "mobx-react";
 import React from "react";
 import { BaseComponent, IBaseProps } from "./base";
-import { Slider } from "@material-ui/core";
+import { Slider, Button } from "@material-ui/core";
 import HorizontalHandle from "../assets/slider-horizontal.svg";
 import { TerrainTypeSelector } from "./terrain-type-selector";
 import { VegetationSelector } from "./vegetation-selector";
@@ -58,55 +58,59 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
 
     return (
       <div className={`${css.terrain} ${ui.showTerrainUI ? "" : css.disabled}`}>
-        <div className={css.header}>Terrain Setup</div>
-        <div className={css.zones}>
-          <div className={css.zone}>
-            <div className={css.terrainPreview}>Zone 1</div>
+        <div className={css.background}>
+          <div className={css.header}>Terrain Setup</div>
+          <div className={css.instructions}>(1) Adjust variables in each zone</div>
+          <div className={css.zones}>
+            <div className={css.zone}>
+              <div className={css.terrainPreview}>Zone 1</div>
+            </div>
+            <div className={css.zone}>
+              <div className={css.terrainPreview}>Zone 2</div>
+            </div>
           </div>
-          <div className={css.zone}>
-            <div className={css.terrainPreview}>Zone 2</div>
+          <div className={css.terrainSelector}>
+            <TerrainTypeSelector zone="1" terrainType="plains" onChange={this.handleTerrainTypeChange} />
           </div>
-        </div>
-        <div className={css.terrainSelector}>
-          <TerrainTypeSelector zone="1" terrainType="plains" onChange={this.handleTerrainTypeChange} />
-        </div>
-        <div className={css.selectors}>
-          <div className={css.selector}>
-            <VegetationSelector zone="1" vegetationType="shrub" onChange={this.handleVegetationChange} />
+          <div className={css.selectors}>
+            <div className={css.selector}>
+              <VegetationSelector zone="1" vegetationType="shrub" onChange={this.handleVegetationChange} />
+            </div>
+            <div className={css.selector}>
+              <DroughtSelector zone="1" droughtIndex="mild" onChange={this.handleDroughtChange}/>
+            </div>
           </div>
-          <div className={css.selector}>
-            <DroughtSelector zone="1" droughtIndex="mild" onChange={this.handleDroughtChange}/>
+          <div className={css.windControls}>
+            <div className={`${css.slider} ${css.windDirection}`}>
+              <div>Wind Direction (° from North)</div>
+              <Slider
+                classes={{ thumb: css.thumb }}
+                min={0}
+                max={360}
+                disabled={simulation.simulationStarted}
+                value={simulation.wind.direction}
+                step={1}
+                marks={windDirectionMarks}
+                onChange={this.handleWindDirectionChange}
+                ThumbComponent={HorizontalHandle}
+              />
+            </div>
+            <div className={css.slider}>
+              <div>Wind Speed (mph)</div>
+              <Slider
+                classes={{ thumb: css.thumb }}
+                min={0}
+                max={10}
+                disabled={simulation.simulationStarted}
+                value={simulation.wind.speed}
+                step={0.1}
+                marks={windSpeedMarks}
+                onChange={this.handleWindSpeedChange}
+                ThumbComponent={HorizontalHandle}
+              />
+            </div>
           </div>
-        </div>
-        <div className={css.windControls}>
-          <div className={`${css.slider} ${css.windDirection}`}>
-            <div>Wind Direction (° from North)</div>
-            <Slider
-              classes={{ thumb: css.thumb }}
-              min={0}
-              max={360}
-              disabled={simulation.simulationStarted}
-              value={simulation.wind.direction}
-              step={1}
-              marks={windDirectionMarks}
-              onChange={this.handleWindDirectionChange}
-              ThumbComponent={HorizontalHandle}
-            />
-          </div>
-          <div className={css.slider}>
-            <div>Wind Speed (mph)</div>
-            <Slider
-              classes={{ thumb: css.thumb }}
-              min={0}
-              max={10}
-              disabled={simulation.simulationStarted}
-              value={simulation.wind.speed}
-              step={0.1}
-              marks={windSpeedMarks}
-              onChange={this.handleWindSpeedChange}
-              ThumbComponent={HorizontalHandle}
-            />
-          </div>
+          <div className={css.buttonContainer}><Button className={css.continueButton}>Next</Button></div>
         </div>
       </div>
     );

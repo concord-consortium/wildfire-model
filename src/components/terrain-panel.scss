@@ -2,7 +2,7 @@
 
 .terrain{
   position: fixed;
-  top: 40px;
+  top: 32px;
   width: 288px;
   height: 500px;
   margin-left: auto;
@@ -11,18 +11,21 @@
   border: 1px solid silver;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.5);
 
-  background: rgba(214, 236, 255, 0.75);
-
-  padding-top: 32px;
+  background: rgba(255, 255, 255, 1);
+  padding: 5px;
   text-align: center;
 
   &.disabled{
     display: none;
   }
 
+  .background{
+    background-color: rgba(214, 236, 255, 0.75);
+    height: 100%;
+  }
+
   .header{
-    margin-top: -32px;
-    height: 30px;
+    height: 27px;
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
     text-align: center;
@@ -30,13 +33,21 @@
     font-family: Lato;
     background: white;
   }
+  .instructions{
+    margin-top: 10px;
+    margin-bottom: 13px;
+    width: 100%;
+    text-align: left;
+    font-style: italic;
+    color: $controlText;
+    font-size: 13px;
+  }
 
   .widgetGroup{
     margin-top: 20px;
   }
 
   .zones{
-    margin-top: 41px;
     padding-left: 4px;
     padding-right: 4px;
     font-size: 0.7em;
@@ -66,7 +77,11 @@
     }
 
   }
+  .terrainSelector{
+    height: 56px;
+  }
   .selectors{
+    height: 169px;
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
@@ -74,10 +89,28 @@
     .selector{
       flex-grow: 1;
       height: 100px;
-
     }
   }
+  .buttonContainer{
+    position: absolute;
+    width: 100%;
+    margin-left: auto;
+    margin-right: aut0;
+    bottom: 13px;
+    .continueButton{
+      border: 1px solid $controlGray;
+      border-radius: 5px;
+      background-color: #ffffff;
+      width: 78px;
+      height: 27px;
+      font-size: 14px;
+    }
+  }
+
+
+
   .windControls{
+    display: none;
     margin-top: 20px;
     margin-left: auto;
     margin-right: auto;

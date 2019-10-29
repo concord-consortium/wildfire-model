@@ -1,4 +1,5 @@
 import { createMuiTheme } from "@material-ui/core/styles";
+import { withTheme } from "@material-ui/styles";
 
 export default createMuiTheme({
   palette: {
@@ -75,6 +76,30 @@ export default createMuiTheme({
           height: 20,
           marginLeft: -8.5,
           marginTop: -8.5
+        },
+        "$vertical &": {
+          width: 18,
+          height: 18,
+          marginLeft: -9,
+
+        }
+      },
+      mark: {
+        "$vertical &": {
+          width: 6,
+          height: 6,
+          borderRadius: 3,
+          marginLeft: -4,
+          marginTop: 4,
+          backgroundColor: "rgba(255,255,255,1)",
+          border: "1px solid silver"
+        }
+      },
+      markLabel: {
+        "font-size": 10,
+        "$vertical &": {
+          marginTop: -3,
+          transform: "translateY(20%)",
         }
       }
     }
