@@ -113,6 +113,14 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 100,
     sparks: [ [50000, 50000] ],
     zoneIndex: "data/complexZones.png",
+  },
+  test01: {
+    modelWidth: 120000,
+    modelHeight: 80000,
+    gridWidth: 240,
+    heightmapMaxElevation: 20000,
+    zoneIndex: "data/test01_zonemap.png",
+    elevation: "data/test01_heightmap.png",
   }
 };
 

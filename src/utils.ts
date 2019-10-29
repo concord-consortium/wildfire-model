@@ -107,7 +107,7 @@ export const getInputData = (
   input: number[][] | string | undefined,
   gridWidth: number,
   gridHeight: number,
-  interpolateArrayDef: boolean,
+  interpolate: boolean,
   // Function that transfers [r, g, b, a] array into single value
   mapColor: (rgba: [number, number, number, number]) => number,
 ): Promise<number[] | undefined> => {
@@ -115,13 +115,13 @@ export const getInputData = (
     if (input === undefined) {
       resolve(undefined);
     } else if (input.constructor === Array) {
-      resolve(populateGrid(gridWidth, gridHeight, input as number[][], interpolateArrayDef));
+      resolve(populateGrid(gridWidth, gridHeight, input as number[][], interpolate));
     } else { // input is a string, URL to an image
       getImageData(
         input as string,
         mapColor,
         (imageData: number[][]) => {
-          resolve(populateGrid(gridWidth, gridHeight, imageData, true));
+          resolve(populateGrid(gridWidth, gridHeight, imageData, interpolate));
         }
       );
     }

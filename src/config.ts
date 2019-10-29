@@ -33,7 +33,7 @@ export const defaultConfig: IUrlConfig = {
   modelWidth: 100000,
   modelHeight: 100000,
   gridWidth: 100,
-  sparks: [ [50000, 50000] ],
+  sparks: [],
   timeStep: 60, // minutes
   windSpeed: 0, // mph
   windDirection: 0, // degrees, northern wind
