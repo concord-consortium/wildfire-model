@@ -29,20 +29,27 @@ export const VegetationSelector = (({ zone, vegetationType, onChange }: IProps) 
   return (
     <div className={`${css.selector} ${css.vegetation}`}>
       <div className={css.header}>Vegetation Type</div>
-      <Slider
-        classes={{ thumb: css.thumb, track: css.track, rail: css.rail, disabled: css.disabled }}
-        min={0}
-        max={2}
-        defaultValue={0}
-        step={1}
-        track={false}
-        marks={marks}
-        onChange={onChange}
-        orientation="vertical"
-        ThumbComponent={VerticalHandle}
-        className={css.vegetationSlider}
-        data-test="vegetation-slider"
-      />
+      <div className={css.sliderContainer}>
+        <div className={css.sliderIcons}>
+          <div className={`${css.sliderIcon} ${css.shrub} ${css.top} ${css.placeholder}`} />
+          <div className={`${css.sliderIcon} ${css.fsl} ${css.mid} ${css.placeholder}`} />
+          <div className={`${css.sliderIcon} ${css.fll} ${css.bottom} ${css.placeholder}`}/>
+        </div>
+        <Slider
+          classes={{ thumb: css.thumb, track: css.track, rail: css.rail, disabled: css.disabled }}
+          min={0}
+          max={2}
+          defaultValue={0}
+          step={1}
+          track={false}
+          marks={marks}
+          onChange={onChange}
+          orientation="vertical"
+          ThumbComponent={VerticalHandle}
+          className={css.vegetationSlider}
+          data-test="vegetation-slider"
+        />
+      </div>
     </div>
   );
 });

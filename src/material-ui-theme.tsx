@@ -98,8 +98,10 @@ export default createMuiTheme({
       markLabel: {
         "font-size": 10,
         "$vertical &": {
-          marginTop: -3,
-          transform: "translateY(20%)",
+          width: 32,
+          minHeight: 20,
+          whiteSpace: "normal",
+          lineHeight: "normal"
         }
       }
     }
