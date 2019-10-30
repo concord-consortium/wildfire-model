@@ -3,8 +3,9 @@ import {getFireSpreadRate, IWindProps} from "./fire-model";
 import {Cell, CellOptions, FireState} from "./cell";
 import {urlConfig, defaultConfig, ISimulationConfig} from "../config";
 import {IPresetConfig} from "../presets";
-import {getImageData, populateGrid} from "../utils";
+import { getImageData, getInputData, populateGrid } from "../utils";
 import {Vector2} from "three";
+import { Zone } from "./zone";
 
 const getGridIndexForLocation = (x: number, y: number, width: number) => {
   return x + y * width;
@@ -55,7 +56,7 @@ const calculateTimeToIgniteNeighbors = (
   for (let i = 0; i < cells.length; i++) {
     const neighbors = cellNeighbors[i];
     const timeToIgniteMyNeighbors = neighbors.map(n =>
-      1 / getFireSpreadRate(cells[i], cells[n], wind, cellSize, moistureContent)
+      1 / getFireSpreadRate(cells[i], cells[n], wind, cellSize)
     );
     timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
   }
@@ -74,6 +75,7 @@ export class SimulationModel {
   @observable public gridWidth: number;
   @observable public gridHeight: number;
   @observable public time = 0;
+  @observable public zones: Zone[] = [];
   @observable public cells: Cell[] = [];
   @observable public simulationStarted = false;
   @observable public simulationRunning = false;
@@ -87,6 +89,7 @@ export class SimulationModel {
     this.cellSize = config.modelWidth / config.gridWidth;
     this.gridWidth = config.gridWidth;
     this.gridHeight = Math.ceil(config.modelHeight / this.cellSize);
+    this.zones = config.zones.map(options => new Zone(options!));
 
     // It's enough to calculate this just once, as grid won't change.
     this.cellNeighbors = calculateCellNeighbors(this.gridWidth, this.gridHeight, this.config.neighborsDist);
@@ -115,39 +118,34 @@ export class SimulationModel {
     });
   }
 
-  public getLandTypeData(): Promise<number[]> {
-    return new Promise(resolve => {
-      const data = this.config.landType && populateGrid(this.gridHeight, this.gridWidth, this.config.landType);
-      resolve(data);
-    });
+  public getZoneIndex(): Promise<number[] | undefined> {
+    return getInputData(this.config.zoneIndex, this.gridWidth, this.gridHeight, false,
+      (rgba: [number, number, number, number]) => {
+        // Red is zone 1, green is zone 2, and blue is zone 3.
+        if (rgba[0] >= rgba[1] && rgba[0] >= rgba[2]) {
+          return 0;
+        }
+        if (rgba[1] >= rgba[0] && rgba[1] >= rgba[2]) {
+          return 1;
+        }
+        return 2;
+      }
+    );
   }
 
-  public getElevationData(): Promise<number[]> {
-    return new Promise(resolve => {
-      const elevation = this.config.elevation;
-      if (elevation === undefined) {
-        resolve(undefined);
-      } else if (elevation.constructor === Array) {
-        resolve(populateGrid(this.gridHeight, this.gridWidth, elevation as number[][], true));
-      } else { // elevation is a string, URL to an image
-        getImageData(
-          elevation as string,
-          (rgbg: [number, number, number, number]) => {
-            // Elevation data is supposed to black & white image, where black is the lowest point and
-            // white is the highest.
-            return rgbg[0] / 255 * this.config.heightmapMaxElevation;
-          },
-          (imageData: number[][]) => {
-            resolve(populateGrid(this.gridHeight, this.gridWidth, imageData, true));
-          }
-        );
+  public getElevationData(): Promise<number[] | undefined> {
+    return getInputData(this.config.elevation, this.gridWidth, this.gridHeight, true,
+      (rgba: [number, number, number, number]) => {
+        // Elevation data is supposed to black & white image, where black is the lowest point and
+        // white is the highest.
+        return rgba[0] / 255 * this.config.heightmapMaxElevation;
       }
-    });
+    );
   }
 
   @action.bound public populateCellsData() {
-    Promise.all([this.getLandTypeData(), this.getElevationData()]).then(values => {
-      const landType = values[0];
+    Promise.all([this.getZoneIndex(), this.getElevationData()]).then(values => {
+      const zoneIndex = values[0];
       const elevation = values[1];
 
       this.cells.length = 0;
@@ -155,10 +153,7 @@ export class SimulationModel {
       for (let y = 0; y < this.gridHeight; y++) {
         for (let x = 0; x < this.gridWidth; x++) {
           const index = getGridIndexForLocation(x, y, this.gridWidth);
-          const cellOptions: CellOptions = { x, y };
-          if (landType) {
-            cellOptions.landType = landType[index];
-          }
+          const cellOptions: CellOptions = { x, y, zone: this.zones[zoneIndex ? zoneIndex[index] : 0] };
           if (elevation) {
             cellOptions.elevation = elevation[index];
           }

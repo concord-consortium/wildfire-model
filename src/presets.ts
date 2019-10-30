@@ -1,7 +1,7 @@
 import {ISimulationConfig} from "./config";
 
 export interface IPresetConfig extends ISimulationConfig {
-  landType?: number[][];
+  zoneIndex: number[][] | string;
   elevation?: number[][] | string;
 }
 
@@ -11,8 +11,17 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     modelHeight: 100000,
     gridWidth: 100,
     sparks: [ [50000, 50000] ],
-    landType: [
-      [ 0 ]
+    zoneIndex: [
+      [ 0, 1 ]
+    ]
+  },
+  threeZones: {
+    modelWidth: 100000,
+    modelHeight: 100000,
+    gridWidth: 100,
+    sparks: [ [50000, 50000] ],
+    zoneIndex: [
+      [ 0, 1, 0 ]
     ]
   },
   basicWithWind: {
@@ -22,8 +31,8 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     sparks: [ [50000, 50000] ],
     windSpeed: 1,
     windDirection: 0,
-    landType: [
-      [ 0 ]
+    zoneIndex: [
+      [ 0, 1 ]
     ]
   },
   slope45deg: {
@@ -32,8 +41,8 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 100,
     sparks: [ [50000, 50000] ],
     heightmapMaxElevation: 3000,
-    landType: [
-      [ 0 ]
+    zoneIndex: [
+      [ 0, 1 ]
     ],
     elevation: [
       [ 100000, 0 ],
@@ -48,8 +57,8 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     windSpeed: 1,
     windDirection: 0,
     heightmapMaxElevation: 10000,
-    landType: [
-      [ 0 ]
+    zoneIndex: [
+      [ 0, 1 ]
     ],
     elevation: [
       [ 10000, 0 ],
@@ -63,8 +72,8 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     sparks: [ [5000, 12500] ],
     timeStep: 10,
     heightmapMaxElevation: 3000,
-    landType: [
-      [ 0 ]
+    zoneIndex: [
+      [ 0, 1 ]
     ],
     elevation: "data/hills.png"
   },
@@ -74,20 +83,20 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 100,
     sparks: [ [50000, 50000] ],
     heightmapMaxElevation: 7000,
-    landType: [
-      [ 0 ]
+    zoneIndex: [
+      [ 0, 1 ]
     ],
     elevation: "data/randomHeightmap.png"
   },
-  landTypes: {
+  complexZones: {
     modelWidth: 100000,
     modelHeight: 100000,
     gridWidth: 100,
     sparks: [ [50000, 50000] ],
-    landType: [
-      [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-      [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
-      [ 0, 0, 0, 0, 0, 0, 0, 0, 0 ],
+    zoneIndex: [
+      [ 0, 0, 0, 0, 0, 0, 2, 2, 2 ],
+      [ 0, 0, 0, 0, 0, 0, 0, 2, 2 ],
+      [ 0, 0, 0, 0, 0, 0, 0, 0, 2 ],
       [ 1, 0, 0, 0, 0, 0, 0, 0, 0 ],
       [ 1, 1, 0, 0, 0, 0, 0, 0, 0 ],
       [ 1, 1, 1, 0, 0, 0, 0, 0, 0 ],
@@ -97,6 +106,21 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
       [ 1, 1, 1, 1, 1, 0, 0, 0, 0 ],
       [ 1, 1, 1, 0, 0, 0, 0, 0, 0 ]
     ]
+  },
+  zonesFromImage: {
+    modelWidth: 100000,
+    modelHeight: 100000,
+    gridWidth: 100,
+    sparks: [ [50000, 50000] ],
+    zoneIndex: "data/complexZones.png",
+  },
+  test01: {
+    modelWidth: 120000,
+    modelHeight: 80000,
+    gridWidth: 240,
+    heightmapMaxElevation: 20000,
+    zoneIndex: "data/test01_zonemap.png",
+    elevation: "data/test01_heightmap.png",
   }
 };
 

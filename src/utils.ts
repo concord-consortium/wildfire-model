@@ -12,8 +12,8 @@ export const populateGrid = (width: number, height: number, image: number[][], i
   // Figure out the size of the image using the first row.
   const imageHeight = image.length;
   const imageWidth = image[0].length;
-  const numGridCellsPerImageRowPixel = (imageHeight - 1) / (height - 1);
-  const numGridCellsPerImageColPixel = (imageWidth - 1) / (width - 1);
+  const numGridCellsPerImageRowPixel = interpolate ? (imageHeight - 1) / (height - 1) : imageHeight / height;
+  const numGridCellsPerImageColPixel = interpolate ? (imageWidth - 1) / (width - 1) : imageWidth / width;
 
   let imageRowIndex = imageHeight - 1;
   let imageRowAdvance = 0;
@@ -54,7 +54,7 @@ export const populateGrid = (width: number, height: number, image: number[][], i
 export const getImageData = (
   imgSrc: string,
   // Function that transfers [r, g, b, a] array into single value
-  transform: (rgba: [number, number, number, number]) => number,
+  mapColor: (rgba: [number, number, number, number]) => number,
   // Final callback when data is ready and processed.
   callback: (imgData: number[][]) => void) => {
   interface IImageLoadedEvent {
@@ -79,7 +79,7 @@ export const getImageData = (
       data.push(row);
       for (let x = 0; x < rawData.width * 4; x += 4) {
         const rIdx = y * (rawData.width * 4) + x;
-        row.push(transform([
+        row.push(mapColor([
           rawData.data[rIdx],
           rawData.data[rIdx + 1],
           rawData.data[rIdx + 2],
@@ -101,4 +101,29 @@ export const getImageData = (
       throw new Error(`Cannot load image ${imgSrc}`);
     });
   }
+};
+
+export const getInputData = (
+  input: number[][] | string | undefined,
+  gridWidth: number,
+  gridHeight: number,
+  interpolate: boolean,
+  // Function that transfers [r, g, b, a] array into single value
+  mapColor: (rgba: [number, number, number, number]) => number,
+): Promise<number[] | undefined> => {
+  return new Promise(resolve => {
+    if (input === undefined) {
+      resolve(undefined);
+    } else if (input.constructor === Array) {
+      resolve(populateGrid(gridWidth, gridHeight, input as number[][], interpolate));
+    } else { // input is a string, URL to an image
+      getImageData(
+        input as string,
+        mapColor,
+        (imageData: number[][]) => {
+          resolve(populateGrid(gridWidth, gridHeight, imageData, interpolate));
+        }
+      );
+    }
+  });
 };

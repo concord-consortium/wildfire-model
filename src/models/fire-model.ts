@@ -15,6 +15,14 @@ export interface IWindProps {
   direction: number;
 }
 
+export interface ICellProps {
+  x: number;
+  y: number;
+  landType: LandType;
+  moistureContent: number;
+  elevation: number;
+}
+
 const FuelConstants: {[key in LandType]: Fuel} = {
   [LandType.Grass]: {
     sav: 1826,
@@ -41,7 +49,7 @@ const FuelConstants: {[key in LandType]: Fuel} = {
 // Helper vector used repeatedly in other calculations.
 const ORIGIN = new Vector2(0, 0);
 
-const dist = (c1: Cell, c2: Cell) => {
+const dist = (c1: ICellProps, c2: ICellProps) => {
   const xDiff = c1.x - c2.x;
   const yDiff = c1.y - c2.y;
   if (xDiff === 0 || yDiff === 0) {
@@ -61,7 +69,7 @@ const dist = (c1: Cell, c2: Cell) => {
  * @param maxSpreadDirection angle from positive X axis
  */
 export const getDirectionFactor =
-  (sourceCell: Cell, targetCell: Cell, effectiveWindSpeed: number, maxSpreadDirection: number) => {
+  (sourceCell: ICellProps, targetCell: ICellProps, effectiveWindSpeed: number, maxSpreadDirection: number) => {
   // Note that wind speed in our model is usually defined in feet/min. However, this formula is using miles per hour.
   const effectiveWindSpeedMPH = effectiveWindSpeed / 88;
   const Z = 1 + 0.25 * effectiveWindSpeedMPH;
@@ -96,7 +104,7 @@ export const getDirectionFactor =
  * @return fire spread rate in ft/min
  */
 export const getFireSpreadRate = (
-  sourceCell: Cell, targetCell: Cell, wind: IWindProps, cellSize: number, moistureContent: number
+  sourceCell: ICellProps, targetCell: ICellProps, wind: IWindProps, cellSize: number
 ) => {
   const fuel = FuelConstants[targetCell.landType];
   const sav = fuel.sav;
@@ -108,7 +116,7 @@ export const getFireSpreadRate = (
   const effectiveMineralContent = fuel.effectiveMineralContent;
   const fuelBedDepth = fuel.fuelBedDepth;
 
-  const moistureContentRatio = moistureContent / mx;
+  const moistureContentRatio = targetCell.moistureContent / mx;
   const savFactor = Math.pow(sav, 1.5);
 
   const a = 133 * Math.pow(sav, -0.7913);
@@ -134,7 +142,7 @@ export const getFireSpreadRate = (
 
   const effectiveHeatingNumber = Math.exp(-138 / sav);
 
-  const heatOfPreIgnition = 250 + (1116 * moistureContent);
+  const heatOfPreIgnition = 250 + (1116 * targetCell.moistureContent);
 
   // r0 is rate of spread without considering wind and slope.
   const r0 = reactionIntensity * propagatingFluxRatio /
