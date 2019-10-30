@@ -8,7 +8,9 @@ export interface ISimulationConfig {
   gridWidth: number; // ft
   // Spark positions, in ft.
   sparks: number[][];
-  timeStep: number; // minutes
+  maxTimeStep: number; // minutes
+  // One day in model should last X seconds in real world.
+  modelDayInSeconds: number;
   windSpeed: number; // mph
   windDirection: number; // degrees, 0 is northern wind
   moistureContent: number;
@@ -34,7 +36,8 @@ export const defaultConfig: IUrlConfig = {
   modelHeight: 100000,
   gridWidth: 100,
   sparks: [],
-  timeStep: 60, // minutes
+  maxTimeStep: 180, // minutes
+  modelDayInSeconds: 8, // one day in model should last X seconds in real world
   windSpeed: 0, // mph
   windDirection: 0, // degrees, northern wind
   moistureContent: 0.1,

@@ -1,10 +1,10 @@
-import {action, observable, computed} from "mobx";
-import {getFireSpreadRate, IWindProps} from "./fire-model";
-import {Cell, CellOptions, FireState} from "./cell";
-import {urlConfig, defaultConfig, ISimulationConfig} from "../config";
-import {IPresetConfig} from "../presets";
-import { getImageData, getInputData, populateGrid } from "../utils";
-import {Vector2} from "three";
+import { action, observable, computed } from "mobx";
+import { getFireSpreadRate, IWindProps } from "./fire-model";
+import { Cell, CellOptions, FireState } from "./cell";
+import { urlConfig, defaultConfig } from "../config";
+import { IPresetConfig } from "../presets";
+import { getInputData } from "../utils";
+import { Vector2 } from "three";
 import { Zone } from "./zone";
 
 const getGridIndexForLocation = (x: number, y: number, width: number) => {
@@ -67,6 +67,7 @@ export class SimulationModel {
   public timeToIgniteNeighbors: number[][];
   public config: IPresetConfig;
   public cellNeighbors: number[][];
+  public prevTickTime: number | null;
   @observable public dataReady = false;
   @observable public wind: IWindProps;
   @observable public moistureContent: number;
@@ -184,7 +185,8 @@ export class SimulationModel {
       });
     }
     this.simulationRunning = true;
-    this.tick();
+    this.prevTickTime = null;
+    requestAnimationFrame(this.tick);
   }
 
   @action.bound public stop() {
@@ -204,12 +206,26 @@ export class SimulationModel {
     this.setInputParamsFromConfig();
   }
 
-  @action.bound public tick() {
+  @action.bound public tick(time: number) {
     if (!this.simulationRunning) {
       return;
     }
     requestAnimationFrame(this.tick);
-    this.time += this.config.timeStep;
+    let realTimeDiffInMinutes = null;
+    if (!this.prevTickTime) {
+      this.prevTickTime = time;
+    } else {
+      realTimeDiffInMinutes = (time - this.prevTickTime) / 60000;
+      this.prevTickTime = time;
+    }
+    if (realTimeDiffInMinutes) {
+      // One day in model time (86400 minutes) should last X seconds in real time.
+      const ratio = 86400 / this.config.modelDayInSeconds;
+      this.time += Math.min(this.config.maxTimeStep, ratio * realTimeDiffInMinutes);
+    } else {
+      // We don't know performance yet, so simply increase time by some safe value and wait for the next tick.
+      this.time += 1;
+    }
     this.updateFire();
     this.notifyCellsUpdated();
   }
