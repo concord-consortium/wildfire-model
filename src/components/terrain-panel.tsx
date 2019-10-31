@@ -74,14 +74,15 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   public render() {
     const { ui, simulation } = this.stores;
     const { selectedZone } = this.state;
+    const zoneUI = this.renderZones(simulation.zones);
     return (
       <div className={`${css.terrain} ${ui.showTerrainUI ? "" : css.disabled}`}>
         <div className={`${css.background} ${cssClasses[selectedZone]}`}>
           <div className={css.header}>Terrain Setup</div>
           <div className={css.instructions}>(1) Adjust variables in each zone</div>
-          {ui.showTerrainUI &&
+          {ui.showTerrainUI && zoneUI &&
             <div className={css.zones}>
-              {this.renderZones(simulation.zones)}
+              {zoneUI}
             </div>
           }
           <div className={css.terrainSelector}>
@@ -147,14 +148,14 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   public handleTerrainTypeChange = (event: React.ChangeEvent<HTMLInputElement>, value: string) => {
     const { ui, simulation } = this.stores;
     simulation.zones[this.state.selectedZone].terrainType = value as TerrainType;
-    console.log(value);
+    // console.log(value);
   }
   public handleVegetationChange = (event: React.ChangeEvent<HTMLInputElement>, value: string) => {
-    console.log(value);
+    // console.log(value);
     // something like this.stores.simulation.setZoneParams()
   }
   public handleDroughtChange = (event: React.ChangeEvent<HTMLInputElement>, value: string) => {
-    console.log(value);
+    // console.log(value);
     // something like this.stores.simulation.setZoneParams()
   }
 
