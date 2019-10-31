@@ -50,6 +50,23 @@
     font-style: italic;
     color: $controlText;
     font-size: 13px;
+    .setupStepIcon{
+      display: inline-block;
+      border-radius: 9px;
+      width: 18px;
+      height: 18px;
+      font-size: 13px;
+      font-weight: bold;
+      font-stretch: condensed;
+      font-style: normal;
+      line-height: normal;
+      letter-spacing: normal;
+      text-align: center;
+      color: #ffffff;
+      background-color: $controlGray;
+      margin-left: 9px;
+      margin-right:7px;
+    }
   }
 
   .widgetGroup{

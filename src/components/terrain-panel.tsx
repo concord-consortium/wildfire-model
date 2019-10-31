@@ -79,7 +79,8 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       <div className={`${css.terrain} ${ui.showTerrainUI ? "" : css.disabled}`}>
         <div className={`${css.background} ${cssClasses[selectedZone]}`}>
           <div className={css.header}>Terrain Setup</div>
-          <div className={css.instructions}>(1) Adjust variables in each zone</div>
+          <div className={css.instructions}>
+            <span className={css.setupStepIcon}>1</span>Adjust variables in each zone</div>
           {ui.showTerrainUI && zoneUI &&
             <div className={css.zones}>
               {zoneUI}
