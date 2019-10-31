@@ -1,20 +1,21 @@
 import { inject, observer } from "mobx-react";
 import React from "react";
 import { BaseComponent, IBaseProps } from "./base";
-import { Slider, Button } from "@material-ui/core";
+import { Slider, Button} from "@material-ui/core";
 import HorizontalHandle from "../assets/slider-horizontal.svg";
 import { TerrainTypeSelector } from "./terrain-type-selector";
 import { VegetationSelector } from "./vegetation-selector";
 import { DroughtSelector } from "./drought-selector";
-
-import foothillsImage from "../assets/terrain/foothills_sample.png";
-import mountainsImage from "../assets/terrain/mountains_sample.png";
-import plainsImage from "../assets/terrain/plains_sample.png";
+import { LandType } from "../models/fire-model";
 
 import css from "./terrain-panel.scss";
+import { Zone } from "../models/zone";
+import { TerrainType } from "../types";
 
 interface IProps extends IBaseProps {}
-interface IState {}
+interface IState {
+  selectedZone: number;
+}
 
 const windDirectionMarks = [
   {
@@ -53,44 +54,45 @@ const windSpeedMarks = [
     label: "10"
   }
 ];
+const cssClasses = [css.zone1, css.zone2, css.zone3];
 
 const backgroundImage: { [key: string]: string } = {
-  mountain: mountainsImage,
-  foothills: foothillsImage,
-  plains: plainsImage
+  mountains: "./mountains_sample.jpg",
+  foothills: "./foothills_sample.jpg",
+  plains: "./plains_sample.jpg"
 };
 
 @inject("stores")
 @observer
 export class TerrainPanel extends BaseComponent<IProps, IState> {
+  constructor(props: IProps) {
+    super(props);
+    this.state = {
+      selectedZone: 0
+    };
+  }
   public render() {
     const { ui, simulation } = this.stores;
+    const { selectedZone } = this.state;
     return (
       <div className={`${css.terrain} ${ui.showTerrainUI ? "" : css.disabled}`}>
-        <div className={css.background}>
+        <div className={`${css.background} ${cssClasses[selectedZone]}`}>
           <div className={css.header}>Terrain Setup</div>
           <div className={css.instructions}>(1) Adjust variables in each zone</div>
-          <div className={css.zones}>
-            <div className={css.zone}>
-              <div className={css.terrainPreview} style={{ backgroundImage: `url(${backgroundImage.mountain})` }}>
-                <span className={`${css.zoneLabel} ${css.zone1}`}>Zone 1</span>
-              </div>
+          {ui.showTerrainUI &&
+            <div className={css.zones}>
+              {this.renderZones(simulation.zones)}
             </div>
-            <div className={css.zone}>
-                <div className={css.terrainPreview} style={{ backgroundImage: `url(${backgroundImage.plains})` }}>
-                <span className={`${css.zoneLabel} ${css.zone2}`}>Zone 2</span>
-                </div>
-            </div>
-          </div>
+          }
           <div className={css.terrainSelector}>
-            <TerrainTypeSelector zone="1" terrainType="plains" onChange={this.handleTerrainTypeChange} />
+            <TerrainTypeSelector zone={selectedZone} onChange={this.handleTerrainTypeChange} />
           </div>
           <div className={css.selectors}>
             <div className={css.selector}>
-              <VegetationSelector zone="1" vegetationType="shrub" onChange={this.handleVegetationChange} />
+              <VegetationSelector zone={selectedZone} vegetationType="shrub" onChange={this.handleVegetationChange} />
             </div>
             <div className={css.selector}>
-              <DroughtSelector zone="1" droughtIndex="mild" onChange={this.handleDroughtChange}/>
+              <DroughtSelector zone={selectedZone} droughtIndex="mild" onChange={this.handleDroughtChange}/>
             </div>
           </div>
           <div className={css.windControls}>
@@ -137,16 +139,47 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     this.stores.simulation.setWindSpeed(value as number);
   }
 
-  public handleTerrainTypeChange = (event: React.ChangeEvent<HTMLInputElement>, value: string) => {
+  public handleZoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const newZone = parseInt(event.target.value, 10);
+    this.setState({ selectedZone: newZone });
+  }
 
-    // something like this.stores.simulation.setZoneParams()
+  public handleTerrainTypeChange = (event: React.ChangeEvent<HTMLInputElement>, value: string) => {
+    const { ui, simulation } = this.stores;
+    simulation.zones[this.state.selectedZone].terrainType = value as TerrainType;
+    console.log(value);
   }
   public handleVegetationChange = (event: React.ChangeEvent<HTMLInputElement>, value: string) => {
-
+    console.log(value);
     // something like this.stores.simulation.setZoneParams()
   }
   public handleDroughtChange = (event: React.ChangeEvent<HTMLInputElement>, value: string) => {
-
+    console.log(value);
     // something like this.stores.simulation.setZoneParams()
+  }
+
+  private renderZones = (zones: Zone[]) => {
+    const { selectedZone } = this.state;
+    let i = 0;
+    const zoneUI = [];
+    for (const z of zones) {
+      zoneUI.push(
+        <div className={`${ css.zone } ${cssClasses[i]} ${selectedZone === i ? css.selected : ""}`} key={i} >
+          <label className={css.terrainPreview}>
+            <input type="radio"
+              className={css.zoneOption}
+              value={i}
+              checked={selectedZone === i}
+              onChange={this.handleZoneChange}/>
+            <div className={css.terrainImage}
+                style={{ backgroundImage: `url(${backgroundImage[z.terrainType]})` }}>
+              <span className={`${css.zoneLabel} ${cssClasses[i]}`}>{`Zone ${i + 1}`}</span>
+            </div>
+          </label>
+        </div>
+      );
+      i++;
+    }
+    return zoneUI;
   }
 }

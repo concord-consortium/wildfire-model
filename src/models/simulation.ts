@@ -6,6 +6,7 @@ import { IPresetConfig } from "../presets";
 import { getInputData } from "../utils";
 import { Vector2 } from "three";
 import { Zone } from "./zone";
+import { TerrainType } from "../types";
 
 const getGridIndexForLocation = (x: number, y: number, width: number) => {
   return x + y * width;
@@ -258,7 +259,6 @@ export class SimulationModel {
   @action.bound public setMoistureContent(value: number) {
     this.moistureContent = value;
   }
-
   public canAddSpark() {
     // There's an assumption that number of sparks should be smaller than number of zones.
     return this.sparks.length < this.config.zonesCount;

@@ -16,6 +16,8 @@ import { AddSparkInteraction } from "./add-spark-interaction";
 const LAND_COLOR = {
   [LandType.Grass]: [1, 0.83, 0, 1],
   [LandType.Shrub]: [0, 1, 0, 1],
+  [LandType.ForestSmallLitter]: [0, 0, 1, 1],
+  [LandType.ForestLargeLitter]: [1, 0, 0.83, 1]
 };
 const BURNING_COLOR = [1, 0, 0, 1];
 const BURNT_COLOR = [0.2, 0.2, 0.2, 1];

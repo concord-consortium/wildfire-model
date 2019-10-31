@@ -22,6 +22,15 @@
   .background{
     background-color: $zone1Red;
     height: 100%;
+    &.zone1{
+      background-color: $zone1Red;
+    }
+    &.zone2{
+      background-color: $zone2Blue;
+    }
+    &.zone3{
+      background-color: $zone3Orange;
+    }
   }
 
   .header{
@@ -66,13 +75,22 @@
       margin: auto;
       background-color: #eeeeee;
       padding: 4px;
+      &.selected{
+        .terrainPreview{
+          border: solid 4px #ffffff;
+        }
+      }
 
       .terrainPreview{
         width: 100%;
         height: 100%;
         border: solid 4px transparent;
-        background-size: cover;
 
+        .terrainImage{
+          width: 100%;
+          height: 100%;
+          background-size: cover;
+        }
         .zoneLabel{
           width: 55px;
           height: 22px;
@@ -81,6 +99,9 @@
           border-radius: 4px;
           border: solid 1px $controlGray;
           background-color: #ffffff;
+        }
+        .zoneOption{
+          display: none;
         }
 
         &:hover{
@@ -94,10 +115,10 @@
             background-color: $zone1Red;
           }
           .zone2{
-            background-color: $zone1Red;
+            background-color: $zone2Blue;
           }
           .zone3{
-            background-color: $zone1Red;
+            background-color: $zone3Orange;
           }
         }
       }

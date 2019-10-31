@@ -5,7 +5,7 @@ import VerticalHandle from "../assets/slider-vertical.svg";
 import * as css from "./vertical-selectors.scss";
 
 interface IProps {
-  zone: string;
+  zone: number;
   vegetationType: VegetationType;
   onChange?: any;
 }

@@ -28,7 +28,7 @@ const marks = [
 ];
 
 interface IProps {
-  zone: string;
+  zone: number;
   droughtIndex: DroughtIndex;
   onChange?: any;
 }

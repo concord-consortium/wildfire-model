@@ -1,16 +1,18 @@
+import { observer } from "mobx-react";
 import React from "react";
-import { TerrainType } from "../types";
-import { Radio, RadioGroup, FormLabel, FormControl, FormControlLabel } from "@material-ui/core";
+import { useStores } from "../use-stores";
+
+import { Radio, RadioGroup, FormControlLabel } from "@material-ui/core";
 
 import * as css from "./terrain-type-selector.scss";
 
 interface IProps {
-  zone: string;
-  terrainType: TerrainType;
+  zone: number;
   onChange?: any;
 }
 
-export const TerrainTypeSelector = (({ zone, terrainType, onChange }: IProps) => {
+export const TerrainTypeSelector = observer(({ zone, onChange }: IProps) => {
+  const { simulation, ui } = useStores();
   return (
     <div className={css.terrain}>
       <div className={css.terrainSelectorHeader}>Terrain Type</div>
@@ -19,7 +21,7 @@ export const TerrainTypeSelector = (({ zone, terrainType, onChange }: IProps) =>
         onChange={onChange}
         className={`${css.terrainSelector}`}
         data-test="terrain-type-selector"
-        defaultValue={terrainType}
+        defaultValue={simulation.zones[zone].terrainType}
       >
         <FormControlLabel
           control={<Radio color="default" className={css.radio} />}
