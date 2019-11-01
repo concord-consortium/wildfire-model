@@ -8,6 +8,17 @@ export enum LandType {
   ForestSmallLitter = 2,
   ForestLargeLitter = 3
 }
+export enum TerrainType {
+  Mountains = 0,
+  Foothills = 1,
+  Plains = 2
+}
+export enum DroughtLevel {
+  NoDrought = 0,
+  Mild = 1,
+  Medium = 2,
+  SevereDrought = 3
+}
 
 export interface IWindProps {
   // Wind speed in mph.

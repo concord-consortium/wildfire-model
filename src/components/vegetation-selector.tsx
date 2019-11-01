@@ -1,12 +1,10 @@
 import React from "react";
-import { VegetationType } from "../types";
 import { Slider } from "@material-ui/core";
 import VerticalHandle from "../assets/slider-vertical.svg";
 import * as css from "./vertical-selectors.scss";
 
 interface IProps {
-  zone: number;
-  vegetationType: VegetationType;
+  vegetationType: number;
   onChange?: any;
 }
 
@@ -25,8 +23,8 @@ const marks = [
   }
 ];
 
-export const VegetationSelector = (({ zone, vegetationType, onChange }: IProps) => {
-  return (
+export const VegetationSelector = ({ vegetationType, onChange }: IProps) =>
+  (
     <div className={`${css.selector} ${css.vegetation}`}>
       <div className={css.header}>Vegetation Type</div>
       <div className={css.sliderContainer}>
@@ -39,7 +37,7 @@ export const VegetationSelector = (({ zone, vegetationType, onChange }: IProps) 
           classes={{ thumb: css.thumb, track: css.track, rail: css.rail, disabled: css.disabled }}
           min={0}
           max={2}
-          defaultValue={0}
+          defaultValue={vegetationType}
           step={1}
           track={false}
           marks={marks}
@@ -52,4 +50,3 @@ export const VegetationSelector = (({ zone, vegetationType, onChange }: IProps) 
       </div>
     </div>
   );
-});

@@ -90,7 +90,7 @@
       align-items: center;
       height: 140px;
       margin: auto;
-      background-color: #eeeeee;
+      background-color: transparent;
       padding: 4px;
       &.selected{
         .terrainPreview{
@@ -169,16 +169,5 @@
       height: 27px;
       font-size: 14px;
     }
-  }
-
-
-
-  .windControls{
-    display: none;
-    margin-top: 20px;
-    margin-left: auto;
-    margin-right: auto;
-    font-size: 0.8em;
-    width: 80%;
   }
 }

@@ -1,12 +1,11 @@
 import { action, observable, computed } from "mobx";
-import { getFireSpreadRate, IWindProps } from "./fire-model";
+import { getFireSpreadRate, IWindProps, LandType, TerrainType } from "./fire-model";
 import { Cell, CellOptions, FireState } from "./cell";
 import { urlConfig, defaultConfig } from "../config";
 import { IPresetConfig } from "../presets";
 import { getInputData } from "../utils";
 import { Vector2 } from "three";
 import { Zone } from "./zone";
-import { TerrainType } from "../types";
 
 const getGridIndexForLocation = (x: number, y: number, width: number) => {
   return x + y * width;
@@ -259,6 +258,17 @@ export class SimulationModel {
   @action.bound public setMoistureContent(value: number) {
     this.moistureContent = value;
   }
+
+  @action.bound public updateZoneTerrain(zoneIdx: number, updatedTerrainType: TerrainType) {
+    this.zones[zoneIdx].terrainType = updatedTerrainType;
+  }
+  @action.bound public updateZoneMoisture(zoneIdx: number, updatedMoistureContent: number) {
+    this.zones[zoneIdx].moistureContent = updatedMoistureContent;
+  }
+  @action.bound public updateZoneVegetation(zoneIdx: number, vegetation: LandType) {
+    this.zones[zoneIdx].landType = vegetation;
+  }
+
   public canAddSpark() {
     // There's an assumption that number of sparks should be smaller than number of zones.
     return this.sparks.length < this.config.zonesCount;
