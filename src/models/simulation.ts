@@ -219,7 +219,7 @@ export class SimulationModel {
       this.prevTickTime = time;
     }
     if (realTimeDiffInMinutes) {
-      // One day in model time (86400 minutes) should last X seconds in real time.
+      // One day in model time (86400 seconds) should last X seconds in real time.
       const ratio = 86400 / this.config.modelDayInSeconds;
       this.time += Math.min(this.config.maxTimeStep, ratio * realTimeDiffInMinutes);
     } else {
