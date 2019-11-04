@@ -5,7 +5,6 @@ import CCLogo from "../assets/cc-logo.svg";
 import CCLogoSmall from "../assets/cc-logo-small.svg";
 import screenfull from "screenfull";
 import Button from "@material-ui/core/Button";
-import Slider from "@material-ui/core/Slider";
 
 import SparkIcon from "../assets/bottom-bar/spark.svg";
 import SparkHighlight from "../assets/bottom-bar/spark_highlight.svg";
@@ -13,7 +12,6 @@ import PauseIcon from "../assets/bottom-bar/pause.svg";
 import StartIcon from "../assets/bottom-bar/start.svg";
 import ReloadIcon from "../assets/bottom-bar/reload.svg";
 import RestartIcon from "../assets/bottom-bar/restart.svg";
-import HorizontalHandle from "../assets/slider-horizontal.svg";
 import FireLineIcon from "../assets/bottom-bar/fire-line.svg";
 import FireLineHighlightIcon from "../assets/bottom-bar/fire-line_highlight.svg";
 import HelitackIcon from "../assets/bottom-bar/helitack.svg";
@@ -41,17 +39,6 @@ const toggleFullscreen = () => {
     screenfull.exit();
   }
 };
-
-const moistureContentMarks = [
-  {
-    value: 0,
-    label: "Low"
-  },
-  {
-    value: 0.2,
-    label: "High"
-  }
-];
 
 @inject("stores")
 @observer
@@ -98,24 +85,6 @@ export class BottomBar extends BaseComponent<IProps, IState> {
             <IconButton icon={<TerrainIcon />} highlightIcon={<TerrainHighlightIcon />}
               disabled={uiDisabled} buttonText="Terrain Setup" dataTest="terrain-button" onClick={this.handleTerrain}
             />
-          </div>
-          <div className={`${css.widgetGroup} ${css.precipitation}`}>
-            <div className={css.slider}>
-              <div>Precipitation</div>
-              <Slider
-                classes={{thumb: css.thumb }}
-                min={0}
-                max={0.2}
-                disabled={simulation.simulationStarted}
-                value={simulation.moistureContent}
-                step={0.01}
-                marks={moistureContentMarks}
-                onChange={this.handleMoistureContentChange}
-                ThumbComponent={HorizontalHandle}
-                className={css.precipitationSlider}
-                data-test="precipitation-slider"
-              />
-            </div>
           </div>
           <div className={`${css.widgetGroup} ${css.placeSpark}`}>
             <IconButton icon={<SparkIcon />} highlightIcon={<SparkHighlight />}
@@ -213,9 +182,5 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     const { ui } = this.stores;
     ui.showTerrainUI = false;
     ui.interaction = Interaction.PlaceSpark;
-  }
-
-  public handleMoistureContentChange = (event: any, value: number | number[]) => {
-    this.stores.simulation.setMoistureContent(value as number);
   }
 }

@@ -20,6 +20,8 @@
   }
 
   .background{
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
     background-color: $zone1Red;
     height: 100%;
     &.zone1{
@@ -30,6 +32,21 @@
     }
     &.zone3{
       background-color: $zone3Orange;
+    }
+  }
+  .closeButton{
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    text-align: center;
+    line-height: 1.2em;
+    color: $controlGray;
+    font-weight: 800;
+    &:hover{
+      background-color: $controlGrayLight1
     }
   }
 
@@ -112,11 +129,15 @@
           width: 55px;
           height: 22px;
           font-size: 13px;
+          display: inline-block;
+          line-height: 20px;
           color: $controlText;
           border-radius: 4px;
           border: solid 1px $controlGray;
           background-color: #ffffff;
+
         }
+
         .zoneOption{
           display: none;
         }
@@ -127,14 +148,17 @@
 
         .active{
           border: solid 4px #ffffff;
-
-          .zone1{
+        }
+      }
+      &.selected{
+        .zoneLabel{
+          &.zone1{
             background-color: $zone1Red;
           }
-          .zone2{
+          &.zone2{
             background-color: $zone2Blue;
           }
-          .zone3{
+          &.zone3{
             background-color: $zone3Orange;
           }
         }

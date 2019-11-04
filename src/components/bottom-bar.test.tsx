@@ -128,19 +128,6 @@ describe("BottomBar component", () => {
     });
   });
 
-  describe("precipitation slider", () => {
-    const wrapper = mount(
-      <Provider stores={stores}>
-        <BottomBar />
-      </Provider>
-    );
-    stores.simulation.simulationStarted = false;
-    const precipitationSlider = wrapper.find('[data-test="precipitation-slider"]').first();
-    it("provides the user a way to change precipitation levels from low to high", () => {
-      expect(precipitationSlider.prop("disabled")).toEqual(false);
-    });
-  });
-
   describe("controls are disabled when running", () => {
     stores.simulation.simulationStarted = true;
     const wrapper = mount(
@@ -148,13 +135,10 @@ describe("BottomBar component", () => {
         <BottomBar />
       </Provider>
     );
-
-    const precipitationSlider = wrapper.find('[data-test="precipitation-slider"]').first();
     const spark = wrapper.find('[data-test="spark-button"]').first();
     const terrainButton = wrapper.find('[data-test="terrain-button"]').first();
 
     it("is disabled while running", () => {
-      expect(precipitationSlider.prop("disabled")).toEqual(true);
       expect(spark.prop("disabled")).toEqual(true);
       expect(terrainButton.prop("disabled")).toEqual(true);
     });

@@ -43,6 +43,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       <div className={`${css.terrain} ${ui.showTerrainUI ? "" : css.disabled}`}>
         { ui.showTerrainUI  &&
           <div className={`${css.background} ${cssClasses[selectedZone]}`}>
+            <div className={css.closeButton} onClick={this.handleClose}>X</div>
             <div className={css.header}>Terrain Setup</div>
               <div className={css.instructions}>
                 <span className={css.setupStepIcon}>1</span>Adjust variables in each zone
@@ -72,6 +73,10 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     );
   }
 
+  public handleClose = () => {
+    const { ui } = this.stores;
+    ui.showTerrainUI = !ui.showTerrainUI;
+  }
   public handleZoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Radio buttons always return string values. We're using hidden radio buttons to change selected zone
     const newZone = parseInt(event.target.value, 10);
@@ -117,7 +122,9 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
               className={css.zoneOption}
               value={i}
               checked={selectedZone === i}
-              onChange={this.handleZoneChange}/>
+              onChange={this.handleZoneChange}
+              data-test="zone-option"
+            />
             <div className={css.terrainImage}
                 style={{ backgroundImage: `url(${backgroundImage[z.terrainType]})` }}>
               <span className={`${css.zoneLabel} ${cssClasses[i]}`}>{`Zone ${i + 1}`}</span>
