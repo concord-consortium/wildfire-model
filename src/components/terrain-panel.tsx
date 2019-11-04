@@ -5,14 +5,13 @@ import { Button} from "@material-ui/core";
 import { TerrainTypeSelector } from "./terrain-type-selector";
 import { VegetationSelector } from "./vegetation-selector";
 import { DroughtSelector } from "./drought-selector";
-import { Zone } from "../models/zone";
+import { defaultConfig } from "../config";
 
 import css from "./terrain-panel.scss";
 
 interface IProps extends IBaseProps {}
 interface IState {
   selectedZone: number;
-  currentZone: Zone;
 }
 
 const cssClasses = [css.zone1, css.zone2, css.zone3];
@@ -29,15 +28,17 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   constructor(props: IProps) {
     super(props);
     this.state = {
-      selectedZone: 0,
-      currentZone: Object.assign({}, this.stores.simulation.zones[0])
+      selectedZone: 0
     };
   }
 
   public render() {
-    const { ui } = this.stores;
-    const { selectedZone, currentZone } = this.state;
+    const { ui, simulation } = this.stores;
+    const { selectedZone } = this.state;
     const zoneUI = this.renderZones();
+    const zone = simulation.zones[selectedZone];
+    // Scale moisture content so the slider snaps to the preset levels
+    const scaledMoistureContent = Math.round(zone.moistureContent / defaultConfig.moistureContentScale);
     return (
       <div className={`${css.terrain} ${ui.showTerrainUI ? "" : css.disabled}`}>
         { ui.showTerrainUI  &&
@@ -51,16 +52,16 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
               </div>
             <div className={css.terrainSelector}>
               <TerrainTypeSelector
-                terrainType={currentZone.terrainType}
+                terrainType={zone.terrainType}
                 onChange={this.handleTerrainTypeChange} />
             </div>
             <div className={css.selectors}>
               <div className={css.selector}>
-              <VegetationSelector vegetationType={currentZone.landType}
+              <VegetationSelector vegetationType={zone.landType}
                 onChange={this.handleVegetationChange} />
               </div>
               <div className={css.selector}>
-              <DroughtSelector droughtIndex={currentZone.moistureContent}
+              <DroughtSelector droughtIndex={scaledMoistureContent}
                 onChange={this.handleDroughtChange} />
               </div>
             </div>
@@ -75,7 +76,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     // Radio buttons always return string values. We're using hidden radio buttons to change selected zone
     const newZone = parseInt(event.target.value, 10);
     if (newZone !== this.state.selectedZone) {
-      this.setState({ selectedZone: newZone, currentZone: Object.assign({}, this.stores.simulation.zones[newZone])});
+      this.setState({ selectedZone: newZone });
     }
   }
 
@@ -85,7 +86,6 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const currentZone = Object.assign({}, simulation.zones[this.state.selectedZone]);
     if (currentZone.terrainType !== newTerrainType) {
       simulation.updateZoneTerrain(this.state.selectedZone, newTerrainType);
-      this.setState({ currentZone: Object.assign({}, this.stores.simulation.zones[this.state.selectedZone])});
     }
   }
   public handleVegetationChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
@@ -93,7 +93,6 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const currentZone = Object.assign({}, simulation.zones[this.state.selectedZone]);
     if (currentZone.landType !== value) {
       simulation.updateZoneVegetation(this.state.selectedZone, value);
-      this.setState({ currentZone: Object.assign({}, this.stores.simulation.zones[this.state.selectedZone])});
     }
   }
   public handleDroughtChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
@@ -101,7 +100,6 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const currentZone = Object.assign({}, simulation.zones[this.state.selectedZone]);
     if (currentZone.moistureContent !== value) {
       simulation.updateZoneMoisture(this.state.selectedZone, value);
-      this.setState({ currentZone: Object.assign({}, this.stores.simulation.zones[this.state.selectedZone])});
     }
   }
 
@@ -110,6 +108,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const { selectedZone } = this.state;
     let i = 0;
     const zoneUI = [];
+    // handle two, three (or more) zones
     for (const z of simulation.zones) {
       zoneUI.push(
         <div className={`${ css.zone } ${cssClasses[i]} ${selectedZone === i ? css.selected : ""}`} key={i} >

@@ -17,7 +17,7 @@ export const TerrainTypeSelector = ({ terrainType, onChange }: IProps) => (
       onChange={onChange}
       className={`${css.terrainSelector}`}
       data-test="terrain-type-selector"
-      defaultValue={terrainType}
+      value={terrainType}
     >
       <FormControlLabel
         control={<Radio color="default" className={css.radio} />}

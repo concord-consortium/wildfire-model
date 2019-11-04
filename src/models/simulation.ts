@@ -263,7 +263,9 @@ export class SimulationModel {
     this.zones[zoneIdx].terrainType = updatedTerrainType;
   }
   @action.bound public updateZoneMoisture(zoneIdx: number, updatedMoistureContent: number) {
-    this.zones[zoneIdx].moistureContent = updatedMoistureContent;
+    // scale moisture content from 0-1-2-3 to a range with max around 0.2
+    const scaledMoistureContent = updatedMoistureContent * this.config.moistureContentScale;
+    this.zones[zoneIdx].moistureContent = scaledMoistureContent;
   }
   @action.bound public updateZoneVegetation(zoneIdx: number, vegetation: LandType) {
     this.zones[zoneIdx].landType = vegetation;

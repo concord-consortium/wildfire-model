@@ -45,7 +45,7 @@ export const DroughtSelector = ({ droughtIndex, onChange }: IProps) => (
         classes={{ thumb: css.thumb, track: css.track, rail: css.rail, disabled: css.disabled }}
         min={0}
         max={3}
-        defaultValue={droughtIndex}
+        value={droughtIndex}
         step={1}
         track={false}
         marks={marks}

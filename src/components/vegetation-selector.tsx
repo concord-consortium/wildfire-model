@@ -37,7 +37,7 @@ export const VegetationSelector = ({ vegetationType, onChange }: IProps) =>
           classes={{ thumb: css.thumb, track: css.track, rail: css.rail, disabled: css.disabled }}
           min={0}
           max={2}
-          defaultValue={vegetationType}
+          value={vegetationType}
           step={1}
           track={false}
           marks={marks}
