@@ -8,6 +8,7 @@ import { DroughtSelector } from "./drought-selector";
 import { defaultConfig } from "../config";
 
 import css from "./terrain-panel.scss";
+import { TerrainType, LandType } from "../models/fire-model";
 
 interface IProps extends IBaseProps {}
 interface IState {
@@ -58,7 +59,9 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
             </div>
             <div className={css.selectors}>
               <div className={css.selector}>
-              <VegetationSelector vegetationType={zone.landType}
+              <VegetationSelector
+                vegetationType={zone.landType}
+                terrainType={zone.terrainType}
                 onChange={this.handleVegetationChange} />
               </div>
               <div className={css.selector}>
@@ -88,8 +91,19 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   public handleTerrainTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { simulation } = this.stores;
     const newTerrainType = parseInt(event.target.value, 10);
-    const currentZone = Object.assign({}, simulation.zones[this.state.selectedZone]);
+    const currentZone = simulation.zones[this.state.selectedZone];
     if (currentZone.terrainType !== newTerrainType) {
+      // Switching to Mountain terrain changes land type / vegetation options
+      // but keeping the min / max options the same for each range helps with slider rendering.
+      // Accommodate this by manual adjustment of land types when switching to-from mountain
+      if (currentZone.terrainType === TerrainType.Mountains && currentZone.landType === LandType.ForestLargeLitter) {
+        // switching from Mountains with large forests to lower land type, reduce forest size
+        simulation.updateZoneVegetation(this.state.selectedZone, LandType.ForestSmallLitter);
+      }
+      else if (newTerrainType === TerrainType.Mountains && currentZone.landType === LandType.Grass) {
+        // no grass allowed on mountains, switch to shrubs
+        simulation.updateZoneVegetation(this.state.selectedZone, LandType.Shrub);
+      }
       simulation.updateZoneTerrain(this.state.selectedZone, newTerrainType);
     }
   }
