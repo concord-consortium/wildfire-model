@@ -5,7 +5,7 @@ import { Button} from "@material-ui/core";
 import { TerrainTypeSelector } from "./terrain-type-selector";
 import { VegetationSelector } from "./vegetation-selector";
 import { DroughtSelector } from "./drought-selector";
-import { defaultConfig } from "../config";
+import { defaultConfig, urlConfigWithDefaultValues, urlConfig } from "../config";
 
 import css from "./terrain-panel.scss";
 import { TerrainType, LandType } from "../models/fire-model";
@@ -129,23 +129,26 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const zoneUI = [];
     // handle two, three (or more) zones
     for (const z of simulation.zones) {
-      zoneUI.push(
-        <div className={`${ css.zone } ${cssClasses[i]} ${selectedZone === i ? css.selected : ""}`} key={i} >
-          <label className={css.terrainPreview}>
-            <input type="radio"
-              className={css.zoneOption}
-              value={i}
-              checked={selectedZone === i}
-              onChange={this.handleZoneChange}
-              data-test="zone-option"
-            />
-            <div className={css.terrainImage}
+      // can limit the number of zones via a url parameter
+      if (i < urlConfigWithDefaultValues.zonesCount) {
+        zoneUI.push(
+          <div className={`${css.zone} ${cssClasses[i]} ${selectedZone === i ? css.selected : ""}`} key={i} >
+            <label className={css.terrainPreview}>
+              <input type="radio"
+                className={css.zoneOption}
+                value={i}
+                checked={selectedZone === i}
+                onChange={this.handleZoneChange}
+                data-test="zone-option"
+              />
+              <div className={css.terrainImage}
                 style={{ backgroundImage: `url(${backgroundImage[z.terrainType]})` }}>
-              <span className={`${css.zoneLabel} ${cssClasses[i]}`}>{`Zone ${i + 1}`}</span>
-            </div>
-          </label>
-        </div>
-      );
+                <span className={`${css.zoneLabel} ${cssClasses[i]}`}>{`Zone ${i + 1}`}</span>
+              </div>
+            </label>
+          </div>
+        );
+      }
       i++;
     }
     return zoneUI;

@@ -94,7 +94,7 @@ describe("zone UI", () => {
         <TerrainPanel />
       </Provider>
     );
-    expect(wrapper.find('[data-test="zone-option"]')).toHaveLength(3);
+    expect(wrapper.find('[data-test="zone-option"]')).toHaveLength(2);
   });
 });
 

@@ -18,11 +18,14 @@ import HelitackIcon from "../assets/bottom-bar/helitack.svg";
 import HelitackHighlightIcon from "../assets/bottom-bar/helitack_highlight.svg";
 import TerrainIcon from "../assets/bottom-bar/terrain-setup.svg";
 import TerrainHighlightIcon from "../assets/bottom-bar/terrain-setup_highlight.svg";
+import TerrainThreeIcon from "../assets/bottom-bar/terrain-three.svg";
+import TerrainThreeHighlightIcon from "../assets/bottom-bar/terrain-three_highlight.svg";
 
 import { IconButton } from "./icon-button";
 
 import css from "./bottom-bar.scss";
 import { Interaction } from "../models/ui";
+import { urlConfigWithDefaultValues } from "../config";
 
 interface IProps extends IBaseProps {}
 interface IState {
@@ -82,7 +85,10 @@ export class BottomBar extends BaseComponent<IProps, IState> {
         </div>
         <div className={css.mainContainer}>
           <div className={`${css.widgetGroup} ${css.terrainButton}`}>
-            <IconButton icon={<TerrainIcon />} highlightIcon={<TerrainHighlightIcon />}
+            <IconButton
+              icon={ urlConfigWithDefaultValues.zonesCount < 3 ? <TerrainIcon /> : <TerrainThreeIcon /> }
+              highlightIcon={
+                urlConfigWithDefaultValues.zonesCount < 3 ? <TerrainHighlightIcon /> : <TerrainThreeHighlightIcon />}
               disabled={uiDisabled} buttonText="Terrain Setup" dataTest="terrain-button" onClick={this.handleTerrain}
             />
           </div>
