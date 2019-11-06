@@ -45,7 +45,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
         { ui.showTerrainUI  &&
           <div className={`${css.background} ${cssClasses[selectedZone]}`}>
             <div className={css.closeButton} onClick={this.handleClose}>X</div>
-            <div className={css.header}>Terrain Setup</div>
+            <div className={css.header} data-test="terrain-header">Terrain Setup</div>
               <div className={css.instructions}>
                 <span className={css.setupStepIcon}>1</span>Adjust variables in each zone
               </div>

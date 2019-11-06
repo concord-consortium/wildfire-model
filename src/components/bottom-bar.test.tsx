@@ -71,7 +71,6 @@ describe("BottomBar component", () => {
 
   describe("terrain button", () => {
     it("toggles the display of the terrain dialog", () => {
-      const showUI = stores.ui.showTerrainUI;
       const wrapper = mount(
         <Provider stores={stores}>
           <BottomBar />
