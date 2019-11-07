@@ -9,10 +9,12 @@ import { urlConfigWithDefaultValues } from "../config";
 
 import css from "./terrain-panel.scss";
 import { TerrainType, LandType } from "../models/fire-model";
+import { WindControls } from "./wind-controls";
 
 interface IProps extends IBaseProps {}
 interface IState {
   selectedZone: number;
+  currentPanel: number;
 }
 
 const cssClasses = [css.zone1, css.zone2, css.zone3];
@@ -29,51 +31,79 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   constructor(props: IProps) {
     super(props);
     this.state = {
-      selectedZone: 0
+      selectedZone: 0,
+      currentPanel: 1
     };
+  }
+  public componentDidUpdate() {
+    const { ui } = this.stores;
+    if (!ui.showTerrainUI && this.state.currentPanel === 2) {
+      this.setState({ currentPanel: 1 });
+    }
   }
 
   public render() {
     const { ui, simulation } = this.stores;
-    const { selectedZone } = this.state;
+    const { selectedZone, currentPanel } = this.state;
     const zone = simulation.zones[selectedZone];
     // Scale moisture content so the slider snaps to the preset levels
     const scaledMoistureContent = Math.round(zone.moistureContent / urlConfigWithDefaultValues.moistureContentScale);
+    const panelClass = currentPanel === 1 ? css.panel1 : css.panel2;
     return (
       <div className={`${css.terrain} ${ui.showTerrainUI ? "" : css.disabled}`}>
         { ui.showTerrainUI  &&
-          <div className={`${css.background} ${cssClasses[selectedZone]}`}>
+          <div className={`${css.background} ${cssClasses[selectedZone]} ${panelClass}`}>
             <div className={css.closeButton} onClick={this.handleClose}>X</div>
             <div className={css.header} data-test="terrain-header">Terrain Setup</div>
-              <div className={css.instructions}>
-                <span className={css.setupStepIcon}>1</span>Adjust variables in each zone
-              </div>
-              <div className={css.zones}>
-                {this.renderZones()}
-              </div>
-          <div className={css.terrainSelector}>
-            {urlConfigWithDefaultValues.zonesCount > 2 && simulation.zones.length > 2 &&
-              <div className={css.terrainTypeLabels}>{this.renderZoneTerrainTypeLabels()}</div>
-            }
-            {urlConfigWithDefaultValues.zonesCount === 2 &&
-              <TerrainTypeSelector
-                terrainType={zone.terrainType}
-                onChange={this.handleTerrainTypeChange} />
-            }
+            <div className={css.instructions}>
+              <span className={css.setupStepIcon}>1</span>Adjust variables in each zone
             </div>
-            <div className={css.selectors}>
-              <div className={css.selector}>
-              <VegetationSelector
-                vegetationType={zone.landType}
-                terrainType={zone.terrainType}
-                onChange={this.handleVegetationChange} />
+            <div className={css.zones}>
+              {this.renderZones()}
+            </div>
+          {currentPanel === 1 &&
+            <div className={css.panel}>
+              <div className={css.terrainSelector}>
+                {urlConfigWithDefaultValues.zonesCount > 2 && simulation.zones.length > 2 &&
+                  <div className={css.terrainTypeLabels}>{this.renderZoneTerrainTypeLabels()}</div>
+                }
+                {urlConfigWithDefaultValues.zonesCount === 2 &&
+                  <TerrainTypeSelector
+                    terrainType={zone.terrainType}
+                    onChange={this.handleTerrainTypeChange} />
+                }
               </div>
-              <div className={css.selector}>
-              <DroughtSelector droughtIndex={scaledMoistureContent}
-                onChange={this.handleDroughtChange} />
+              <div className={css.selectors}>
+                <div className={css.selector}>
+                  <VegetationSelector
+                    vegetationType={zone.landType}
+                    terrainType={zone.terrainType}
+                    onChange={this.handleVegetationChange} />
+                </div>
+                <div className={css.selector}>
+                  <DroughtSelector droughtIndex={scaledMoistureContent}
+                    onChange={this.handleDroughtChange} />
+                </div>
+              </div>
+              <div className={css.buttonContainer}>
+                <Button className={css.continueButton} onClick={this.showNextPanel}>
+                  Next</Button>
               </div>
             </div>
-            <div className={css.buttonContainer}><Button className={css.continueButton}>Next</Button></div>
+            }
+            { currentPanel === 2 &&
+              <div className={css.panel}>
+                <div className={css.wind}>
+                  <WindControls />
+                </div>
+                <div className={css.buttonContainer}>
+                  <Button className={css.continueButton} onClick={this.showPreviousPanel}>
+                    Previous</Button>
+                  <Button className={css.continueButton} onClick={this.applyAndClose}>
+                    Create</Button>
+                </div>
+              </div>
+            }
           </div>
         }
       </div>
@@ -84,12 +114,23 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const { ui } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
   }
+  public applyAndClose = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    // trigger re-draw of terrain
+    const { ui } = this.stores;
+    ui.showTerrainUI = !ui.showTerrainUI;
+  }
   public handleZoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Radio buttons always return string values. We're using hidden radio buttons to change selected zone
     const newZone = parseInt(event.target.value, 10);
     if (newZone !== this.state.selectedZone) {
       this.setState({ selectedZone: newZone });
     }
+  }
+  public showNextPanel = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    this.setState({ currentPanel: 2 });
+  }
+  public showPreviousPanel = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+    this.setState({ currentPanel: 1 });
   }
 
   public handleTerrainTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,15 +169,17 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
 
   private renderZones = () => {
     const { simulation } = this.stores;
-    const { selectedZone } = this.state;
+    const { selectedZone, currentPanel } = this.state;
     let i = 0;
     const zoneUI = [];
     // handle two, three (or more) zones
     for (const z of simulation.zones) {
       // can limit the number of zones via a url parameter
       if (i < urlConfigWithDefaultValues.zonesCount) {
+        // Individual zones can only be edited on the first page of the wizard
+        const zoneStyle = currentPanel === 1 ? selectedZone === i ? css.selected : "" : css.fixed;
         zoneUI.push(
-          <div className={`${css.zone} ${cssClasses[i]} ${selectedZone === i ? css.selected : ""}`} key={i} >
+          <div className={`${css.zone} ${cssClasses[i]} ${zoneStyle}`} key={i} >
             <label className={css.terrainPreview}>
               <input type="radio"
                 className={css.zoneOption}
