@@ -15,7 +15,7 @@ export const TerrainTypeSelector = ({ terrainType, onChange }: IProps) => (
     <RadioGroup
       aria-label="terrain type"
       onChange={onChange}
-      className={`${css.terrainSelector}`}
+      className={css.terrainSelector}
       data-test="terrain-type-selector"
       value={terrainType}
     >

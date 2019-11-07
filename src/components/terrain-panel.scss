@@ -167,6 +167,16 @@
   }
   .terrainSelector{
     height: 56px;
+    .terrainTypeLabels{
+      width: 100%;
+      .terrainTypeLabel{
+        display: inline-block;
+        width: 33%;
+        text-align: center;
+        font-size: 10px;
+      }
+    }
+
   }
   .selectors{
     height: 169px;

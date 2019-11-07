@@ -5,7 +5,7 @@ import { Button} from "@material-ui/core";
 import { TerrainTypeSelector } from "./terrain-type-selector";
 import { VegetationSelector } from "./vegetation-selector";
 import { DroughtSelector } from "./drought-selector";
-import { defaultConfig, urlConfigWithDefaultValues, urlConfig } from "../config";
+import { urlConfigWithDefaultValues } from "../config";
 
 import css from "./terrain-panel.scss";
 import { TerrainType, LandType } from "../models/fire-model";
@@ -36,10 +36,9 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   public render() {
     const { ui, simulation } = this.stores;
     const { selectedZone } = this.state;
-    const zoneUI = this.renderZones();
     const zone = simulation.zones[selectedZone];
     // Scale moisture content so the slider snaps to the preset levels
-    const scaledMoistureContent = Math.round(zone.moistureContent / defaultConfig.moistureContentScale);
+    const scaledMoistureContent = Math.round(zone.moistureContent / urlConfigWithDefaultValues.moistureContentScale);
     return (
       <div className={`${css.terrain} ${ui.showTerrainUI ? "" : css.disabled}`}>
         { ui.showTerrainUI  &&
@@ -50,12 +49,17 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
                 <span className={css.setupStepIcon}>1</span>Adjust variables in each zone
               </div>
               <div className={css.zones}>
-                {zoneUI}
+                {this.renderZones()}
               </div>
-            <div className={css.terrainSelector}>
+          <div className={css.terrainSelector}>
+            {urlConfigWithDefaultValues.zonesCount > 2 && simulation.zones.length > 2 &&
+              <div className={css.terrainTypeLabels}>{this.renderZoneTerrainTypeLabels()}</div>
+            }
+            {urlConfigWithDefaultValues.zonesCount === 2 &&
               <TerrainTypeSelector
                 terrainType={zone.terrainType}
                 onChange={this.handleTerrainTypeChange} />
+            }
             </div>
             <div className={css.selectors}>
               <div className={css.selector}>
@@ -152,5 +156,22 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       i++;
     }
     return zoneUI;
+  }
+  private renderZoneTerrainTypeLabels = () => {
+    const { simulation } = this.stores;
+    const labels = [];
+    const labelText = {
+      0: "Mountains",
+      1: "Foothills",
+      2: "Plains"
+    };
+    let i = 0;
+    for (const z of simulation.zones) {
+      if (i < urlConfigWithDefaultValues.zonesCount) {
+        labels.push(<div className={css.terrainTypeLabel}>{labelText[z.terrainType]}</div>);
+      }
+      i++;
+    }
+    return labels;
   }
 }
