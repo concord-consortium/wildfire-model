@@ -189,17 +189,23 @@
   }
   .terrainSelector{
     height: 56px;
-    .terrainTypeLabels{
-      width: 100%;
-      .terrainTypeLabel{
-        display: inline-block;
-        width: 33%;
-        text-align: center;
-        font-size: 10px;
-      }
-    }
-
   }
+  .terrainTypeLabels{
+    width: 100%;
+    display: flex;
+    .terrainTypeLabel{
+      justify-content: space-around;
+      flex-grow: 1;
+      text-align: center;
+      font-size: 10px;
+    }
+  }
+  .terrainProperties{
+    width: 100%;
+    display: flex;
+    color: $controlText;
+  }
+
   .selectors{
     height: 169px;
     display: flex;

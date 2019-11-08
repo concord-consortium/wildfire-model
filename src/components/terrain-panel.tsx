@@ -10,6 +10,7 @@ import { urlConfigWithDefaultValues } from "../config";
 import css from "./terrain-panel.scss";
 import { TerrainType, LandType } from "../models/fire-model";
 import { WindControls } from "./wind-controls";
+import { TerrainSummary } from "./terrain-summary";
 
 interface IProps extends IBaseProps {}
 interface IState {
@@ -49,14 +50,15 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     // Scale moisture content so the slider snaps to the preset levels
     const scaledMoistureContent = Math.round(zone.moistureContent / urlConfigWithDefaultValues.moistureContentScale);
     const panelClass = currentPanel === 1 ? css.panel1 : css.panel2;
+    const panelInstructions = currentPanel === 1 ? "Adjust variables in each zone" : "Set initial wind direction and speed";
     return (
       <div className={`${css.terrain} ${ui.showTerrainUI ? "" : css.disabled}`}>
         { ui.showTerrainUI  &&
           <div className={`${css.background} ${cssClasses[selectedZone]} ${panelClass}`}>
             <div className={css.closeButton} onClick={this.handleClose}>X</div>
-            <div className={css.header} data-test="terrain-header">Terrain Setup</div>
+          <div className={css.header} data-test="terrain-header">Terrain Setup</div>
             <div className={css.instructions}>
-              <span className={css.setupStepIcon}>1</span>Adjust variables in each zone
+              <span className={css.setupStepIcon}>{currentPanel}</span>{panelInstructions}
             </div>
             <div className={css.zones}>
               {this.renderZones()}
@@ -93,6 +95,8 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
             }
             { currentPanel === 2 &&
               <div className={css.panel}>
+                <div className={css.terrainTypeLabels}>{this.renderZoneTerrainTypeLabels()}</div>
+                <div className={css.terrainProperties}>{this.renderTerrainProperties()}</div>
                 <div className={css.wind}>
                   <WindControls />
                 </div>
@@ -212,6 +216,22 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     for (const z of simulation.zones) {
       if (i < urlConfigWithDefaultValues.zonesCount) {
         labels.push(<div className={css.terrainTypeLabel}>{labelText[z.terrainType]}</div>);
+      }
+      i++;
+    }
+    return labels;
+  }
+  private renderTerrainProperties = () => {
+    const { simulation } = this.stores;
+    const labels = [];
+
+    let i = 0;
+    for (const z of simulation.zones) {
+      if (i < urlConfigWithDefaultValues.zonesCount) {
+        const scaledMoistureContent = Math.round(z.moistureContent / urlConfigWithDefaultValues.moistureContentScale);
+        labels.push(
+          <TerrainSummary vegetationType={z.landType} droughtLevel={scaledMoistureContent} />
+        );
       }
       i++;
     }
