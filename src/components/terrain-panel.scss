@@ -127,6 +127,24 @@
           width: 100%;
           height: 100%;
           background-size: cover;
+          &.mildDrought{
+            filter:
+              hue-rotate(327deg)
+              saturate(80%)
+              brightness(115%);
+          }
+          &.mediumDrought{
+            filter:
+              hue-rotate(316deg)
+              saturate(80%)
+              brightness(130%);
+          }
+          &.severeDrought{
+            filter:
+              hue-rotate(297deg)
+              saturate(65%)
+              brightness(120%);
+          }
         }
         .zoneLabel{
           width: 55px;

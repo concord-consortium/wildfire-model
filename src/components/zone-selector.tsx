@@ -28,6 +28,20 @@ const getBackgroundImage = (zoneCount: number, terrainType: number, currentZone:
   return prefix + terrainStyle + panelPosition + ".png";
 };
 
+const getColorFilter = (moistureContent: number) => {
+  const scaledMoistureContent = Math.round(moistureContent / urlConfigWithDefaultValues.moistureContentScale);
+  switch (scaledMoistureContent) {
+    case 1:
+      return css.mildDrought;
+    case 2:
+      return css.mediumDrought;
+    case 3:
+      return css.severeDrought;
+    default:
+      return "";
+  }
+};
+
 export const renderZones = (zones: Zone[], selectedZone: number, readonly: boolean, onChange: any) => {
   const zoneUI: any[] = [];
   // handle two, three (or more) zones
@@ -47,7 +61,7 @@ export const renderZones = (zones: Zone[], selectedZone: number, readonly: boole
               onChange={onChange}
               data-test="zone-option"
             />
-            <div className={css.terrainImage}
+            <div className={`${css.terrainImage} ${getColorFilter(z.moistureContent)}`}
               style={{ backgroundImage: `url(${zoneTerrainImagePath})` }}>
               <span className={`${css.zoneLabel} ${cssClasses[i]}`}>{`Zone ${i + 1}`}</span>
             </div>
