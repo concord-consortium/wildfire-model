@@ -19,10 +19,10 @@ interface IProps {
 }
 
 const vegetationLabels = [
-  "Forest Large Litter",
-  "Forest Small Litter",
+  "Grass",
   "Shrub",
-  "Grass"
+  "Forest Small Litter",
+  "Forest Large Litter"
 ];
 
 const droughtLabels = [
@@ -33,10 +33,10 @@ const droughtLabels = [
 ];
 
 const vegetationIcons = [
-  <ForestLargeLitter key={0} />,
-  <ForestSmallLitter key={1} />,
-  <Shrub key={2} />,
-  <Grass key={3} />,
+  <Grass key={0} />,
+  <Shrub key={1} />,
+  <ForestSmallLitter key={2} />,
+  <ForestLargeLitter key={3} />,
 ];
 
 const droughtIcons = [

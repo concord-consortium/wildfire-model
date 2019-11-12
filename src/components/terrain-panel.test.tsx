@@ -122,7 +122,7 @@ describe("vegetation selector", () => {
       </Provider>
     );
     const veg = wrapper.find('[data-test="vegetation-slider"]').first();
-    expect(veg.prop("value")).toBe(2);
+    expect(veg.prop("value")).toBe(1);
 
     // const panel = (wrapper.find(TerrainPanel).instance() as any).wrappedInstance as TerrainPanel;
     // const panel = wrapper.find(TerrainPanel).instance();

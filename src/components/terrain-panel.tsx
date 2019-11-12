@@ -49,6 +49,8 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const zone = simulation.zones[selectedZone];
     // Scale moisture content so the slider snaps to the preset levels
     const scaledMoistureContent = Math.round(zone.moistureContent / urlConfigWithDefaultValues.moistureContentScale);
+    const displayVegetationType =
+      zone.terrainType === TerrainType.Mountains ? zone.landType - 1 : zone.landType;
     const panelClass = currentPanel === 1 ? css.panel1 : css.panel2;
     const panelInstructions = currentPanel === 1 ? "Adjust variables in each zone" : "Set initial wind direction and speed";
     return (
@@ -78,7 +80,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
               <div className={css.selectors}>
                 <div className={css.selector}>
                   <VegetationSelector
-                    vegetationType={zone.landType}
+                    landType={displayVegetationType}
                     terrainType={zone.terrainType}
                     onChange={this.handleVegetationChange} />
                 </div>
@@ -145,7 +147,8 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       // Switching to Mountain terrain changes land type / vegetation options
       // but keeping the min / max options the same for each range helps with slider rendering.
       // Accommodate this by manual adjustment of land types when switching to-from mountain
-      if (currentZone.terrainType === TerrainType.Mountains && currentZone.landType === LandType.ForestLargeLitter) {
+      if (currentZone.terrainType === TerrainType.Mountains &&
+        currentZone.landType === LandType.ForestLargeLitter) {
         // switching from Mountains with large forests to lower land type, reduce forest size
         simulation.updateZoneVegetation(this.state.selectedZone, LandType.ForestSmallLitter);
       }
@@ -156,11 +159,17 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       simulation.updateZoneTerrain(this.state.selectedZone, newTerrainType);
     }
   }
+
   public handleVegetationChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
     const { simulation } = this.stores;
-    const currentZone = Object.assign({}, simulation.zones[this.state.selectedZone]);
-    if (currentZone.landType !== value) {
-      simulation.updateZoneVegetation(this.state.selectedZone, value);
+    const zone = Object.assign({}, simulation.zones[this.state.selectedZone]);
+    const displayVegetationType =
+      zone.terrainType === TerrainType.Mountains ? zone.landType - 1 : zone.landType;
+
+    if (displayVegetationType !== value) {
+      const newVegetationType =
+        zone.terrainType === TerrainType.Mountains ? value + 1 : value;
+      simulation.updateZoneVegetation(this.state.selectedZone, newVegetationType);
     }
   }
   public handleDroughtChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
@@ -174,10 +183,9 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   private renderZones = () => {
     const { simulation } = this.stores;
     const { selectedZone, currentPanel } = this.state;
-    let i = 0;
-    const zoneUI = [];
+    const zoneUI: any[] = [];
     // handle two, three (or more) zones
-    for (const z of simulation.zones) {
+    simulation.zones.forEach((z, i) => {
       // can limit the number of zones via a url parameter
       if (i < urlConfigWithDefaultValues.zonesCount) {
         // Individual zones can only be edited on the first page of the wizard
@@ -200,41 +208,37 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
           </div>
         );
       }
-      i++;
-    }
+    });
+
     return zoneUI;
   }
   private renderZoneTerrainTypeLabels = () => {
     const { simulation } = this.stores;
-    const labels = [];
+    const labels: any[] = [];
     const labelText = {
       0: "Mountains",
       1: "Foothills",
       2: "Plains"
     };
-    let i = 0;
-    for (const z of simulation.zones) {
+    simulation.zones.forEach((z, i) => {
       if (i < urlConfigWithDefaultValues.zonesCount) {
-        labels.push(<div className={css.terrainTypeLabel}>{labelText[z.terrainType]}</div>);
+        labels.push(<div className={css.terrainTypeLabel} key={i}>{labelText[z.terrainType]}</div>);
       }
-      i++;
-    }
+    });
     return labels;
   }
   private renderTerrainProperties = () => {
     const { simulation } = this.stores;
-    const labels = [];
+    const labels: any[] = [];
 
-    let i = 0;
-    for (const z of simulation.zones) {
+    simulation.zones.forEach((z, i) => {
       if (i < urlConfigWithDefaultValues.zonesCount) {
         const scaledMoistureContent = Math.round(z.moistureContent / urlConfigWithDefaultValues.moistureContentScale);
         labels.push(
-          <TerrainSummary vegetationType={z.landType} droughtLevel={scaledMoistureContent} />
+          <TerrainSummary vegetationType={z.landType} droughtLevel={scaledMoistureContent} key={i} />
         );
       }
-      i++;
-    }
+    });
     return labels;
   }
 }
