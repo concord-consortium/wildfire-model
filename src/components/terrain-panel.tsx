@@ -1,7 +1,9 @@
 import { inject, observer } from "mobx-react";
 import React from "react";
 import { BaseComponent, IBaseProps } from "./base";
-import { Button} from "@material-ui/core";
+import { Button } from "@material-ui/core";
+
+import { renderZones } from "./zone-selector";
 import { TerrainTypeSelector } from "./terrain-type-selector";
 import { VegetationSelector } from "./vegetation-selector";
 import { DroughtSelector } from "./drought-selector";
@@ -17,14 +19,7 @@ interface IState {
   selectedZone: number;
   currentPanel: number;
 }
-
 const cssClasses = [css.zone1, css.zone2, css.zone3];
-
-const backgroundImage: { [key: number]: string } = {
-  0: "./mountains_sample.jpg",
-  1: "./foothills_sample.jpg",
-  2: "./plains_sample.jpg"
-};
 
 @inject("stores")
 @observer
@@ -63,7 +58,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
               <span className={css.setupStepIcon}>{currentPanel}</span>{panelInstructions}
             </div>
             <div className={css.zones}>
-              {this.renderZones()}
+              {renderZones(simulation.zones, selectedZone, currentPanel === 2, this.handleZoneChange)}
             </div>
           {currentPanel === 1 &&
             <div className={css.panel}>
@@ -180,38 +175,6 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     }
   }
 
-  private renderZones = () => {
-    const { simulation } = this.stores;
-    const { selectedZone, currentPanel } = this.state;
-    const zoneUI: any[] = [];
-    // handle two, three (or more) zones
-    simulation.zones.forEach((z, i) => {
-      // can limit the number of zones via a url parameter
-      if (i < urlConfigWithDefaultValues.zonesCount) {
-        // Individual zones can only be edited on the first page of the wizard
-        const zoneStyle = currentPanel === 1 ? selectedZone === i ? css.selected : "" : css.fixed;
-        zoneUI.push(
-          <div className={`${css.zone} ${cssClasses[i]} ${zoneStyle}`} key={i} >
-            <label className={css.terrainPreview}>
-              <input type="radio"
-                className={css.zoneOption}
-                value={i}
-                checked={selectedZone === i}
-                onChange={this.handleZoneChange}
-                data-test="zone-option"
-              />
-              <div className={css.terrainImage}
-                style={{ backgroundImage: `url(${backgroundImage[z.terrainType]})` }}>
-                <span className={`${css.zoneLabel} ${cssClasses[i]}`}>{`Zone ${i + 1}`}</span>
-              </div>
-            </label>
-          </div>
-        );
-      }
-    });
-
-    return zoneUI;
-  }
   private renderZoneTerrainTypeLabels = () => {
     const { simulation } = this.stores;
     const labels: any[] = [];
