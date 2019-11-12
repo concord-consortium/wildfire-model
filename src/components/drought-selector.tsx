@@ -5,26 +5,9 @@ import NoDrought from "../assets/terrain/drought-no.svg";
 import MildDrought from "../assets/terrain/drought-mild.svg";
 import MedDrought from "../assets/terrain/drought-med.svg";
 import SevereDrought from "../assets/terrain/drought-severe.svg";
-import * as css from "./vertical-selectors.scss";
 
-const marks = [
-  {
-    value: 0,
-    label: "No Drought",
-  },
-  {
-    value: 1,
-    label: "Mild",
-  },
-  {
-    value: 2,
-    label: "Medium",
-  },
-  {
-    value: 3,
-    label: "Severe Drought",
-  },
-];
+import { generateMarks, droughtIcons, droughtLabels } from "./vertical-selectors";
+import * as css from "./vertical-selectors.scss";
 
 interface IProps {
   droughtIndex: number;
@@ -36,10 +19,10 @@ export const DroughtSelector = ({ droughtIndex, onChange }: IProps) => (
     <div className={css.header}>Drought Index</div>
     <div className={css.sliderContainer}>
       <div className={css.sliderIcons}>
-        <div className={`${css.sliderIcon} ${css.severeDrought} ${css.top}`}><SevereDrought /></div>
-        <div className={`${css.sliderIcon} ${css.mediumDrought} ${css.topQuarter}`}><MedDrought /></div>
-        <div className={`${css.sliderIcon} ${css.mildDrought} ${css.bottomQuarter}`} ><MildDrought /></div>
-        <div className={`${css.sliderIcon} ${css.noDrought} ${css.bottom}`}><NoDrought /></div>
+        <div className={`${css.sliderIcon} ${css.severeDrought} ${css.top}`}>{droughtIcons[3]}</div>
+        <div className={`${css.sliderIcon} ${css.mediumDrought} ${css.topQuarter}`}>{droughtIcons[2]}</div>
+        <div className={`${css.sliderIcon} ${css.mildDrought} ${css.bottomQuarter}`} >{droughtIcons[1]}</div>
+        <div className={`${css.sliderIcon} ${css.noDrought} ${css.bottom}`}>{droughtIcons[0]}</div>
       </div>
       <Slider
         classes={{ thumb: css.thumb, track: css.track, rail: css.rail, disabled: css.disabled }}
@@ -48,7 +31,7 @@ export const DroughtSelector = ({ droughtIndex, onChange }: IProps) => (
         value={droughtIndex}
         step={1}
         track={false}
-        marks={marks}
+        marks={generateMarks(droughtLabels)}
         onChange={onChange}
         orientation="vertical"
         ThumbComponent={VerticalHandle}
