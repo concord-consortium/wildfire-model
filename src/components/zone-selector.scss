@@ -7,6 +7,7 @@
   flex-direction: column;
   flex-wrap: nowrap;
   align-items: center;
+  font-family: Lato;
   height: 140px;
   margin: auto;
   background-color: transparent;
@@ -15,12 +16,18 @@
     .terrainPreview{
       border: solid 4px #ffffff;
     }
+    &:hover{
+      .terrainPreview{
+        border: solid 4px #ffffff;
+      }
+    }
   }
 
   .terrainPreview{
     width: 100%;
     height: 100%;
     border: solid 4px transparent;
+    position: relative;
 
     .terrainImage{
       width: 100%;
@@ -45,17 +52,46 @@
           brightness(120%);
       }
     }
+    .vegetationPreview{
+      position: absolute;
+      left: 6px;
+      bottom: 6px;
+      width: 26px;
+      height: 26px;
+      border: 1px solid #ffffff;
+      &.right{
+        left: auto;
+        right: 6px;
+      }
+      &.mid{
+        left: 26px;
+      }
+      svg{
+        width: 100%;
+        height: 100%;
+      }
+    }
+    .zoneLabelBorder{
+      width: 63px;
+      height: 30px;
+      display: inline-block;
+      color: $controlText;
+      border-radius: 8px;
+      background-color: rgba(255,255,255,0.1);
+      margin-top: 8px;
+    }
     .zoneLabel{
       width: 55px;
       height: 22px;
-      font-size: 13px;
+      font-size: 12px;
       display: inline-block;
-      line-height: 20px;
+      font-weight: bold;
+      line-height: 22px;
       color: $controlText;
       border-radius: 4px;
       border: solid 1px $controlGray;
       background-color: #ffffff;
-      margin-top: 5px;
+      margin-top: 3px;
     }
 
     .zoneOption{
@@ -64,13 +100,22 @@
 
     &:hover{
       border: solid 4px rgba(255,255,255,0.5);
+      .zoneLabelBorder{
+        background-color: rgba(255,255,255,0.5);
+      }
     }
 
-    .active{
+    &:active{
       border: solid 4px #ffffff;
+      .zoneLabelBorder{
+        background-color: rgba(255,255,255,1.0);
+      }
     }
   }
   &.selected{
+    .zoneLabelBorder{
+      background-color: rgba(255,255,255,0.5);
+    }
     .zoneLabel{
       &.zone1{
         background-color: $zone1Red;

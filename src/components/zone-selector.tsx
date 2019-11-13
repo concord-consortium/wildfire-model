@@ -3,6 +3,7 @@ import { urlConfigWithDefaultValues } from "../config";
 import { Zone } from "../models/zone";
 import * as css from "./zone-selector.scss";
 import { TerrainType } from "../models/fire-model";
+import { vegetationIcons } from "./vertical-selectors";
 
 interface IProps {
   zones: Zone[];
@@ -45,6 +46,11 @@ export const renderZones = (zones: Zone[], selectedZone: number, readonly: boole
       // Individual zones can only be edited on the first page of the wizard
       const zoneTerrainImagePath = getBackgroundImage(urlConfigWithDefaultValues.zonesCount, z.terrainType, i);
       const zoneStyle = readonly ? css.fixed : selectedZone === i ? css.selected : "";
+      // Only apply a position change for > 0 zone index (in span rendering)
+      let vegPreviewPosition = css.right;
+      if (i === 1 && urlConfigWithDefaultValues.zonesCount > 2) {
+        vegPreviewPosition = css.mid;
+      }
       zoneUI.push(
         <div className={`${css.zone} ${cssClasses[i]} ${zoneStyle}`} key={i} >
           <label className={css.terrainPreview}>
@@ -57,7 +63,13 @@ export const renderZones = (zones: Zone[], selectedZone: number, readonly: boole
             />
             <div className={`${css.terrainImage} ${getColorFilter(z.moistureContent)}`}
               style={{ backgroundImage: `url(${zoneTerrainImagePath})` }}>
-              <span className={`${css.zoneLabel} ${cssClasses[i]}`}>{`Zone ${i + 1}`}</span>
+              <span className={`${css.zoneLabelBorder}`}>
+                <span className={`${css.zoneLabel} ${cssClasses[i]}`}>{`Zone ${i + 1}`}</span>
+              </span>
+              {!readonly &&
+                <span className={`${css.vegetationPreview} ${i > 0 ? vegPreviewPosition : ""}`}>
+                  {vegetationIcons[z.landType]}</span>
+              }
             </div>
           </label>
         </div>

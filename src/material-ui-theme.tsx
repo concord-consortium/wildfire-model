@@ -79,19 +79,18 @@ export default createMuiTheme({
         "$vertical &": {
           width: 18,
           height: 18,
-          marginLeft: -9,
-
+          marginLeft: -8,
         }
       },
       mark: {
         "$vertical &": {
-          width: 6,
-          height: 6,
+          width: 4,
+          height: 4,
           borderRadius: 3,
-          marginLeft: -4,
+          marginLeft: -3,
           marginTop: 4,
-          backgroundColor: "rgba(255,255,255,1)",
-          border: "1px solid silver"
+          backgroundColor: "#d8d8d8",
+          border: "1px solid #797979"
         }
       },
       markLabel: {

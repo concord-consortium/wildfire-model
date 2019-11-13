@@ -1,3 +1,5 @@
+@import "common.scss";
+
 .terrainSummary{
   justify-content: space-around;
   flex-grow: 1;
@@ -6,7 +8,7 @@
   margin-left: auto;
   margin-right: auto;
   .row{
-    height: 50px;
+    height: 30px;
     vertical-align: middle;
     .column{
       display: inline-block;
@@ -16,11 +18,20 @@
         right: 0px;
         width: 26px;
         height: 26px;
+        border: 1px solid $controlGray;
+        &.drought{
+          padding-top: 6px;
+          right: 5px;
+          width: 18px;
+          height: 24px;
+          border: 0;
+        }
       }
       .caption{
         position: absolute;
         left: 0px;
         width: 50px;
+        padding-top: 6px;
       }
     }
   }
