@@ -1,7 +1,7 @@
 import React from "react";
 import { urlConfigWithDefaultValues } from "../config";
 import { Zone } from "../models/zone";
-import * as css from "./terrain-panel.scss";
+import * as css from "./zone-selector.scss";
 import { TerrainType } from "../models/fire-model";
 
 interface IProps {
@@ -12,12 +12,6 @@ interface IProps {
 }
 
 const cssClasses = [css.zone1, css.zone2, css.zone3];
-
-const backgroundImage: { [key: number]: string } = {
-  0: "./mountains_sample.jpg",
-  1: "./foothills_sample.jpg",
-  2: "./plains_sample.jpg"
-};
 
 const getBackgroundImage = (zoneCount: number, terrainType: number, currentZone: number) => {
   const prefix = `./terrain/${zoneCount}-zone-`;
@@ -50,7 +44,7 @@ export const renderZones = (zones: Zone[], selectedZone: number, readonly: boole
     if (i < urlConfigWithDefaultValues.zonesCount) {
       // Individual zones can only be edited on the first page of the wizard
       const zoneTerrainImagePath = getBackgroundImage(urlConfigWithDefaultValues.zonesCount, z.terrainType, i);
-      const zoneStyle = readonly ? selectedZone === i ? css.selected : "" : css.fixed;
+      const zoneStyle = readonly ? css.fixed : selectedZone === i ? css.selected : "";
       zoneUI.push(
         <div className={`${css.zone} ${cssClasses[i]} ${zoneStyle}`} key={i} >
           <label className={css.terrainPreview}>
