@@ -2,32 +2,237 @@
 
 .terrain{
   position: fixed;
-  top: 40px;
-  width: 512px;
-  height: 485px;
+  top: 32px;
+  width: 288px;
+  height: 500px;
   margin-left: auto;
   margin-right: auto;
   border-radius: 10px;
   border: 1px solid silver;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.5);
 
-  background: #fff;
-
-  padding: 15px;
-  padding-top: 32px;
+  background: rgba(255, 255, 255, 1);
+  padding: 5px;
+  text-align: center;
 
   &.disabled{
     display: none;
   }
 
+  .background{
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+    background-color: $zone1Red;
+    height: 100%;
+    &.zone1{
+      background-color: $zone1Red;
+    }
+    &.zone2{
+      background-color: $zone2Blue;
+    }
+    &.zone3{
+      background-color: $zone3Orange;
+    }
+    &.panel2{
+      background-color: $zoneGreen;
+    }
+  }
+  .closeButton{
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 6px;
+    text-align: center;
+    line-height: 1.2em;
+    color: $controlGray;
+    font-weight: 800;
+    &:hover{
+      background-color: $controlGrayLight1
+    }
+  }
+
   .header{
-    margin-top: -28px;
+    height: 27px;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
     text-align: center;
     font-size: 14px;
     font-family: Lato;
+    background: white;
+  }
+  .instructions{
+    margin-top: 10px;
+    margin-bottom: 13px;
+    width: 100%;
+    text-align: left;
+    font-style: italic;
+    color: $controlText;
+    font-size: 13px;
+    .setupStepIcon{
+      display: inline-block;
+      border-radius: 9px;
+      width: 18px;
+      height: 18px;
+      font-size: 13px;
+      font-weight: bold;
+      font-stretch: condensed;
+      font-style: normal;
+      line-height: normal;
+      letter-spacing: normal;
+      text-align: center;
+      color: #ffffff;
+      background-color: $controlGray;
+      margin-left: 9px;
+      margin-right:7px;
+    }
   }
 
   .widgetGroup{
     margin-top: 20px;
+  }
+
+  .zones{
+    padding-left: 4px;
+    padding-right: 4px;
+    font-size: 0.7em;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    .zone{
+      flex-grow: 1;
+      /* flex options for children */
+      display: flex;
+      flex-direction: column;
+      flex-wrap: nowrap;
+      align-items: center;
+      height: 140px;
+      margin: auto;
+      background-color: transparent;
+      padding: 4px;
+      &.selected{
+        .terrainPreview{
+          border: solid 4px #ffffff;
+        }
+      }
+
+      .terrainPreview{
+        width: 100%;
+        height: 100%;
+        border: solid 4px transparent;
+
+        .terrainImage{
+          width: 100%;
+          height: 100%;
+          background-size: cover;
+        }
+        .zoneLabel{
+          width: 55px;
+          height: 22px;
+          font-size: 13px;
+          display: inline-block;
+          line-height: 20px;
+          color: $controlText;
+          border-radius: 4px;
+          border: solid 1px $controlGray;
+          background-color: #ffffff;
+          margin-top: 5px;
+        }
+
+        .zoneOption{
+          display: none;
+        }
+
+        &:hover{
+          border: solid 4px #ffffff;
+        }
+
+        .active{
+          border: solid 4px #ffffff;
+        }
+      }
+      &.selected{
+        .zoneLabel{
+          &.zone1{
+            background-color: $zone1Red;
+          }
+          &.zone2{
+            background-color: $zone2Blue;
+          }
+          &.zone3{
+            background-color: $zone3Orange;
+          }
+        }
+      }
+      &.fixed{
+        .terrainPreview{
+          &:hover{
+            border: solid 4px transparent;
+          }
+          .zoneLabel{
+            border: none;
+            &.zone1{
+              background-color: $zone1Red;
+            }
+            &.zone2{
+              background-color: $zone2Blue;
+            }
+            &.zone3{
+              background-color: $zone3Orange;
+            }
+          }
+        }
+      }
+    }
+  }
+  .terrainSelector{
+    height: 56px;
+  }
+  .terrainTypeLabels{
+    width: 100%;
+    display: flex;
+    .terrainTypeLabel{
+      justify-content: space-around;
+      flex-grow: 1;
+      text-align: center;
+      font-size: 10px;
+    }
+  }
+  .terrainProperties{
+    width: 100%;
+    display: flex;
+    color: $controlText;
+  }
+
+  .selectors{
+    height: 169px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: center;
+    .selector{
+      flex-grow: 1;
+      height: 100px;
+    }
+  }
+  .buttonContainer{
+    position: absolute;
+    width: 100%;
+    margin-left: auto;
+    margin-right: aut0;
+    bottom: 13px;
+    .continueButton{
+      border: 1px solid $controlGray;
+      border-radius: 5px;
+      background-color: #ffffff;
+      width: 78px;
+      height: 27px;
+      font-size: 14px;
+    }
+    .continueButton + .continueButton{
+      margin-left: 20px;
+    }
   }
 }

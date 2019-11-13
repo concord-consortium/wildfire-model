@@ -1,5 +1,5 @@
 import { action, observable, computed } from "mobx";
-import { getFireSpreadRate, IWindProps } from "./fire-model";
+import { getFireSpreadRate, IWindProps, LandType, TerrainType } from "./fire-model";
 import { Cell, CellOptions, FireState } from "./cell";
 import { urlConfig, defaultConfig } from "../config";
 import { IPresetConfig } from "../presets";
@@ -257,6 +257,18 @@ export class SimulationModel {
 
   @action.bound public setMoistureContent(value: number) {
     this.moistureContent = value;
+  }
+
+  @action.bound public updateZoneTerrain(zoneIdx: number, updatedTerrainType: TerrainType) {
+    this.zones[zoneIdx].terrainType = updatedTerrainType;
+  }
+  @action.bound public updateZoneMoisture(zoneIdx: number, updatedMoistureContent: number) {
+    // scale moisture content from 0-1-2-3 to a range with max around 0.2
+    const scaledMoistureContent = updatedMoistureContent * this.config.moistureContentScale;
+    this.zones[zoneIdx].moistureContent = scaledMoistureContent;
+  }
+  @action.bound public updateZoneVegetation(zoneIdx: number, vegetation: LandType) {
+    this.zones[zoneIdx].landType = vegetation;
   }
 
   public canAddSpark() {

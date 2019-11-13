@@ -4,7 +4,20 @@ import { Vector2 } from "three";
 
 export enum LandType {
   Grass = 0,
-  Shrub = 1
+  Shrub = 1,
+  ForestSmallLitter = 2,
+  ForestLargeLitter = 3
+}
+export enum TerrainType {
+  Mountains = 0,
+  Foothills = 1,
+  Plains = 2
+}
+export enum DroughtLevel {
+  NoDrought = 0,
+  Mild = 1,
+  Medium = 2,
+  SevereDrought = 3
 }
 
 export interface IWindProps {
@@ -43,6 +56,28 @@ const FuelConstants: {[key in LandType]: Fuel} = {
     totalMineralContent: 0.0555,
     effectiveMineralContent: 0.01,
     fuelBedDepth: 2
+  },
+  // TODO: the following two land types have not yet been configured via specification,
+  // only by approximation to get the code to compile
+  [LandType.ForestSmallLitter]: {
+    sav: 800,
+    packingRatio: 0.00812,
+    netFuelLoad: 0.383655,
+    heatContent: 8000,
+    mx: 0.45,
+    totalMineralContent: 0.0555,
+    effectiveMineralContent: 0.01,
+    fuelBedDepth: 3
+  },
+  [LandType.ForestLargeLitter]: {
+    sav: 600,
+    packingRatio: 0.01412,
+    netFuelLoad: 0.583655,
+    heatContent: 8000,
+    mx: 0.6,
+    totalMineralContent: 0.0555,
+    effectiveMineralContent: 0.01,
+    fuelBedDepth: 4
   }
 };
 
