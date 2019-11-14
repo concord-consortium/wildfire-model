@@ -1,9 +1,9 @@
 import React from "react";
-import { urlConfigWithDefaultValues } from "../config";
 import { Zone } from "../models/zone";
 import * as css from "./zone-selector.scss";
 import { TerrainType } from "../models/fire-model";
 import { vegetationIcons } from "./vertical-selectors";
+import { IPresetConfig } from "../presets";
 
 interface IProps {
   zones: Zone[];
@@ -30,8 +30,8 @@ const getRiverOverlay = (zoneCount: number, currentZone: number) => {
   return prefix + panelPosition + ".png";
 };
 
-const getColorFilter = (moistureContent: number) => {
-  const scaledMoistureContent = Math.round(moistureContent / urlConfigWithDefaultValues.moistureContentScale);
+const getColorFilter = (moistureContent: number, config: IPresetConfig) => {
+  const scaledMoistureContent = Math.round(moistureContent / config.moistureContentScale);
   switch (scaledMoistureContent) {
     case 1:
       return css.mildDrought;
@@ -44,19 +44,20 @@ const getColorFilter = (moistureContent: number) => {
   }
 };
 
-export const renderZones = (zones: Zone[], selectedZone: number, readonly: boolean, onChange: any) => {
+export const renderZones = (
+  zones: Zone[], selectedZone: number, readonly: boolean, config: IPresetConfig, onChange: any) => {
   const zoneUI: any[] = [];
   // handle two, three (or more) zones
   zones.forEach((z, i) => {
     // can limit the number of zones via a url parameter
-    if (i < urlConfigWithDefaultValues.zonesCount) {
+    if (i < config.zonesCount) {
       // Individual zones can only be edited on the first page of the wizard
-      const zoneTerrainImagePath = getBackgroundImage(urlConfigWithDefaultValues.zonesCount, z.terrainType, i);
-      const zoneRiverImagePath = getRiverOverlay(urlConfigWithDefaultValues.zonesCount, i);
+      const zoneTerrainImagePath = getBackgroundImage(config.zonesCount, z.terrainType, i);
+      const zoneRiverImagePath = getRiverOverlay(config.zonesCount, i);
       const zoneStyle = readonly ? css.fixed : selectedZone === i ? css.selected : "";
       // Only apply a position change for > 0 zone index (in span rendering)
       let vegPreviewPosition = css.right;
-      if (i === 1 && urlConfigWithDefaultValues.zonesCount > 2) {
+      if (i === 1 && config.zonesCount > 2) {
         vegPreviewPosition = css.mid;
       }
       zoneUI.push(
@@ -69,7 +70,7 @@ export const renderZones = (zones: Zone[], selectedZone: number, readonly: boole
               onChange={onChange}
               data-test="zone-option"
             />
-            <div className={`${css.terrainImage} ${getColorFilter(z.moistureContent)}`}
+            <div className={`${css.terrainImage} ${getColorFilter(z.moistureContent, config)}`}
               style={{ backgroundImage: `url(${zoneTerrainImagePath})` }}>
               <div className={`${css.riverOverlay}`} style={{backgroundImage: `url(${zoneRiverImagePath})`}} />
               <span className={`${css.zoneLabelBorder}`}>

@@ -7,7 +7,6 @@ import { renderZones } from "./zone-selector";
 import { TerrainTypeSelector } from "./terrain-type-selector";
 import { VegetationSelector } from "./vegetation-selector";
 import { DroughtSelector } from "./drought-selector";
-import { urlConfigWithDefaultValues } from "../config";
 
 import css from "./terrain-panel.scss";
 import { TerrainType, LandType } from "../models/fire-model";
@@ -43,7 +42,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const { selectedZone, currentPanel } = this.state;
     const zone = simulation.zones[selectedZone];
     // Scale moisture content so the slider snaps to the preset levels
-    const scaledMoistureContent = Math.round(zone.moistureContent / urlConfigWithDefaultValues.moistureContentScale);
+    const scaledMoistureContent = Math.round(zone.moistureContent / simulation.config.moistureContentScale);
     const displayVegetationType =
       zone.terrainType === TerrainType.Mountains ? zone.landType - 1 : zone.landType;
     const panelClass = currentPanel === 1 ? css.panel1 : css.panel2;
@@ -58,15 +57,20 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
               <span className={css.setupStepIcon}>{currentPanel}</span>{panelInstructions}
             </div>
             <div className={css.zones}>
-              {renderZones(simulation.zones, selectedZone, currentPanel === 2, this.handleZoneChange)}
+            {renderZones(
+              simulation.zones,
+              selectedZone,
+              currentPanel === 2,
+              simulation.config,
+              this.handleZoneChange)}
             </div>
           {currentPanel === 1 &&
             <div className={css.panel}>
               <div className={css.terrainSelector}>
-                {urlConfigWithDefaultValues.zonesCount > 2 && simulation.zones.length > 2 &&
+                {simulation.config.zonesCount > 2 && simulation.zones.length > 2 &&
                   <div className={css.terrainTypeLabels}>{this.renderZoneTerrainTypeLabels()}</div>
                 }
-                {urlConfigWithDefaultValues.zonesCount === 2 &&
+                {simulation.config.zonesCount === 2 &&
                   <TerrainTypeSelector
                     terrainType={zone.terrainType}
                     onChange={this.handleTerrainTypeChange} />
@@ -123,11 +127,11 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const prefix = "data/";
     const zoneTypes: string[] = [];
     simulation.zones.forEach((z, i) => {
-      if (i < urlConfigWithDefaultValues.zonesCount) {
+      if (i < simulation.config.zonesCount) {
         zoneTypes.push(TerrainType[z.terrainType].toLowerCase());
       }
     });
-    const edgeStyle = urlConfigWithDefaultValues.fillTerrainEdges ? "-edge" : "";
+    const edgeStyle = simulation.config.fillTerrainEdges ? "-edge" : "";
     const newElevation = prefix + zoneTypes.join("-") + "-heightmap" + edgeStyle + ".png";
     if (simulation.config.elevation !== newElevation) {
       // force a redraw of terrain when this flips to true
@@ -202,7 +206,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       2: "Plains"
     };
     simulation.zones.forEach((z, i) => {
-      if (i < urlConfigWithDefaultValues.zonesCount) {
+      if (i < simulation.config.zonesCount) {
         labels.push(<div className={css.terrainTypeLabel} key={i}>{labelText[z.terrainType]}</div>);
       }
     });
@@ -213,8 +217,8 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const labels: any[] = [];
 
     simulation.zones.forEach((z, i) => {
-      if (i < urlConfigWithDefaultValues.zonesCount) {
-        const scaledMoistureContent = Math.round(z.moistureContent / urlConfigWithDefaultValues.moistureContentScale);
+      if (i < simulation.config.zonesCount) {
+        const scaledMoistureContent = Math.round(z.moistureContent / simulation.config.moistureContentScale);
         labels.push(
           <TerrainSummary vegetationType={z.landType} droughtLevel={scaledMoistureContent} key={i} />
         );

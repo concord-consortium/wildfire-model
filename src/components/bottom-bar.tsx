@@ -25,7 +25,6 @@ import { IconButton } from "./icon-button";
 
 import css from "./bottom-bar.scss";
 import { Interaction } from "../models/ui";
-import { urlConfigWithDefaultValues } from "../config";
 
 interface IProps extends IBaseProps {}
 interface IState {
@@ -86,9 +85,9 @@ export class BottomBar extends BaseComponent<IProps, IState> {
         <div className={css.mainContainer}>
           <div className={`${css.widgetGroup} ${css.terrainButton}`}>
             <IconButton
-              icon={ urlConfigWithDefaultValues.zonesCount < 3 ? <TerrainIcon /> : <TerrainThreeIcon /> }
+              icon={ simulation.config.zonesCount < 3 ? <TerrainIcon /> : <TerrainThreeIcon /> }
               highlightIcon={
-                urlConfigWithDefaultValues.zonesCount < 3 ? <TerrainHighlightIcon /> : <TerrainThreeHighlightIcon />}
+                simulation.config.zonesCount < 3 ? <TerrainHighlightIcon /> : <TerrainThreeHighlightIcon />}
               disabled={uiDisabled} buttonText="Terrain Setup" dataTest="terrain-button" onClick={this.handleTerrain}
             />
           </div>

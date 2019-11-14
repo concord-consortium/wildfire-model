@@ -127,6 +127,10 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     modelHeight: 80000,
     gridWidth: 240,
     heightmapMaxElevation: 20000,
+    zones: [
+      { terrainType: 1, landType: 0, moistureContent: 0 },
+      { terrainType: 1, landType: 1, moistureContent: 0.07 },
+    ],
     zoneIndex: [
       [ 0, 1 ]
     ]
@@ -136,9 +140,74 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     modelHeight: 80000,
     gridWidth: 240,
     heightmapMaxElevation: 20000,
+    zonesCount: 3,
     zoneIndex: [
       [ 0, 1, 0 ]
     ]
+  },
+  threeZonePlains: {
+    modelWidth: 120000,
+    modelHeight: 80000,
+    gridWidth: 240,
+    heightmapMaxElevation: 20000,
+    zones: [
+      { terrainType: 2, landType: 0, moistureContent: 0 },
+      { terrainType: 2, landType: 1, moistureContent: 0.07 },
+      { terrainType: 2, landType: 2, moistureContent: 0.21 }
+    ],
+    zonesCount: 3,
+    zoneIndex: [
+      [ 0, 1, 2 ]
+    ],
+    elevation: "data/plains-plains-plains-heightmap-edge.png",
+  },
+  threeZoneFoothills: {
+    modelWidth: 120000,
+    modelHeight: 80000,
+    gridWidth: 240,
+    heightmapMaxElevation: 20000,
+    zones: [
+      { terrainType: 1, landType: 0, moistureContent: 0 },
+      { terrainType: 1, landType: 1, moistureContent: 0.07 },
+      { terrainType: 1, landType: 2, moistureContent: 0.21 }
+    ],
+    zonesCount: 3,
+    zoneIndex: [
+      [ 0, 1, 2 ]
+    ],
+    elevation: "data/foothills-foothills-foothills-heightmap-edge.png",
+  },
+  threeZoneMountains: {
+    modelWidth: 120000,
+    modelHeight: 80000,
+    gridWidth: 240,
+    heightmapMaxElevation: 20000,
+    zones: [
+      { terrainType: 0, landType: 1, moistureContent: 0 },
+      { terrainType: 0, landType: 2, moistureContent: 0.07 },
+      { terrainType: 0, landType: 3, moistureContent: 0.21 }
+    ],
+    zonesCount: 3,
+    zoneIndex: [
+      [ 0, 1, 2 ]
+    ],
+    elevation: "data/mountains-mountains-mountains-heightmap-edge.png",
+  },
+  threeZoneMix: {
+    modelWidth: 120000,
+    modelHeight: 80000,
+    gridWidth: 240,
+    heightmapMaxElevation: 20000,
+    zones: [
+      { terrainType: 0, landType: 0, moistureContent: 0 },
+      { terrainType: 1, landType: 1, moistureContent: 0.07 },
+      { terrainType: 2, landType: 2, moistureContent: 0.21 }
+    ],
+    zonesCount: 3,
+    zoneIndex: [
+      [ 0, 1, 2 ]
+    ],
+    elevation: "data/mountains-foothills-plains-heightmap-edge.png",
   },
 };
 
