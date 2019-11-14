@@ -5,6 +5,7 @@ import { Provider } from "mobx-react";
 import { BottomBar } from "./bottom-bar";
 import Button from "@material-ui/core/Button";
 import css from "./bottom-bar.scss";
+import { Vector2 } from "three";
 
 describe("BottomBar component", () => {
   let stores = createStores();
@@ -22,6 +23,8 @@ describe("BottomBar component", () => {
   });
 
   it("start button is disabled until model is ready", () => {
+    // simulation will not be ready until at least one spark is defined
+    stores.simulation.sparks = [];
     stores.simulation.dataReady = false;
     expect(stores.simulation.ready).toEqual(false);
     let wrapper = mount(
@@ -33,7 +36,11 @@ describe("BottomBar component", () => {
     expect(start.prop("disabled")).toEqual(true);
 
     stores.simulation.dataReady = true;
+    // no sparks defined - this should still be false
+    expect(stores.simulation.ready).toEqual(false);
+    stores.simulation.sparks[0] = new Vector2(100, 100);
     expect(stores.simulation.ready).toEqual(true);
+
     wrapper = mount(
       <Provider stores={stores}>
         <BottomBar />

@@ -119,6 +119,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     // trigger re-draw of terrain
     const { ui, simulation } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
+    // check if elevation has changed since last update
     const prefix = "data/";
     const zoneTypes: string[] = [];
     simulation.zones.forEach((z, i) => {
@@ -126,10 +127,16 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
         zoneTypes.push(TerrainType[z.terrainType].toLowerCase());
       }
     });
-    simulation.dataReady = false;
-    simulation.config.elevation = prefix + zoneTypes.join("-") + "-heightmap.png";
+    const newElevation = prefix + zoneTypes.join("-") + "-heightmap.png";
+    if (simulation.config.elevation !== newElevation) {
+      // force a redraw of terrain when this flips to true
+      simulation.dataReady = false;
+      simulation.config.elevation = newElevation;
+    }
+    // If simulation was not Ready then this will mark it as such.
     simulation.restart();
   }
+
   public handleZoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Radio buttons always return string values. We're using hidden radio buttons to change selected zone
     const newZone = parseInt(event.target.value, 10);
