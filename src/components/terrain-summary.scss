@@ -1,21 +1,18 @@
 @import "common.scss";
 
 .terrainSummary{
-  justify-content: space-around;
   flex-grow: 1;
-  text-align: center;
   font-size: 10px;
-  margin-left: auto;
-  margin-right: auto;
   .row{
-    height: 30px;
-    vertical-align: middle;
+    display: flex;
+    padding: 4px;
     .column{
-      display: inline-block;
-      position: relative;
+      flex: 1;
+      display: flex;
+      justify-content: space-between;
       .icon{
-        position: absolute;
-        right: 0px;
+        margin: auto;
+        margin-right: 0px;
         width: 26px;
         height: 26px;
         border: 1px solid $controlGray;
@@ -28,10 +25,9 @@
         }
       }
       .caption{
-        position: absolute;
-        left: 0px;
+        margin: auto;
+        margin-left: 0px;
         width: 50px;
-        padding-top: 6px;
       }
     }
   }
