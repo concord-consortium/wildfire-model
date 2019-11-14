@@ -127,7 +127,8 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
         zoneTypes.push(TerrainType[z.terrainType].toLowerCase());
       }
     });
-    const newElevation = prefix + zoneTypes.join("-") + "-heightmap.png";
+    const edgeStyle = urlConfigWithDefaultValues.fillTerrainEdges ? "-edge" : "";
+    const newElevation = prefix + zoneTypes.join("-") + "-heightmap" + edgeStyle + ".png";
     if (simulation.config.elevation !== newElevation) {
       // force a redraw of terrain when this flips to true
       simulation.dataReady = false;

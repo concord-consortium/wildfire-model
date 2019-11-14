@@ -25,6 +25,7 @@ export interface ISimulationConfig {
   // Number of zones that the model is using. Zones are used to keep properties of some area of the model.
   zonesCount: 2 | 3;
   zones: [ZoneOptions, ZoneOptions, ZoneOptions?];
+  fillTerrainEdges: boolean;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -51,7 +52,8 @@ export const defaultConfig: IUrlConfig = {
     { landType: LandType.Grass, moistureContent: 0 },
     { landType: LandType.Shrub, moistureContent: 0.07 },
     { landType: LandType.Grass, moistureContent: 0.21 }
-  ]
+  ],
+  fillTerrainEdges: true
 };
 
 export const urlConfig: any = {};

@@ -22,7 +22,7 @@ const getBackgroundImage = (zoneCount: number, terrainType: number, currentZone:
   const panelPosition = zoneCount === 2 ? twoZonePosition[currentZone] : threeZonePosition[currentZone];
   return prefix + terrainStyle + panelPosition + ".png";
 };
-const getRiverOverlayPosition = (zoneCount: number, currentZone: number) => {
+const getRiverOverlay = (zoneCount: number, currentZone: number) => {
   const prefix = `./terrain/`;
   const twoZonePosition = ["2-zone-river-left", "2-zone-river-right"];
   const threeZonePosition = ["3-zone-river-left", "3-zone-river-mid", "3-zone-river-right"];
@@ -52,7 +52,7 @@ export const renderZones = (zones: Zone[], selectedZone: number, readonly: boole
     if (i < urlConfigWithDefaultValues.zonesCount) {
       // Individual zones can only be edited on the first page of the wizard
       const zoneTerrainImagePath = getBackgroundImage(urlConfigWithDefaultValues.zonesCount, z.terrainType, i);
-      const zoneRiverImagePath = getRiverOverlayPosition(urlConfigWithDefaultValues.zonesCount, i);
+      const zoneRiverImagePath = getRiverOverlay(urlConfigWithDefaultValues.zonesCount, i);
       const zoneStyle = readonly ? css.fixed : selectedZone === i ? css.selected : "";
       // Only apply a position change for > 0 zone index (in span rendering)
       let vegPreviewPosition = css.right;
