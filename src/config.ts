@@ -32,7 +32,7 @@ export interface IUrlConfig extends ISimulationConfig {
 }
 
 export const defaultConfig: IUrlConfig = {
-  preset: "basic",
+  preset: "defaultTwoZone",
   modelWidth: 100000,
   modelHeight: 100000,
   gridWidth: 100,

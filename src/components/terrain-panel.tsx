@@ -117,8 +117,18 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   }
   public applyAndClose = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     // trigger re-draw of terrain
-    const { ui } = this.stores;
+    const { ui, simulation } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
+    const prefix = "data/";
+    const zoneTypes: string[] = [];
+    simulation.zones.forEach((z, i) => {
+      if (i < urlConfigWithDefaultValues.zonesCount) {
+        zoneTypes.push(TerrainType[z.terrainType].toLowerCase());
+      }
+    });
+    simulation.dataReady = false;
+    simulation.config.elevation = prefix + zoneTypes.join("-") + "-heightmap.png";
+    simulation.restart();
   }
   public handleZoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Radio buttons always return string values. We're using hidden radio buttons to change selected zone

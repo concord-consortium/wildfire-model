@@ -86,7 +86,7 @@ export const Terrain = observer(() => {
 
   useEffect(() => {
     const plane = getEntity();
-    if (plane) {
+    if (plane && simulation.dataReady) {
       setupElevation(plane, simulation);
     }
   }, [simulation.dataReady]);

@@ -121,7 +121,25 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     heightmapMaxElevation: 20000,
     zoneIndex: "data/test01_zonemap.png",
     elevation: "data/test01_heightmap.png",
-  }
+  },
+  defaultTwoZone: {
+    modelWidth: 120000,
+    modelHeight: 80000,
+    gridWidth: 240,
+    heightmapMaxElevation: 20000,
+    zoneIndex: [
+      [ 0, 1 ]
+    ]
+  },
+  defaultThreeZone: {
+    modelWidth: 120000,
+    modelHeight: 80000,
+    gridWidth: 240,
+    heightmapMaxElevation: 20000,
+    zoneIndex: [
+      [ 0, 1, 0 ]
+    ]
+  },
 };
 
 export default presets;
