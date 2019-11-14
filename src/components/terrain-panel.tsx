@@ -38,11 +38,11 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   }
 
   public render() {
-    const { ui, simulation } = this.stores;
+    const { ui, simulation, simulation: {config} } = this.stores;
     const { selectedZone, currentPanel } = this.state;
     const zone = simulation.zones[selectedZone];
     // Scale moisture content so the slider snaps to the preset levels
-    const scaledMoistureContent = Math.round(zone.moistureContent / simulation.config.moistureContentScale);
+    const scaledMoistureContent = Math.round(zone.moistureContent / config.moistureContentScale);
     const displayVegetationType =
       zone.terrainType === TerrainType.Mountains ? zone.landType - 1 : zone.landType;
     const panelClass = currentPanel === 1 ? css.panel1 : css.panel2;
@@ -61,16 +61,16 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
               simulation.zones,
               selectedZone,
               currentPanel === 2,
-              simulation.config,
+              config,
               this.handleZoneChange)}
             </div>
           {currentPanel === 1 &&
             <div className={css.panel}>
               <div className={css.terrainSelector}>
-                {simulation.config.zonesCount > 2 && simulation.zones.length > 2 &&
+                {config.zonesCount > 2 && simulation.zones.length > 2 &&
                   <div className={css.terrainTypeLabels}>{this.renderZoneTerrainTypeLabels()}</div>
                 }
-                {simulation.config.zonesCount === 2 &&
+                {config.zonesCount === 2 &&
                   <TerrainTypeSelector
                     terrainType={zone.terrainType}
                     onChange={this.handleTerrainTypeChange} />
@@ -121,22 +121,22 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   }
   public applyAndClose = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
     // trigger re-draw of terrain
-    const { ui, simulation } = this.stores;
+    const { ui, simulation, simulation: { config } } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
     // check if elevation has changed since last update
     const prefix = "data/";
     const zoneTypes: string[] = [];
     simulation.zones.forEach((z, i) => {
-      if (i < simulation.config.zonesCount) {
+      if (i < config.zonesCount) {
         zoneTypes.push(TerrainType[z.terrainType].toLowerCase());
       }
     });
-    const edgeStyle = simulation.config.fillTerrainEdges ? "-edge" : "";
+    const edgeStyle = config.fillTerrainEdges ? "-edge" : "";
     const newElevation = prefix + zoneTypes.join("-") + "-heightmap" + edgeStyle + ".png";
-    if (simulation.config.elevation !== newElevation) {
+    if (config.elevation !== newElevation) {
       // force a redraw of terrain when this flips to true
       simulation.dataReady = false;
-      simulation.config.elevation = newElevation;
+      config.elevation = newElevation;
     }
     // If simulation was not Ready then this will mark it as such.
     simulation.restart();
@@ -198,7 +198,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   }
 
   private renderZoneTerrainTypeLabels = () => {
-    const { simulation } = this.stores;
+    const { simulation, simulation: { config } } = this.stores;
     const labels: any[] = [];
     const labelText = {
       0: "Mountains",
@@ -206,19 +206,19 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       2: "Plains"
     };
     simulation.zones.forEach((z, i) => {
-      if (i < simulation.config.zonesCount) {
+      if (i < config.zonesCount) {
         labels.push(<div className={css.terrainTypeLabel} key={i}>{labelText[z.terrainType]}</div>);
       }
     });
     return labels;
   }
   private renderTerrainProperties = () => {
-    const { simulation } = this.stores;
+    const { simulation, simulation: { config }  } = this.stores;
     const labels: any[] = [];
 
     simulation.zones.forEach((z, i) => {
-      if (i < simulation.config.zonesCount) {
-        const scaledMoistureContent = Math.round(z.moistureContent / simulation.config.moistureContentScale);
+      if (i < config.zonesCount) {
+        const scaledMoistureContent = Math.round(z.moistureContent / config.moistureContentScale);
         labels.push(
           <TerrainSummary vegetationType={z.landType} droughtLevel={scaledMoistureContent} key={i} />
         );
