@@ -22,6 +22,13 @@ const getBackgroundImage = (zoneCount: number, terrainType: number, currentZone:
   const panelPosition = zoneCount === 2 ? twoZonePosition[currentZone] : threeZonePosition[currentZone];
   return prefix + terrainStyle + panelPosition + ".png";
 };
+const getRiverOverlayPosition = (zoneCount: number, currentZone: number) => {
+  const prefix = `./terrain/`;
+  const twoZonePosition = ["2-zone-river-left", "2-zone-river-right"];
+  const threeZonePosition = ["3-zone-river-left", "3-zone-river-mid", "3-zone-river-right"];
+  const panelPosition = zoneCount === 2 ? twoZonePosition[currentZone] : threeZonePosition[currentZone];
+  return prefix + panelPosition + ".png";
+};
 
 const getColorFilter = (moistureContent: number) => {
   const scaledMoistureContent = Math.round(moistureContent / urlConfigWithDefaultValues.moistureContentScale);
@@ -45,6 +52,7 @@ export const renderZones = (zones: Zone[], selectedZone: number, readonly: boole
     if (i < urlConfigWithDefaultValues.zonesCount) {
       // Individual zones can only be edited on the first page of the wizard
       const zoneTerrainImagePath = getBackgroundImage(urlConfigWithDefaultValues.zonesCount, z.terrainType, i);
+      const zoneRiverImagePath = getRiverOverlayPosition(urlConfigWithDefaultValues.zonesCount, i);
       const zoneStyle = readonly ? css.fixed : selectedZone === i ? css.selected : "";
       // Only apply a position change for > 0 zone index (in span rendering)
       let vegPreviewPosition = css.right;
@@ -63,6 +71,7 @@ export const renderZones = (zones: Zone[], selectedZone: number, readonly: boole
             />
             <div className={`${css.terrainImage} ${getColorFilter(z.moistureContent)}`}
               style={{ backgroundImage: `url(${zoneTerrainImagePath})` }}>
+              <div className={`${css.riverOverlay}`} style={{backgroundImage: `url(${zoneRiverImagePath})`}} />
               <span className={`${css.zoneLabelBorder}`}>
                 <span className={`${css.zoneLabel} ${cssClasses[i]}`}>{`Zone ${i + 1}`}</span>
               </span>
