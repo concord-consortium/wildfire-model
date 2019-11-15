@@ -32,7 +32,7 @@ export const VegetationSelector = ({ landType: vegetationType, terrainType, onCh
           { terrainType === TerrainType.Mountains ? iconsMountains : icons }
         </div>
         <Slider
-          classes={{ thumb: css.thumb, track: css.track, rail: css.rail, disabled: css.disabled }}
+          classes={{ thumb: css.thumb, track: css.track, rail: css.rail, mark: css.mark, disabled: css.disabled }}
           min={0}
           max={2}
           value={vegetationType}

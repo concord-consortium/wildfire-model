@@ -2,12 +2,14 @@
 
 .selector{
   .header{
-    font-size:10px;
+    font-size: 12px;
+    font-family: Lato;
+    font-weight: bold;
     color: $controlText;
   }
   .sliderContainer{
     position: relative;
-    margin-top: 24px;
+    margin-top: 26px;
     height: 100px;
   }
   .sliderIcons{
@@ -48,15 +50,22 @@
     }
   }
   .rail {
-    height: 90px !important;
+    height: 94px !important;
     width: 1px;
     opacity: 1;
-    background-color: #fff;
+    background-color: $controlGray;
+  }
+  .mark {
+    width: 4px;
+    height: 4px;
+    border: solid 1px $controlGray;
+    background-color: #d8d8d8;
   }
   .slider {
     margin: 10px auto;
     text-align: center;
     font-size: 12px;
+    width: 1px;
 
     .disabled {
       opacity: 0.25;
@@ -64,7 +73,7 @@
       .thumb {
         width: 20px;
         height: 20px;
-        margin-left: -8.5px;
+        margin-left: -8px;
         margin-top: -8.5px;
       }
     }

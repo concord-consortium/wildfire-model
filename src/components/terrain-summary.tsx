@@ -22,7 +22,7 @@ export const TerrainSummary = ({ vegetationType, droughtLevel }: IProps) =>
       </div>
       <div className={`${css.row}`}>
         <div className={`${css.column}`}>
-          <div className={css.icon}>{droughtIcons[droughtLevel]}</div>
+          <div className={`${css.icon} ${css.drought}`}>{droughtIcons[droughtLevel]}</div>
         </div>
         <div className={`${css.column}`}>
           <div className={css.caption}>{droughtLabels[droughtLevel]}</div>
