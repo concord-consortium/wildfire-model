@@ -21,10 +21,12 @@
     justify-content: center;
     text-align: center;
     height: 25px;
+
     .terrainOption{
       flex-grow: 1;
       span{
         font-size: 10px !important;
+        font-family: 'Roboto Condensed';
         color: $controlGray;
       }
       .radio{

@@ -11,6 +11,7 @@ import { DroughtSelector } from "./drought-selector";
 import css from "./terrain-panel.scss";
 import { TerrainType, LandType } from "../models/fire-model";
 import { WindControls } from "./wind-controls";
+import { WindCircularControl } from "./wind-circular-control";
 import { TerrainSummary } from "./terrain-summary";
 
 interface IProps extends IBaseProps {}
@@ -99,7 +100,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
                 <div className={css.terrainTypeLabels}>{this.renderZoneTerrainTypeLabels()}</div>
                 <div className={css.terrainProperties}>{this.renderTerrainProperties()}</div>
                 <div className={css.wind}>
-                  <WindControls />
+                  <WindCircularControl />
                 </div>
                 <div className={css.buttonContainer}>
                   <Button className={css.continueButton} onClick={this.showPreviousPanel}>
