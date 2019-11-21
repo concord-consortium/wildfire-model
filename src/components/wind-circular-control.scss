@@ -15,7 +15,7 @@
       width: 142px;
       height: 142px;
       position: absolute;
-      border: 1px dotted $waterDropletOutline;
+      border: 0;
       border-radius: 72px;
 
       .windSymbol{
@@ -87,5 +87,20 @@
     letter-spacing: normal;
     text-align: center;
     color: $controlText;
+  }
+  .windSliderControls{
+    margin-top: 10px;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 0.8em;
+    width: 90%;
+    .thumb{
+      width: 14px;
+      height: 14px;
+      margin-top: -6.5px;
+    }
+    .markLabel{
+      font-family: 'Roboto Condensed';
+    }
   }
 }
