@@ -135,6 +135,10 @@ export const getDirectionFactor =
 export const getFireSpreadRate = (
   sourceCell: ICellProps, targetCell: ICellProps, wind: IWindProps, cellSize: number
 ) => {
+  // small tweak to prevent the extreme edges of the simulation from burning
+  if (targetCell.x < 2 || targetCell.y < 2) return 0;
+  // stop river beds from burning
+  if (targetCell.elevation < 1 || sourceCell.elevation < 1) return 0;
   const fuel = FuelConstants[targetCell.landType];
   const sav = fuel.sav;
   const packingRatio = fuel.packingRatio;
