@@ -1,7 +1,7 @@
 import React from "react";
 import { Zone } from "../models/zone";
 import * as css from "./zone-selector.scss";
-import { TerrainType } from "../models/fire-model";
+import { TerrainType, DroughtLevel } from "../models/fire-model";
 import { vegetationIcons } from "./vertical-selectors";
 import { IPresetConfig } from "../presets";
 
@@ -30,14 +30,14 @@ const getRiverOverlay = (zoneCount: number, currentZone: number) => {
   return prefix + panelPosition + ".png";
 };
 
-const getColorFilter = (moistureContent: number, config: IPresetConfig) => {
-  const scaledMoistureContent = Math.round(moistureContent / config.moistureContentScale);
-  switch (scaledMoistureContent) {
-    case 2:
+const getColorFilter = (droughtLevel: DroughtLevel) => {
+  // Default is no drought = no filter
+  switch (droughtLevel) {
+    case DroughtLevel.MildDrought:
       return css.mildDrought;
-    case 1:
+    case DroughtLevel.MediumDrought:
       return css.mediumDrought;
-    case 0:
+    case DroughtLevel.SevereDrought:
       return css.severeDrought;
     default:
       return "";
@@ -70,7 +70,7 @@ export const renderZones = (
               onChange={onChange}
               data-test="zone-option"
             />
-            <div className={`${css.terrainImage} ${getColorFilter(z.moistureContent, config)}`}
+            <div className={`${css.terrainImage} ${getColorFilter(z.droughtLevel)}`}
               style={{ backgroundImage: `url(${zoneTerrainImagePath})` }}>
               <div className={`${css.riverOverlay}`} style={{backgroundImage: `url(${zoneRiverImagePath})`}} />
               <span className={`${css.zoneLabelBorder}`}>

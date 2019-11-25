@@ -4,21 +4,26 @@ import VerticalHandle from "../assets/slider-vertical.svg";
 
 import { generateMarks, droughtIcons, droughtLabels } from "./vertical-selectors";
 import * as css from "./vertical-selectors.scss";
+import { DroughtLevel } from "../models/fire-model";
 
 interface IProps {
-  droughtIndex: number;
+  droughtLevel: number;
   onChange?: any;
 }
 
-export const DroughtSelector = ({ droughtIndex, onChange }: IProps) => (
+export const DroughtSelector = ({ droughtLevel, onChange }: IProps) => (
   <div className={`${css.selector} ${css.drought}`}>
     <div className={css.header}>Drought Index</div>
     <div className={css.sliderContainer}>
       <div className={css.sliderIcons}>
-        <div className={`${css.sliderIcon} ${css.noDrought} ${css.top}`}>{droughtIcons[0]}</div>
-        <div className={`${css.sliderIcon} ${css.mildDrought} ${css.topQuarter}`}>{droughtIcons[1]}</div>
-        <div className={`${css.sliderIcon} ${css.mediumDrought} ${css.bottomQuarter}`} >{droughtIcons[2]}</div>
-        <div className={`${css.sliderIcon} ${css.severeDrought} ${css.bottom}`}>{droughtIcons[3]}</div>
+        <div className={`${css.sliderIcon} ${css.top}`}>
+          {droughtIcons[DroughtLevel.SevereDrought]}</div>
+        <div className={`${css.sliderIcon} ${css.topQuarter}`}>
+          {droughtIcons[DroughtLevel.MediumDrought]}</div>
+        <div className={`${css.sliderIcon} ${css.bottomQuarter}`} >
+          {droughtIcons[DroughtLevel.MildDrought]}</div>
+        <div className={`${css.sliderIcon} ${css.bottom}`}>
+          {droughtIcons[DroughtLevel.NoDrought]}</div>
       </div>
       <Slider
         classes={{
@@ -30,7 +35,7 @@ export const DroughtSelector = ({ droughtIndex, onChange }: IProps) => (
         }}
         min={0}
         max={3}
-        value={droughtIndex}
+        value={droughtLevel}
         step={1}
         track={false}
         marks={generateMarks(droughtLabels)}

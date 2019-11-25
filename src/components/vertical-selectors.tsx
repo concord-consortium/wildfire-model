@@ -17,10 +17,10 @@ export const vegetationLabels = [
 ];
 
 export const droughtLabels = [
-  "Severe Drought",
-  "Medium Drought",
-  "Mild Drought",
   "No Drought",
+  "Mild Drought",
+  "Medium Drought",
+  "Severe Drought",
 ];
 
 export const generateMarks = (labelsToShow: string[]) => {

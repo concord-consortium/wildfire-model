@@ -40,4 +40,8 @@ export class Cell {
       return 10000;
     }
   }
+
+  public get droughtLevel() {
+    return this.zone.droughtLevel;
+  }
 }

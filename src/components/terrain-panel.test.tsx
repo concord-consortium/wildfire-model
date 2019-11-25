@@ -9,11 +9,13 @@ const defaultTwoZones = [
   {
     landType: 2,
     moistureContent: 0.07,
+    droughtLevel: 2,
     terrainType: 0
   },
   {
     landType: 1,
     moistureContent: 0.14,
+    droughtLevel: 1,
     terrainType: 2
   }
 ];
@@ -22,16 +24,19 @@ const defaultThreeZones = [
   {
     landType: 2,
     moistureContent: 0.07,
+    droughtLevel: 2,
     terrainType: 0
   },
   {
     landType: 1,
     moistureContent: 0.14,
+    droughtLevel: 1,
     terrainType: 2
   },
   {
     landType: 3,
     moistureContent: 0.21,
+    droughtLevel: 0,
     terrainType: 1
   },
 ];

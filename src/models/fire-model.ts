@@ -13,6 +13,12 @@ export enum TerrainType {
   Foothills = 1,
   Plains = 2
 }
+export enum DroughtLevel {
+  NoDrought = 0,
+  MildDrought = 1,
+  MediumDrought = 2,
+  SevereDrought = 3
+}
 
 export interface IWindProps {
   // Wind speed in mph.
@@ -74,6 +80,14 @@ const FuelConstants: {[key in LandType]: Fuel} = {
     effectiveMineralContent: 0.01,
     fuelBedDepth: 4
   }
+};
+
+// values for each level of vegetation: Grass, Shrub, ForestSmallLitter, ForestLargeLitter
+export const moistureLookups: {[key in DroughtLevel]: number[]} = {
+  [DroughtLevel.NoDrought]: [0.1275, 0.255, 0.17, 0.2125],
+  [DroughtLevel.MildDrought]: [0.09, 0.18, 0.12, 0.15],
+  [DroughtLevel.MediumDrought]: [0.0525, 0.105, 0.07, 0.0875],
+  [DroughtLevel.SevereDrought]: [0.015, 0.3, 0.02, 0.025],
 };
 
 // Helper vector used repeatedly in other calculations.
@@ -138,8 +152,6 @@ export const getFireSpreadRate = (
 ) => {
   // small tweak to prevent the extreme edges of the simulation from burning
   if (targetCell.x < 2 || targetCell.y < 2) return 0;
-  // stop river beds from burning
-  const moistureAtTarget = targetCell.isRiverOrFireLine ? 10000 : targetCell.moistureContent;
   const fuel = FuelConstants[targetCell.landType];
   const sav = fuel.sav;
   const packingRatio = fuel.packingRatio;
@@ -150,7 +162,7 @@ export const getFireSpreadRate = (
   const effectiveMineralContent = fuel.effectiveMineralContent;
   const fuelBedDepth = fuel.fuelBedDepth;
 
-  const moistureContentRatio = moistureAtTarget / mx;
+  const moistureContentRatio = targetCell.moistureContent / mx;
   const savFactor = Math.pow(sav, 1.5);
 
   const a = 133 * Math.pow(sav, -0.7913);
