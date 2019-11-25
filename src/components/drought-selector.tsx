@@ -25,7 +25,13 @@ export const DroughtSelector = ({ droughtIndex, onChange }: IProps) => (
         <div className={`${css.sliderIcon} ${css.noDrought} ${css.bottom}`}>{droughtIcons[0]}</div>
       </div>
       <Slider
-        classes={{ thumb: css.thumb, track: css.track, rail: css.rail, disabled: css.disabled }}
+        classes={{
+          thumb: css.thumb,
+          track: css.track,
+          rail: css.rail,
+          markLabel: css.markLabel,
+          disabled: css.disabled
+        }}
         min={0}
         max={3}
         value={droughtIndex}

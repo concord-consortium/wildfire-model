@@ -1,6 +1,7 @@
 @import "common.scss";
 
 .selector{
+
   .header{
     font-size: 12px;
     font-family: Lato;
@@ -60,6 +61,9 @@
     height: 4px;
     border: solid 1px $controlGray;
     background-color: #d8d8d8;
+  }
+  .markLabel{
+    font-family: 'Roboto Condensed';
   }
   .slider {
     margin: 10px auto;
