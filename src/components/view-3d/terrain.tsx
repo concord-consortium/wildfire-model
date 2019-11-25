@@ -12,27 +12,39 @@ import { ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
 import { SparksContainer } from "./spark";
 import { Interaction } from "../../models/ui";
 import { AddSparkInteraction } from "./add-spark-interaction";
+import { ISimulationConfig } from "../../config";
 
-const LAND_COLOR = {
-  [LandType.Grass]: [1, 0.83, 0, 1],
-  [LandType.Shrub]: [0, 1, 0, 1],
-  [LandType.ForestSmallLitter]: [0, 0, 1, 1],
-  [LandType.ForestLargeLitter]: [1, 0, 0.83, 1]
+const getTerrainColor = (moistureContent: number, moistureContentScale: number) => {
+  const scaledValue = Math.round(moistureContent / moistureContentScale);
+  switch (scaledValue) {
+    case 3:
+      return [0.008, 0.831, 0.039, 1];
+    case 2:
+      return [0.573, 0.839, 0.216, 1];
+    case 1:
+      return [0.757, 0.886, 0.271, 1];
+    default:
+      return [0.784, 0.631, 0.271, 1];
+  }
 };
 const BURNING_COLOR = [1, 0, 0, 1];
 const BURNT_COLOR = [0.2, 0.2, 0.2, 1];
+const RIVER_COLOR = [0.663, 0.855, 1, 1];
 
 const vertexIdx = (cell: Cell, gridWidth: number, gridHeight: number) => (gridHeight - 1 - cell.y) * gridWidth + cell.x;
 
-const setVertexColor = (colArray: number[], cell: Cell, gridWidth: number, gridHeight: number) => {
+const setVertexColor = (colArray: number[], cell: Cell, gridWidth: number, gridHeight: number,
+                        config: ISimulationConfig) => {
   const idx = vertexIdx(cell, gridWidth, gridHeight) * 4;
   let color;
   if (cell.fireState === FireState.Burning) {
     color = BURNING_COLOR;
   } else if (cell.fireState === FireState.Burnt) {
     color = BURNT_COLOR;
+  } else if (cell.isRiverOrFireLine) {
+    color = RIVER_COLOR;
   } else {
-    color = LAND_COLOR[cell.landType];
+    color = getTerrainColor(cell.moistureContent, config.moistureContentScale);
   }
   colArray[idx] = color[0];
   colArray[idx + 1] = color[1];
@@ -74,7 +86,7 @@ const updateColors = (plane: THREE.Mesh, simulation: SimulationModel) => {
   const geometry = plane.geometry as PlaneBufferGeometry;
   const colArray = geometry.attributes.color.array as number[];
   simulation.cells.forEach(cell => {
-    setVertexColor(colArray, cell, simulation.gridWidth, simulation.gridHeight);
+    setVertexColor(colArray, cell, simulation.gridWidth, simulation.gridHeight, simulation.config);
   });
   geometry.computeVertexNormals();
   (geometry.attributes.color as BufferAttribute).needsUpdate = true;

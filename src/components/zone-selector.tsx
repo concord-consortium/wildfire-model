@@ -33,11 +33,11 @@ const getRiverOverlay = (zoneCount: number, currentZone: number) => {
 const getColorFilter = (moistureContent: number, config: IPresetConfig) => {
   const scaledMoistureContent = Math.round(moistureContent / config.moistureContentScale);
   switch (scaledMoistureContent) {
-    case 1:
-      return css.mildDrought;
     case 2:
+      return css.mildDrought;
+    case 1:
       return css.mediumDrought;
-    case 3:
+    case 0:
       return css.severeDrought;
     default:
       return "";

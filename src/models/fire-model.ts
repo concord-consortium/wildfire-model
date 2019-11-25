@@ -28,6 +28,7 @@ export interface ICellProps {
   landType: LandType;
   moistureContent: number;
   elevation: number;
+  isRiverOrFireLine: boolean;
 }
 
 const FuelConstants: {[key in LandType]: Fuel} = {
@@ -138,7 +139,7 @@ export const getFireSpreadRate = (
   // small tweak to prevent the extreme edges of the simulation from burning
   if (targetCell.x < 2 || targetCell.y < 2) return 0;
   // stop river beds from burning
-  if (targetCell.elevation < 1 || sourceCell.elevation < 1) return 0;
+  const moistureAtTarget = targetCell.isRiverOrFireLine ? 10000 : targetCell.moistureContent;
   const fuel = FuelConstants[targetCell.landType];
   const sav = fuel.sav;
   const packingRatio = fuel.packingRatio;
@@ -149,7 +150,7 @@ export const getFireSpreadRate = (
   const effectiveMineralContent = fuel.effectiveMineralContent;
   const fuelBedDepth = fuel.fuelBedDepth;
 
-  const moistureContentRatio = targetCell.moistureContent / mx;
+  const moistureContentRatio = moistureAtTarget / mx;
   const savFactor = Math.pow(sav, 1.5);
 
   const a = 133 * Math.pow(sav, -0.7913);

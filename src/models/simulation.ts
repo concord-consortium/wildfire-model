@@ -144,17 +144,30 @@ export class SimulationModel {
     );
   }
 
+  public getRiverData(): Promise<number[] | undefined> {
+    return getInputData("data/river-texmap-data.png", this.gridWidth, this.gridHeight, true,
+      (rgba: [number, number, number, number]) => {
+        // River texture is mostly transparent, so look for non-transparent cells to define shape
+        return rgba[3] > 0 ? 1 : 0;
+      }
+    );
+  }
+
   @action.bound public populateCellsData() {
-    Promise.all([this.getZoneIndex(), this.getElevationData()]).then(values => {
+    Promise.all([this.getZoneIndex(), this.getElevationData(), this.getRiverData()]).then(values => {
       const zoneIndex = values[0];
       const elevation = values[1];
+      const river = values[2];
 
       this.cells.length = 0;
 
       for (let y = 0; y < this.gridHeight; y++) {
         for (let x = 0; x < this.gridWidth; x++) {
           const index = getGridIndexForLocation(x, y, this.gridWidth);
-          const cellOptions: CellOptions = { x, y, zone: this.zones[zoneIndex ? zoneIndex[index] : 0] };
+          const cellOptions: CellOptions = {
+            x, y, zone: this.zones[zoneIndex ? zoneIndex[index] : 0],
+            isRiverOrFireLine: river && river[index] > 0
+          };
           if (elevation) {
             cellOptions.elevation = elevation[index];
           }

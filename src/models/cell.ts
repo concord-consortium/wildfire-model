@@ -13,6 +13,7 @@ export interface CellOptions {
   elevation?: number;
   ignitionTime?: number;
   fireState?: FireState;
+  isRiverOrFireLine?: boolean;
 }
 
 export class Cell {
@@ -22,6 +23,7 @@ export class Cell {
   public elevation: number = 0;
   public ignitionTime: number = Infinity;
   public fireState: FireState = FireState.Unburnt;
+  public isRiverOrFireLine: boolean = false;
 
   constructor(props: CellOptions) {
     Object.assign(this, props);
@@ -32,6 +34,10 @@ export class Cell {
   }
 
   public get moistureContent() {
-    return this.zone.moistureContent;
+    if (!this.isRiverOrFireLine) {
+      return this.zone.moistureContent;
+    } else {
+      return 10000;
+    }
   }
 }
