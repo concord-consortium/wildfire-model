@@ -3,21 +3,23 @@ import { getFireSpreadRate, LandType, getDirectionFactor } from "./fire-model";
 const cellSize = 1;
 
 const sourceCell = {
-  x: 0,
-  y: 1,
+  x: 10,
+  y: 11,
   landType: LandType.Shrub,
   moistureContent: 0.1,
-  elevation: 0
+  elevation: 0,
+  isRiverOrFireLine: false
 };
 
 const targetCell = {
-  x: 0,
-  y: 0,
+  x: 10,
+  y: 10,
   landType: LandType.Shrub,
   moistureContent: 0.1,
   // Why such elevation? Note that spreadsheet uses value for slope -1deg => Math.PI / 180.
   // Ensure that we use the same slope here (so calculate elevation accordingly).
-  elevation: Math.tan(Math.PI / 180) * cellSize
+  elevation: Math.tan(Math.PI / 180) * cellSize,
+  isRiverOrFireLine: false
 };
 
 describe("getFireSpreadRate", () => {
