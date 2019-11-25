@@ -146,6 +146,6 @@ describe("vegetation selector", () => {
     );
 
     const drought = wrapper.find('[data-test="drought-slider"]').first();
-    expect(drought.prop("value")).toBe(1);
+    expect(drought.prop("value")).toBe(2);
   });
 });

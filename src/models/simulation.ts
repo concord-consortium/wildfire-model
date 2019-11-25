@@ -70,6 +70,7 @@ export class SimulationModel {
   public prevTickTime: number | null;
   @observable public dataReady = false;
   @observable public wind: IWindProps;
+  // TODO: This may be used later for Rain, for now, simulation should use moisture per-zone
   @observable public moistureContent: number;
   @observable public sparks: Vector2[] = [];
   @observable public cellSize: number;
@@ -91,7 +92,10 @@ export class SimulationModel {
     this.gridWidth = config.gridWidth;
     this.gridHeight = Math.ceil(config.modelHeight / this.cellSize);
     this.zones = config.zones.map(options => new Zone(options!));
-
+    // set moisture values per-zone based on drought level and vegetation
+    this.zones.forEach((z) => {
+      z.moistureContent = moistureLookups[z.droughtLevel][z.landType];
+    });
     // It's enough to calculate this just once, as grid won't change.
     this.cellNeighbors = calculateCellNeighbors(this.gridWidth, this.gridHeight, this.config.neighborsDist);
 
