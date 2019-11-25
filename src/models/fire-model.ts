@@ -143,15 +143,19 @@ export const getDirectionFactor =
  * @param targetCell Adjacent grid cell that is currently UNBURNT
  * @param wind Wind properties, speed and direction
  * @param cellSize cell size in feet
- * @param moistureContent global moisture content
+ * @param moistureContent global moisture content (not currently used?)
  *
  * @return fire spread rate in ft/min
  */
 export const getFireSpreadRate = (
-  sourceCell: ICellProps, targetCell: ICellProps, wind: IWindProps, cellSize: number
+  sourceCell: ICellProps,
+  targetCell: ICellProps,
+  wind: IWindProps,
+  cellSize: number,
+  gridWidth: number, gridHeight: number
 ) => {
   // small tweak to prevent the extreme edges of the simulation from burning
-  if (targetCell.x < 2 || targetCell.y < 2) return 0;
+  if (targetCell.x < 2 || targetCell.y < 2 || targetCell.x > gridWidth - 3 || targetCell.y > gridHeight - 3) return 0;
   const fuel = FuelConstants[targetCell.landType];
   const sav = fuel.sav;
   const packingRatio = fuel.packingRatio;

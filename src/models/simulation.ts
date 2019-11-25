@@ -50,13 +50,13 @@ const calculateCellNeighbors = (width: number, height: number, neighborsDist: nu
  * which means that, if cell 0 is ignited, cell 1 will ignite 0.5 seconds later.
  */
 const calculateTimeToIgniteNeighbors = (
-  cells: Cell[], cellNeighbors: number[][], wind: IWindProps, cellSize: number, moistureContent: number
+  cells: Cell[], cellNeighbors: number[][], wind: IWindProps, cellSize: number, gridWidth: number, gridHeight: number
 ) => {
   const timeToIgniteNeighbors = [];
   for (let i = 0; i < cells.length; i++) {
     const neighbors = cellNeighbors[i];
     const timeToIgniteMyNeighbors = neighbors.map(n =>
-      1 / getFireSpreadRate(cells[i], cells[n], wind, cellSize)
+      1 / getFireSpreadRate(cells[i], cells[n], wind, cellSize, gridWidth, gridHeight)
     );
     timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
   }
@@ -194,7 +194,7 @@ export class SimulationModel {
       // It's enough to calculate this just once, as long as none of the land properties or wind speed can be changed.
       // This will change in the future when user is able to set land properties or wind speed dynamically.
       this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(
-        this.cells, this.cellNeighbors, this.wind, this.cellSize, this.moistureContent
+        this.cells, this.cellNeighbors, this.wind, this.cellSize, this.gridWidth, this.gridHeight
       );
       // Use sparks to start the simulation.
       this.sparks.forEach(spark => {
