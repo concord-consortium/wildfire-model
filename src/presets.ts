@@ -128,8 +128,8 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 240,
     heightmapMaxElevation: 20000,
     zones: [
-      { terrainType: 1, landType: 0, moistureContent: 0 },
-      { terrainType: 1, landType: 1, moistureContent: 0.07 },
+      { terrainType: 1, landType: 0, droughtLevel: 3 },
+      { terrainType: 1, landType: 1, droughtLevel: 2 },
     ],
     zoneIndex: [
       [ 0, 1 ]
@@ -151,9 +151,9 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 240,
     heightmapMaxElevation: 20000,
     zones: [
-      { terrainType: 2, landType: 0, moistureContent: 0 },
-      { terrainType: 2, landType: 1, moistureContent: 0.07 },
-      { terrainType: 2, landType: 2, moistureContent: 0.21 }
+      { terrainType: 2, landType: 0, droughtLevel: 3 },
+      { terrainType: 2, landType: 1, droughtLevel: 2 },
+      { terrainType: 2, landType: 2, droughtLevel: 0 }
     ],
     zonesCount: 3,
     zoneIndex: [
@@ -167,9 +167,9 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 240,
     heightmapMaxElevation: 20000,
     zones: [
-      { terrainType: 1, landType: 0, moistureContent: 0 },
-      { terrainType: 1, landType: 1, moistureContent: 0.07 },
-      { terrainType: 1, landType: 2, moistureContent: 0.21 }
+      { terrainType: 1, landType: 0, droughtLevel: 3 },
+      { terrainType: 1, landType: 1, droughtLevel: 2 },
+      { terrainType: 1, landType: 2, droughtLevel: 0 }
     ],
     zonesCount: 3,
     zoneIndex: [
@@ -183,9 +183,9 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 240,
     heightmapMaxElevation: 20000,
     zones: [
-      { terrainType: 0, landType: 1, moistureContent: 0 },
-      { terrainType: 0, landType: 2, moistureContent: 0.07 },
-      { terrainType: 0, landType: 3, moistureContent: 0.21 }
+      { terrainType: 0, landType: 1, droughtLevel: 3 },
+      { terrainType: 0, landType: 2, droughtLevel: 2 },
+      { terrainType: 0, landType: 3, droughtLevel: 0 }
     ],
     zonesCount: 3,
     zoneIndex: [
@@ -199,9 +199,9 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 240,
     heightmapMaxElevation: 20000,
     zones: [
-      { terrainType: 0, landType: 0, moistureContent: 0 },
-      { terrainType: 1, landType: 1, moistureContent: 0.07 },
-      { terrainType: 2, landType: 2, moistureContent: 0.21 }
+      { terrainType: 0, landType: 0, droughtLevel: 3 },
+      { terrainType: 1, landType: 1, droughtLevel: 2 },
+      { terrainType: 2, landType: 2, droughtLevel: 0 }
     ],
     zonesCount: 3,
     zoneIndex: [

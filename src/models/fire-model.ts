@@ -13,6 +13,12 @@ export enum TerrainType {
   Foothills = 1,
   Plains = 2
 }
+export enum DroughtLevel {
+  NoDrought = 0,
+  MildDrought = 1,
+  MediumDrought = 2,
+  SevereDrought = 3
+}
 
 export interface IWindProps {
   // Wind speed in mph.
@@ -28,6 +34,7 @@ export interface ICellProps {
   landType: LandType;
   moistureContent: number;
   elevation: number;
+  isRiverOrFireLine: boolean;
 }
 
 const FuelConstants: {[key in LandType]: Fuel} = {
@@ -73,6 +80,14 @@ const FuelConstants: {[key in LandType]: Fuel} = {
     effectiveMineralContent: 0.01,
     fuelBedDepth: 4
   }
+};
+
+// values for each level of vegetation: Grass, Shrub, ForestSmallLitter, ForestLargeLitter
+export const moistureLookups: {[key in DroughtLevel]: number[]} = {
+  [DroughtLevel.NoDrought]: [0.1275, 0.255, 0.17, 0.2125],
+  [DroughtLevel.MildDrought]: [0.09, 0.18, 0.12, 0.15],
+  [DroughtLevel.MediumDrought]: [0.0525, 0.105, 0.07, 0.0875],
+  [DroughtLevel.SevereDrought]: [0.015, 0.03, 0.02, 0.025],
 };
 
 // Helper vector used repeatedly in other calculations.
@@ -128,13 +143,19 @@ export const getDirectionFactor =
  * @param targetCell Adjacent grid cell that is currently UNBURNT
  * @param wind Wind properties, speed and direction
  * @param cellSize cell size in feet
- * @param moistureContent global moisture content
+ * @param moistureContent global moisture content (not currently used?)
  *
  * @return fire spread rate in ft/min
  */
 export const getFireSpreadRate = (
-  sourceCell: ICellProps, targetCell: ICellProps, wind: IWindProps, cellSize: number
+  sourceCell: ICellProps,
+  targetCell: ICellProps,
+  wind: IWindProps,
+  cellSize: number,
+  gridWidth: number, gridHeight: number
 ) => {
+  // small tweak to prevent the extreme edges of the simulation from burning
+  if (targetCell.x < 2 || targetCell.y < 2 || targetCell.x > gridWidth - 3 || targetCell.y > gridHeight - 3) return 0;
   const fuel = FuelConstants[targetCell.landType];
   const sav = fuel.sav;
   const packingRatio = fuel.packingRatio;

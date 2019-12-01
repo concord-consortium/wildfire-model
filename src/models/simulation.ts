@@ -1,5 +1,5 @@
 import { action, observable, computed } from "mobx";
-import { getFireSpreadRate, IWindProps, LandType, TerrainType } from "./fire-model";
+import { getFireSpreadRate, IWindProps, LandType, TerrainType, DroughtLevel, moistureLookups } from "./fire-model";
 import { Cell, CellOptions, FireState } from "./cell";
 import { urlConfig, defaultConfig } from "../config";
 import { IPresetConfig } from "../presets";
@@ -50,13 +50,13 @@ const calculateCellNeighbors = (width: number, height: number, neighborsDist: nu
  * which means that, if cell 0 is ignited, cell 1 will ignite 0.5 seconds later.
  */
 const calculateTimeToIgniteNeighbors = (
-  cells: Cell[], cellNeighbors: number[][], wind: IWindProps, cellSize: number, moistureContent: number
+  cells: Cell[], cellNeighbors: number[][], wind: IWindProps, cellSize: number, gridWidth: number, gridHeight: number
 ) => {
   const timeToIgniteNeighbors = [];
   for (let i = 0; i < cells.length; i++) {
     const neighbors = cellNeighbors[i];
     const timeToIgniteMyNeighbors = neighbors.map(n =>
-      1 / getFireSpreadRate(cells[i], cells[n], wind, cellSize)
+      1 / getFireSpreadRate(cells[i], cells[n], wind, cellSize, gridWidth, gridHeight)
     );
     timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
   }
@@ -70,6 +70,7 @@ export class SimulationModel {
   public prevTickTime: number | null;
   @observable public dataReady = false;
   @observable public wind: IWindProps;
+  // TODO: This may be used later for Rain, for now, simulation should use moisture per-zone
   @observable public moistureContent: number;
   @observable public sparks: Vector2[] = [];
   @observable public cellSize: number;
@@ -91,7 +92,10 @@ export class SimulationModel {
     this.gridWidth = config.gridWidth;
     this.gridHeight = Math.ceil(config.modelHeight / this.cellSize);
     this.zones = config.zones.map(options => new Zone(options!));
-
+    // set moisture values per-zone based on drought level and vegetation
+    this.zones.forEach((z) => {
+      z.moistureContent = moistureLookups[z.droughtLevel][z.landType];
+    });
     // It's enough to calculate this just once, as grid won't change.
     this.cellNeighbors = calculateCellNeighbors(this.gridWidth, this.gridHeight, this.config.neighborsDist);
 
@@ -144,17 +148,30 @@ export class SimulationModel {
     );
   }
 
+  public getRiverData(): Promise<number[] | undefined> {
+    return getInputData("data/river-texmap-data.png", this.gridWidth, this.gridHeight, true,
+      (rgba: [number, number, number, number]) => {
+        // River texture is mostly transparent, so look for non-transparent cells to define shape
+        return rgba[3] > 0 ? 1 : 0;
+      }
+    );
+  }
+
   @action.bound public populateCellsData() {
-    Promise.all([this.getZoneIndex(), this.getElevationData()]).then(values => {
+    Promise.all([this.getZoneIndex(), this.getElevationData(), this.getRiverData()]).then(values => {
       const zoneIndex = values[0];
       const elevation = values[1];
+      const river = values[2];
 
       this.cells.length = 0;
 
       for (let y = 0; y < this.gridHeight; y++) {
         for (let x = 0; x < this.gridWidth; x++) {
           const index = getGridIndexForLocation(x, y, this.gridWidth);
-          const cellOptions: CellOptions = { x, y, zone: this.zones[zoneIndex ? zoneIndex[index] : 0] };
+          const cellOptions: CellOptions = {
+            x, y, zone: this.zones[zoneIndex ? zoneIndex[index] : 0],
+            isRiverOrFireLine: river && river[index] > 0
+          };
           if (elevation) {
             cellOptions.elevation = elevation[index];
           }
@@ -177,7 +194,7 @@ export class SimulationModel {
       // It's enough to calculate this just once, as long as none of the land properties or wind speed can be changed.
       // This will change in the future when user is able to set land properties or wind speed dynamically.
       this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(
-        this.cells, this.cellNeighbors, this.wind, this.cellSize, this.moistureContent
+        this.cells, this.cellNeighbors, this.wind, this.cellSize, this.gridWidth, this.gridHeight
       );
       // Use sparks to start the simulation.
       this.sparks.forEach(spark => {
@@ -262,12 +279,17 @@ export class SimulationModel {
   @action.bound public updateZoneTerrain(zoneIdx: number, updatedTerrainType: TerrainType) {
     this.zones[zoneIdx].terrainType = updatedTerrainType;
   }
-  @action.bound public updateZoneMoisture(zoneIdx: number, updatedMoistureContent: number) {
-    // scale moisture content from 0-1-2-3 to a range with max around 0.2
-    const scaledMoistureContent = updatedMoistureContent * this.config.moistureContentScale;
-    this.zones[zoneIdx].moistureContent = scaledMoistureContent;
+
+  @action.bound public updateZoneMoisture(zoneIdx: number, droughtLevel: DroughtLevel) {
+    // moisture content from lookup of drought level and land type
+    const zone = this.zones[zoneIdx];
+    this.zones[zoneIdx].moistureContent = moistureLookups[droughtLevel][zone.landType];
+    this.zones[zoneIdx].droughtLevel = droughtLevel;
   }
+
   @action.bound public updateZoneVegetation(zoneIdx: number, vegetation: LandType) {
+    const zone = this.zones[zoneIdx];
+    this.zones[zoneIdx].moistureContent = moistureLookups[zone.droughtLevel][vegetation];
     this.zones[zoneIdx].landType = vegetation;
   }
 

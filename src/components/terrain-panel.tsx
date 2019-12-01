@@ -42,8 +42,6 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const { ui, simulation, simulation: {config} } = this.stores;
     const { selectedZone, currentPanel } = this.state;
     const zone = simulation.zones[selectedZone];
-    // Scale moisture content so the slider snaps to the preset levels
-    const scaledMoistureContent = Math.round(zone.moistureContent / config.moistureContentScale);
     const displayVegetationType =
       zone.terrainType === TerrainType.Mountains ? zone.landType - 1 : zone.landType;
     const panelClass = currentPanel === 1 ? css.panel1 : css.panel2;
@@ -85,7 +83,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
                     onChange={this.handleVegetationChange} />
                 </div>
                 <div className={css.selector}>
-                  <DroughtSelector droughtIndex={scaledMoistureContent}
+                  <DroughtSelector droughtLevel={zone.droughtLevel}
                     onChange={this.handleDroughtChange} />
                 </div>
               </div>
@@ -193,7 +191,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   public handleDroughtChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
     const { simulation } = this.stores;
     const currentZone = Object.assign({}, simulation.zones[this.state.selectedZone]);
-    if (currentZone.moistureContent !== value) {
+    if (currentZone.droughtLevel !== value) {
       simulation.updateZoneMoisture(this.state.selectedZone, value);
     }
   }
@@ -219,9 +217,8 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
 
     simulation.zones.forEach((z, i) => {
       if (i < config.zonesCount) {
-        const scaledMoistureContent = Math.round(z.moistureContent / config.moistureContentScale);
         labels.push(
-          <TerrainSummary vegetationType={z.landType} droughtLevel={scaledMoistureContent} key={i} />
+          <TerrainSummary vegetationType={z.landType} droughtLevel={z.droughtLevel} key={i} />
         );
       }
     });
