@@ -1,5 +1,5 @@
 import { action, observable, computed } from "mobx";
-import { getFireSpreadRate, IWindProps, LandType, TerrainType, DroughtLevel, moistureLookups } from "./fire-model";
+import { getFireSpreadRate, IWindProps, LandType, TerrainType, DroughtLevel } from "./fire-model";
 import { Cell, CellOptions, FireState } from "./cell";
 import { urlConfig, defaultConfig } from "../config";
 import { IPresetConfig } from "../presets";
@@ -156,10 +156,6 @@ export class SimulationModel {
     this.gridWidth = config.gridWidth;
     this.gridHeight = Math.ceil(config.modelHeight / this.cellSize);
     this.zones = config.zones.map(options => new Zone(options!));
-    // set moisture values per-zone based on drought level and vegetation
-    this.zones.forEach((z) => {
-      z.moistureContent = moistureLookups[z.droughtLevel][z.landType];
-    });
     this.populateCellsData();
     this.setInputParamsFromConfig();
 
@@ -350,15 +346,10 @@ export class SimulationModel {
   }
 
   @action.bound public updateZoneMoisture(zoneIdx: number, droughtLevel: DroughtLevel) {
-    // moisture content from lookup of drought level and land type
-    const zone = this.zones[zoneIdx];
-    this.zones[zoneIdx].moistureContent = moistureLookups[droughtLevel][zone.landType];
     this.zones[zoneIdx].droughtLevel = droughtLevel;
   }
 
   @action.bound public updateZoneVegetation(zoneIdx: number, vegetation: LandType) {
-    const zone = this.zones[zoneIdx];
-    this.zones[zoneIdx].moistureContent = moistureLookups[zone.droughtLevel][vegetation];
     this.zones[zoneIdx].landType = vegetation;
   }
 

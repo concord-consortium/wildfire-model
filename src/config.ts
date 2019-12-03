@@ -1,5 +1,5 @@
 import { ZoneOptions } from "./models/zone";
-import { LandType } from "./models/fire-model";
+import { DroughtLevel, LandType, TerrainType } from "./models/fire-model";
 
 export interface ISimulationConfig {
   modelWidth: number; // ft
@@ -51,9 +51,9 @@ export const defaultConfig: IUrlConfig = {
   heightmapMaxElevation: 3000,
   zonesCount: 2,
   zones: [
-    { landType: LandType.Grass, moistureContent: 0 },
-    { landType: LandType.Shrub, moistureContent: 0.07 },
-    { landType: LandType.Grass, moistureContent: 0.21 }
+    { terrainType: TerrainType.Plains, landType: LandType.Grass, droughtLevel: DroughtLevel.MildDrought },
+    { terrainType: TerrainType.Plains, landType: LandType.Shrub, droughtLevel: DroughtLevel.MediumDrought },
+    { terrainType: TerrainType.Plains, landType: LandType.ForestSmallLitter, droughtLevel: DroughtLevel.SevereDrought }
   ],
   fillTerrainEdges: true
 };

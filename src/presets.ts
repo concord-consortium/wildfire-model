@@ -142,7 +142,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     heightmapMaxElevation: 20000,
     zonesCount: 3,
     zoneIndex: [
-      [ 0, 1, 0 ]
+      [ 0, 1, 2 ]
     ]
   },
   threeZonePlains: {
