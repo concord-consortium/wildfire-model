@@ -50,7 +50,8 @@
     "test:watch": "jest --watchAll",
     "test:coverage:watch": "jest --coverage --watchAll",
     "test:cypress": "cypress run",
-    "test:cypress:open": "cypress open",
+    "test:cypress:open": "cypress open --env failOnSnapshotDiff=false",
+    "test:cypress:snapshots": "cypress run --spec cypress/integration/model-smoke-test.js --env failOnSnapshotDiff=false --reporter cypress-image-snapshot/reporter",
     "test:full": "npm-run-all test test:cypress"
   },
   "repository": {
@@ -79,6 +80,7 @@
     "copy-webpack-plugin": "^5.0.4",
     "css-loader": "^3.2.0",
     "cypress": "^3.4.1",
+    "cypress-image-snapshot": "^3.1.1",
     "enzyme": "^3.10.0",
     "enzyme-adapter-react-16": "^1.15.1",
     "file-loader": "^4.2.0",
