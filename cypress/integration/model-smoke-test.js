@@ -44,9 +44,9 @@ context('Model Smoke Test', () => {
 
     it('runs model for set number of seconds', () => {
         bottomBar.getSparkButton().click()
-        cy.get('canvas').click(400,400, {force:true})
+        cy.get('canvas').click(500,700, {force:true})
         bottomBar.getSparkButton().click()
-        cy.get('canvas').click(700,400, {force:true})
+        cy.get('canvas').click(800,700, {force:true})
         bottomBar.getStartButton().click()
         cy.wait(10000)
         bottomBar.getStartButton().click()
