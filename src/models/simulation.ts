@@ -11,30 +11,94 @@ const getGridIndexForLocation = (x: number, y: number, width: number) => {
   return x + y * width;
 };
 
-/**
- * Returns an array of indices of all cells touching `i`, given the number of
- * `height` and `width`. `neighborsDist` variable says how many neighbouring cells will we consider
- * (or how wide is the neighbor rectangle).
- */
-const getGridCellNeighbors = (i: number, width: number, height: number, neighborsDist: number) => {
-  const result = [];
-  const x = i % width;
-  const y = Math.floor(i / width);
-  for (let nx = x - neighborsDist; nx <= x + neighborsDist; nx += 1) {
-    for (let ny = y - neighborsDist; ny <= y + neighborsDist; ny += 1) {
-      if ((nx !== x || ny !== y) && nx >= 0 && nx < width && ny >= 0 && ny < height) {
-        result.push(getGridIndexForLocation(nx, ny, width));
-      }
+// Bresenham's line algorithm is used to check if there's any river or fire line between (x0, y0) and (x1, y1).
+export const riverOrFireLineBetween = (
+  cells: Cell[], width: number, x0: number, y0: number, x1: number, y1: number
+) => {
+  const dx = Math.abs(x1 - x0);
+  const dy = Math.abs(y1 - y0);
+  const sx = (x0 < x1) ? 1 : -1;
+  const sy = (y0 < y1) ? 1 : -1;
+  let err = dx - dy;
+
+  while (true) {
+    const idx = getGridIndexForLocation(x0, y0, width);
+    if (cells[idx].isRiverOrFireLine) {
+      return true;
+    }
+    if ((x0 === x1) && (y0 === y1)) break;
+    const e2 = 2 * err;
+    if (e2 > -dy) {
+      err -= dy;
+      x0 += sx;
+    }
+    if (e2 < dx) {
+      err += dx;
+      y0 += sy;
     }
   }
-  return result;
+  return false;
 };
 
-const calculateCellNeighbors = (width: number, height: number, neighborsDist: number) => {
+export const withinDist = (x0: number, y0: number, x1: number, y1: number, maxDist: number) => {
+  return (x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1) <= maxDist * maxDist;
+};
+
+// Only four directions. It's important, as it makes less likely the river or fire line is accidentally crossed by the
+// fire (e.g. when it's really narrow and drawn at 45* angle).
+const directNeighbours = [ {x: -1, y: 0}, {x: 1, y: 0}, {x: 0, y: -1}, {x: 0, y: 1} ];
+
+/**
+ * Returns an array of indices of all cells neighboring `i`.
+ * Each cell within `neighborsDist` is considered to be a neighbour if there's no river or fire line between
+ * this cell and cell `i`.
+ */
+export const getGridCellNeighbors = (
+  cells: Cell[], i: number, width: number, height: number, neighborsDist: number
+) => {
+  const neighbours: number[] = [];
+  const queue: number[] = [];
+  const processed: {[key: number]: boolean}  = {};
+  const x0 = i % width;
+  const y0 = Math.floor(i / width);
+  // Keep this flag for performance reasons. If there's no river or fire line in current grid area, it doesn't
+  // make sense to run Bresenham's algorithm for every cell (riverOrFireLineBetween).
+  let anyRiverOrFireLine = false;
+  // Start BFS.
+  queue.push(i);
+  processed[i] = true;
+  while (queue.length > 0) {
+    const j = queue.shift()!;
+    const x1 = j % width;
+    const y1 = Math.floor(j / width);
+    directNeighbours.forEach(diff => {
+      const nIdx = getGridIndexForLocation(x1 + diff.x, y1 + diff.y, width);
+      if (x1 + diff.x >= 0 && x1 + diff.x < width && y1 + diff.y >= 0 &&  y1 + diff.y < height &&
+        !processed[nIdx] &&
+        withinDist(x0, y0, x1 + diff.x, y1 + diff.y, neighborsDist)
+      ) {
+        if (cells[nIdx].isRiverOrFireLine) {
+          anyRiverOrFireLine = true;
+        } else if (!anyRiverOrFireLine || !riverOrFireLineBetween(cells, width, x1 + diff.x, y1 + diff.y, x0, y0)) {
+          neighbours.push(nIdx);
+          queue.push(nIdx);
+        }
+        processed[nIdx] = true;
+      }
+    });
+  }
+  return neighbours;
+};
+
+const calculateCellNeighbors = (cells: Cell[], width: number, height: number, neighborsDist: number) => {
+  // tslint:disable-next-line:no-console
+  console.time("neighbours calc");
   const result = [];
   for (let i = 0; i < width * height; i++) {
-    result.push(getGridCellNeighbors(i, width, height, neighborsDist));
+    result.push(getGridCellNeighbors(cells, i, width, height, neighborsDist));
   }
+  // tslint:disable-next-line:no-console
+  console.timeEnd("neighbours calc");
   return result;
 };
 
@@ -96,9 +160,6 @@ export class SimulationModel {
     this.zones.forEach((z) => {
       z.moistureContent = moistureLookups[z.droughtLevel][z.landType];
     });
-    // It's enough to calculate this just once, as grid won't change.
-    this.cellNeighbors = calculateCellNeighbors(this.gridWidth, this.gridHeight, this.config.neighborsDist);
-
     this.populateCellsData();
     this.setInputParamsFromConfig();
 
@@ -178,6 +239,10 @@ export class SimulationModel {
           this.cells.push(new Cell(cellOptions));
         }
       }
+      // It's enough to calculate this just once, as grid won't change.
+      this.cellNeighbors = calculateCellNeighbors(
+        this.cells, this.gridWidth, this.gridHeight, this.config.neighborsDist
+      );
       this.notifyCellsUpdated();
       this.dataReady = true;
     });
@@ -191,11 +256,15 @@ export class SimulationModel {
       this.simulationStarted = true;
     }
     if (this.time === 0) {
+      // tslint:disable-next-line:no-console
+      console.time("ignition time calc");
       // It's enough to calculate this just once, as long as none of the land properties or wind speed can be changed.
       // This will change in the future when user is able to set land properties or wind speed dynamically.
       this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(
         this.cells, this.cellNeighbors, this.wind, this.cellSize, this.gridWidth, this.gridHeight
       );
+      // tslint:disable-next-line:no-console
+      console.timeEnd("ignition time calc");
       // Use sparks to start the simulation.
       this.sparks.forEach(spark => {
         this.cellAt(spark.x, spark.y).ignitionTime = 0;
