@@ -1,5 +1,5 @@
-import TerrainSetup from "../support/TerrainSetup"
-import ModelInfo from "../support/ModelInfo"
+import TerrainSetup from "../support/elements/TerrainSetup"
+import ModelInfo from "../support/elements/ModelInfo"
 
 context('WildFire Smoke Test', () => {
 
@@ -126,9 +126,4 @@ context('WildFire Smoke Test', () => {
         })
     })
 
-    describe("Model Canvas", () => {
-        /**
-         * Integrate screenshot tests from Tectonic/Seismic Explorer tests
-         */
-    })
 })
