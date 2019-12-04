@@ -36,25 +36,18 @@ const windScaleFactor = 0.2;
 
 export const WindCircularControl = observer(() => {
   const { simulation } = useStores();
-  const [directionAngle, setDirectionAngle] = useState(simulation.wind.direction / 360);
 
-  useEffect(() => {
-    simulation.setWindDirection(angleToDirection());
-  }, [directionAngle]);
-
-  const angleToDirection = () => {
-    // convert 0-1 scale of angle to the direction from which the wind is coming
-    // which is the inverse of this current direction
-    const fromAngle = (directionAngle * 360) + 180;
-    return fromAngle < 360 ? fromAngle : fromAngle - 360;
+  const circularInputValToAngle = (circularInputVal: number) => {
+    // Convert 0-1 scale of angle to the direction from which the wind is coming.
+    return (circularInputVal * 360 + 180) % 360;
   };
 
-  const degToCompass = () => {
-    // wind comes _from_ the opposite direction
-    const fromAngle = angleToDirection();
-    const val = Math.floor((fromAngle / 22.5) + 0.5);
-    const arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW",  ];
-    return arr[(val % 16)];
+  const circularInputValue = () => {
+    return (simulation.wind.direction - 180) / 360;
+  };
+
+  const setDirectionAngle = (circularInputVal: number) => {
+    simulation.setWindDirection(circularInputValToAngle(circularInputVal));
   };
 
   const handleWindSpeedChange = (event: any, value: number | number[]) => {
@@ -62,16 +55,23 @@ export const WindCircularControl = observer(() => {
   };
   const scaledWind = simulation.wind.speed / windScaleFactor;
 
+  const degToCompass = () => {
+    // wind comes _from_ the opposite direction
+    const val = Math.floor((simulation.wind.direction / 22.5) + 0.5);
+    const arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+    return arr[(val % 16)];
+  };
+
   return (
     <div className={css.windContainer}>
       <div className={css.controlContainer}>
-        <div className={css.windSymbolContainer} style={{transform: `rotate(${360 * directionAngle}deg)`}}>
+        <div className={css.windSymbolContainer} style={{transform: `rotate(${simulation.wind.direction + 180}deg)`}}>
           <WindSymbol className={css.windSymbol} />
         </div>
         <div className={css.dialContainer}>
           <WindDial className={css.dial} />
-          <WindArrow className={css.arrow} style={{transform: `rotate(${360 * directionAngle}deg)`}}/>
-          <CircularInput value={directionAngle} radius={35}
+          <WindArrow className={css.arrow} style={{transform: `rotate(${simulation.wind.direction + 180}deg)`}}/>
+          <CircularInput value={circularInputValue()} radius={35}
             onChange={setDirectionAngle} className={css.windCircularControl}>
             <CircularTrack strokeWidth={4} stroke="rgba(255,255,255,0.5)" fill="rgba(255,255,255,0)" />
           </CircularInput>
