@@ -1,16 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { useStores } from "../use-stores";
-import {
-  CircularInput,
-  CircularTrack,
-} from "react-circular-input";
-import WindDial from "../assets/wind-dial.svg";
-import WindArrow from "../assets/wind-arrow.svg";
-import WindSymbol from "../assets/wind-symbol.svg";
-import css from "./wind-circular-control.scss";
 import { Slider } from "@material-ui/core";
-import HorizontalHandle from "../assets/slider-horizontal.svg";
 import { observer } from "mobx-react";
+import { WindDial } from "./wind-dial";
+
+import WindSymbol from "../assets/wind-symbol.svg";
+import HorizontalHandle from "../assets/slider-horizontal.svg";
+
+import css from "./wind-circular-control.scss";
 
 const windSpeedMarks = [
   {
@@ -37,17 +34,8 @@ const windScaleFactor = 0.2;
 export const WindCircularControl = observer(() => {
   const { simulation } = useStores();
 
-  const circularInputValToAngle = (circularInputVal: number) => {
-    // Convert 0-1 scale of angle to the direction from which the wind is coming.
-    return (circularInputVal * 360 + 180) % 360;
-  };
-
-  const circularInputValue = () => {
-    return (simulation.wind.direction - 180) / 360;
-  };
-
   const setDirectionAngle = (circularInputVal: number) => {
-    simulation.setWindDirection(circularInputValToAngle(circularInputVal));
+    simulation.setWindDirection(circularInputVal);
   };
 
   const handleWindSpeedChange = (event: any, value: number | number[]) => {
@@ -68,14 +56,7 @@ export const WindCircularControl = observer(() => {
         <div className={css.windSymbolContainer} style={{transform: `rotate(${simulation.wind.direction + 180}deg)`}}>
           <WindSymbol className={css.windSymbol} />
         </div>
-        <div className={css.dialContainer}>
-          <WindDial className={css.dial} />
-          <WindArrow className={css.arrow} style={{transform: `rotate(${simulation.wind.direction + 180}deg)`}}/>
-          <CircularInput value={circularInputValue()} radius={35}
-            onChange={setDirectionAngle} className={css.windCircularControl}>
-            <CircularTrack strokeWidth={4} stroke="rgba(255,255,255,0.5)" fill="rgba(255,255,255,0)" />
-          </CircularInput>
-        </div>
+        {WindDial(simulation.wind.direction, setDirectionAngle)}
       </div>
 
       <div className={css.key}>Wind Direction and Speed</div>
