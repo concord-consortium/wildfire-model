@@ -4,40 +4,41 @@ import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
 import { TerrainPanel } from "./terrain-panel";
 import { Slider } from "@material-ui/core";
+import { Vegetation, TerrainType } from "../models/fire-model";
 
 const defaultTwoZones = [
   {
-    landType: 2,
+    vegetation: Vegetation.ForestSmallLitter,
     moistureContent: 0.07,
     droughtLevel: 2,
-    terrainType: 0
+    terrainType: TerrainType.Mountains
   },
   {
-    landType: 1,
+    vegetation: Vegetation.Shrub,
     moistureContent: 0.14,
     droughtLevel: 1,
-    terrainType: 2
+    terrainType: TerrainType.Plains
   }
 ];
 
 const defaultThreeZones = [
   {
-    landType: 2,
+    vegetation: Vegetation.ForestSmallLitter,
     moistureContent: 0.07,
     droughtLevel: 2,
-    terrainType: 0
+    terrainType: TerrainType.Mountains
   },
   {
-    landType: 1,
+    vegetation: Vegetation.Shrub,
     moistureContent: 0.14,
     droughtLevel: 1,
-    terrainType: 2
+    terrainType: TerrainType.Plains
   },
   {
-    landType: 3,
+    vegetation: Vegetation.ForestLargeLitter,
     moistureContent: 0.21,
     droughtLevel: 0,
-    terrainType: 1
+    terrainType: TerrainType.Foothills
   },
 ];
 
@@ -118,8 +119,8 @@ describe("vegetation selector", () => {
       </Provider>
     );
     expect(wrapper.find(Slider)).toHaveLength(2);
-
   });
+
   it("displays the correct vegetation level", () => {
     const wrapper = mount(
       <Provider stores={stores}>
@@ -138,6 +139,7 @@ describe("vegetation selector", () => {
     // veg = wrapper.find('[data-test="vegetation-slider"]').first();
     // expect(veg.prop("value")).toBe(1);
   });
+
   it("displays the correct drought level", () => {
     const wrapper = mount(
       <Provider stores={stores}>

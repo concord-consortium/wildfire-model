@@ -2,17 +2,15 @@ import { inject, observer } from "mobx-react";
 import React from "react";
 import { BaseComponent, IBaseProps } from "./base";
 import { Button } from "@material-ui/core";
-
 import { renderZones } from "./zone-selector";
 import { TerrainTypeSelector } from "./terrain-type-selector";
 import { VegetationSelector } from "./vegetation-selector";
 import { DroughtSelector } from "./drought-selector";
-
-import css from "./terrain-panel.scss";
-import { TerrainType, LandType } from "../models/fire-model";
-import { WindControls } from "./wind-controls";
+import { TerrainType, Vegetation } from "../models/fire-model";
 import { WindCircularControl } from "./wind-circular-control";
 import { TerrainSummary } from "./terrain-summary";
+
+import css from "./terrain-panel.scss";
 
 interface IProps extends IBaseProps {}
 interface IState {
@@ -43,7 +41,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const { selectedZone, currentPanel } = this.state;
     const zone = simulation.zones[selectedZone];
     const displayVegetationType =
-      zone.terrainType === TerrainType.Mountains ? zone.landType - 1 : zone.landType;
+      zone.terrainType === TerrainType.Mountains ? zone.vegetation - 1 : zone.vegetation;
     const panelClass = currentPanel === 1 ? css.panel1 : css.panel2;
     const panelInstructions = currentPanel === 1 ? "Adjust variables in each zone" : "Set initial wind direction and speed";
     return (
@@ -69,7 +67,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
                 {config.zonesCount > 2 && simulation.zones.length > 2 &&
                   <div className={css.terrainTypeLabels}>{this.renderZoneTerrainTypeLabels()}</div>
                 }
-                {config.zonesCount === 2 &&
+                {!config.elevation && config.zonesCount === 2 &&
                   <TerrainTypeSelector
                     terrainType={zone.terrainType}
                     onChange={this.handleTerrainTypeChange} />
@@ -78,7 +76,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
               <div className={css.selectors}>
                 <div className={css.selector}>
                   <VegetationSelector
-                    landType={displayVegetationType}
+                    vegetation={displayVegetationType}
                     terrainType={zone.terrainType}
                     onChange={this.handleVegetationChange} />
                 </div>
@@ -118,27 +116,11 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const { ui } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
   }
-  public applyAndClose = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
-    // trigger re-draw of terrain
-    const { ui, simulation, simulation: { config } } = this.stores;
+
+  public applyAndClose = () => {
+    const { ui, simulation } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
-    // check if elevation has changed since last update
-    const prefix = "data/";
-    const zoneTypes: string[] = [];
-    simulation.zones.forEach((z, i) => {
-      if (i < config.zonesCount) {
-        zoneTypes.push(TerrainType[z.terrainType].toLowerCase());
-      }
-    });
-    const edgeStyle = config.fillTerrainEdges ? "-edge" : "";
-    const newElevation = prefix + zoneTypes.join("-") + "-heightmap" + edgeStyle + ".png";
-    if (config.elevation !== newElevation) {
-      // force a redraw of terrain when this flips to true
-      simulation.dataReady = false;
-      config.elevation = newElevation;
-    }
-    // If simulation was not Ready then this will mark it as such.
-    simulation.restart();
+    simulation.populateCellsData();
   }
 
   public handleZoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -148,10 +130,12 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       this.setState({ selectedZone: newZone });
     }
   }
-  public showNextPanel = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+
+  public showNextPanel = () => {
     this.setState({ currentPanel: 2 });
   }
-  public showPreviousPanel = (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
+
+  public showPreviousPanel = () => {
     this.setState({ currentPanel: 1 });
   }
 
@@ -163,14 +147,12 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       // Switching to Mountain terrain changes land type / vegetation options
       // but keeping the min / max options the same for each range helps with slider rendering.
       // Accommodate this by manual adjustment of land types when switching to-from mountain
-      if (currentZone.terrainType === TerrainType.Mountains &&
-        currentZone.landType === LandType.ForestLargeLitter) {
+      if (newTerrainType !== TerrainType.Mountains && currentZone.vegetation === Vegetation.ForestLargeLitter) {
         // switching from Mountains with large forests to lower land type, reduce forest size
-        simulation.updateZoneVegetation(this.state.selectedZone, LandType.ForestSmallLitter);
-      }
-      else if (newTerrainType === TerrainType.Mountains && currentZone.landType === LandType.Grass) {
+        simulation.updateZoneVegetation(this.state.selectedZone, Vegetation.ForestSmallLitter);
+      } else if (newTerrainType === TerrainType.Mountains && currentZone.vegetation === Vegetation.Grass) {
         // no grass allowed on mountains, switch to shrubs
-        simulation.updateZoneVegetation(this.state.selectedZone, LandType.Shrub);
+        simulation.updateZoneVegetation(this.state.selectedZone, Vegetation.Shrub);
       }
       simulation.updateZoneTerrain(this.state.selectedZone, newTerrainType);
     }
@@ -178,22 +160,14 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
 
   public handleVegetationChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
     const { simulation } = this.stores;
-    const zone = Object.assign({}, simulation.zones[this.state.selectedZone]);
-    const displayVegetationType =
-      zone.terrainType === TerrainType.Mountains ? zone.landType - 1 : zone.landType;
-
-    if (displayVegetationType !== value) {
-      const newVegetationType =
-        zone.terrainType === TerrainType.Mountains ? value + 1 : value;
-      simulation.updateZoneVegetation(this.state.selectedZone, newVegetationType);
-    }
+    const zone = simulation.zones[this.state.selectedZone];
+    const newVegetationType = zone.terrainType === TerrainType.Mountains ? value + 1 : value;
+    simulation.updateZoneVegetation(this.state.selectedZone, newVegetationType);
   }
+
   public handleDroughtChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
     const { simulation } = this.stores;
-    const currentZone = Object.assign({}, simulation.zones[this.state.selectedZone]);
-    if (currentZone.droughtLevel !== value) {
-      simulation.updateZoneMoisture(this.state.selectedZone, value);
-    }
+    simulation.updateZoneMoisture(this.state.selectedZone, value);
   }
 
   private renderZoneTerrainTypeLabels = () => {
@@ -211,6 +185,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     });
     return labels;
   }
+
   private renderTerrainProperties = () => {
     const { simulation, simulation: { config }  } = this.stores;
     const labels: any[] = [];
@@ -218,7 +193,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     simulation.zones.forEach((z, i) => {
       if (i < config.zonesCount) {
         labels.push(
-          <TerrainSummary vegetationType={z.landType} droughtLevel={z.droughtLevel} key={i} />
+          <TerrainSummary vegetationType={z.vegetation} droughtLevel={z.droughtLevel} key={i} />
         );
       }
     });

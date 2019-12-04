@@ -1,5 +1,5 @@
 import { ZoneOptions } from "./models/zone";
-import { LandType } from "./models/fire-model";
+import { DroughtLevel, Vegetation, TerrainType } from "./models/fire-model";
 
 export interface ISimulationConfig {
   modelWidth: number; // ft
@@ -25,6 +25,7 @@ export interface ISimulationConfig {
   zonesCount: 2 | 3;
   zones: [ZoneOptions, ZoneOptions, ZoneOptions?];
   fillTerrainEdges: boolean;
+  riverData: string | null;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -48,14 +49,27 @@ export const defaultConfig: IUrlConfig = {
   // Higher values will make this shape better, but performance will be affected.
   neighborsDist: 2.5,
   cellBurnTime: 2000, // minutes
-  heightmapMaxElevation: 3000,
+  heightmapMaxElevation: 20000,
   zonesCount: 2,
   zones: [
-    { landType: LandType.Grass, moistureContent: 0 },
-    { landType: LandType.Shrub, moistureContent: 0.07 },
-    { landType: LandType.Grass, moistureContent: 0.21 }
+    {
+      terrainType: TerrainType.Plains,
+      vegetation: Vegetation.Grass,
+      droughtLevel: DroughtLevel.MildDrought
+    },
+    {
+      terrainType: TerrainType.Plains,
+      vegetation: Vegetation.Shrub,
+      droughtLevel: DroughtLevel.MediumDrought
+    },
+    {
+      terrainType: TerrainType.Plains,
+      vegetation: Vegetation.ForestSmallLitter,
+      droughtLevel: DroughtLevel.SevereDrought
+    }
   ],
-  fillTerrainEdges: true
+  fillTerrainEdges: true,
+  riverData: "data/river-texmap-data.png"
 };
 
 export const urlConfig: any = {};

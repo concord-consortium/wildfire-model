@@ -29,19 +29,24 @@ export class Cell {
     Object.assign(this, props);
   }
 
-  public get landType() {
-    return this.zone.landType;
+  public get vegetation() {
+    return this.zone.vegetation;
   }
 
   public get moistureContent() {
     if (!this.isRiverOrFireLine) {
       return this.zone.moistureContent;
     } else {
-      return 10000;
+      return Infinity;
     }
   }
 
   public get droughtLevel() {
     return this.zone.droughtLevel;
+  }
+
+  public reset() {
+    this.ignitionTime = Infinity;
+    this.fireState = FireState.Unburnt;
   }
 }

@@ -1,17 +1,16 @@
 import { Fuel } from "../types";
-import {Cell} from "./cell";
 import { Vector2 } from "three";
 
-export enum LandType {
+export enum Vegetation {
   Grass = 0,
   Shrub = 1,
   ForestSmallLitter = 2,
   ForestLargeLitter = 3
 }
 export enum TerrainType {
-  Mountains = 0,
+  Plains = 0,
   Foothills = 1,
-  Plains = 2
+  Mountains = 2
 }
 export enum DroughtLevel {
   NoDrought = 0,
@@ -31,14 +30,14 @@ export interface IWindProps {
 export interface ICellProps {
   x: number;
   y: number;
-  landType: LandType;
+  vegetation: Vegetation;
   moistureContent: number;
   elevation: number;
   isRiverOrFireLine: boolean;
 }
 
-const FuelConstants: {[key in LandType]: Fuel} = {
-  [LandType.Grass]: {
+const FuelConstants: {[key in Vegetation]: Fuel} = {
+  [Vegetation.Grass]: {
     sav: 1826,
     packingRatio: 0.00154,
     netFuelLoad: 0.09871442,
@@ -48,7 +47,7 @@ const FuelConstants: {[key in LandType]: Fuel} = {
     effectiveMineralContent: 0.01,
     fuelBedDepth: 1
   },
-  [LandType.Shrub]: {
+  [Vegetation.Shrub]: {
     sav: 1144,
     packingRatio: 0.00412,
     netFuelLoad: 0.183655,
@@ -60,7 +59,7 @@ const FuelConstants: {[key in LandType]: Fuel} = {
   },
   // TODO: the following two land types have not yet been configured via specification,
   // only by approximation to get the code to compile
-  [LandType.ForestSmallLitter]: {
+  [Vegetation.ForestSmallLitter]: {
     sav: 800,
     packingRatio: 0.00812,
     netFuelLoad: 0.383655,
@@ -70,7 +69,7 @@ const FuelConstants: {[key in LandType]: Fuel} = {
     effectiveMineralContent: 0.01,
     fuelBedDepth: 3
   },
-  [LandType.ForestLargeLitter]: {
+  [Vegetation.ForestLargeLitter]: {
     sav: 600,
     packingRatio: 0.01412,
     netFuelLoad: 0.583655,
@@ -156,7 +155,7 @@ export const getFireSpreadRate = (
 ) => {
   // small tweak to prevent the extreme edges of the simulation from burning
   if (targetCell.x < 2 || targetCell.y < 2 || targetCell.x > gridWidth - 3 || targetCell.y > gridHeight - 3) return 0;
-  const fuel = FuelConstants[targetCell.landType];
+  const fuel = FuelConstants[targetCell.vegetation];
   const sav = fuel.sav;
   const packingRatio = fuel.packingRatio;
   const netFuelLoad = fuel.netFuelLoad;

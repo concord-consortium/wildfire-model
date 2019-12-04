@@ -1,7 +1,7 @@
-import { action, observable, computed } from "mobx";
-import { getFireSpreadRate, IWindProps, LandType, TerrainType, DroughtLevel, moistureLookups } from "./fire-model";
+import { action, computed, observable } from "mobx";
+import { DroughtLevel, getFireSpreadRate, IWindProps, Vegetation, TerrainType } from "./fire-model";
 import { Cell, CellOptions, FireState } from "./cell";
-import { urlConfig, defaultConfig } from "../config";
+import { defaultConfig, urlConfig } from "../config";
 import { IPresetConfig } from "../presets";
 import { getInputData } from "../utils";
 import { Vector2 } from "three";
@@ -134,8 +134,6 @@ export class SimulationModel {
   public prevTickTime: number | null;
   @observable public dataReady = false;
   @observable public wind: IWindProps;
-  // TODO: This may be used later for Rain, for now, simulation should use moisture per-zone
-  @observable public moistureContent: number;
   @observable public sparks: Vector2[] = [];
   @observable public cellSize: number;
   @observable public gridWidth: number;
@@ -145,6 +143,11 @@ export class SimulationModel {
   @observable public cells: Cell[] = [];
   @observable public simulationStarted = false;
   @observable public simulationRunning = false;
+  // These flags can be used by view to trigger appropriate rendering. Theoretically, view could/should check
+  // every single cell and re-render when it detects some changes. In practice, we perform these updates in very
+  // specific moments and usually for all the cells, so this approach can be way more efficient.
+  @observable public cellsStateFlag = 0;
+  @observable public cellsElevationFlag = 0;
 
   constructor(presetConfig: Partial<IPresetConfig>) {
     // Configuration are joined together. Default values can be replaced by preset, and preset values can be replaced
@@ -156,10 +159,6 @@ export class SimulationModel {
     this.gridWidth = config.gridWidth;
     this.gridHeight = Math.ceil(config.modelHeight / this.cellSize);
     this.zones = config.zones.map(options => new Zone(options!));
-    // set moisture values per-zone based on drought level and vegetation
-    this.zones.forEach((z) => {
-      z.moistureContent = moistureLookups[z.droughtLevel][z.landType];
-    });
     this.populateCellsData();
     this.setInputParamsFromConfig();
 
@@ -177,7 +176,6 @@ export class SimulationModel {
       speed: config.windSpeed,
       direction: config.windDirection
     };
-    this.moistureContent = config.moistureContent;
     this.sparks.length = 0;
     config.sparks.forEach(s => {
       this.addSpark(s[0], s[1]);
@@ -200,7 +198,21 @@ export class SimulationModel {
   }
 
   public getElevationData(): Promise<number[] | undefined> {
-    return getInputData(this.config.elevation, this.gridWidth, this.gridHeight, true,
+    // If `elevation` height map is provided, it will be loaded during model initialization.
+    // Otherwise, height map URL will be derived from zones `terrainType` properties.
+    let heightmapUrl = this.config.elevation;
+    if (!heightmapUrl) {
+      const prefix = "data/";
+      const zoneTypes: string[] = [];
+      this.zones.forEach((z, i) => {
+        if (i < this.config.zonesCount) {
+          zoneTypes.push(TerrainType[z.terrainType].toLowerCase());
+        }
+      });
+      const edgeStyle = this.config.fillTerrainEdges ? "-edge" : "";
+      heightmapUrl = prefix + zoneTypes.join("-") + "-heightmap" + edgeStyle + ".png";
+    }
+    return getInputData(heightmapUrl, this.gridWidth, this.gridHeight, true,
       (rgba: [number, number, number, number]) => {
         // Elevation data is supposed to black & white image, where black is the lowest point and
         // white is the highest.
@@ -210,7 +222,10 @@ export class SimulationModel {
   }
 
   public getRiverData(): Promise<number[] | undefined> {
-    return getInputData("data/river-texmap-data.png", this.gridWidth, this.gridHeight, true,
+    if (!this.config.riverData) {
+      return Promise.resolve(undefined);
+    }
+    return getInputData(this.config.riverData, this.gridWidth, this.gridHeight, true,
       (rgba: [number, number, number, number]) => {
         // River texture is mostly transparent, so look for non-transparent cells to define shape
         return rgba[3] > 0 ? 1 : 0;
@@ -219,6 +234,7 @@ export class SimulationModel {
   }
 
   @action.bound public populateCellsData() {
+    this.dataReady = false;
     Promise.all([this.getZoneIndex(), this.getElevationData(), this.getRiverData()]).then(values => {
       const zoneIndex = values[0];
       const elevation = values[1];
@@ -230,7 +246,8 @@ export class SimulationModel {
         for (let x = 0; x < this.gridWidth; x++) {
           const index = getGridIndexForLocation(x, y, this.gridWidth);
           const cellOptions: CellOptions = {
-            x, y, zone: this.zones[zoneIndex ? zoneIndex[index] : 0],
+            x, y,
+            zone: this.zones[zoneIndex ? zoneIndex[index] : 0],
             isRiverOrFireLine: river && river[index] > 0
           };
           if (elevation) {
@@ -243,7 +260,8 @@ export class SimulationModel {
       this.cellNeighbors = calculateCellNeighbors(
         this.cells, this.gridWidth, this.gridHeight, this.config.neighborsDist
       );
-      this.notifyCellsUpdated();
+      this.updateCellsElevationFlag();
+      this.updateCellsStateFlag();
       this.dataReady = true;
     });
   }
@@ -283,7 +301,8 @@ export class SimulationModel {
     this.simulationRunning = false;
     this.simulationStarted = false;
     this.time = 0;
-    this.populateCellsData();
+    this.cells.forEach(cell => cell.reset());
+    this.updateCellsStateFlag();
   }
 
   @action.bound public reload() {
@@ -313,13 +332,15 @@ export class SimulationModel {
       this.time += 1;
     }
     this.updateFire();
-    this.notifyCellsUpdated();
+    this.updateCellsStateFlag();
   }
 
-  @action.bound public notifyCellsUpdated() {
-    // This is hopefully needed only temporarly. 2D view observers cells array directly instead of its content.
-    // It doesn't make sense to change it, as it will be eventually replaced by 3D view.
-    this.cells = this.cells.slice();
+  @action.bound public updateCellsElevationFlag() {
+    this.cellsElevationFlag += 1;
+  }
+
+  @action.bound public updateCellsStateFlag() {
+    this.cellsStateFlag += 1;
   }
 
   // Coords are in model units (feet).
@@ -341,25 +362,16 @@ export class SimulationModel {
     this.wind.speed = speed;
   }
 
-  @action.bound public setMoistureContent(value: number) {
-    this.moistureContent = value;
-  }
-
   @action.bound public updateZoneTerrain(zoneIdx: number, updatedTerrainType: TerrainType) {
     this.zones[zoneIdx].terrainType = updatedTerrainType;
   }
 
   @action.bound public updateZoneMoisture(zoneIdx: number, droughtLevel: DroughtLevel) {
-    // moisture content from lookup of drought level and land type
-    const zone = this.zones[zoneIdx];
-    this.zones[zoneIdx].moistureContent = moistureLookups[droughtLevel][zone.landType];
     this.zones[zoneIdx].droughtLevel = droughtLevel;
   }
 
-  @action.bound public updateZoneVegetation(zoneIdx: number, vegetation: LandType) {
-    const zone = this.zones[zoneIdx];
-    this.zones[zoneIdx].moistureContent = moistureLookups[zone.droughtLevel][vegetation];
-    this.zones[zoneIdx].landType = vegetation;
+  @action.bound public updateZoneVegetation(zoneIdx: number, vegetation: Vegetation) {
+    this.zones[zoneIdx].vegetation = vegetation;
   }
 
   public canAddSpark() {

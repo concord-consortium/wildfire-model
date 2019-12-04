@@ -7,7 +7,7 @@ import * as css from "./vertical-selectors.scss";
 import { vegetationLabels, generateMarks, vegetationIcons } from "./vertical-selectors";
 
 interface IProps {
-  landType: number;
+  vegetation: number;
   terrainType: number;
   onChange?: any;
 }
@@ -23,7 +23,7 @@ const icons = [
   <div className={`${css.sliderIcon} ${css.fsl} ${css.top} ${css.placeholder}`} key={2}>{vegetationIcons[2]}</div>
 ];
 
-export const VegetationSelector = ({ landType: vegetationType, terrainType, onChange }: IProps) =>
+export const VegetationSelector = ({ vegetation: vegetationType, terrainType, onChange }: IProps) =>
   (
     <div className={`${css.selector} ${css.vegetation}`}>
       <div className={css.header}>Vegetation Type</div>
