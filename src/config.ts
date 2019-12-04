@@ -42,7 +42,11 @@ export const defaultConfig: IUrlConfig = {
   windSpeed: 0, // mph
   windDirection: 0, // degrees, northern wind
   moistureContent: 0.07,
-  neighborsDist: 3,
+  // Note that 0.5 helps to create a nicer, more round shape of neighbours set for a given cell
+  // on the rectangular grid when small radius values are used (like 2.5).
+  // 2.5 seems to be first value that ensures that fire front looks pretty round.
+  // Higher values will make this shape better, but performance will be affected.
+  neighborsDist: 2.5,
   cellBurnTime: 2000, // minutes
   heightmapMaxElevation: 3000,
   zonesCount: 2,
