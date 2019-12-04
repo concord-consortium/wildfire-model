@@ -6,7 +6,7 @@ import { renderZones } from "./zone-selector";
 import { TerrainTypeSelector } from "./terrain-type-selector";
 import { VegetationSelector } from "./vegetation-selector";
 import { DroughtSelector } from "./drought-selector";
-import { TerrainType, LandType } from "../models/fire-model";
+import { TerrainType, Vegetation } from "../models/fire-model";
 import { WindCircularControl } from "./wind-circular-control";
 import { TerrainSummary } from "./terrain-summary";
 
@@ -41,7 +41,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const { selectedZone, currentPanel } = this.state;
     const zone = simulation.zones[selectedZone];
     const displayVegetationType =
-      zone.terrainType === TerrainType.Mountains ? zone.landType - 1 : zone.landType;
+      zone.terrainType === TerrainType.Mountains ? zone.vegetation - 1 : zone.vegetation;
     const panelClass = currentPanel === 1 ? css.panel1 : css.panel2;
     const panelInstructions = currentPanel === 1 ? "Adjust variables in each zone" : "Set initial wind direction and speed";
     return (
@@ -76,7 +76,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
               <div className={css.selectors}>
                 <div className={css.selector}>
                   <VegetationSelector
-                    landType={displayVegetationType}
+                    vegetation={displayVegetationType}
                     terrainType={zone.terrainType}
                     onChange={this.handleVegetationChange} />
                 </div>
@@ -147,12 +147,12 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       // Switching to Mountain terrain changes land type / vegetation options
       // but keeping the min / max options the same for each range helps with slider rendering.
       // Accommodate this by manual adjustment of land types when switching to-from mountain
-      if (newTerrainType !== TerrainType.Mountains && currentZone.landType === LandType.ForestLargeLitter) {
+      if (newTerrainType !== TerrainType.Mountains && currentZone.vegetation === Vegetation.ForestLargeLitter) {
         // switching from Mountains with large forests to lower land type, reduce forest size
-        simulation.updateZoneVegetation(this.state.selectedZone, LandType.ForestSmallLitter);
-      } else if (newTerrainType === TerrainType.Mountains && currentZone.landType === LandType.Grass) {
+        simulation.updateZoneVegetation(this.state.selectedZone, Vegetation.ForestSmallLitter);
+      } else if (newTerrainType === TerrainType.Mountains && currentZone.vegetation === Vegetation.Grass) {
         // no grass allowed on mountains, switch to shrubs
-        simulation.updateZoneVegetation(this.state.selectedZone, LandType.Shrub);
+        simulation.updateZoneVegetation(this.state.selectedZone, Vegetation.Shrub);
       }
       simulation.updateZoneTerrain(this.state.selectedZone, newTerrainType);
     }
@@ -193,7 +193,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     simulation.zones.forEach((z, i) => {
       if (i < config.zonesCount) {
         labels.push(
-          <TerrainSummary vegetationType={z.landType} droughtLevel={z.droughtLevel} key={i} />
+          <TerrainSummary vegetationType={z.vegetation} droughtLevel={z.droughtLevel} key={i} />
         );
       }
     });

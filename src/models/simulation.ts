@@ -1,5 +1,5 @@
 import { action, computed, observable } from "mobx";
-import { DroughtLevel, getFireSpreadRate, IWindProps, LandType, TerrainType } from "./fire-model";
+import { DroughtLevel, getFireSpreadRate, IWindProps, Vegetation, TerrainType } from "./fire-model";
 import { Cell, CellOptions, FireState } from "./cell";
 import { defaultConfig, urlConfig } from "../config";
 import { IPresetConfig } from "../presets";
@@ -370,8 +370,8 @@ export class SimulationModel {
     this.zones[zoneIdx].droughtLevel = droughtLevel;
   }
 
-  @action.bound public updateZoneVegetation(zoneIdx: number, vegetation: LandType) {
-    this.zones[zoneIdx].landType = vegetation;
+  @action.bound public updateZoneVegetation(zoneIdx: number, vegetation: Vegetation) {
+    this.zones[zoneIdx].vegetation = vegetation;
   }
 
   public canAddSpark() {

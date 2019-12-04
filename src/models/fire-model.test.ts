@@ -1,11 +1,11 @@
-import { getFireSpreadRate, LandType, getDirectionFactor } from "./fire-model";
+import { getFireSpreadRate, Vegetation, getDirectionFactor } from "./fire-model";
 
 const cellSize = 1;
 
 const sourceCell = {
   x: 10,
   y: 11,
-  landType: LandType.Shrub,
+  vegetation: Vegetation.Shrub,
   moistureContent: 0.1,
   elevation: 0,
   isRiverOrFireLine: false
@@ -14,7 +14,7 @@ const sourceCell = {
 const targetCell = {
   x: 10,
   y: 10,
-  landType: LandType.Shrub,
+  vegetation: Vegetation.Shrub,
   moistureContent: 0.1,
   // Why such elevation? Note that spreadsheet uses value for slope -1deg => Math.PI / 180.
   // Ensure that we use the same slope here (so calculate elevation accordingly).

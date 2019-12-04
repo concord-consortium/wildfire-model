@@ -29,8 +29,8 @@ export class Cell {
     Object.assign(this, props);
   }
 
-  public get landType() {
-    return this.zone.landType;
+  public get vegetation() {
+    return this.zone.vegetation;
   }
 
   public get moistureContent() {

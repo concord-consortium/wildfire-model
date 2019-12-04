@@ -78,7 +78,7 @@ export const renderZones = (
               </span>
               {!readonly &&
                 <span className={`${css.vegetationPreview} ${i > 0 ? vegPreviewPosition : ""}`}>
-                  {vegetationIcons[z.landType]}</span>
+                  {vegetationIcons[z.vegetation]}</span>
               }
             </div>
           </label>

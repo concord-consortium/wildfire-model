@@ -4,17 +4,17 @@ import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
 import { TerrainPanel } from "./terrain-panel";
 import { Slider } from "@material-ui/core";
-import { LandType, TerrainType } from "../models/fire-model";
+import { Vegetation, TerrainType } from "../models/fire-model";
 
 const defaultTwoZones = [
   {
-    landType: LandType.ForestSmallLitter,
+    vegetation: Vegetation.ForestSmallLitter,
     moistureContent: 0.07,
     droughtLevel: 2,
     terrainType: TerrainType.Mountains
   },
   {
-    landType: LandType.Shrub,
+    vegetation: Vegetation.Shrub,
     moistureContent: 0.14,
     droughtLevel: 1,
     terrainType: TerrainType.Plains
@@ -23,19 +23,19 @@ const defaultTwoZones = [
 
 const defaultThreeZones = [
   {
-    landType: LandType.ForestSmallLitter,
+    vegetation: Vegetation.ForestSmallLitter,
     moistureContent: 0.07,
     droughtLevel: 2,
     terrainType: TerrainType.Mountains
   },
   {
-    landType: LandType.Shrub,
+    vegetation: Vegetation.Shrub,
     moistureContent: 0.14,
     droughtLevel: 1,
     terrainType: TerrainType.Plains
   },
   {
-    landType: LandType.ForestLargeLitter,
+    vegetation: Vegetation.ForestLargeLitter,
     moistureContent: 0.21,
     droughtLevel: 0,
     terrainType: TerrainType.Foothills
