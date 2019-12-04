@@ -25,6 +25,7 @@ export interface ISimulationConfig {
   zonesCount: 2 | 3;
   zones: [ZoneOptions, ZoneOptions, ZoneOptions?];
   fillTerrainEdges: boolean;
+  riverData: string | null;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -55,7 +56,8 @@ export const defaultConfig: IUrlConfig = {
     { terrainType: TerrainType.Plains, landType: LandType.Shrub, droughtLevel: DroughtLevel.MediumDrought },
     { terrainType: TerrainType.Plains, landType: LandType.ForestSmallLitter, droughtLevel: DroughtLevel.SevereDrought }
   ],
-  fillTerrainEdges: true
+  fillTerrainEdges: true,
+  riverData: "data/river-texmap-data.png"
 };
 
 export const urlConfig: any = {};

@@ -222,7 +222,10 @@ export class SimulationModel {
   }
 
   public getRiverData(): Promise<number[] | undefined> {
-    return getInputData("data/river-texmap-data.png", this.gridWidth, this.gridHeight, true,
+    if (!this.config.riverData) {
+      return Promise.resolve(undefined);
+    }
+    return getInputData(this.config.riverData, this.gridWidth, this.gridHeight, true,
       (rgba: [number, number, number, number]) => {
         // River texture is mostly transparent, so look for non-transparent cells to define shape
         return rgba[3] > 0 ? 1 : 0;

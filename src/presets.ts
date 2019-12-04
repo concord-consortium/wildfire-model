@@ -16,7 +16,8 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     sparks: [ [50000, 50000] ],
     zoneIndex: [
       [ 0, 1 ]
-    ]
+    ],
+    riverData: null
   },
   threeZones: {
     modelWidth: 100000,
