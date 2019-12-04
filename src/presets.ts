@@ -214,6 +214,29 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
       [ 0, 1, 2 ]
     ]
   },
+  extremeZones: {
+    modelWidth: 120000,
+    modelHeight: 80000,
+    gridWidth: 240,
+    heightmapMaxElevation: 20000,
+    zones: [
+      {
+        terrainType: TerrainType.Mountains,
+        vegetation: Vegetation.ForestLargeLitter,
+        droughtLevel: DroughtLevel.SevereDrought
+      },
+      {
+        terrainType: TerrainType.Foothills,
+        vegetation: Vegetation.Shrub,
+        droughtLevel: DroughtLevel.MediumDrought
+      },
+      { terrainType: TerrainType.Plains, vegetation: Vegetation.Grass, droughtLevel: DroughtLevel.NoDrought }
+    ],
+    zonesCount: 3,
+    zoneIndex: [
+      [ 0, 1, 2 ]
+    ]
+  },
 };
 
 export default presets;

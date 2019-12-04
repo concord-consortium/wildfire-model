@@ -22,6 +22,7 @@ export class Cell {
   public zone: Zone;
   public elevation: number = 0;
   public ignitionTime: number = Infinity;
+  public burnTime: number = Infinity;
   public fireState: FireState = FireState.Unburnt;
   public isRiverOrFireLine: boolean = false;
 
@@ -47,6 +48,7 @@ export class Cell {
 
   public reset() {
     this.ignitionTime = Infinity;
+    this.burnTime = Infinity;
     this.fireState = FireState.Unburnt;
   }
 }

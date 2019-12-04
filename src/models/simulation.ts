@@ -396,7 +396,7 @@ export class SimulationModel {
 
     for (let i = 0; i < numCells; i++) {
       const ignitionTime = this.cells[i].ignitionTime;
-      if (this.cells[i].fireState === FireState.Burning && this.time - ignitionTime > this.config.cellBurnTime) {
+      if (this.cells[i].fireState === FireState.Burning && this.time - ignitionTime > this.cells[i].burnTime) {
         newFireStateData[i] = FireState.Burnt;
       } else if (this.cells[i].fireState === FireState.Unburnt && this.time > ignitionTime) {
         // Sets any unburnt cells to burning if we are passed their ignition time.
@@ -412,6 +412,11 @@ export class SimulationModel {
             newIgnitionData[n] = Math.min(
               ignitionTime + ignitionDeltas[j], newIgnitionData[n] || this.cells[n].ignitionTime
             );
+            // Make cell burn time proportional to fire spread rate.
+            const newBurnTime = (newIgnitionData[n] - ignitionTime) + this.config.minCellBurnTime;
+            if (newBurnTime < this.cells[n].burnTime) {
+              this.cells[n].burnTime = newBurnTime;
+            }
           }
         });
       }
