@@ -10,6 +10,7 @@ import WindSymbol from "../assets/wind-symbol.svg";
 import css from "./wind-circular-control.scss";
 import { Slider } from "@material-ui/core";
 import HorizontalHandle from "../assets/slider-horizontal.svg";
+import { observer } from "mobx-react";
 
 const windSpeedMarks = [
   {
@@ -29,15 +30,17 @@ const windSpeedMarks = [
     label: "30"
   }
 ];
-export const WindCircularControl = () => {
-  const { simulation, ui } = useStores();
+
+// Note that model is very sensitive to wind. Scale wind values down for now, so changes are less dramatic.
+const windScaleFactor = 0.2;
+
+export const WindCircularControl = observer(() => {
+  const { simulation } = useStores();
   const [directionAngle, setDirectionAngle] = useState(simulation.wind.direction / 360);
-  const [windSpeed, setWindSpeed] = useState(simulation.wind.speed);
 
   useEffect(() => {
     simulation.setWindDirection(angleToDirection());
-    simulation.setWindSpeed(windSpeed);
-  }, [directionAngle, windSpeed]);
+  }, [directionAngle]);
 
   const angleToDirection = () => {
     // convert 0-1 scale of angle to the direction from which the wind is coming
@@ -55,8 +58,9 @@ export const WindCircularControl = () => {
   };
 
   const handleWindSpeedChange = (event: any, value: number | number[]) => {
-    setWindSpeed(value as number);
+    simulation.setWindSpeed(value as number * windScaleFactor);
   };
+  const scaledWind = simulation.wind.speed / windScaleFactor;
 
   return (
     <div className={css.windContainer}>
@@ -75,14 +79,14 @@ export const WindCircularControl = () => {
       </div>
 
       <div className={css.key}>Wind Direction and Speed</div>
-      <div className={css.windText}>{`${windSpeed} MPH from the ${degToCompass()}`}
+      <div className={css.windText}>{`${Math.round(scaledWind)} MPH from the ${degToCompass()}`}
         <div className={css.windSliderControls}>
           <Slider
             classes={{ thumb: css.thumb, markLabel: css.markLabel }}
             min={0}
             max={30}
             disabled={simulation.simulationStarted}
-            value={windSpeed}
+            value={scaledWind}
             step={1}
             marks={windSpeedMarks}
             onChange={handleWindSpeedChange}
@@ -92,4 +96,4 @@ export const WindCircularControl = () => {
       </div>
     </div>
   );
-};
+});
