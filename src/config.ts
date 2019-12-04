@@ -18,7 +18,7 @@ export interface ISimulationConfig {
   // In min - note that larger cells will burn the same amount of time. Cell doesn't burn from edge to edge, but
   // its whole area is supposed to burn at the same time. We might consider whether it should be different for
   // different fuel types.
-  cellBurnTime: number;
+  minCellBurnTime: number;
   // Max elevation of 100% white points in heightmap (image used for elevation data).
   heightmapMaxElevation: number; // ft
   // Number of zones that the model is using. Zones are used to keep properties of some area of the model.
@@ -48,7 +48,7 @@ export const defaultConfig: IUrlConfig = {
   // 2.5 seems to be first value that ensures that fire front looks pretty round.
   // Higher values will make this shape better, but performance will be affected.
   neighborsDist: 2.5,
-  cellBurnTime: 2000, // minutes
+  minCellBurnTime: 200, // minutes
   heightmapMaxElevation: 20000,
   zonesCount: 2,
   zones: [
