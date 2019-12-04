@@ -8,17 +8,14 @@ import WindArrow from "../assets/wind-arrow.svg";
 
 import css from "./wind-dial.scss";
 
-export const WindDial = (simulationWindDirection: number, onChange?: any) => {
-
+export const windDial = (simulationWindDirection: number, onChange?: any) => {
   const circularInputValToAngle = (circularInputVal: number) => {
     // Convert 0-1 scale of angle to the direction from which the wind is coming.
     return (circularInputVal * 360 + 180) % 360;
   };
-
   const circularInputValue = () => {
     return (simulationWindDirection - 180) / 360;
   };
-
   const setDirectionAngle = (circularInputVal: number) => {
     if (onChange) {
       onChange(circularInputValToAngle(circularInputVal));
@@ -35,4 +32,10 @@ export const WindDial = (simulationWindDirection: number, onChange?: any) => {
       </CircularInput>
     </div>
   );
+};
+export const degToCompass = (direction: number) => {
+  // wind comes _from_ the opposite direction
+  const val = Math.floor((direction / 22.5) + 0.5);
+  const arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+  return arr[(val % 16)];
 };

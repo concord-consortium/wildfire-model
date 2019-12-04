@@ -3,7 +3,7 @@ import { observer } from "mobx-react";
 import { useStores } from "../use-stores";
 import { droughtIcons, droughtLabels, vegetationIcons, vegetationLabels } from "./vertical-selectors";
 import { Zone } from "../models/zone";
-import { WindDial } from "./wind-dial";
+import { windDial, degToCompass } from "./wind-dial";
 
 import * as css from "./simulation-info.scss";
 
@@ -37,11 +37,17 @@ const zoneDetails = (zones: Zone[]) => {
 
 export const SimulationInfo = observer(() => {
   const { simulation } = useStores();
+  const scaledWind = simulation.wind.speed / simulation.config.windScaleFactor;
   return (
     <div className={css.simulationInfo}>
       {zoneDetails(simulation.zones)}
-      <div className={css.windDial}>{WindDial(simulation.wind.direction)}</div>
-
+      <div className={css.windContainer}>
+        <div className={css.windHeader}>Wind Meter</div>
+        <div className={css.windText}>
+            {`${Math.round(scaledWind)} MPH from the ${degToCompass(simulation.wind.direction)}`}
+        </div>
+        <div className={css.windDial}>{windDial(simulation.wind.direction)}</div>
+      </div>
     </div>
   );
 });

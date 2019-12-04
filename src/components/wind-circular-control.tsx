@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useStores } from "../use-stores";
 import { Slider } from "@material-ui/core";
 import { observer } from "mobx-react";
-import { WindDial } from "./wind-dial";
+import { windDial, degToCompass } from "./wind-dial";
 
 import WindSymbol from "../assets/wind-symbol.svg";
 import HorizontalHandle from "../assets/slider-horizontal.svg";
@@ -43,24 +43,18 @@ export const WindCircularControl = observer(() => {
   };
   const scaledWind = simulation.wind.speed / windScaleFactor;
 
-  const degToCompass = () => {
-    // wind comes _from_ the opposite direction
-    const val = Math.floor((simulation.wind.direction / 22.5) + 0.5);
-    const arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
-    return arr[(val % 16)];
-  };
-
   return (
     <div className={css.windContainer}>
       <div className={css.controlContainer}>
         <div className={css.windSymbolContainer} style={{transform: `rotate(${simulation.wind.direction + 180}deg)`}}>
           <WindSymbol className={css.windSymbol} />
         </div>
-        {WindDial(simulation.wind.direction, setDirectionAngle)}
+        {windDial(simulation.wind.direction, setDirectionAngle)}
       </div>
 
       <div className={css.key}>Wind Direction and Speed</div>
-      <div className={css.windText}>{`${Math.round(scaledWind)} MPH from the ${degToCompass()}`}
+      <div className={css.windText}>
+        {`${Math.round(scaledWind)} MPH from the ${degToCompass(simulation.wind.direction)}`}
         <div className={css.windSliderControls}>
           <Slider
             classes={{ thumb: css.thumb, markLabel: css.markLabel }}

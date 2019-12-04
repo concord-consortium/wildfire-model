@@ -26,6 +26,7 @@ export interface ISimulationConfig {
   zones: [ZoneOptions, ZoneOptions, ZoneOptions?];
   fillTerrainEdges: boolean;
   riverData: string | null;
+  windScaleFactor: number;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -69,7 +70,9 @@ export const defaultConfig: IUrlConfig = {
     }
   ],
   fillTerrainEdges: true,
-  riverData: "data/river-texmap-data.png"
+  riverData: "data/river-texmap-data.png",
+  windScaleFactor: 0.2, // Note that model is very sensitive to wind.
+  // Scale wind values down for now, so changes are less dramatic.
 };
 
 export const urlConfig: any = {};

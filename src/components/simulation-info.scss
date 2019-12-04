@@ -70,10 +70,36 @@
     }
   }
 
-  .windDial{
-    width: 100px;
-    height: 100px;
+  .windContainer{
+    width: 90px;
+    height: 118px;
     position: relative;
     top: 100px;
+    left: 10px;
+    background: white;
+    border-radius: 4px;
+    border: solid 1px $controlGray;
+    text-align: center;
+    color: $controlText;
+
+    .windHeader{
+      font-family: Lato;
+      font-size: 12px;
+      font-weight: bold;
+      padding: 4px;
+    }
+    .windText{
+      font-family: 'Roboto Condensed';
+      font-size: 11px;
+      font-weight: normal;
+      width: 60px;
+      margin: auto;
+    }
+    .windDial{
+      transform: scale(0.7);
+      transform-origin: left;
+      filter: grayscale(1);
+      margin-left: 6px;
+    }
   }
 }
