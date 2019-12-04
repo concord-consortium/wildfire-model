@@ -48,7 +48,7 @@ export const defaultConfig: IUrlConfig = {
   // Higher values will make this shape better, but performance will be affected.
   neighborsDist: 2.5,
   cellBurnTime: 2000, // minutes
-  heightmapMaxElevation: 3000,
+  heightmapMaxElevation: 20000,
   zonesCount: 2,
   zones: [
     { terrainType: TerrainType.Plains, landType: LandType.Grass, droughtLevel: DroughtLevel.MildDrought },

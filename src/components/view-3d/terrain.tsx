@@ -5,21 +5,21 @@ import { useThree } from "../../react-three-hook";
 import { observer } from "mobx-react";
 import { useStores } from "../../use-stores";
 import { Cell, FireState } from "../../models/cell";
-import { LandType } from "../../models/fire-model";
 import { SimulationModel } from "../../models/simulation";
 import { IThreeContext } from "../../react-three-hook/threejs-manager";
 import { ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
 import { SparksContainer } from "./spark";
 import { Interaction } from "../../models/ui";
 import { AddSparkInteraction } from "./add-spark-interaction";
+import { DroughtLevel } from "../../models/fire-model";
 
 const getTerrainColor = (droughtLevel: number) => {
   switch (droughtLevel) {
-    case 0:
+    case DroughtLevel.NoDrought:
       return [0.008, 0.831, 0.039, 1];
-    case 1:
+    case DroughtLevel.MildDrought:
       return [0.573, 0.839, 0.216, 1];
-    case 2:
+    case DroughtLevel.MediumDrought:
       return [0.757, 0.886, 0.271, 1];
     default:
       return [0.784, 0.631, 0.271, 1];
@@ -95,17 +95,17 @@ export const Terrain = observer(() => {
 
   useEffect(() => {
     const plane = getEntity();
-    if (plane && simulation.dataReady) {
+    if (plane) {
       setupElevation(plane, simulation);
     }
-  }, [simulation.dataReady]);
+  }, [simulation.cellsElevationFlag]);
 
   useEffect(() => {
     const plane = getEntity();
     if (plane) {
       updateColors(plane, simulation);
     }
-  }, [simulation.cells]);
+  }, [simulation.cellsStateFlag]);
 
   // Note that we don't want to conditionally render <PlaceSparkInteraction> or provide more props to it.
   // If <PlaceSparkInteraction> subscribes to stores directly, we can avoid unnecessary re-renders of parent component

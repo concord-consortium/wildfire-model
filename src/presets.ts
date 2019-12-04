@@ -1,7 +1,10 @@
-import {ISimulationConfig} from "./config";
+import { ISimulationConfig } from "./config";
+import { DroughtLevel, LandType, TerrainType } from "./models/fire-model";
 
 export interface IPresetConfig extends ISimulationConfig {
   zoneIndex: number[][] | string;
+  // If `elevation` height map is provided, it will be loaded during model initialization and terrain setup dialog
+  // won't let users change terrain type. Otherwise, height map URL will be derived from zones `terrainType` properties.
   elevation?: number[][] | string;
 }
 
@@ -21,7 +24,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 100,
     sparks: [ [50000, 50000] ],
     zoneIndex: [
-      [ 0, 1, 0 ]
+      [ 0, 1, 2 ]
     ]
   },
   basicWithWind: {
@@ -128,8 +131,8 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 240,
     heightmapMaxElevation: 20000,
     zones: [
-      { terrainType: 1, landType: 0, droughtLevel: 3 },
-      { terrainType: 1, landType: 1, droughtLevel: 2 },
+      { terrainType: TerrainType.Foothills, landType: LandType.Grass, droughtLevel: DroughtLevel.SevereDrought },
+      { terrainType: TerrainType.Foothills, landType: LandType.Shrub, droughtLevel: DroughtLevel.MediumDrought },
     ],
     zoneIndex: [
       [ 0, 1 ]
@@ -141,6 +144,11 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 240,
     heightmapMaxElevation: 20000,
     zonesCount: 3,
+    zones: [
+      { terrainType: TerrainType.Foothills, landType: LandType.Grass, droughtLevel: 3 },
+      { terrainType: TerrainType.Foothills, landType: LandType.Shrub, droughtLevel: 2 },
+      { terrainType: TerrainType.Foothills, landType: LandType.ForestSmallLitter, droughtLevel: 0 },
+    ],
     zoneIndex: [
       [ 0, 1, 2 ]
     ]
@@ -151,15 +159,14 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 240,
     heightmapMaxElevation: 20000,
     zones: [
-      { terrainType: 2, landType: 0, droughtLevel: 3 },
-      { terrainType: 2, landType: 1, droughtLevel: 2 },
-      { terrainType: 2, landType: 2, droughtLevel: 0 }
+      { terrainType: TerrainType.Plains, landType: LandType.Grass, droughtLevel: 3 },
+      { terrainType: TerrainType.Plains, landType: LandType.Shrub, droughtLevel: 2 },
+      { terrainType: TerrainType.Plains, landType: LandType.ForestSmallLitter, droughtLevel: 0 },
     ],
     zonesCount: 3,
     zoneIndex: [
       [ 0, 1, 2 ]
-    ],
-    elevation: "data/plains-plains-plains-heightmap-edge.png",
+    ]
   },
   threeZoneFoothills: {
     modelWidth: 120000,
@@ -167,15 +174,14 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 240,
     heightmapMaxElevation: 20000,
     zones: [
-      { terrainType: 1, landType: 0, droughtLevel: 3 },
-      { terrainType: 1, landType: 1, droughtLevel: 2 },
-      { terrainType: 1, landType: 2, droughtLevel: 0 }
+      { terrainType: TerrainType.Foothills, landType: LandType.Grass, droughtLevel: 3 },
+      { terrainType: TerrainType.Foothills, landType: LandType.Shrub, droughtLevel: 2 },
+      { terrainType: TerrainType.Foothills, landType: LandType.ForestSmallLitter, droughtLevel: 0 },
     ],
     zonesCount: 3,
     zoneIndex: [
       [ 0, 1, 2 ]
-    ],
-    elevation: "data/foothills-foothills-foothills-heightmap-edge.png",
+    ]
   },
   threeZoneMountains: {
     modelWidth: 120000,
@@ -183,15 +189,14 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 240,
     heightmapMaxElevation: 20000,
     zones: [
-      { terrainType: 0, landType: 1, droughtLevel: 3 },
-      { terrainType: 0, landType: 2, droughtLevel: 2 },
-      { terrainType: 0, landType: 3, droughtLevel: 0 }
+      { terrainType: TerrainType.Mountains, landType: LandType.Shrub, droughtLevel: 3 },
+      { terrainType: TerrainType.Mountains, landType: LandType.ForestSmallLitter, droughtLevel: 2 },
+      { terrainType: TerrainType.Mountains, landType: LandType.ForestLargeLitter, droughtLevel: 0 },
     ],
     zonesCount: 3,
     zoneIndex: [
       [ 0, 1, 2 ]
-    ],
-    elevation: "data/mountains-mountains-mountains-heightmap-edge.png",
+    ]
   },
   threeZoneMix: {
     modelWidth: 120000,
@@ -199,15 +204,14 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 240,
     heightmapMaxElevation: 20000,
     zones: [
-      { terrainType: 0, landType: 0, droughtLevel: 3 },
-      { terrainType: 1, landType: 1, droughtLevel: 2 },
-      { terrainType: 2, landType: 2, droughtLevel: 0 }
+      { terrainType: TerrainType.Mountains, landType: LandType.Grass, droughtLevel: 3 },
+      { terrainType: TerrainType.Foothills, landType: LandType.Shrub, droughtLevel: 2 },
+      { terrainType: TerrainType.Plains, landType: LandType.ForestSmallLitter, droughtLevel: 0 },
     ],
     zonesCount: 3,
     zoneIndex: [
       [ 0, 1, 2 ]
-    ],
-    elevation: "data/mountains-foothills-plains-heightmap-edge.png",
+    ]
   },
 };
 

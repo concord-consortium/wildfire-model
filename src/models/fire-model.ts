@@ -1,5 +1,4 @@
 import { Fuel } from "../types";
-import {Cell} from "./cell";
 import { Vector2 } from "three";
 
 export enum LandType {
@@ -9,9 +8,9 @@ export enum LandType {
   ForestLargeLitter = 3
 }
 export enum TerrainType {
-  Mountains = 0,
+  Plains = 0,
   Foothills = 1,
-  Plains = 2
+  Mountains = 2
 }
 export enum DroughtLevel {
   NoDrought = 0,
