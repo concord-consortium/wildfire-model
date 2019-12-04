@@ -1,9 +1,11 @@
 import React, { useEffect } from "react";
-import { droughtIcons, droughtLabels, vegetationIcons, vegetationLabels } from "./vertical-selectors";
-import * as css from "./simulation-info.scss";
-import { Zone } from "../models/zone";
 import { observer } from "mobx-react";
 import { useStores } from "../use-stores";
+import { droughtIcons, droughtLabels, vegetationIcons, vegetationLabels } from "./vertical-selectors";
+import { Zone } from "../models/zone";
+import { WindDial } from "./wind-dial";
+
+import * as css from "./simulation-info.scss";
 
 const zoneTypeText = {
   0: "Plains",
@@ -20,7 +22,7 @@ const zoneDetails = (zones: Zone[]) => {
 
   zones.forEach((z, i) => {
     detailView.push(
-      <div className={`${css.zone} ${zoneLayout[i]} ${cssClasses[i]}`}>
+      <div className={`${css.zone} ${zoneLayout[i]} ${cssClasses[i]}`} key={i}>
         <div className={`${css.icon} ${css.vegetationIcon}`}>{vegetationIcons[z.vegetation]}</div>
         <div className={`${css.icon} ${css.droughtIcon}`}>{droughtIcons[z.droughtLevel]}</div>
         <div className={`${css.zoneText}`}>
@@ -35,10 +37,11 @@ const zoneDetails = (zones: Zone[]) => {
 
 export const SimulationInfo = observer(() => {
   const { simulation } = useStores();
-
   return (
     <div className={css.simulationInfo}>
       {zoneDetails(simulation.zones)}
+      <div className={css.windDial}>{WindDial(simulation.wind.direction)}</div>
+
     </div>
   );
 });
