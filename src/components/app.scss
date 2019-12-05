@@ -1,3 +1,5 @@
+@import "common.scss";
+
 .app {
   width: 100%;
   display: flex;
@@ -11,5 +13,27 @@
   text-align: left;
   position: absolute;
   top: 10px;
+  left: 120px;
+  color: $controlText;
+  font-family: Lato;
+  font-size: 12px;
+  font-weight: bold;
+}
+.timeDisplay{
+  width: 82px;
+  height: 20px;
+  position: fixed;
+  top: 10px;
   left: 10px;
+  background: white;
+  border-radius: 4px;
+  border: solid 1px $controlGray;
+  text-align: center;
+  color: $controlText;
+  z-index: 2;
+  font-family: Lato;
+  font-size: 12px;
+  font-weight: bold;
+  padding: 4px;
+  padding-top: 8px;
 }
