@@ -121,14 +121,10 @@ export const getGridCellNeighbors = (
 };
 
 const calculateCellNeighbors = (cells: Cell[], width: number, height: number, neighborsDist: number) => {
-  // tslint:disable-next-line:no-console
-  console.time("neighbours calc");
   const result = [];
   for (let i = 0; i < width * height; i++) {
     result.push(getGridCellNeighbors(cells, i, width, height, neighborsDist));
   }
-  // tslint:disable-next-line:no-console
-  console.timeEnd("neighbours calc");
   return result;
 };
 
@@ -162,6 +158,7 @@ export class SimulationModel {
   public config: IPresetConfig;
   public cellNeighbors: number[][];
   public prevTickTime: number | null;
+  public recalculateCellProps: boolean = true;
   @observable public dataReady = false;
   @observable public wind: IWindProps;
   @observable public sparks: Vector2[] = [];
@@ -293,6 +290,26 @@ export class SimulationModel {
     });
   }
 
+  @action.bound public calculateCellProps() {
+    if (this.recalculateCellProps) {
+      // tslint:disable-next-line:no-console
+      console.time("neighbors calc");
+      this.cellNeighbors = calculateCellNeighbors(
+        this.cells, this.gridWidth, this.gridHeight, this.config.neighborsDist
+      );
+      // tslint:disable-next-line:no-console
+      console.timeEnd("neighbors calc");
+      // tslint:disable-next-line:no-console
+      console.time("ignition time calc");
+      this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(
+        this.cells, this.cellNeighbors, this.wind, this.cellSize, this.gridWidth, this.gridHeight
+      );
+      // tslint:disable-next-line:no-console
+      console.timeEnd("ignition time calc");
+      this.recalculateCellProps = false;
+    }
+  }
+
   @action.bound public start() {
     if (!this.ready) {
       return;
@@ -301,17 +318,6 @@ export class SimulationModel {
       this.simulationStarted = true;
     }
     if (this.time === 0) {
-      // tslint:disable-next-line:no-console
-      console.time("ignition time calc");
-
-      this.cellNeighbors = calculateCellNeighbors(
-        this.cells, this.gridWidth, this.gridHeight, this.config.neighborsDist
-      );
-      this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(
-        this.cells, this.cellNeighbors, this.wind, this.cellSize, this.gridWidth, this.gridHeight
-      );
-      // tslint:disable-next-line:no-console
-      console.timeEnd("ignition time calc");
       // Use sparks to start the simulation.
       this.sparks.forEach(spark => {
         this.cellAt(spark.x, spark.y).ignitionTime = 0;
@@ -426,12 +432,8 @@ export class SimulationModel {
     this.fireLineMarkers.length = 0;
     this.updateCellsStateFlag();
     this.updateCellsElevationFlag();
-    this.cellNeighbors = calculateCellNeighbors(
-      this.cells, this.gridWidth, this.gridHeight, this.config.neighborsDist
-    );
-    this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(
-      this.cells, this.cellNeighbors, this.wind, this.cellSize, this.gridWidth, this.gridHeight
-    );
+    // Neighbours will be affected, so it's necessary to recalulate neighbours list and ignition times.
+    this.recalculateCellProps = true;
   }
 
   @action.bound public markFireLineUnderConstruction(start: ICoords, end: ICoords, value: boolean) {
@@ -496,6 +498,10 @@ export class SimulationModel {
   }
 
   @action.bound private updateFire() {
+    // Note that in most cases this function will immediately return. It's only necessary once when model starts
+    // or when fire line is added.
+    this.calculateCellProps();
+
     const numCells = this.cells.length;
     // Run through all cells. Check the unburnt neighbors of currently-burning cells. If the current time
     // is greater than the ignition time of the cell and the delta time for the neighbor, update

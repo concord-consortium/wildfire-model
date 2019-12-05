@@ -16,16 +16,22 @@ defImage.src = sparkImg;
 defImage.onload = () =>  { defTexture.needsUpdate = true; };
 const defTexture = new THREE.Texture(defImage);
 const defMaterial = new THREE.SpriteMaterial({ map: defTexture });
+defMaterial.depthTest = false;
 
 const highlightImage = document.createElement("img");
 highlightImage.src = sparkHighlightImg;
 highlightImage.onload = () =>  { highlightTexture.needsUpdate = true; };
 const highlightTexture = new THREE.Texture(highlightImage);
 const highlightMaterial = new THREE.SpriteMaterial({ map: highlightTexture });
+highlightMaterial.depthTest = false;
 
 const setupMesh = ({ scene }: IThreeContext) => {
   const sprite = new THREE.Sprite(defMaterial);
+  // Move anchor point to bottom.
+  sprite.center.y = 0;
   sprite.scale.set(SIZE, SIZE, 1);
+  // Ensure that sprite is always rendered on top of other geometry, so e.g. it doesn't disappear under a mountain.
+  sprite.renderOrder = 1;
   scene.add(sprite);
   return sprite;
 };
@@ -56,18 +62,30 @@ export const Spark = observer(({ sparkIdx, getTerrain }) => {
   });
 
   useEffect(() => {
-    if (ui.interaction === null) {
+    if (ui.interaction === null && !simulation.simulationStarted) {
       dragging.enable();
     }
     return dragging.disable;
-  }, [ui.interaction]);
+  }, [ui.interaction, simulation.simulationStarted]);
+
+  useEffect(() => {
+    const sprite = getEntity();
+    if (!sprite) {
+      return;
+    }
+    if (simulation.simulationStarted) {
+      sprite.scale.set(SIZE * 0.5, SIZE * 0.5, 1);
+    } else {
+      sprite.scale.set(SIZE, SIZE, 1);
+    }
+  }, [simulation.simulationStarted]);
 
   useEffect(() => {
     const sprite = getEntity();
     const spark = simulation.sparks[sparkIdx];
     if (simulation.dataReady && sprite && spark) {
       const ratio = ftToViewUnit(simulation);
-      const z = simulation.cellAt(spark.x, spark.y).elevation * ratio + SIZE * 0.5;
+      const z = simulation.cellAt(spark.x, spark.y).elevation * ratio;
       sprite.position.set(spark.x * ratio, spark.y * ratio, z);
     }
   }, [simulation.sparks[sparkIdx], simulation.dataReady]);

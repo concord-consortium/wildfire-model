@@ -19,6 +19,7 @@ export interface CellOptions {
 }
 
 const FIRE_LINE_DEPTH = 2000;
+const MAX_BURN_TIME = 500;
 
 export class Cell {
   public x: number;
@@ -26,7 +27,7 @@ export class Cell {
   public zone: Zone;
   public baseElevation: number = 0;
   public ignitionTime: number = Infinity;
-  public burnTime: number = Infinity;
+  public burnTime: number = MAX_BURN_TIME;
   public fireState: FireState = FireState.Unburnt;
   public isRiver: boolean = false;
   public isFireLine: boolean = false;
@@ -60,7 +61,7 @@ export class Cell {
 
   public reset() {
     this.ignitionTime = Infinity;
-    this.burnTime = Infinity;
+    this.burnTime = MAX_BURN_TIME;
     this.fireState = FireState.Unburnt;
     this.isFireLineUnderConstruction = false;
     this.isFireLine = false;

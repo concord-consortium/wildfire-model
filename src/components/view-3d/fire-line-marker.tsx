@@ -16,16 +16,22 @@ defImage.src = fireLineImg;
 defImage.onload = () =>  { defTexture.needsUpdate = true; };
 const defTexture = new THREE.Texture(defImage);
 const defMaterial = new THREE.SpriteMaterial({ map: defTexture });
+defMaterial.depthTest = false;
 
 const highlightImage = document.createElement("img");
 highlightImage.src = fireLineHighlightImg;
 highlightImage.onload = () =>  { highlightTexture.needsUpdate = true; };
 const highlightTexture = new THREE.Texture(highlightImage);
 const highlightMaterial = new THREE.SpriteMaterial({ map: highlightTexture });
+highlightMaterial.depthTest = false;
 
 const setupMesh = ({ scene }: IThreeContext) => {
   const sprite = new THREE.Sprite(defMaterial);
+  // Move anchor point to bottom.
+  sprite.center.y = 0;
   sprite.scale.set(SIZE, SIZE, 1);
+  // Ensure that sprite is always rendered on top of other geometry, so e.g. it doesn't disappear under a mountain.
+  sprite.renderOrder = 1;
   scene.add(sprite);
   return sprite;
 };
@@ -67,7 +73,7 @@ export const FireLineMarker = observer(({ fireLineMarkerIdx, getTerrain }) => {
     const fireLine = simulation.fireLineMarkers[fireLineMarkerIdx];
     if (simulation.dataReady && sprite && fireLine) {
       const ratio = ftToViewUnit(simulation);
-      const z = simulation.cellAt(fireLine.x, fireLine.y).elevation * ratio + SIZE * 0.5;
+      const z = simulation.cellAt(fireLine.x, fireLine.y).elevation * ratio;
       sprite.position.set(fireLine.x * ratio, fireLine.y * ratio, z);
     }
   }, [simulation.fireLineMarkers[fireLineMarkerIdx], simulation.dataReady]);
