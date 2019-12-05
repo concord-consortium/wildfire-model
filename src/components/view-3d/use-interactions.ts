@@ -1,4 +1,4 @@
-import { useContext, useEffect, useRef } from "react";
+import { useContext, useRef } from "react";
 import { ThreeJSContext } from "../../react-three-hook/threejs-manager";
 import * as THREE from "three";
 import { useStores } from "../../use-stores";
@@ -58,10 +58,13 @@ export const useInteractions = ({
           if (result) {
             const p = result.point;
             onMouseDown(p.x, p.y, p.z);
+            ui.dragging = true;
           }
         }
 
-        ui.dragging = true;
+        if (onDrag && getDragBaseObject && hoverDetected) {
+          ui.dragging = true;
+        }
       };
     }
     if (onMouseUp || onDrag || onMouseDown) {
