@@ -186,9 +186,8 @@ export class SimulationModel {
     this.cellSize = config.modelWidth / config.gridWidth;
     this.gridWidth = config.gridWidth;
     this.gridHeight = Math.ceil(config.modelHeight / this.cellSize);
-    this.zones = config.zones.map(options => new Zone(options!));
-    this.populateCellsData();
     this.setInputParamsFromConfig();
+    this.populateCellsData();
 
     // Make simulation available in browser console for manual tests.
     (window as any).sim = this;
@@ -200,6 +199,7 @@ export class SimulationModel {
 
   @action.bound public setInputParamsFromConfig() {
     const config = this.config;
+    this.zones = config.zones.map(options => new Zone(options!));
     this.wind = {
       speed: config.windSpeed,
       direction: config.windDirection
@@ -287,6 +287,7 @@ export class SimulationModel {
       this.updateCellsElevationFlag();
       this.updateCellsStateFlag();
       this.dataReady = true;
+      this.recalculateCellProps = true;
     });
   }
 
@@ -342,12 +343,15 @@ export class SimulationModel {
     this.fireLineMarkers.length = 0;
     this.updateCellsStateFlag();
     this.updateCellsElevationFlag();
+    // That's necessary because of the fire lines that have been removed.
+    this.recalculateCellProps = true;
   }
 
   @action.bound public reload() {
     this.restart();
     // Reset user-controlled properties too.
     this.setInputParamsFromConfig();
+    this.populateCellsData();
   }
 
   @action.bound public tick(time: number) {
@@ -419,6 +423,21 @@ export class SimulationModel {
     }
   }
 
+  @action.bound public markFireLineUnderConstruction(start: ICoords, end: ICoords, value: boolean) {
+    const startGridX = Math.floor(start.x / this.cellSize);
+    const startGridY = Math.floor(start.y / this.cellSize);
+    const endGridX = Math.floor(end.x / this.cellSize);
+    const endGridY = Math.floor(end.y / this.cellSize);
+    const points = pointsBetween(startGridX, startGridY, endGridX, endGridY);
+    points.forEach((p, idx) => {
+      if (idx % 2 === 0) {
+        // idx % 2 === 0 to make dashed line.
+        this.cells[getGridIndexForLocation(p.x, p.y, this.gridWidth)].isFireLineUnderConstruction = value;
+      }
+    });
+    this.updateCellsStateFlag();
+  }
+
   @action.bound public applyFireLineMarkers() {
     if (this.fireLineMarkers.length === 0) {
       return;
@@ -434,20 +453,6 @@ export class SimulationModel {
     this.updateCellsElevationFlag();
     // Neighbours will be affected, so it's necessary to recalulate neighbours list and ignition times.
     this.recalculateCellProps = true;
-  }
-
-  @action.bound public markFireLineUnderConstruction(start: ICoords, end: ICoords, value: boolean) {
-    const startGridX = Math.floor(start.x / this.cellSize);
-    const startGridY = Math.floor(start.y / this.cellSize);
-    const endGridX = Math.floor(end.x / this.cellSize);
-    const endGridY = Math.floor(end.y / this.cellSize);
-    const points = pointsBetween(startGridX, startGridY, endGridX, endGridY);
-    points.forEach((p, idx) => {
-      if (idx % 2 === 0) {
-        this.cells[getGridIndexForLocation(p.x, p.y, this.gridWidth)].isFireLineUnderConstruction = value;
-      }
-    });
-    this.updateCellsStateFlag();
   }
 
   @action.bound public buildFireLine(start: ICoords, end: ICoords) {
