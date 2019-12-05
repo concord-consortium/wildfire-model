@@ -1,5 +1,5 @@
 import { action, computed, observable } from "mobx";
-import { DroughtLevel, getFireSpreadRate, IWindProps, Vegetation, TerrainType } from "./fire-model";
+import { DroughtLevel, getFireSpreadRate, IWindProps, TerrainType, Vegetation } from "./fire-model";
 import { Cell, CellOptions, FireState } from "./cell";
 import { defaultConfig, urlConfig } from "../config";
 import { IPresetConfig } from "../presets";
@@ -7,8 +7,38 @@ import { getInputData } from "../utils";
 import { Vector2 } from "three";
 import { Zone } from "./zone";
 
+interface ICoords {
+  x: number;
+  y: number;
+}
+
 const getGridIndexForLocation = (x: number, y: number, width: number) => {
   return x + y * width;
+};
+
+// Bresenham's line algorithm.
+export const pointsBetween = (x0: number, y0: number, x1: number, y1: number) => {
+  const result = [];
+  const dx = Math.abs(x1 - x0);
+  const dy = Math.abs(y1 - y0);
+  const sx = (x0 < x1) ? 1 : -1;
+  const sy = (y0 < y1) ? 1 : -1;
+  let err = dx - dy;
+
+  while (true) {
+    result.push({x: x0, y: y0});
+    if ((x0 === x1) && (y0 === y1)) break;
+    const e2 = 2 * err;
+    if (e2 > -dy) {
+      err -= dy;
+      x0 += sx;
+    }
+    if (e2 < dx) {
+      err += dx;
+      y0 += sy;
+    }
+  }
+  return result;
 };
 
 // Bresenham's line algorithm is used to check if there's any river or fire line between (x0, y0) and (x1, y1).
@@ -23,7 +53,7 @@ export const riverOrFireLineBetween = (
 
   while (true) {
     const idx = getGridIndexForLocation(x0, y0, width);
-    if (cells[idx].isRiverOrFireLine) {
+    if (cells[idx].isRiver || cells[idx].isFireLine) {
       return true;
     }
     if ((x0 === x1) && (y0 === y1)) break;
@@ -77,7 +107,7 @@ export const getGridCellNeighbors = (
         !processed[nIdx] &&
         withinDist(x0, y0, x1 + diff.x, y1 + diff.y, neighborsDist)
       ) {
-        if (cells[nIdx].isRiverOrFireLine) {
+        if (cells[nIdx].isRiver || cells[nIdx].isFireLine) {
           anyRiverOrFireLine = true;
         } else if (!anyRiverOrFireLine || !riverOrFireLineBetween(cells, width, x1 + diff.x, y1 + diff.y, x0, y0)) {
           neighbours.push(nIdx);
@@ -135,6 +165,7 @@ export class SimulationModel {
   @observable public dataReady = false;
   @observable public wind: IWindProps;
   @observable public sparks: Vector2[] = [];
+  @observable public fireLineMarkers: Array<{x: number, y: number, hidden: boolean}> = [];
   @observable public cellSize: number;
   @observable public gridWidth: number;
   @observable public gridHeight: number;
@@ -248,18 +279,14 @@ export class SimulationModel {
           const cellOptions: CellOptions = {
             x, y,
             zone: this.zones[zoneIndex ? zoneIndex[index] : 0],
-            isRiverOrFireLine: river && river[index] > 0
+            isRiver: river && river[index] > 0
           };
           if (elevation) {
-            cellOptions.elevation = elevation[index];
+            cellOptions.baseElevation = elevation[index];
           }
           this.cells.push(new Cell(cellOptions));
         }
       }
-      // It's enough to calculate this just once, as grid won't change.
-      this.cellNeighbors = calculateCellNeighbors(
-        this.cells, this.gridWidth, this.gridHeight, this.config.neighborsDist
-      );
       this.updateCellsElevationFlag();
       this.updateCellsStateFlag();
       this.dataReady = true;
@@ -276,8 +303,10 @@ export class SimulationModel {
     if (this.time === 0) {
       // tslint:disable-next-line:no-console
       console.time("ignition time calc");
-      // It's enough to calculate this just once, as long as none of the land properties or wind speed can be changed.
-      // This will change in the future when user is able to set land properties or wind speed dynamically.
+
+      this.cellNeighbors = calculateCellNeighbors(
+        this.cells, this.gridWidth, this.gridHeight, this.config.neighborsDist
+      );
       this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(
         this.cells, this.cellNeighbors, this.wind, this.cellSize, this.gridWidth, this.gridHeight
       );
@@ -288,6 +317,8 @@ export class SimulationModel {
         this.cellAt(spark.x, spark.y).ignitionTime = 0;
       });
     }
+    this.applyFireLineMarkers();
+
     this.simulationRunning = true;
     this.prevTickTime = null;
     requestAnimationFrame(this.tick);
@@ -302,7 +333,9 @@ export class SimulationModel {
     this.simulationStarted = false;
     this.time = 0;
     this.cells.forEach(cell => cell.reset());
+    this.fireLineMarkers.length = 0;
     this.updateCellsStateFlag();
+    this.updateCellsElevationFlag();
   }
 
   @action.bound public reload() {
@@ -343,15 +376,87 @@ export class SimulationModel {
     this.cellsStateFlag += 1;
   }
 
+  @action.bound public addSpark(x: number, y: number) {
+    if (this.canAddSpark()) {
+      this.sparks.push(new Vector2(x, y));
+    }
+  }
+
   // Coords are in model units (feet).
   @action.bound public setSpark(idx: number, x: number, y: number) {
     this.sparks[idx] = new Vector2(x, y);
   }
 
-  @action.bound public addSpark(x: number, y: number) {
-    if (this.canAddSpark()) {
-      this.sparks.push(new Vector2(x, y));
+  @action.bound public addFireLineMarker(x: number, y: number, hidden: boolean) {
+    if (this.canAddFireLineMarker()) {
+      this.fireLineMarkers.push({ x, y, hidden });
+      const count = this.fireLineMarkers.length;
+      if (count % 2 === 0) {
+        this.markFireLineUnderConstruction(this.fireLineMarkers[count - 2], this.fireLineMarkers[count - 1], true);
+      }
     }
+  }
+
+  @action.bound public setFireLineMarker(idx: number, x: number, y: number, hidden: boolean) {
+    if (idx % 2 === 1 && idx - 1 >= 0) {
+      // Erase old line.
+      this.markFireLineUnderConstruction(this.fireLineMarkers[idx - 1], this.fireLineMarkers[idx], false);
+      // Update point.
+      this.fireLineMarkers[idx] = { x, y, hidden };
+      // Draw a new line.
+      this.markFireLineUnderConstruction(this.fireLineMarkers[idx - 1], this.fireLineMarkers[idx], true);
+    }
+    if (idx % 2 === 0 && idx + 1 < this.fireLineMarkers.length) {
+      this.markFireLineUnderConstruction(this.fireLineMarkers[idx], this.fireLineMarkers[idx + 1], false);
+      this.fireLineMarkers[idx] = { x, y, hidden };
+      this.markFireLineUnderConstruction(this.fireLineMarkers[idx], this.fireLineMarkers[idx + 1], true);
+    }
+  }
+
+  @action.bound public applyFireLineMarkers() {
+    if (this.fireLineMarkers.length === 0) {
+      return;
+    }
+    for (let i = 0; i < this.fireLineMarkers.length; i += 2) {
+      if (i + 1 < this.fireLineMarkers.length) {
+        this.markFireLineUnderConstruction(this.fireLineMarkers[i], this.fireLineMarkers[i + 1], false);
+        this.buildFireLine(this.fireLineMarkers[i], this.fireLineMarkers[i + 1]);
+      }
+    }
+    this.fireLineMarkers.length = 0;
+    this.updateCellsStateFlag();
+    this.updateCellsElevationFlag();
+    this.cellNeighbors = calculateCellNeighbors(
+      this.cells, this.gridWidth, this.gridHeight, this.config.neighborsDist
+    );
+    this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(
+      this.cells, this.cellNeighbors, this.wind, this.cellSize, this.gridWidth, this.gridHeight
+    );
+  }
+
+  @action.bound public markFireLineUnderConstruction(start: ICoords, end: ICoords, value: boolean) {
+    const startGridX = Math.floor(start.x / this.cellSize);
+    const startGridY = Math.floor(start.y / this.cellSize);
+    const endGridX = Math.floor(end.x / this.cellSize);
+    const endGridY = Math.floor(end.y / this.cellSize);
+    const points = pointsBetween(startGridX, startGridY, endGridX, endGridY);
+    points.forEach((p, idx) => {
+      if (idx % 2 === 0) {
+        this.cells[getGridIndexForLocation(p.x, p.y, this.gridWidth)].isFireLineUnderConstruction = value;
+      }
+    });
+    this.updateCellsStateFlag();
+  }
+
+  @action.bound public buildFireLine(start: ICoords, end: ICoords) {
+    const startGridX = Math.floor(start.x / this.cellSize);
+    const startGridY = Math.floor(start.y / this.cellSize);
+    const endGridX = Math.floor(end.x / this.cellSize);
+    const endGridY = Math.floor(end.y / this.cellSize);
+    const points = pointsBetween(startGridX, startGridY, endGridX, endGridY);
+    points.forEach(p => {
+      this.cells[getGridIndexForLocation(p.x, p.y, this.gridWidth)].isFireLine = true;
+    });
   }
 
   @action.bound public setWindDirection(direction: number) {
@@ -377,6 +482,11 @@ export class SimulationModel {
   public canAddSpark() {
     // There's an assumption that number of sparks should be smaller than number of zones.
     return this.sparks.length < this.config.zonesCount;
+  }
+
+  public canAddFireLineMarker() {
+    // Only one fire line can be added at given time.
+    return this.fireLineMarkers.length < 2;
   }
 
   public cellAt(x: number, y: number) {

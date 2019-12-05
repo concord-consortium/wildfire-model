@@ -8,6 +8,9 @@ interface IUseInteractionProps {
   getObject: () => THREE.Object3D | THREE.Sprite | undefined;
   getDragBaseObject?: () => THREE.Object3D | undefined;
   onClick?: (x: number, y: number, z: number) => void;
+  onMouseDown?: (x: number, y: number, z: number) => void;
+  onMouseUp?: (x: number, y: number, z: number) => void;
+  onMouseMove?: (x: number, y: number, z: number) => void;
   onDrag?: (x: number, y: number, z: number) => void;
   onMouseOver?: () => string | void; // optionally returns cursor style
   onMouseOut?: () => void;
@@ -19,7 +22,7 @@ interface IMouseHandlers {
 }
 
 export const useInteractions = ({
-  getObject, getDragBaseObject, onClick, onDrag, onMouseOver, onMouseOut, cursor
+  getObject, getDragBaseObject, onClick, onDrag, onMouseOver, onMouseOut, cursor, onMouseDown, onMouseUp, onMouseMove
 }: IUseInteractionProps) => {
   const { ui } = useStores();
   const { canvas, camera } = useContext(ThreeJSContext);
@@ -44,11 +47,52 @@ export const useInteractions = ({
         }
       };
     }
-    if (onDrag || onMouseOver || onMouseOut) {
+    if (onMouseDown || onDrag && getDragBaseObject) {
+      mouseHandlers.current.mousedown = (event: MouseEvent) => {
+        if (onMouseDown) {
+          const object = getObject();
+          if (!object) {
+            return;
+          }
+          const result = intersects({ event, camera, canvas, object });
+          if (result) {
+            const p = result.point;
+            onMouseDown(p.x, p.y, p.z);
+          }
+        }
+
+        ui.dragging = true;
+      };
+    }
+    if (onMouseUp || onDrag || onMouseDown) {
+      mouseHandlers.current.mouseup = (event: MouseEvent) => {
+        if (onMouseUp) {
+          const object = getObject();
+          if (!object) {
+            return;
+          }
+          const result = intersects({ event, camera, canvas, object });
+          if (result) {
+            const p = result.point;
+            onMouseUp(p.x, p.y, p.z);
+          }
+        }
+
+        ui.dragging = false;
+      };
+    }
+    if (onDrag || onMouseOver || onMouseOut || onMouseMove) {
       mouseHandlers.current.mousemove = (event: MouseEvent) => {
         const object = getObject();
         if (!object) {
           return;
+        }
+        if (onMouseMove) {
+          const result = intersects({ event, camera, canvas, object });
+          if (result) {
+            const p = result.point;
+            onMouseMove(p.x, p.y, p.z);
+          }
         }
         const baseMesh = getDragBaseObject && getDragBaseObject();
         if (ui.dragging && ui.hoverTarget === object && baseMesh && onDrag) {
@@ -94,18 +138,6 @@ export const useInteractions = ({
             // Update distance only.
             ui.setHoverTarget(object, p.distance);
           }
-        }
-      };
-    }
-    if (onDrag && getDragBaseObject) {
-      mouseHandlers.current.mousedown = () => {
-        if (hoverDetected) {
-          ui.dragging = true;
-        }
-      };
-      mouseHandlers.current.mouseup = () => {
-        if (ui.dragging) {
-          ui.dragging = false;
         }
       };
     }

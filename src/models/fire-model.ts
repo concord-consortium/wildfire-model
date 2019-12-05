@@ -33,7 +33,7 @@ export interface ICellProps {
   vegetation: Vegetation;
   moistureContent: number;
   elevation: number;
-  isRiverOrFireLine: boolean;
+  isRiver: boolean;
 }
 
 const FuelConstants: {[key in Vegetation]: Fuel} = {

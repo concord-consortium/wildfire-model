@@ -61,6 +61,11 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     return ui.interaction === Interaction.PlaceSpark || !simulation.canAddSpark() || simulation.simulationStarted;
   }
 
+  get fireLineBtnDisabled() {
+    const { simulation, ui } = this.stores;
+    return ui.interaction === Interaction.DrawFireLine || !simulation.canAddFireLineMarker();
+  }
+
   public componentDidMount() {
     if (screenfull && screenfull.enabled) {
       document.addEventListener(screenfull.raw.fullscreenchange, this.fullscreenChange);
@@ -128,12 +133,13 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
           <div className={`${css.widgetGroup}`}>
             <IconButton icon={<FireLineIcon />} highlightIcon={<FireLineHighlightIcon />}
-              disabled={uiDisabled} buttonText="Fire Line" dataTest="fireline-button" onClick={this.handleFireLine}
+              disabled={this.fireLineBtnDisabled} buttonText="Fire Line" dataTest="fireline-button"
+              onClick={this.handleFireLine}
             />
           </div>
           <div className={`${css.widgetGroup} ${css.helitack}`}>
             <IconButton icon={<HelitackIcon />} highlightIcon={<HelitackHighlightIcon />}
-              disabled={uiDisabled} buttonText="Helitack" dataTest="helitack-button" onClick={this.handleHelitack}
+              disabled={true} buttonText="Helitack" dataTest="helitack-button" onClick={this.handleHelitack}
             />
           </div>
         </div>
@@ -171,7 +177,10 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   }
 
   public handleFireLine = () => {
-    // TODO: handle fire line
+    const { ui, simulation } = this.stores;
+    ui.showTerrainUI = false;
+    simulation.stop();
+    ui.interaction = Interaction.DrawFireLine;
   }
 
   public handleHelitack = () => {
