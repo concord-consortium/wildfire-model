@@ -28,11 +28,9 @@ const windSpeedMarks = [
   }
 ];
 
-// Note that model is very sensitive to wind. Scale wind values down for now, so changes are less dramatic.
-const windScaleFactor = 0.2;
-
 export const WindCircularControl = observer(() => {
   const { simulation } = useStores();
+  const windScaleFactor = simulation.config.windScaleFactor;
 
   const setDirectionAngle = (circularInputVal: number) => {
     simulation.setWindDirection(circularInputVal);
