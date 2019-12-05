@@ -174,9 +174,9 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const { simulation, simulation: { config } } = this.stores;
     const labels: any[] = [];
     const labelText = {
-      0: "Mountains",
+      0: "Plains",
       1: "Foothills",
-      2: "Plains"
+      2: "Mountains"
     };
     simulation.zones.forEach((z, i) => {
       if (i < config.zonesCount) {
