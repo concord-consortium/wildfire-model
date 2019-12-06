@@ -17,45 +17,18 @@ const getGridIndexForLocation = (x: number, y: number, width: number) => {
 };
 
 // Bresenham's line algorithm.
-export const pointsBetween = (x0: number, y0: number, x1: number, y1: number) => {
-  const result = [];
-  const dx = Math.abs(x1 - x0);
-  const dy = Math.abs(y1 - y0);
-  const sx = (x0 < x1) ? 1 : -1;
-  const sy = (y0 < y1) ? 1 : -1;
-  let err = dx - dy;
-
-  while (true) {
-    result.push({x: x0, y: y0});
-    if ((x0 === x1) && (y0 === y1)) break;
-    const e2 = 2 * err;
-    if (e2 > -dy) {
-      err -= dy;
-      x0 += sx;
-    }
-    if (e2 < dx) {
-      err += dx;
-      y0 += sy;
-    }
-  }
-  return result;
-};
-
-// Bresenham's line algorithm is used to check if there's any river or fire line between (x0, y0) and (x1, y1).
-export const riverOrFireLineBetween = (
-  cells: Cell[], width: number, x0: number, y0: number, x1: number, y1: number
+export const forEachPointBetween = (
+  x0: number, y0: number, x1: number, y1: number, callback: (x: number, y: number, idx: number) => void
 ) => {
   const dx = Math.abs(x1 - x0);
   const dy = Math.abs(y1 - y0);
   const sx = (x0 < x1) ? 1 : -1;
   const sy = (y0 < y1) ? 1 : -1;
   let err = dx - dy;
-
+  let idx = 0;
   while (true) {
-    const idx = getGridIndexForLocation(x0, y0, width);
-    if (cells[idx].isRiver || cells[idx].isFireLine) {
-      return true;
-    }
+    callback(x0, y0, idx);
+    idx += 1;
     if ((x0 === x1) && (y0 === y1)) break;
     const e2 = 2 * err;
     if (e2 > -dy) {
@@ -67,7 +40,19 @@ export const riverOrFireLineBetween = (
       y0 += sy;
     }
   }
-  return false;
+};
+
+export const riverOrFireLineBetween = (
+  cells: Cell[], width: number, x0: number, y0: number, x1: number, y1: number
+) => {
+  let result = false;
+  forEachPointBetween(x0, y0, x1, y1, (x: number, y: number) => {
+    const idx = getGridIndexForLocation(x, y, width);
+    if (cells[idx].isRiver || cells[idx].isFireLine) {
+      result = true;
+    }
+  });
+  return result;
 };
 
 export const withinDist = (x0: number, y0: number, x1: number, y1: number, maxDist: number) => {
@@ -428,11 +413,10 @@ export class SimulationModel {
     const startGridY = Math.floor(start.y / this.cellSize);
     const endGridX = Math.floor(end.x / this.cellSize);
     const endGridY = Math.floor(end.y / this.cellSize);
-    const points = pointsBetween(startGridX, startGridY, endGridX, endGridY);
-    points.forEach((p, idx) => {
+    forEachPointBetween(startGridX, startGridY, endGridX, endGridY, (x: number, y: number, idx: number) => {
       if (idx % 2 === 0) {
         // idx % 2 === 0 to make dashed line.
-        this.cells[getGridIndexForLocation(p.x, p.y, this.gridWidth)].isFireLineUnderConstruction = value;
+        this.cells[getGridIndexForLocation(x, y, this.gridWidth)].isFireLineUnderConstruction = value;
       }
     });
     this.updateCellsStateFlag();
@@ -460,9 +444,8 @@ export class SimulationModel {
     const startGridY = Math.floor(start.y / this.cellSize);
     const endGridX = Math.floor(end.x / this.cellSize);
     const endGridY = Math.floor(end.y / this.cellSize);
-    const points = pointsBetween(startGridX, startGridY, endGridX, endGridY);
-    points.forEach(p => {
-      this.cells[getGridIndexForLocation(p.x, p.y, this.gridWidth)].isFireLine = true;
+    forEachPointBetween(startGridX, startGridY, endGridX, endGridY, (x: number, y: number) => {
+      this.cells[getGridIndexForLocation(x, y, this.gridWidth)].isFireLine = true;
     });
   }
 
