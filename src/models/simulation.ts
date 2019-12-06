@@ -407,7 +407,7 @@ export class SimulationModel {
     }
   }
 
-  @action.bound public setFireLineMarker(idx: number, x: number, y: number, hidden: boolean) {
+  @action.bound public setFireLineMarker(idx: number, x: number, y: number, hidden = true) {
     if (idx % 2 === 1 && idx - 1 >= 0) {
       // Erase old line.
       this.markFireLineUnderConstruction(this.fireLineMarkers[idx - 1], this.fireLineMarkers[idx], false);
