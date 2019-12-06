@@ -63,7 +63,8 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   get fireLineBtnDisabled() {
     const { simulation, ui } = this.stores;
-    return ui.interaction === Interaction.DrawFireLine || !simulation.canAddFireLineMarker();
+    return ui.interaction === Interaction.DrawFireLine || !simulation.canAddFireLineMarker() ||
+      !simulation.simulationStarted;
   }
 
   public componentDidMount() {

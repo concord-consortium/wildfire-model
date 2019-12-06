@@ -156,6 +156,7 @@ export class SimulationModel {
   @observable public cells: Cell[] = [];
   @observable public simulationStarted = false;
   @observable public simulationRunning = false;
+  @observable public lastFireLineTimestamp = -Infinity;
   // These flags can be used by view to trigger appropriate rendering. Theoretically, view could/should check
   // every single cell and re-render when it detects some changes. In practice, we perform these updates in very
   // specific moments and usually for all the cells, so this approach can be way more efficient.
@@ -447,6 +448,7 @@ export class SimulationModel {
     forEachPointBetween(startGridX, startGridY, endGridX, endGridY, (x: number, y: number) => {
       this.cells[getGridIndexForLocation(x, y, this.gridWidth)].isFireLine = true;
     });
+    this.lastFireLineTimestamp = this.time;
   }
 
   @action.bound public setWindDirection(direction: number) {
@@ -476,7 +478,7 @@ export class SimulationModel {
 
   public canAddFireLineMarker() {
     // Only one fire line can be added at given time.
-    return this.fireLineMarkers.length < 2;
+    return this.fireLineMarkers.length < 2 && this.time - this.lastFireLineTimestamp > this.config.fireLineDelay;
   }
 
   public cellAt(x: number, y: number) {
