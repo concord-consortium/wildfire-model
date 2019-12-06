@@ -7,20 +7,19 @@ import { Marker } from "./marker";
 
 export const FireLineMarkersContainer = observer(({ getTerrain }) => {
   const { simulation } = useStores();
-  const getPosition = (idx: number) => () => simulation.fireLineMarkers[idx];
-  const setPosition = (idx: number) => (x: number, y: number) => simulation.setFireLineMarker(idx, x, y);
   return <>
     {
-      simulation.fireLineMarkers.map((fl, idx) =>
-        <Marker
+      simulation.fireLineMarkers.map((fl, idx) => {
+        const setPosition = (x: number, y: number) => simulation.setFireLineMarker(idx, x, y);
+        return <Marker
           key={idx}
           markerImg={fireLineImg}
           markerHighlightImg={fireLineHighlightImg}
-          getPosition={getPosition(idx)}
-          setPosition={setPosition(idx)}
+          position={simulation.fireLineMarkers[idx]}
+          setPosition={setPosition}
           getTerrain={getTerrain}
-        />
-      )
+        />;
+      })
     }
   </>;
 });
