@@ -21,14 +21,14 @@ export const DrawFireLineInteraction: React.FC<IProps> = observer(({ getTerrain 
     onMouseDown: (x, y) => {
       mouseDown = true;
       const ratio = ftToViewUnit(simulation);
-      simulation.addFireLineMarker(x / ratio, y / ratio, false);
-      simulation.addFireLineMarker(x / ratio, y / ratio, true);
+      simulation.addFireLineMarker(x / ratio, y / ratio);
+      simulation.addFireLineMarker(x / ratio, y / ratio);
     },
     onMouseMove: (x, y) => {
       if (mouseDown) {
         const ratio = ftToViewUnit(simulation);
         const lastIdx = simulation.fireLineMarkers.length - 1;
-        simulation.setFireLineMarker(lastIdx, x / ratio, y / ratio, true);
+        simulation.setFireLineMarker(lastIdx, x / ratio, y / ratio);
       }
     },
     onMouseUp: (x, y) => {
@@ -44,7 +44,7 @@ export const DrawFireLineInteraction: React.FC<IProps> = observer(({ getTerrain 
         );
         simulation.fireLineMarkers.length = simulation.fireLineMarkers.length - 2;
       } else {
-        simulation.setFireLineMarker(lastIdx, x / ratio, y / ratio, false);
+        simulation.setFireLineMarker(lastIdx, x / ratio, y / ratio);
         ui.interaction = null;
       }
     }

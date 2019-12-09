@@ -55,6 +55,10 @@ export const riverOrFireLineBetween = (
   return result;
 };
 
+export const dist = (x0: number, y0: number, x1: number, y1: number) => {
+  return Math.sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
+};
+
 export const withinDist = (x0: number, y0: number, x1: number, y1: number, maxDist: number) => {
   return (x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1) <= maxDist * maxDist;
 };
@@ -147,7 +151,7 @@ export class SimulationModel {
   @observable public dataReady = false;
   @observable public wind: IWindProps;
   @observable public sparks: Vector2[] = [];
-  @observable public fireLineMarkers: Array<{x: number, y: number, hidden: boolean}> = [];
+  @observable public fireLineMarkers: Vector2[] = [];
   @observable public cellSize: number;
   @observable public gridWidth: number;
   @observable public gridHeight: number;
@@ -383,9 +387,9 @@ export class SimulationModel {
     this.sparks[idx] = new Vector2(x, y);
   }
 
-  @action.bound public addFireLineMarker(x: number, y: number, hidden: boolean) {
+  @action.bound public addFireLineMarker(x: number, y: number) {
     if (this.canAddFireLineMarker()) {
-      this.fireLineMarkers.push({ x, y, hidden });
+      this.fireLineMarkers.push(new Vector2(x, y));
       const count = this.fireLineMarkers.length;
       if (count % 2 === 0) {
         this.markFireLineUnderConstruction(this.fireLineMarkers[count - 2], this.fireLineMarkers[count - 1], true);
@@ -393,18 +397,20 @@ export class SimulationModel {
     }
   }
 
-  @action.bound public setFireLineMarker(idx: number, x: number, y: number, hidden = true) {
+  @action.bound public setFireLineMarker(idx: number, x: number, y: number) {
     if (idx % 2 === 1 && idx - 1 >= 0) {
       // Erase old line.
       this.markFireLineUnderConstruction(this.fireLineMarkers[idx - 1], this.fireLineMarkers[idx], false);
       // Update point.
-      this.fireLineMarkers[idx] = { x, y, hidden };
+      this.fireLineMarkers[idx] = new Vector2(x, y);
+      this.limitFireLineLength(this.fireLineMarkers[idx - 1], this.fireLineMarkers[idx]);
       // Draw a new line.
       this.markFireLineUnderConstruction(this.fireLineMarkers[idx - 1], this.fireLineMarkers[idx], true);
     }
     if (idx % 2 === 0 && idx + 1 < this.fireLineMarkers.length) {
       this.markFireLineUnderConstruction(this.fireLineMarkers[idx], this.fireLineMarkers[idx + 1], false);
-      this.fireLineMarkers[idx] = { x, y, hidden };
+      this.fireLineMarkers[idx] = new Vector2(x, y);
+      this.limitFireLineLength(this.fireLineMarkers[idx + 1], this.fireLineMarkers[idx]);
       this.markFireLineUnderConstruction(this.fireLineMarkers[idx], this.fireLineMarkers[idx + 1], true);
     }
   }
@@ -421,6 +427,15 @@ export class SimulationModel {
       }
     });
     this.updateCellsStateFlag();
+  }
+
+  // Note that this function modifies "end" point coordinates.
+  @action.bound public limitFireLineLength(start: ICoords, end: ICoords) {
+    const dRatio = dist(start.x, start.y, end.x, end.y) / this.config.maxFireLineLength;
+    if (dRatio > 1) {
+      end.x = start.x + (end.x - start.x) / dRatio;
+      end.y = start.y + (end.y - start.y) / dRatio;
+    }
   }
 
   @action.bound public applyFireLineMarkers() {

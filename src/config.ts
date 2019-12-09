@@ -30,6 +30,7 @@ export interface ISimulationConfig {
   showModelDimensions: boolean;
   // Time that needs to pass before next fire line can be added.
   fireLineDelay: number;
+  maxFireLineLength: number; // ft
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -77,7 +78,8 @@ export const defaultConfig: IUrlConfig = {
   windScaleFactor: 0.2, // Note that model is very sensitive to wind.
   // Scale wind values down for now, so changes are less dramatic.
   showModelDimensions: false,
-  fireLineDelay: 1440 // a day
+  fireLineDelay: 1440, // a day
+  maxFireLineLength: 15000 // ft
 };
 
 export const urlConfig: any = {};
