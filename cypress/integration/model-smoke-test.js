@@ -43,13 +43,13 @@ context('Model Smoke Test', () => {
     })
 
     it('runs model for set number of seconds', () => {
-        bottomBar.getSparkButton().click()
+        bottomBar.getSparkButton().click({force:true})
         cy.get('canvas').click(500,700, {force:true})
-        bottomBar.getSparkButton().click()
+        bottomBar.getSparkButton().click({force:true})
         cy.get('canvas').click(800,700, {force:true})
-        bottomBar.getStartButton().click()
+        bottomBar.getStartButton().click({force:true})
         cy.wait(10000)
-        bottomBar.getStartButton().click()
+        bottomBar.getStartButton().click({force:true})
         cy.matchImageSnapshot('test-snapshot')
     })
 })

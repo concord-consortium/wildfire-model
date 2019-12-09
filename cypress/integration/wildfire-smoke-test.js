@@ -95,31 +95,31 @@ context('WildFire Smoke Test', () => {
 
     describe("Bottom bar", () => {
         it("adds sparks to graph and runs model", () => {
-            bottomBar.getSparkButton().click()
+            bottomBar.getSparkButton().click({force:true})
             cy.get('canvas').click(500,700, {force:true})
-            bottomBar.getSparkButton().click()
+            bottomBar.getSparkButton().click({force:true})
             cy.get('canvas').click(800,700, {force:true})
         })
         it("reload model and checks default conditions", () => {
-            bottomBar.getStartButton().click()
+            bottomBar.getStartButton().click({force:true})
             cy.wait(5000)
-            bottomBar.getStartButton().click()
-            bottomBar.getReloadButton().click()
+            bottomBar.getStartButton().click({force:true})
+            bottomBar.getReloadButton().click({force:true})
         })
         it("add sparks, runs model, then restarts model", () => {
-            bottomBar.getSparkButton().click()
+            bottomBar.getSparkButton().click({force:true})
             cy.get('canvas').click(500,700, {force:true})
-            bottomBar.getSparkButton().click()
+            bottomBar.getSparkButton().click({force:true})
             cy.get('canvas').click(800,700, {force:true})
-            bottomBar.getStartButton().click()
+            bottomBar.getStartButton().click({force:true})
             cy.wait(5000)
-            bottomBar.getStartButton().click()
-            bottomBar.getRestartButton().click()
+            bottomBar.getStartButton().click({force:true})
+            bottomBar.getRestartButton().click({force:true})
         })
         it("run and pause model", () => {
-            bottomBar.getStartButton().click()
+            bottomBar.getStartButton().click({force:true})
             cy.wait(5500)
-            bottomBar.getStartButton().click()
+            bottomBar.getStartButton().click({force:true})
             // Getting inconsistent time progress, check that 
             modelInfo.getModelTimeProgress().should('not.contain', '0.0')
             bottomBar.getStartButton().should('contain', 'Start')
