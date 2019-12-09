@@ -18,5 +18,8 @@ class ModelInfo {
     checkTimeElapsedAfterStart() {
         return cy.get('.app--modelInfo--__wildfire-v1__').children().eq(2).should('not.contain', preset.initialTimeElapsed)
     }
+    getModelTimeProgress() {
+        return cy.get('.app--timeDisplay--__wildfire-v1__')
+    }
 
 } export default ModelInfo;

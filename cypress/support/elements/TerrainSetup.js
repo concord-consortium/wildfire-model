@@ -37,7 +37,7 @@ class TerrainSetup {
         return cy.get('[data-test="vegetation-slider"]')
     }
     setVegetationTypeOption(vegType) {
-        this.getVegetationSlider().contains(vegType).click()
+        this.getVegetationSlider().contains(vegType).should('be.visible').click()
     }
 
     //Drought
@@ -45,7 +45,7 @@ class TerrainSetup {
         return cy.get('[data-test="drought-slider"]')
     }
     setDroughtIndexOption(droughtIndex) {
-        this.getDroughtSlider().contains(droughtIndex).click()
+        this.getDroughtSlider().contains(droughtIndex).should('be.visible').click()
     }
 
     // Next/Prev Buttons
@@ -69,10 +69,10 @@ class TerrainSetup {
     getZoneTerrainSummary() {
         return cy.get('.terrain-summary--terrainSummary--__wildfire-v1__')
     }
-    getWindControls() {
-        return cy.get('.wind-controls--windControls--__wildfire-v1__')
+    getWindDirectionControl() {
+        return cy.get('.wind-dial--dialContainer--__wildfire-v1__')
     }
-    getWindDirectionSlider() {
+    getWindSpeedSlider() {
         return cy.get('.wind-circular-control--windSliderControls--__wildfire-v1__')
     }
 
