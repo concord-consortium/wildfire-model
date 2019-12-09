@@ -18,7 +18,7 @@ context('Model Smoke Test', () => {
         bottomBar.getTerrainSetupButton().click()
         terrain.getZone('1').click()
         // Terrain Types : Plains / Foothills / Mountains
-        terrain.getTerrainType('Plains').click()
+        // terrain.getTerrainType('Plains').click()
         // Veg Types     : Forest Small Litter / Shrub / Mountains
         terrain.setVegetationTypeOption('Shrub')
         // Drought Index : Severe / Medium / Mild / No + Drought
@@ -26,7 +26,7 @@ context('Model Smoke Test', () => {
 
         terrain.getZone('2').click()
         // Terrain Types : Plains / Foothills / Mountains
-        terrain.getTerrainType('Foothills').click()
+        // terrain.getTerrainType('Foothills').click()
         // Veg Types     : Forest Small Litter / Shrub / Mountains
         terrain.setVegetationTypeOption('Shrub')
         // Drought Index : Severe / Medium / Mild / No + Drought
@@ -38,7 +38,7 @@ context('Model Smoke Test', () => {
          * At least until we cna figure out clicking on canvas
          */
 
-        terrain.getWindDirectionSlider().contains('10').click()
+        terrain.getWindSpeedSlider().contains('10').click()
         terrain.getCreateButton().click()
     })
 
@@ -50,6 +50,6 @@ context('Model Smoke Test', () => {
         bottomBar.getStartButton().click()
         cy.wait(10000)
         bottomBar.getStartButton().click()
-        // cy.matchImageSnapshot()
+        cy.matchImageSnapshot('test-snapshot')
     })
 })
