@@ -20,6 +20,6 @@ script:
 - npm run test:coverage -- --runInBand
 - npm run start &
 - wait-on http://localhost:8080
-- $(npm bin)/cypress run --spec cypress/integration/model-smoke-test.js --config video=false
+- $(npm bin)/cypress run --spec cypress/integration/wildfire-smoke-test.js --config video=false
 after_success:
 - ./s3_deploy.sh
