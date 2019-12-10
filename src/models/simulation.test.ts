@@ -4,10 +4,10 @@ import { Cell } from "./cell";
 describe("riverOrFileLineBetween", () => {
   it("returns true if there's any river or fire line between two points", () => {
     const cells = [
-      {isRiverOrFireLine: false}, {isRiverOrFireLine: false}, {isRiverOrFireLine: false}, {isRiverOrFireLine: false},
-      {isRiverOrFireLine: false}, {isRiverOrFireLine: false}, {isRiverOrFireLine: false}, {isRiverOrFireLine: false},
-      {isRiverOrFireLine: false}, {isRiverOrFireLine: true}, {isRiverOrFireLine: true}, {isRiverOrFireLine: true},
-      {isRiverOrFireLine: false}, {isRiverOrFireLine: false}, {isRiverOrFireLine: false}, {isRiverOrFireLine: false},
+      {isRiver: false}, {isRiver: false}, {isRiver: false}, {isRiver: false},
+      {isRiver: false}, {isRiver: false}, {isRiver: false}, {isRiver: false},
+      {isRiver: false}, {isRiver: true}, {isRiver: true}, {isRiver: true},
+      {isRiver: false}, {isRiver: false}, {isRiver: false}, {isRiver: false},
     ] as Cell[];
     expect(riverOrFireLineBetween(cells, 4, 0, 0, 0, 3)).toEqual(false);
     expect(riverOrFireLineBetween(cells, 4, 0, 0, 0, 3)).toEqual(false);
@@ -36,10 +36,10 @@ describe("withinDist", () => {
 describe("getGridCellNeighbors", () => {
   it("returns array of neighbours without cells that are rivers, fire lines, or lay behind them", () => {
     const cells = [
-      {isRiverOrFireLine: false}, {isRiverOrFireLine: false}, {isRiverOrFireLine: false}, {isRiverOrFireLine: false},
-      {isRiverOrFireLine: false}, {isRiverOrFireLine: false}, {isRiverOrFireLine: false}, {isRiverOrFireLine: false},
-      {isRiverOrFireLine: false}, {isRiverOrFireLine: true}, {isRiverOrFireLine: true}, {isRiverOrFireLine: true},
-      {isRiverOrFireLine: false}, {isRiverOrFireLine: false}, {isRiverOrFireLine: false}, {isRiverOrFireLine: false},
+      {isRiver: false}, {isRiver: false}, {isRiver: false}, {isRiver: false},
+      {isRiver: false}, {isRiver: false}, {isRiver: false}, {isRiver: false},
+      {isRiver: false}, {isRiver: true}, {isRiver: true}, {isRiver: true},
+      {isRiver: false}, {isRiver: false}, {isRiver: false}, {isRiver: false},
     ] as Cell[];
     expect(getGridCellNeighbors(cells, 0, 4, 4, 1.5).sort()).toEqual([1, 4, 5]);
     expect(getGridCellNeighbors(cells, 5, 4, 4, 1.5).sort()).toEqual([0, 1, 2, 4, 6, 8]);

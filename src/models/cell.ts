@@ -10,21 +10,28 @@ export interface CellOptions {
   x: number;
   y: number;
   zone: Zone;
-  elevation?: number;
+  baseElevation?: number;
   ignitionTime?: number;
   fireState?: FireState;
-  isRiverOrFireLine?: boolean;
+  isRiver?: boolean;
+  isFireLine?: boolean;
+  isFireLineUnderConstruction?: boolean;
 }
+
+const FIRE_LINE_DEPTH = 2000;
+const MAX_BURN_TIME = 500;
 
 export class Cell {
   public x: number;
   public y: number;
   public zone: Zone;
-  public elevation: number = 0;
+  public baseElevation: number = 0;
   public ignitionTime: number = Infinity;
-  public burnTime: number = Infinity;
+  public burnTime: number = MAX_BURN_TIME;
   public fireState: FireState = FireState.Unburnt;
-  public isRiverOrFireLine: boolean = false;
+  public isRiver: boolean = false;
+  public isFireLine: boolean = false;
+  public isFireLineUnderConstruction: boolean = false;
 
   constructor(props: CellOptions) {
     Object.assign(this, props);
@@ -34,12 +41,18 @@ export class Cell {
     return this.zone.vegetation;
   }
 
+  public get elevation() {
+    if (this.isFireLine) {
+      return this.baseElevation - FIRE_LINE_DEPTH;
+    }
+    return this.baseElevation;
+  }
+
   public get moistureContent() {
-    if (!this.isRiverOrFireLine) {
-      return this.zone.moistureContent;
-    } else {
+    if (this.isRiver || this.isFireLine) {
       return Infinity;
     }
+    return this.zone.moistureContent;
   }
 
   public get droughtLevel() {
@@ -48,7 +61,9 @@ export class Cell {
 
   public reset() {
     this.ignitionTime = Infinity;
-    this.burnTime = Infinity;
+    this.burnTime = MAX_BURN_TIME;
     this.fireState = FireState.Unburnt;
+    this.isFireLineUnderConstruction = false;
+    this.isFireLine = false;
   }
 }

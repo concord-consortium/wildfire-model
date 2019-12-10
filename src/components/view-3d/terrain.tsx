@@ -11,7 +11,9 @@ import { ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
 import { SparksContainer } from "./spark";
 import { Interaction } from "../../models/ui";
 import { AddSparkInteraction } from "./add-spark-interaction";
+import { DrawFireLineInteraction } from "./draw-fire-line-interaction";
 import { DroughtLevel } from "../../models/fire-model";
+import { FireLineMarkersContainer } from "./fire-line-marker";
 
 const getTerrainColor = (droughtLevel: number) => {
   switch (droughtLevel) {
@@ -28,6 +30,7 @@ const getTerrainColor = (droughtLevel: number) => {
 const BURNING_COLOR = [1, 0, 0, 1];
 const BURNT_COLOR = [0.2, 0.2, 0.2, 1];
 const RIVER_COLOR = [0.663, 0.855, 1, 1];
+const FIRE_LINE_UNDER_CONSTRUCTION_COLOR = [0.5, 0.5, 0, 1];
 
 const vertexIdx = (cell: Cell, gridWidth: number, gridHeight: number) => (gridHeight - 1 - cell.y) * gridWidth + cell.x;
 
@@ -38,8 +41,10 @@ const setVertexColor = (colArray: number[], cell: Cell, gridWidth: number, gridH
     color = BURNING_COLOR;
   } else if (cell.fireState === FireState.Burnt) {
     color = BURNT_COLOR;
-  } else if (cell.isRiverOrFireLine) {
+  } else if (cell.isRiver) {
     color = RIVER_COLOR;
+  } else if (cell.isFireLineUnderConstruction) {
+    color = FIRE_LINE_UNDER_CONSTRUCTION_COLOR;
   } else {
     color = getTerrainColor(cell.droughtLevel);
   }
@@ -85,7 +90,6 @@ const updateColors = (plane: THREE.Mesh, simulation: SimulationModel) => {
   simulation.cells.forEach(cell => {
     setVertexColor(colArray, cell, simulation.gridWidth, simulation.gridHeight);
   });
-  geometry.computeVertexNormals();
   (geometry.attributes.color as BufferAttribute).needsUpdate = true;
 };
 
@@ -112,6 +116,8 @@ export const Terrain = observer(() => {
   // (Terrain) when some properties change.
   return <>
     <SparksContainer getTerrain={getEntity}/>
+    <FireLineMarkersContainer getTerrain={getEntity}/>
     { ui.interaction === Interaction.PlaceSpark && <AddSparkInteraction getTerrain={getEntity} /> }
+    { ui.interaction === Interaction.DrawFireLine && <DrawFireLineInteraction getTerrain={getEntity} /> }
   </>;
 });

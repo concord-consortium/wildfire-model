@@ -8,7 +8,7 @@ const sourceCell = {
   vegetation: Vegetation.Shrub,
   moistureContent: 0.1,
   elevation: 0,
-  isRiverOrFireLine: false
+  isRiver: false
 };
 
 const targetCell = {
@@ -19,7 +19,7 @@ const targetCell = {
   // Why such elevation? Note that spreadsheet uses value for slope -1deg => Math.PI / 180.
   // Ensure that we use the same slope here (so calculate elevation accordingly).
   elevation: Math.tan(Math.PI / 180) * cellSize,
-  isRiverOrFireLine: false
+  isRiver: false
 };
 
 const gridWidth = 100;

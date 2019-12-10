@@ -28,6 +28,9 @@ export interface ISimulationConfig {
   riverData: string | null;
   windScaleFactor: number;
   showModelDimensions: boolean;
+  // Time that needs to pass before next fire line can be added.
+  fireLineDelay: number;
+  maxFireLineLength: number; // ft
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -74,7 +77,9 @@ export const defaultConfig: IUrlConfig = {
   riverData: "data/river-texmap-data.png",
   windScaleFactor: 0.2, // Note that model is very sensitive to wind.
   // Scale wind values down for now, so changes are less dramatic.
-  showModelDimensions: false
+  showModelDimensions: false,
+  fireLineDelay: 1440, // a day
+  maxFireLineLength: 15000 // ft
 };
 
 export const urlConfig: any = {};

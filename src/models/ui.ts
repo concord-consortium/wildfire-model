@@ -1,8 +1,8 @@
 import { observable, action } from "mobx";
-import { urlConfigWithDefaultValues } from "../config";
 
 export enum Interaction {
   PlaceSpark = "PlaceSpark",
+  DrawFireLine = "DrawFireLine",
 }
 
 export class UIModel {
