@@ -1,0 +1,19 @@
+@import "../common.scss"
+
+.line-chart-controls
+  position: relative
+  width: 88%
+  height: 10px
+  margin-left: 8%
+  margin-right: 4%
+  margin-top: 5px
+  flex: 0 0 20px
+  transform: translate3d(0px, 0px, 0px)  // needed to keep visibility after scaling
+
+  .scrubber
+    position: absolute
+    width: 100%
+    margin-top: -5px
+
+  .rc-slider-disabled
+    background-color: $controlGrayLight1
