@@ -9,6 +9,35 @@
   height: 100%;
   flex-direction: column;
 }
+.mainContent{
+  overflow: hidden;
+  width: 100%;
+  height: calc(100% - #{$bottomBarHeight + $bottomBarBorderWidth});
+  position: fixed;
+  top: 0;
+  left: 0;
+  transition: 1s;
+  &.shrink{
+    width: calc(100% - #{$rightPanelContainerWidth});
+    left: 0;
+  }
+}
+
+.rightContent{
+  overflow-x: hidden;
+  width: $rightPanelContainerWidth + $tabWidth;
+  height: calc(100% - #{$bottomBarHeight + $bottomBarBorderWidth});
+  min-height: 551px;
+  position: fixed;
+  z-index: 1000;
+  top: 0;
+  right: 0;
+  pointer-events: none;
+  transition: 1s;
+  &.grow{
+    right: 0;
+  }
+}
 
 .modelInfo {
   text-align: left;

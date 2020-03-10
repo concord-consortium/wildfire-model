@@ -12,25 +12,25 @@
     border-top-right-radius: 0;
     border-bottom-right-radius: 0;
     position: relative;
-    border: 1px solid $controlIconLine;
-    border-right: 0;
-    margin-left: -2px;
+    border: 2px solid $controlGreenDark2;
+    background-color: $controlGreenDark2;
+
     &.active {
       width: $tabWidth + 1px; // to cover border on the right side
     }
 
     .tabImage {
       position: absolute;
-      width: 64px;
+      width: 60px;
       height: 44px;
       border-radius: 6px;
       border-top-right-radius: 0;
       border-bottom-right-radius: 0;
       top: $tabPadding;
       left: $tabPadding;
-      padding-right: 0;
       background-repeat: no-repeat;
       background-size: contain;
+      background-color: #fff;
       cursor: pointer;
       &:hover {
         opacity: 0.75;
@@ -39,7 +39,7 @@
     .tabContent {
       position: relative;
       width: 64px;
-      top: 5px;
+      top: 11px;
       left: $tabPadding;
       height: 30px;
       font-size: 14px;

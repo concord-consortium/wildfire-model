@@ -21,6 +21,7 @@ export class RightPanelTab extends BaseComponent<IProps, IState> {
     return (
       <div className={css.tab} data-test="right-panel-tab">
         <div className={css.tabBack}>
+          <div className={css.tabImage}/>
           <div className={css.tabContent}>{tabText}</div>
         </div>
       </div>

@@ -10,7 +10,8 @@ import { ChartDataModelType, ChartDataModel } from "../models/charts/chart-data"
 
 export type MapType = "graph";
 
-interface IProps extends IBaseProps { }
+interface IProps extends IBaseProps {}
+
 interface IState {
   open: boolean;
   selectedTab: MapType;
@@ -30,19 +31,17 @@ export class RightPanel extends BaseComponent<IProps, IState> {
   public render() {
     const { open, selectedTab } = this.state;
     return (
-      <div className={css.rightPanelContainer}>
-        <div className={`${css.rightPanel} ${open ? css.open : ""}`} data-test="right-panel">
-          <div className={css.rightPanelContent}>
-            <Chart title="chart" chartType="line" chartData={getMockChartData()} isPlaying={false} />
-          </div>
-          <ul className={css.rightPanelTabs}>
-            <li>
-              <div id="base" className={css.rightPanelTab} onClick={this.handleToggleDrawer}>
-                <RightPanelTab tabType="graph" active={selectedTab === "graph" || !open} />
-              </div>
-            </li>
-          </ul>
+      <div className={`${css.rightPanel} ${open ? css.open : ""}`} data-test="right-panel">
+        <div className={css.rightPanelContent}>
+          <Chart title="chart" chartType="line" chartData={getMockChartData()} isPlaying={false} />
         </div>
+        <ul className={css.rightPanelTabs}>
+          <li>
+            <div id="base" className={css.rightPanelTab} onClick={this.handleToggleDrawer}>
+              <RightPanelTab tabType="graph" active={selectedTab === "graph" || !open} />
+            </div>
+          </li>
+        </ul>
       </div>
     );
   }
@@ -50,9 +49,12 @@ export class RightPanel extends BaseComponent<IProps, IState> {
   public handleToggleDrawer = (e: React.SyntheticEvent) => {
     const { selectedTab } = this.state;
     if (e.currentTarget.id !== selectedTab) {
-      this.setState({ open: true, selectedTab: e.currentTarget.id as MapType});
+      this.setState({ open: true, selectedTab: e.currentTarget.id as MapType });
+      this.stores.ui.showChart = true;
     } else {
-      this.setState({ open: !this.state.open });
+      const isOpen = !this.state.open;
+      this.setState({ open: isOpen });
+      this.stores.ui.showChart = isOpen;
     }
   }
 }
