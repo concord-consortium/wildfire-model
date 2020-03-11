@@ -123,6 +123,7 @@ export const getDirectionFactor =
  *   https://www.fs.fed.us/rm/pubs_series/rmrs/gtr/rmrs_gtr371.pdf
  * and was made into a spreadsheet that can be seen at
  *   https://docs.google.com/spreadsheets/d/1ov3JUz6hXdnXChbXTz20Fo_9YoWmGukJgCaIMJeRUb4/
+ *   UPDATED version: https://drive.google.com/file/d/1ck0nwlawOtK-GjCV4qJ6ztMcxh3utbv-/view
  *
  * Still to do:
  *  * Calculate the slope between two cells
@@ -135,7 +136,6 @@ export const getDirectionFactor =
  * @param targetCell Adjacent grid cell that is currently UNBURNT
  * @param wind Wind properties, speed and direction
  * @param cellSize cell size in feet
- * @param moistureContent global moisture content (not currently used?)
  *
  * @return fire spread rate in ft/min
  */
