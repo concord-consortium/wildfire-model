@@ -1,4 +1,4 @@
-import { DataPoint } from "./models/charts/chart-data-set";
+import { DataPoint } from "./models/chart-data-set";
 
 /**
  * Downsample using Largest Triangle, One Bucket method.

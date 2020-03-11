@@ -1,0 +1,23 @@
+{
+  "name": "cc-charts",
+  "version": "0.0.1",
+  "description": "Concord Consortium Charts",
+  "author": "Concord Consortium",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/concord-consortium/wildfire-model/issues"
+  },
+  "homepage": "https://github.com/concord-consortium/wildfire-model#readme",
+  "devDependencies": {
+    "@types/chart.js": "^2.9.15",
+    "@types/rc-slider": "^8.6.5"
+  },
+  "dependencies": {
+    "chart.js": "^2.9.3",
+    "chartjs-plugin-annotation": "^0.5.7",
+    "chartjs-plugin-datalabels": "^0.7.0",
+    "patternomaly": "^1.3.2",
+    "rc-slider": "^9.2.2",
+    "react-chartjs-2": "^2.9.0"
+  }
+}

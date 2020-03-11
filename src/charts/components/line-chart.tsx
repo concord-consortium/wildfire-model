@@ -1,13 +1,13 @@
 import * as React from "react";
 import { Scatter, ChartData } from "react-chartjs-2";
 import { observer } from "mobx-react";
-import { ChartDataModel } from "../../models/charts/chart-data";
+import { ChartDataModel } from "../models/chart-data";
 import { ChartOptions } from "chart.js";
 // import * as ChartAnnotation from "chartjs-plugin-annotation";
-import { ChartColors } from "../../models/charts/chart-data-set";
+import { ChartColors } from "../models/chart-data-set";
 import { hexToRGBValue } from "../../utils";
 import { LineChartControls } from "./line-chart-controls";
-import { BaseComponent } from "../base";
+import { BaseComponent } from "../../components/base";
 
 interface ILineProps {
   chartData: ChartDataModel;

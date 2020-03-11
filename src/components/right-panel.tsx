@@ -2,11 +2,11 @@ import { inject, observer } from "mobx-react";
 import * as React from "react";
 import { BaseComponent, IBaseProps } from "./base";
 import { RightPanelTab } from "./right-panel-tab";
-import { Chart } from "./charts/chart";
+import { Chart } from "../charts/components/chart";
 
 import * as css from "./right-panel.scss";
-import { DataPoint, ChartDataSet } from "../models/charts/chart-data-set";
-import { ChartDataModel } from "../models/charts/chart-data";
+import { DataPoint, ChartDataSet } from "../charts/models/chart-data-set";
+import { ChartDataModel } from "../charts/models/chart-data";
 import { SimulationModel } from "../models/simulation";
 
 export type MapType = "graph";
@@ -95,7 +95,7 @@ const getMockChartData = () => {
     name: "Sample Dataset1",
     dataPoints: points,
     color: "#ff0000",
-    maxPoints: 100,
+    maxPoints: 80,
     downsample: true,
     downsampleMaxLength: 120,
     downsampleGrowWindow: 40,
@@ -111,7 +111,7 @@ const getMockChartData = () => {
     name: "Sample Dataset2",
     dataPoints: points2,
     color: "#00ff00",
-    maxPoints: 100,
+    maxPoints: 80,
     downsample: true,
     downsampleMaxLength: 120,
     downsampleGrowWindow: 40,

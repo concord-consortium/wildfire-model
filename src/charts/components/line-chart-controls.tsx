@@ -1,9 +1,9 @@
 import * as React from "react";
 import { observer } from "mobx-react";
-import { ChartDataModel} from "../../models/charts/chart-data";
-import { baseColors } from "../../models/charts/chart-data-set";
+import { ChartDataModel} from "../models/chart-data";
+import { baseColors } from "../models/chart-data-set";
 import Slider from "rc-slider";
-import { BaseComponent } from "../base";
+import { BaseComponent } from "../../components/base";
 
 import "./line-chart-controls.sass";
 import "rc-slider/assets/index.css";

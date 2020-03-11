@@ -1,9 +1,9 @@
 import * as React from "react";
 import { observer } from "mobx-react";
 import { HorizontalBar, Bar, ChartData } from "react-chartjs-2";
-import { ChartDataModel } from "../../models/charts/chart-data";
+import { ChartDataModel } from "../models/chart-data";
 import { ChartOptions, ChartType } from "chart.js";
-import { ChartColors } from "../../models/charts/chart-data-set";
+import { ChartColors } from "../models/chart-data-set";
 import { hexToRGBValue } from "../../utils";
 import { draw } from "patternomaly";
 

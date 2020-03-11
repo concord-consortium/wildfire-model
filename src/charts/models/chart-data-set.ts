@@ -1,4 +1,4 @@
-import { downsample } from "../../data";
+import { downsample } from "../data";
 import { observable } from "mobx";
 import css from "../../components/common.scss";
 

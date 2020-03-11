@@ -2,7 +2,7 @@ import * as React from "react";
 import { observer } from "mobx-react";
 import { BarChart } from "./bar-chart";
 import { LineChart } from "./line-chart";
-import { ChartDataModel } from "../../models/charts/chart-data";
+import { ChartDataModel } from "../models/chart-data";
 
 import "./chart.sass";
 
