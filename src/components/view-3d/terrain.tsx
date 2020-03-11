@@ -4,7 +4,7 @@ import { BufferAttribute, Float32BufferAttribute, PlaneBufferGeometry } from "th
 import { useThree } from "../../react-three-hook";
 import { observer } from "mobx-react";
 import { useStores } from "../../use-stores";
-import { Cell, FireState } from "../../models/cell";
+import { BurnIndex, Cell, FireState } from "../../models/cell";
 import { SimulationModel } from "../../models/simulation";
 import { IThreeContext } from "../../react-three-hook/threejs-manager";
 import { ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
@@ -14,6 +14,7 @@ import { AddSparkInteraction } from "./add-spark-interaction";
 import { DrawFireLineInteraction } from "./draw-fire-line-interaction";
 import { DroughtLevel } from "../../models/fire-model";
 import { FireLineMarkersContainer } from "./fire-line-marker";
+import { ISimulationConfig } from "../../config";
 
 const getTerrainColor = (droughtLevel: number) => {
   switch (droughtLevel) {
@@ -32,13 +33,29 @@ const BURNT_COLOR = [0.2, 0.2, 0.2, 1];
 const RIVER_COLOR = [0.663, 0.855, 1, 1];
 const FIRE_LINE_UNDER_CONSTRUCTION_COLOR = [0.5, 0.5, 0, 1];
 
+const BURN_INDEX_LOW = [1, 0.7, 0, 1];
+const BURN_INDEX_MEDIUM = [1, 0.35, 0, 1];
+const BURN_INDEX_HIGH = [1, 0, 0, 1];
+
 const vertexIdx = (cell: Cell, gridWidth: number, gridHeight: number) => (gridHeight - 1 - cell.y) * gridWidth + cell.x;
 
-const setVertexColor = (colArray: number[], cell: Cell, gridWidth: number, gridHeight: number) => {
+const burnIndexColor = (burnIndex: BurnIndex) => {
+  if (burnIndex === BurnIndex.Low) {
+    return BURN_INDEX_LOW;
+  }
+  if (burnIndex === BurnIndex.Medium) {
+    return BURN_INDEX_MEDIUM;
+  }
+  return BURN_INDEX_HIGH;
+};
+
+const setVertexColor = (
+  colArray: number[], cell: Cell, gridWidth: number, gridHeight: number, config: ISimulationConfig
+) => {
   const idx = vertexIdx(cell, gridWidth, gridHeight) * 4;
   let color;
   if (cell.fireState === FireState.Burning) {
-    color = BURNING_COLOR;
+    color = config.showBurnIndex ? burnIndexColor(cell.burnIndex) : BURNING_COLOR;
   } else if (cell.fireState === FireState.Burnt) {
     color = BURNT_COLOR;
   } else if (cell.isRiver) {
@@ -88,7 +105,7 @@ const updateColors = (plane: THREE.Mesh, simulation: SimulationModel) => {
   const geometry = plane.geometry as PlaneBufferGeometry;
   const colArray = geometry.attributes.color.array as number[];
   simulation.cells.forEach(cell => {
-    setVertexColor(colArray, cell, simulation.gridWidth, simulation.gridHeight);
+    setVertexColor(colArray, cell, simulation.gridWidth, simulation.gridHeight, simulation.config);
   });
   (geometry.attributes.color as BufferAttribute).needsUpdate = true;
 };
