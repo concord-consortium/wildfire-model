@@ -1,6 +1,7 @@
-import { downsample } from "../data";
+import { downsample } from "../downsample-data";
 import { observable } from "mobx";
 import css from "../../components/common.scss";
+import { NumberKeyframeTrack } from "three";
 
 const MAX_TOTAL_POINTS = 120;
 const GROW_WINDOW = 40;
@@ -277,10 +278,19 @@ export class ChartDataSet implements IChartDataSet {
     this.dataPoints.push({ a1, a2, label });
   }
 
-  public updateDataPoint = (pointIdx: number, newValA1: number, newValA2: number) => {
+  public updateDataPoint = (pointIdx: number, newValA1: number, newValA2: number, newLabel?: string) => {
     if (this.dataPoints[pointIdx]) {
       this.dataPoints[pointIdx].a1 = newValA1;
       this.dataPoints[pointIdx].a2 = newValA2;
+      if (newLabel) this.dataPoints[pointIdx].label = newLabel;
+    }
+  }
+  public addOrUpdateDataPoint = (newValA1: number, newValA2: number, label?: string) => {
+    const pointIdx = this.dataPoints.findIndex(p => p.a1 === newValA1);
+    if (pointIdx > -1 && this.dataPoints[pointIdx]) {
+      this.updateDataPoint(pointIdx, newValA1, newValA2, label);
+    } else {
+      this.addDataPoint(newValA1, newValA2, label ? label : "");
     }
   }
 
