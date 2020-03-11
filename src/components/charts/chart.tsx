@@ -2,7 +2,7 @@ import * as React from "react";
 import { observer } from "mobx-react";
 import { BarChart } from "./bar-chart";
 import { LineChart } from "./line-chart";
-import { ChartDataModelType } from "../../models/charts/chart-data";
+import { ChartDataModel } from "../../models/charts/chart-data";
 
 import "./chart.sass";
 
@@ -10,7 +10,7 @@ export type ChartType = "line" | "bar" | "horizontalBar";
 
 interface IChartProps {
   title: string;
-  chartData: ChartDataModelType;
+  chartData: ChartDataModel;
   chartType: ChartType;
   width?: number;
   height?: number;

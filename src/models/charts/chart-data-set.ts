@@ -1,5 +1,5 @@
-import { types, Instance } from "mobx-state-tree";
 import { downsample } from "../../data";
+import { observable } from "mobx";
 import css from "../../components/common.scss";
 
 const MAX_TOTAL_POINTS = 120;
@@ -72,223 +72,234 @@ const timeSeriesSort = (a: XYPoint, b: XYPoint) => {
 const defaultMax = 100;
 const defaultMin = 0;
 
-export const DataPoint = types
-  .model("DataPoint", {
-    label: types.string,
-    a1: types.number,
-    a2: types.number
-  });
-export type DataPointType = typeof DataPoint.Type;
+export interface IDataPoint{
+  label: string;
+  a1: number;
+  a2: number;
+}
+export class DataPoint implements IDataPoint{
+  public label: string;
+  public a1: number;
+  public a2: number;
 
-export const GraphPatternTypeEnum = types.enumeration("type", ["diagonal", "diagonal-right-left"]);
-export type GraphPatternType = typeof GraphPatternTypeEnum.Type;
+  constructor(props: IDataPoint) {
+    Object.assign(this, props);
+  }
+}
+export interface IChartDataSet{
+  name: string;
+  dataPoints: IDataPoint[];
 
-export const ChartDataSetModel = types
-  .model("ChartDataSet", {
-    name: types.string,
-    dataPoints: types.array(DataPoint),
-    // A single color will apply to a whole dataset (a line on a line graph, or all bars on a bar chart)
-    color: types.maybe(types.string),
-    // An array will vary each point's color
-    // useful for bar charts with different color bars or scatter plots with each point a different color
-    pointColors: types.maybe(types.array(types.string)),
-    // For bars, can vary opacity of the bar by dataset to show a second dataset with less opacity
-    backgroundOpacity: types.maybe(types.number),
-    graphPattern: types.maybe(GraphPatternTypeEnum),
-    // If maxPoints is 0 we will always work with the entire data set
-    maxPoints: types.optional(types.number, -1),
-    fixedMinA1: types.maybe(types.number),
-    fixedMaxA1: types.maybe(types.number),
-    fixedMinA2: types.maybe(types.number),
-    fixedMaxA2: types.maybe(types.number),
-    // if x data points are not sequential 1,2,3..., and we are setting maxPoints, we need to have an
-    // initial maximum which is not simply the value of maxPoints, which is otherwise the default.
-    initialMaxA1: types.maybe(types.number),
-    // expandOnly is used for y-axis scaling. When requesting min/max point values,
-    // if this is set the a2 / y axis max returns the max of the full data set, not just the visiblePoints
-    expandOnly: false,
-    fixedLabelRotation: types.maybe(types.number),
-    dataStartIdx: types.maybe(types.number),
-    stack: types.maybe(types.string),
-    axisLabelA1: types.maybe(types.string),
-    axisLabelA2: types.maybe(types.string),
-    // Sets whether we start downsampling the data after a certain number of points, for performant live data
-    downsample: true,
-    // The maximum points the visible data will ever contain, if we downsample
-    downsampleMaxLength: 120,
-    // For live data, we may not want to downsample the data every step, or we'll see the past data points constantly
-    // changing. Rather, we downsample all the data up to a certain point, then add growWindow more points as-is,
-    // and then resample the entire set and start again.
-    // In order to always downsample the entire dataset (e.g. for static data), set downsampleGrowWindow: 1.
-    downsampleGrowWindow: 40,
-    display: true
-  })
-  .views(self => ({
-    get visibleDataPoints() {
-      let points: DataPointType[];
-      if (self.maxPoints && self.maxPoints > 0 && self.dataPoints.length >= self.maxPoints) {
-        if (self.dataStartIdx !== undefined && self.dataStartIdx > -1) {
-          points = self.dataPoints.slice(self.dataStartIdx, self.dataStartIdx + self.maxPoints);
-        } else {
-          // just get the tail of most recent data
-          points = self.dataPoints.slice(-self.maxPoints);
-        }
+  // optional properties
+  color?: string;
+  pointColors?: string[];
+  backgroundOpacity?: number;
+  graphPattern?: GraphPatternType;
+  maxPoints?: number;
+  fixedMinA1?: number;
+  fixedMaxA1?: number;
+  fixedMinA2?: number;
+  fixedMaxA2?: number;
+  initialMaxA1?: number;
+  fixedLabelRotation?: number;
+  dataStartIdx?: number;
+  stack?: string;
+  axisLabelA1?: string;
+  axisLabelA2?: string;
+  expandOnly?: false;
+  display: boolean;
+  downsample?: boolean;
+  downsampleMaxLength?: number;
+  downsampleGrowWindow?: number;
+}
+
+export type GraphPatternType = "diagonal" | "diagonal-right-left";
+
+export class ChartDataSet implements IChartDataSet {
+  @observable public name: string;
+  @observable public dataPoints: IDataPoint[];
+
+  // optional properties
+  @observable public color?: string;
+  @observable public pointColors?: string[];
+  @observable public backgroundOpacity?: number;
+  @observable public graphPattern?: GraphPatternType;
+  @observable public maxPoints: number = -1;
+  @observable public fixedMinA1?: number;
+  @observable public fixedMaxA1?: number;
+  @observable public fixedMinA2?: number;
+  @observable public fixedMaxA2?: number;
+  @observable public initialMaxA1?: number;
+  @observable public fixedLabelRotation?: number;
+  @observable public dataStartIdx?: number;
+  @observable public stack?: string;
+  @observable public axisLabelA1?: string = "";
+  @observable public axisLabelA2?: string = "";
+  @observable public expandOnly?: false;
+  @observable public display: boolean = true;
+  @observable public downsample?: boolean;
+  @observable public downsampleMaxLength?: number;
+  @observable public downsampleGrowWindow?: number;
+
+  constructor(props: IChartDataSet) {
+    Object.assign(this, props);
+  }
+
+  public get visibleDataPoints(): IDataPoint[]{
+    let points: IDataPoint[];
+    if (this.maxPoints && this.maxPoints > 0 &&
+      this.dataPoints.length >= this.maxPoints) {
+      if (this.dataStartIdx !== undefined && this.dataStartIdx > -1) {
+        points = this.dataPoints.slice(this.dataStartIdx, this.dataStartIdx + this.maxPoints);
       } else {
-        // If we don't set a max, don't use filtering
-        points = self.dataPoints;
+        // just get the tail of most recent data
+        points = this.dataPoints.slice(-this.maxPoints);
       }
-
-      // Downsample current data, using a method that tries to keep features intact.
-      // We could just always downsample to MAX_TOTAL_POINTS, but that results in the points changing every
-      // tick, which is visually annoying, so instead we downsample up to MAX_TOTAL_POINTS - GROW_WINDOW, and
-      // then add on the remainder as-is, and then downsample again when we grow past our window
-      const {downsampleMaxLength: max, downsampleGrowWindow: growWindow} = self;
-      if (self.downsample && points.length > (max - growWindow)) {
-        const tailLength = points.length % growWindow;
-        const dataToSample = self.dataPoints.slice(0, points.length - tailLength);
-        const sampledData = downsample(dataToSample, (max - growWindow));
-        points = tailLength ? sampledData.concat(points.slice(-tailLength)) : sampledData;
-      }
-      return points;
+    } else {
+      // If we don't set a max, don't use filtering
+      points = this.dataPoints;
     }
-  }))
-  .views(self => ({
-    // labels for a data point - essential for a bar graph, optional for a line
-    get dataLabels() {
-      return self.visibleDataPoints.map(p => p.label);
-    },
-    // Axis 1 data, for a line will be point x value, for bar will be quantity
-    get dataA1() {
-      return self.visibleDataPoints.map(p => p.a1);
-    },
-    // Axis 2 data for a line will be y value, for a bar will be label
-    get dataA2() {
-      if (self.visibleDataPoints.length > 0 && self.visibleDataPoints[0].a2) {
-        return self.visibleDataPoints.map(p => p.a2);
+
+    // Downsample current data, using a method that tries to keep features intact.
+    // We could just always downsample to MAX_TOTAL_POINTS, but that results in the points changing every
+    // tick, which is visually annoying, so instead we downsample up to MAX_TOTAL_POINTS - GROW_WINDOW, and
+    // then add on the remainder as-is, and then downsample again when we grow past our window
+    const { downsampleMaxLength: max, downsampleGrowWindow: growWindow } = this;
+    if (this.downsample && points.length > (max! - growWindow!)) {
+      const tailLength = points.length % growWindow!;
+      const dataToSample = this.dataPoints.slice(0, points.length - tailLength);
+      const sampledData = downsample(dataToSample, (max! - growWindow!));
+      points = tailLength ? sampledData.concat(points.slice(-tailLength)) : sampledData;
+    }
+    return points;
+  }
+
+  public get dataLabels() {
+    return this.visibleDataPoints.map(p => p.label);
+  }
+
+  // Axis 1 data, for a line will be point x value, for bar will be quantity
+  public get dataA1() {
+    return this.visibleDataPoints.map(p => p.a1);
+  }
+  // Axis 2 data for a line will be y value, for a bar will be label
+  public get dataA2() {
+    const visiblePoints = this.visibleDataPoints;
+    if (visiblePoints.length > 0 && visiblePoints[0].a2) {
+      return visiblePoints.map(p => p.a2);
+    } else {
+      return visiblePoints.map(p => p.label);
+    }
+    return visiblePoints.map(p => p.a2);
+  }
+
+  // Determine minimum and maximum values on each axis
+  public get maxA1(): number | undefined {
+    const visiblePoints: IDataPoint[] = this.visibleDataPoints;
+    if (this.fixedMaxA1 !== undefined && this.dataPoints.length <= this.fixedMaxA1) {
+      return this.fixedMaxA1;
+    } else if (!visiblePoints || visiblePoints.length === 0) {
+      if (this.initialMaxA1){
+        return this.initialMaxA1;
+      } else if (this.maxPoints) {
+        return this.maxPoints;
       } else {
-        return self.visibleDataPoints.map(p => p.label);
-      }
-    },
-    // Determine minimum and maximum values on each axis
-    get maxA1(): number | undefined {
-      if (self.fixedMaxA1 !== undefined && self.dataPoints.length <= self.fixedMaxA1) {
-        return self.fixedMaxA1;
-      } else if (!self.visibleDataPoints || self.visibleDataPoints.length === 0) {
-        if (self.initialMaxA1){
-          return self.initialMaxA1;
-        } else if (self.maxPoints) {
-          return self.maxPoints;
-        } else {
-          return defaultMax;
-        }
-      } else if (self.visibleDataPoints && self.visibleDataPoints.length > 0 &&
-        self.maxPoints && self.visibleDataPoints.length < self.maxPoints) {
-          if (self.initialMaxA1){
-            return self.initialMaxA1;
-          } else {
-            return self.maxPoints;
-          }
-      } else {
-        return Math.max(...self.visibleDataPoints.map(p => p.a1));
-      }
-    },
-    get maxA2(): number | undefined {
-      if (self.fixedMaxA2 !== undefined && !self.expandOnly) {
-        return self.fixedMaxA2;
-      } else if (!self.visibleDataPoints || self.visibleDataPoints.length === 0) {
         return defaultMax;
-      } else if (self.expandOnly) {
-        // always return max from all points so y axis only scales up, never down
-        if (self.fixedMaxA2) {
-          // use fixedMax as a minimum value for max
-          const dataMax = Math.max(...self.dataPoints.map(p => p.a2));
-          return self.fixedMaxA2 > dataMax ? self.fixedMaxA2 : dataMax;
+      }
+    } else if (visiblePoints && visiblePoints.length > 0 &&
+      this.maxPoints && visiblePoints.length < this.maxPoints) {
+        if (this.initialMaxA1){
+          return this.initialMaxA1;
         } else {
-          return Math.max(...self.dataPoints.map(p => p.a2));
+          return this.maxPoints;
         }
-      } else {
-        // only return max of visible subset of data
-        return Math.max(...self.visibleDataPoints.map(p => p.a2));
-      }
-    },
-    get minA1(): number | undefined {
-      if (self.fixedMinA1 !== undefined) {
-        return self.fixedMinA1;
-      } else if (!self.visibleDataPoints || self.visibleDataPoints.length === 0) {
-        return defaultMin;
-      } else {
-        return Math.min(...self.visibleDataPoints.map(p => p.a1));
-      }
-    },
-    get minA2(): number | undefined {
-      if (self.fixedMinA2 !== undefined) {
-        return self.fixedMinA2;
-      } else if (!self.visibleDataPoints || self.visibleDataPoints.length === 0) {
-        return defaultMin;
-      } else {
-        return Math.min(...self.visibleDataPoints.map(p => p.a2));
-      }
-    },
-    // Lines and scatter plots require X and Y coordinates
-    get dataAsXY() {
-      return self.visibleDataPoints.map(d => ({x: d.a1, y: d.a2}));
-    },
-    // Sort lines in increasing order of X for time-based plots
-    get timeSeriesXY() {
-      const xyData = self.visibleDataPoints.map(d => ({ x: d.a1, y: d.a2 }));
-      xyData.sort(timeSeriesSort);
-      return xyData;
+    } else {
+      return Math.max(...visiblePoints.map(p => p.a1));
     }
-  }))
-  .extend(self => {
-    // actions
-    // fetching a subset of points is designed for scrubbing back and forth along a large set of data
-    // starting from a specified index. Set to -1 to remove the filter.
-    const subsetPoints = (idx: number) => {
-      self.dataStartIdx = idx;
-    };
+  }
 
-    const addDataPoint = (a1: number, a2: number, label: string) => {
-      self.dataPoints.push({ a1, a2, label });
-    };
-
-    const updateDataPoint = (pointIdx: number, newValA1: number, newValA2: number) => {
-      if (self.dataPoints[pointIdx]) {
-        self.dataPoints[pointIdx].a1 = newValA1;
-        self.dataPoints[pointIdx].a2 = newValA2;
+  public get maxA2(): number | undefined {
+    if (this.fixedMaxA2 !== undefined && !this.expandOnly) {
+      return this.fixedMaxA2;
+    } else if (!this.visibleDataPoints || this.visibleDataPoints.length === 0) {
+      return defaultMax;
+    } else if (this.expandOnly) {
+      // always return max from all points so y axis only scales up, never down
+      if (this.fixedMaxA2) {
+        // use fixedMax as a minimum value for max
+        const dataMax = Math.max(...this.dataPoints.map(p => p.a2));
+        return this.fixedMaxA2 > dataMax ? this.fixedMaxA2 : dataMax;
+      } else {
+        return Math.max(...this.dataPoints.map(p => p.a2));
       }
-    };
+    } else {
+      // only return max of visible subset of data
+      return Math.max(...this.visibleDataPoints.map(p => p.a2));
+    }
+  }
+  public get minA1(): number | undefined {
+    if (this.fixedMinA1 !== undefined) {
+      return this.fixedMinA1;
+    } else if (!this.visibleDataPoints || this.visibleDataPoints.length === 0) {
+      return defaultMin;
+    } else {
+      return Math.min(...this.visibleDataPoints.map(p => p.a1));
+    }
+  }
+  public get minA2(): number | undefined {
+    if (this.fixedMinA2 !== undefined) {
+      return this.fixedMinA2;
+    } else if (!this.visibleDataPoints || this.visibleDataPoints.length === 0) {
+      return defaultMin;
+    } else {
+      return Math.min(...this.visibleDataPoints.map(p => p.a2));
+    }
+  }
+  // Lines and scatter plots require X and Y coordinates
+  public get dataAsXY() {
+    return this.visibleDataPoints.map(d => ({x: d.a1, y: d.a2}));
+  }
+  // Sort lines in increasing order of X for time-based plots
+  public get timeSeriesXY() {
+    const xyData = this.visibleDataPoints.map(d => ({ x: d.a1, y: d.a2 }));
+    xyData.sort(timeSeriesSort);
+    return xyData;
+  }
 
-    const deleteDataPoint = (pointIdx: number) => {
-      if (self.dataPoints.length > pointIdx) {
-        self.dataPoints.splice(pointIdx, 1);
-      }
-    };
+  // actions
+  // fetching a subset of points is designed for scrubbing back and forth along a large set of data
+  // starting from a specified index. Set to -1 to remove the filter.
+  public subsetPoints = (idx: number) => {
+    this.dataStartIdx = idx;
+  }
 
-    const changeColor = (newColor: string) => {
-      self.color = newColor;
-    };
+  public addDataPoint = (a1: number, a2: number, label: string) => {
+    this.dataPoints.push({ a1, a2, label });
+  }
 
-    const clearDataPoints = () => {
-      self.dataPoints.splice(0, self.dataPoints.length);
-    };
+  public updateDataPoint = (pointIdx: number, newValA1: number, newValA2: number) => {
+    if (this.dataPoints[pointIdx]) {
+      this.dataPoints[pointIdx].a1 = newValA1;
+      this.dataPoints[pointIdx].a2 = newValA2;
+    }
+  }
 
-    // used to filter data to a fixed number of points, or returns all points if set to -1
-    const setMaxDataPoints = (maxPoints: number) => {
-      self.maxPoints = maxPoints;
-    };
+  public deleteDataPoint = (pointIdx: number) => {
+    if (this.dataPoints.length > pointIdx) {
+      this.dataPoints.splice(pointIdx, 1);
+    }
+  }
 
-    return {
-      actions: {
-        addDataPoint,
-        updateDataPoint,
-        deleteDataPoint,
-        changeColor,
-        clearDataPoints,
-        subsetPoints,
-        setMaxDataPoints
-      }
-    };
-  });
+  public changeColor = (newColor: string) => {
+    this.color = newColor;
+  }
 
-export type ChartDataSetModelType = Instance<typeof ChartDataSetModel>;
+  public clearDataPoints = () => {
+    this.dataPoints.splice(0, this.dataPoints.length);
+  }
+
+  // used to filter data to a fixed number of points, or returns all points if set to -1
+  public setMaxDataPoints = (maxPoints: number) => {
+    this.maxPoints = maxPoints;
+  }
+}

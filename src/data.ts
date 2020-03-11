@@ -1,10 +1,10 @@
-import { DataPointType } from "../models/spaces/charts/chart-data-set";
+import { DataPoint } from "./models/charts/chart-data-set";
 
 /**
  * Downsample using Largest Triangle, One Bucket method.
  * See https://blog.scottlogic.com/2015/11/16/sampling-large-data-in-d3fc.html
  */
-export const downsample = (points: DataPointType[], maxSize: number) => {
+export const downsample = (points: DataPoint[], maxSize: number) => {
   const length = points.length;
   if (maxSize >= length) return points;
   if (maxSize < 1 || length < 1) return [];
@@ -39,7 +39,7 @@ export const downsample = (points: DataPointType[], maxSize: number) => {
   return sampledData;
 };
 
-const calculateTriangleArea = (a: DataPointType, b: DataPointType, c: DataPointType) => {
+const calculateTriangleArea = (a: DataPoint, b: DataPoint, c: DataPoint) => {
   return Math.abs((a.a1 - c.a1) * (b.a2 - a.a2) - (a.a1 - b.a1) * (c.a2 - a.a2)) / 2;
 };
 

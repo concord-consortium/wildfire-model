@@ -1,4 +1,5 @@
-import { types, Instance } from "mobx-state-tree";
+import { observable } from "mobx";
+import { ChartData } from "chart.js";
 
 /**
  * This model tries to reduce the number of options that need to be specified when defining an
@@ -9,126 +10,139 @@ import { types, Instance } from "mobx-state-tree";
  *
  * See https://github.com/chartjs/chartjs-plugin-annotation
  */
+export interface IChartAnnotation{
+  type: string;
+  // x value for vertical line, y value for horizontal
+  value?: number;
+  // line styling
+  color?: string;
+  thickness?: number;
+  dashArray: number[];
+  // text label. Note: only available for line annotations.
+  label: string;
+  labelColor: string;
+  labelBackgroundColor: string;
+  labelXOffset?: number;
+  labelYOffset?: number;
+  // if present, will add mouse rollover and click handlers
+  expandLabel?: string;
+  // additional offset for rollovers of different lenghts
+  expandOffset?: number;
+  // bounds for box labels. Infinity is permitted
+  xMin?: number;
+  xMax?: number;
+  yMax?: number;
+  yMin?: number;
+  chartInstance: ChartData;
+}
+export class ChartAnnotation implements IChartAnnotation {
+  @observable public type: string;
+  @observable public value?: number;
+  @observable public color?: string = "red";
+  @observable public thickness?: number = 2;
+  @observable public dashArray: number[];
+  @observable public label: string;
+  @observable public labelColor: string = "white";
+  @observable public labelBackgroundColor: string = "rgba(0,0,0,0.8)";
+  @observable public labelXOffset: number = 0;
+  @observable public labelYOffset: number = 0;
+  @observable public expandLabel?: string;
+  @observable public expandOffset?: number = 0;
+  @observable public xMin?: number;
+  @observable public xMax?: number;
+  @observable public yMax?: number;
+  @observable public yMin?: number;
+  @observable public showingExpandLabel: boolean;
+  @observable public chartInstance: ChartData;
 
-export const ChartAnnotationModel = types
-  .model("ChartAnnotation", {
-    // "horizontalLine", "verticalLine", "box"
-    type: types.string,
-    // x value for vertical line, y value for horizontal
-    value: types.maybe(types.number),
-    // line styling
-    color: types.optional(types.string, "red"),
-    thickness: types.optional(types.number, 2),
-    dashArray: types.array(types.number),
-    // text label. Note: only available for line annotations.
-    label: types.maybe(types.string),
-    labelColor: types.optional(types.string, "white"),
-    labelBackgroundColor: types.optional(types.string, "rgba(0,0,0,0.8)"),
-    labelXOffset: types.optional(types.number, 0),
-    labelYOffset: types.optional(types.number, 0),
-    // if present, will add mouse rollover and click handlers
-    expandLabel: types.maybe(types.string),
-    // additional offset for rollovers of different lenghts
-    expandOffset: types.optional(types.number, 0),
-    // bounds for box labels. Infinity is permitted
-    xMin: types.maybe(types.number),
-    xMax: types.maybe(types.number),
-    yMax: types.maybe(types.number),
-    yMin: types.maybe(types.number)
-  })
-  .volatile(self => ({
-    showingExpandLabel: false
-  }))
-  .actions(self => ({
-    setShowingExpandLabel: (val: boolean) => {
-      self.showingExpandLabel = val;
-    }
-  }))
-  .views(self => ({
-    get formatted() {
-      let formatted: any = {
-        borderColor: self.color,
-        borderWidth: self.thickness
+  constructor(props: IChartAnnotation) {
+    Object.assign(this, props);
+  }
+
+  public setShowingExpandLabel(val: boolean) {
+    this.showingExpandLabel = val;
+  }
+
+  public get formatted() {
+    let formatted: any = {
+      borderColor: this.color,
+      borderWidth: this.thickness
+    };
+
+    if (this.type === "horizontalLine") {
+      formatted = {
+        type: "line",
+        mode: "horizontal",
+        scaleID: "y-axis-0",
+        value: this.value,
+        label: {
+          position: "right"
+        },
+        ...formatted
       };
-
-      if (self.type === "horizontalLine") {
-        formatted = {
-          type: "line",
-          mode: "horizontal",
-          scaleID: "y-axis-0",
-          value: self.value,
-          label: {
-            position: "right"
-          },
-          ...formatted
-        };
-      } else if (self.type === "verticalLine") {
-        formatted = {
-          type: "line",
-          mode: "vertical",
-          scaleID: "x-axis-0",
-          value: self.value,
-          label: {
-            position: "bottom"
-          },
-          ...formatted
-        };
-      } else if (self.type === "box") {
-        const { xMin, xMax, yMin, yMax } = self;
-        formatted = {
-          type: "box",
-          drawTime: "beforeDatasetsDraw",
-          xScaleID: "x-axis-0",
-          yScaleID: "y-axis-0",
-          backgroundColor: self.color,
-          xMin, xMax, yMin, yMax,
-          ...formatted
-        };
-      }
-
-      if (self.label) {
-        const content = self.showingExpandLabel ? self.expandLabel : self.label;
-        const xAdjust = self.showingExpandLabel ? self.expandOffset : self.labelXOffset;
-
-        formatted.label = {
-          ...formatted.label,
-          enabled: true,
-          content,
-          xAdjust,
-          yAdjust: 305 - self.labelYOffset,
-          fontColor: self.labelColor,
-          backgroundColor: self.labelBackgroundColor
-        };
-      }
-
-      if (self.dashArray.length) {
-        formatted.borderDash = self.dashArray;
-      }
-
-      if (self.expandLabel) {
-        const expand = (val: boolean) => () => {
-          self.setShowingExpandLabel(val);
-          this.chartInstance.update();
-        };
-        formatted.onMouseenter = () => self.setShowingExpandLabel(true);
-        formatted.onMouseleave = () => self.setShowingExpandLabel(false);
-        formatted.onClick = () => self.setShowingExpandLabel(!self.showingExpandLabel);
-      }
-
-      return formatted;
+    } else if (this.type === "verticalLine") {
+      formatted = {
+        type: "line",
+        mode: "vertical",
+        scaleID: "x-axis-0",
+        value: this.value,
+        label: {
+          position: "bottom"
+        },
+        ...formatted
+      };
+    } else if (this.type === "box") {
+      const { xMin, xMax, yMin, yMax } = this;
+      formatted = {
+        type: "box",
+        drawTime: "beforeDatasetsDraw",
+        xScaleID: "x-axis-0",
+        yScaleID: "y-axis-0",
+        backgroundColor: this.color,
+        xMin, xMax, yMin, yMax,
+        ...formatted
+      };
     }
-  }))
-  .actions(self => ({
-    setValue: (value: number) => {
-      self.value = value;
-    },
 
-    setBounds: (bounds: {xMin?: number, xMax?: number, yMin?: number, yMax?: number}) => {
-      if (bounds.xMin) self.xMin = bounds.xMin;
-      if (bounds.xMax) self.xMax = bounds.xMax;
-      if (bounds.yMin) self.yMin = bounds.yMin;
-      if (bounds.yMax) self.yMax = bounds.yMax;
+    if (this.label) {
+      const content = this.showingExpandLabel ? this.expandLabel : this.label;
+      const xAdjust = this.showingExpandLabel ? this.expandOffset : this.labelXOffset;
+
+      formatted.label = {
+        ...formatted.label,
+        enabled: true,
+        content,
+        xAdjust,
+        yAdjust: 305 - this.labelYOffset,
+        fontColor: this.labelColor,
+        backgroundColor: this.labelBackgroundColor
+      };
     }
-  }));
 
-export type ChartAnnotationType = Instance<typeof ChartAnnotationModel>;
+    if (this.dashArray.length) {
+      formatted.borderDash = this.dashArray;
+    }
+
+    if (this.expandLabel) {
+      const expand = (val: boolean) => () => {
+        this.setShowingExpandLabel(val);
+        // this.chartInstance.update();
+      };
+      formatted.onMouseenter = () => this.setShowingExpandLabel(true);
+      formatted.onMouseleave = () => this.setShowingExpandLabel(false);
+      formatted.onClick = () => this.setShowingExpandLabel(!this.showingExpandLabel);
+    }
+    return formatted;
+  }
+
+  public setValue(value: number) {
+    this.value = value;
+  }
+
+  public setBounds(bounds: { xMin?: number, xMax?: number, yMin?: number, yMax?: number }) {
+    if (bounds.xMin) this.xMin = bounds.xMin;
+    if (bounds.xMax) this.xMax = bounds.xMax;
+    if (bounds.yMin) this.yMin = bounds.yMin;
+    if (bounds.yMax) this.yMax = bounds.yMax;
+  }
+}

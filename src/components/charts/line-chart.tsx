@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Scatter, ChartData } from "react-chartjs-2";
 import { observer } from "mobx-react";
-import { ChartDataModelType } from "../../models/charts/chart-data";
+import { ChartDataModel } from "../../models/charts/chart-data";
 import { ChartOptions } from "chart.js";
 // import * as ChartAnnotation from "chartjs-plugin-annotation";
 import { ChartColors } from "../../models/charts/chart-data-set";
@@ -10,7 +10,7 @@ import { LineChartControls } from "./line-chart-controls";
 import { BaseComponent } from "../base";
 
 interface ILineProps {
-  chartData: ChartDataModelType;
+  chartData: ChartDataModel;
   width?: number;
   height?: number;
   isPlaying: boolean;
@@ -86,7 +86,7 @@ const lineDatasetDefaults: ChartData<any> = {
   showLine: true
 };
 
-const lineData = (chartData: ChartDataModelType) => {
+const lineData = (chartData: ChartDataModel) => {
   const lineDatasets = [];
   for (const d of chartData.visibleDataSets) {
     const dset = Object.assign({}, lineDatasetDefaults, {

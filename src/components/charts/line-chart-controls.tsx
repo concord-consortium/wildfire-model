@@ -1,6 +1,6 @@
 import * as React from "react";
 import { observer } from "mobx-react";
-import { ChartDataModelType } from "../../models/charts/chart-data";
+import { ChartDataModel} from "../../models/charts/chart-data";
 import { baseColors } from "../../models/charts/chart-data-set";
 import Slider from "rc-slider";
 import { BaseComponent } from "../base";
@@ -9,7 +9,7 @@ import "./line-chart-controls.sass";
 import "rc-slider/assets/index.css";
 
 interface IChartControlProps {
-  chartData: ChartDataModelType;
+  chartData: ChartDataModel;
   isPlaying: boolean;
 }
 
