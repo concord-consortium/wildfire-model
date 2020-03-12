@@ -1,6 +1,5 @@
 import { ChartDataModel } from "./models/chart-data";
 import { DataPoint, ChartDataSet } from "./models/chart-data-set";
-import createBreakpoints from "@material-ui/core/styles/createBreakpoints";
 
 const defaultMaxPoints = 0;
 const defaultDownsampleMaxLength = 120;
@@ -64,6 +63,10 @@ const addNewDataSetToChart = (points: DataPoint[], seriesName?: string, seriesCo
 
 export const setChartName = (name: string) => {
   chart.name = name;
+};
+
+export const clearData = () => {
+  chart.dataSets = [];
 };
 
 export const getMockChartData = () => {

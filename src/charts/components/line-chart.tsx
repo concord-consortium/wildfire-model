@@ -161,12 +161,14 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
         }],
         xAxes: [{
           ticks: {
+            beginAtZero: minMaxValues.minA1 === 0,
+            precision: 0,
             min: minMaxValues.minA1,
             max: minMaxValues.maxA1,
             minRotation: chartData.dataLabelRotation,
             maxRotation: chartData.dataLabelRotation,
             userCallback: (label: any) => {
-              return Math.ceil(label);
+              return Math.ceil(label / 24);
             },
           },
           scaleLabel: {

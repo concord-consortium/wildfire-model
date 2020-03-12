@@ -18,6 +18,7 @@ export interface CellOptions {
   x: number;
   y: number;
   zone: Zone;
+  zoneIdx?: number;
   baseElevation?: number;
   ignitionTime?: number;
   fireState?: FireState;
@@ -34,6 +35,7 @@ export class Cell {
   public x: number; // grid X coord
   public y: number; // grid Y coord
   public zone: Zone;
+  public zoneIdx: number;
   public baseElevation: number = 0;
   public ignitionTime: number = Infinity;
   public spreadRate: number = 0;

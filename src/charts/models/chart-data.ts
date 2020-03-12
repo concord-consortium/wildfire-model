@@ -11,7 +11,7 @@ export interface IChartDataModel{
 
 export class ChartDataModel implements IChartDataModel {
   public name: string;
-  public dataSets: ChartDataSet[];
+  @observable public dataSets: ChartDataSet[];
   public labels?: string[];
   public annotations?: ChartAnnotation[];
 

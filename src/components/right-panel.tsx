@@ -33,7 +33,7 @@ export class RightPanel extends BaseComponent<IProps, IState> {
   public render() {
     const { open, selectedTab } = this.state;
     const currentData: ChartDataModel = currentChart();
-    const showChart = currentData != null;
+    const showChart = currentData != null && currentData.dataSets.length > 0;
     return (
       <div className={`${css.rightPanel} ${open ? css.open : ""}`} data-test="right-panel">
         <div className={css.rightPanelContent}>
