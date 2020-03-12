@@ -10,10 +10,10 @@ export interface IChartDataModel{
 }
 
 export class ChartDataModel implements IChartDataModel {
-  @observable public name: string;
-  @observable public dataSets: ChartDataSet[];
-  @observable public labels?: string[];
-  @observable public annotations?: ChartAnnotation[];
+  public name: string;
+  public dataSets: ChartDataSet[];
+  public labels?: string[];
+  public annotations?: ChartAnnotation[];
 
   constructor(props: IChartDataModel) {
     Object.assign(this, props);

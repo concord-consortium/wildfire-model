@@ -117,30 +117,30 @@ export interface IChartDataSet{
 export type GraphPatternType = "diagonal" | "diagonal-right-left";
 
 export class ChartDataSet implements IChartDataSet {
-  @observable public name: string;
+  public name: string;
   @observable public dataPoints: IDataPoint[];
 
   // optional properties
-  @observable public color?: string;
-  @observable public pointColors?: string[];
-  @observable public backgroundOpacity?: number;
-  @observable public graphPattern?: GraphPatternType;
-  @observable public maxPoints: number = -1;
-  @observable public fixedMinA1?: number;
-  @observable public fixedMaxA1?: number;
-  @observable public fixedMinA2?: number;
-  @observable public fixedMaxA2?: number;
-  @observable public initialMaxA1?: number;
-  @observable public fixedLabelRotation?: number;
-  @observable public dataStartIdx?: number;
-  @observable public stack?: string;
-  @observable public axisLabelA1?: string = "";
-  @observable public axisLabelA2?: string = "";
-  @observable public expandOnly?: false;
-  @observable public display: boolean = true;
-  @observable public downsample?: boolean;
-  @observable public downsampleMaxLength?: number;
-  @observable public downsampleGrowWindow?: number;
+  public color?: string;
+  public pointColors?: string[];
+  public backgroundOpacity?: number;
+  public graphPattern?: GraphPatternType;
+  public maxPoints: number = -1;
+  public fixedMinA1?: number;
+  public fixedMaxA1?: number;
+  public fixedMinA2?: number;
+  public fixedMaxA2?: number;
+  public initialMaxA1?: number;
+  public fixedLabelRotation?: number;
+  public dataStartIdx?: number;
+  public stack?: string;
+  public axisLabelA1?: string = "";
+  public axisLabelA2?: string = "";
+  public expandOnly?: false;
+  public display: boolean = true;
+  public downsample?: boolean;
+  public downsampleMaxLength?: number;
+  public downsampleGrowWindow?: number;
 
   constructor(props: IChartDataSet) {
     Object.assign(this, props);
