@@ -17,6 +17,6 @@ describe("MapTab component", () => {
         <RightPanelTab tabType="graph" active={true} />
       </Provider>
     );
-    expect(wrapper.find('[data-test="map-tab"]').length).toEqual(1);
+    expect(wrapper.find('[data-test="right-panel-tab"]').length).toEqual(1);
   });
 });
