@@ -110,6 +110,7 @@
   "dependencies": {
     "@inlet/react-pixi": "^0.6.0",
     "@material-ui/core": "^4.5.1",
+    "jquery": "^3.4.1",
     "mobx": "^5.14.0",
     "mobx-react": "^6.1.4",
     "pixi.js": "^4.8.7",
@@ -118,6 +119,7 @@
     "react-circular-input": "^0.1.6",
     "react-dom": "^16.10.2",
     "screenfull": "^4.2.1",
+    "shutterbug": "^1.2.0",
     "three": "^0.109.0",
     "three-orbitcontrols": "^2.108.1"
   }
