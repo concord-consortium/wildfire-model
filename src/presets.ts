@@ -12,7 +12,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
   basic: {
     modelWidth: 100000,
     modelHeight: 100000,
-    gridWidth: 100,
+    gridWidth: 20,
     sparks: [ [50000, 50000] ],
     zoneIndex: [
       [ 0, 1 ]

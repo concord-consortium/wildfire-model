@@ -18,7 +18,7 @@ const getGridIndexForLocation = (x: number, y: number, width: number) => {
 
 const modelDay = 1440; // minutes
 
-const endOfFireProbability: {[key: number]: number} = {
+const endOfLowIntensityFireProbability: {[key: number]: number} = {
   0: 0.0,
   1: 0.6,
   2: 0.6,
@@ -165,7 +165,8 @@ export class SimulationModel {
   public timeToIgniteNeighbors: number[][];
   public prevTickTime: number | null;
   public recalculateCellProps: boolean = true;
-  public endOfFire = false;
+  public endOfLowIntensityFire = false;
+  public dataReadyPromise: Promise<void>;
   @observable public dataReady = false;
   @observable public wind: IWindProps;
   @observable public sparks: Vector2[] = [];
@@ -271,7 +272,9 @@ export class SimulationModel {
 
   @action.bound public populateCellsData() {
     this.dataReady = false;
-    Promise.all([this.getZoneIndex(), this.getElevationData(), this.getRiverData()]).then(values => {
+    this.dataReadyPromise = Promise.all([
+      this.getZoneIndex(), this.getElevationData(), this.getRiverData()
+    ]).then(values => {
       const zoneIndex = values[0];
       const elevation = values[1];
       const river = values[2];
@@ -334,17 +337,12 @@ export class SimulationModel {
     if (!this.simulationStarted) {
       this.simulationStarted = true;
     }
-    if (this.time === 0) {
-      // Use sparks to start the simulation.
-      this.sparks.forEach(spark => {
-        this.cellAt(spark.x, spark.y).ignitionTime = 0;
-      });
-    }
+
     this.applyFireLineMarkers();
 
     this.simulationRunning = true;
     this.prevTickTime = null;
-    requestAnimationFrame(this.tick);
+    requestAnimationFrame(this.rafCallback);
   }
 
   @action.bound public stop() {
@@ -355,7 +353,7 @@ export class SimulationModel {
     this.simulationRunning = false;
     this.simulationStarted = false;
     this.time = 0;
-    this.endOfFire = false;
+    this.endOfLowIntensityFire = false;
     this.cells.forEach(cell => cell.reset());
     this.fireLineMarkers.length = 0;
     this.updateCellsStateFlag();
@@ -371,13 +369,11 @@ export class SimulationModel {
     this.populateCellsData();
   }
 
-  @action.bound public tick(time: number) {
+  @action.bound public rafCallback(time: number) {
     if (!this.simulationRunning) {
       return;
     }
-    requestAnimationFrame(this.tick);
-
-    this.calculateCellProps();
+    requestAnimationFrame(this.rafCallback);
 
     let realTimeDiffInMinutes = null;
     if (!this.prevTickTime) {
@@ -395,13 +391,27 @@ export class SimulationModel {
       // We don't know performance yet, so simply increase time by some safe value and wait for the next tick.
       timeDiff = 1;
     }
-    const dayChange = Math.floor(this.time / modelDay) !== Math.floor((this.time + timeDiff) / modelDay);
-    this.time += timeDiff;
+
+    this.tick(timeDiff);
+  }
+
+  @action.bound public tick(modelTimeDiff: number) {
+    if (this.time === 0) {
+      // Use sparks to start the simulation.
+      this.sparks.forEach(spark => {
+        this.cellAt(spark.x, spark.y).ignitionTime = 0;
+      });
+    }
+
+    this.calculateCellProps();
+
+    const dayChange = Math.floor(this.time / modelDay) !== Math.floor((this.time + modelTimeDiff) / modelDay);
+    this.time += modelTimeDiff;
 
     if (dayChange) {
       const day = Math.floor(this.time / modelDay);
-      if (Math.random() <= endOfFireProbability[day]) {
-        this.endOfFire = true;
+      if (Math.random() <= endOfLowIntensityFireProbability[day]) {
+        this.endOfLowIntensityFire = true;
       }
     }
 
@@ -571,8 +581,8 @@ export class SimulationModel {
         // above, this not only allows us to pre-set ignition times for testing, but will also allow us to
         // run forward or backward through a simulation.
         newFireStateData[i] = FireState.Burning;
-        // Fire should spread if endOfFire flag is false or burn index is high enough.
-        const fireShouldSpread = !this.endOfFire || cell.burnIndex !== BurnIndex.Low;
+        // Fire should spread if endOfLowIntensityFire flag is false or burn index is high enough.
+        const fireShouldSpread = !this.endOfLowIntensityFire || cell.burnIndex !== BurnIndex.Low;
         if (fireShouldSpread) {
           // Fire lines and other fire control methods will work only if burn index is low or medium.
           // If it's high, fire cannot be controlled.

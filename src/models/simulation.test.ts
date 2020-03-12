@@ -1,5 +1,6 @@
-import { getGridCellNeighbors, riverOrFireLineBetween, withinDist } from "./simulation";
+import { getGridCellNeighbors, riverOrFireLineBetween, withinDist, SimulationModel } from "./simulation";
 import { Cell } from "./cell";
+import presets from "../presets";
 
 describe("riverOrFileLineBetween", () => {
   it("returns true if there's any river or fire line between two points", () => {
@@ -46,5 +47,41 @@ describe("getGridCellNeighbors", () => {
     expect(getGridCellNeighbors(cells, 5, 4, 4, 2.5).sort()).toEqual([0, 1, 12, 2, 3, 4, 6, 7, 8]);
     expect(getGridCellNeighbors(cells, 14, 4, 4, 2.5).sort()).toEqual([12, 13, 15]);
     expect(getGridCellNeighbors(cells, 15, 4, 4, 2.5).sort()).toEqual([13, 14]);
+  });
+});
+
+describe("SimulationModel", () => {
+  it("should stop low intensity fire after 5 days (or earlier but it's random)", async () => {
+    const sim = new SimulationModel({
+      modelWidth: 100000,
+      modelHeight: 100000,
+      gridWidth: 2,
+      sparks: [ [50000, 50000] ],
+      zoneIndex: [[0]],
+      elevation: [[0]],
+      riverData: null
+    });
+    await sim.dataReadyPromise;
+    expect(sim.endOfLowIntensityFire).toBe(false);
+    sim.tick(1440 * 5); // 5 days in minutes
+    expect(sim.endOfLowIntensityFire).toBe(true);
+  });
+
+  it("should stop when nothing is burning anymore", async () => {
+    const sim = new SimulationModel({
+      modelWidth: 100000,
+      modelHeight: 100000,
+      gridWidth: 20,
+      sparks: [ [50000, 50000] ],
+      zoneIndex: [[0]],
+      elevation: [[0]],
+      riverData: null
+    });
+    await sim.dataReadyPromise;
+    sim.simulationRunning = true;
+    sim.tick(1440 * 5);
+    sim.tick(1440);
+    sim.tick(1440);
+    expect(sim.simulationRunning).toBe(false);
   });
 });
