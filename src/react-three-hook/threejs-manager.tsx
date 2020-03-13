@@ -9,12 +9,14 @@ export interface IThreeContext {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
   canvas: HTMLCanvasElement;
+  render: () => void;
 }
 
 const defaultContext = {
   scene: new THREE.Scene(),
   camera: new THREE.PerspectiveCamera(),
-  canvas: document.createElement("canvas")
+  canvas: document.createElement("canvas"),
+  render: () => undefined
 };
 
 export const ThreeJSContext = createContext<IThreeContext>(defaultContext);
@@ -39,10 +41,17 @@ export const ThreeJSManager: React.FC<IProps> = ({
   const cameraRef = useRef<THREE.PerspectiveCamera>();
   const rendererRef = useRef<THREE.Renderer>();
 
+  const render = () => {
+    if (rendererRef.current && sceneRef.current && cameraRef.current) {
+      rendererRef.current.render(sceneRef.current, cameraRef.current);
+    }
+  };
+
   const threeContext = {
     scene: sceneRef.current || defaultContext.scene,
     camera: cameraRef.current || defaultContext.camera,
     canvas: canvasRef.current || defaultContext.canvas,
+    render
   };
 
   const onWindowResize = () => {
@@ -83,9 +92,7 @@ export const ThreeJSManager: React.FC<IProps> = ({
 
   // set animation frame time value and rerender the scene
   useAnimationFrame((newTime: number) => {
-    if (rendererRef.current && sceneRef.current && cameraRef.current) {
-      rendererRef.current.render(sceneRef.current, cameraRef.current);
-    }
+    render();
   });
 
   return (

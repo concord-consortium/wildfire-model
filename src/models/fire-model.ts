@@ -36,48 +36,41 @@ export interface ICellProps {
   isRiver: boolean;
 }
 
+const heatContent = 8000;
+const totalMineralContent = 0.0555;
+const effectiveMineralContent = 0.01;
+
+// Values are specified in this PT story: https://www.pivotaltracker.com/story/show/170343321
 const FuelConstants: {[key in Vegetation]: Fuel} = {
   [Vegetation.Grass]: {
-    sav: 1826,
-    packingRatio: 0.00154,
-    netFuelLoad: 0.09871442,
-    heatContent: 8000,
-    mx: 0.15,
-    totalMineralContent: 0.0555,
-    effectiveMineralContent: 0.01,
-    fuelBedDepth: 1
+    sav: 2100,
+    netFuelLoad: 0.294,
+    fuelBedDepth: 3,
+    packingRatio: 0.00306,
+    mx: 0.15
   },
   [Vegetation.Shrub]: {
-    sav: 1144,
-    packingRatio: 0.00412,
-    netFuelLoad: 0.183655,
-    heatContent: 8000,
-    mx: 0.3,
-    totalMineralContent: 0.0555,
-    effectiveMineralContent: 0.01,
-    fuelBedDepth: 2
+    sav: 1672,
+    netFuelLoad: 0.239,
+    fuelBedDepth: 1.2,
+    packingRatio: 0.01198,
+    mx: 0.3
   },
   // TODO: the following two land types have not yet been configured via specification,
   // only by approximation to get the code to compile
   [Vegetation.ForestSmallLitter]: {
-    sav: 800,
-    packingRatio: 0.00812,
-    netFuelLoad: 0.383655,
-    heatContent: 8000,
-    mx: 0.45,
-    totalMineralContent: 0.0555,
-    effectiveMineralContent: 0.01,
-    fuelBedDepth: 3
+    sav: 1716,
+    netFuelLoad: 0.0459,
+    fuelBedDepth: 0.1,
+    packingRatio: 0.04878,
+    mx: 0.2
   },
   [Vegetation.ForestLargeLitter]: {
-    sav: 600,
-    packingRatio: 0.01412,
-    netFuelLoad: 0.583655,
-    heatContent: 8000,
-    mx: 0.6,
-    totalMineralContent: 0.0555,
-    effectiveMineralContent: 0.01,
-    fuelBedDepth: 4
+    sav: 1500,
+    netFuelLoad: 0.689,
+    fuelBedDepth: 0.5,
+    packingRatio: 0.02224,
+    mx: 0.25
   }
 };
 
@@ -130,6 +123,7 @@ export const getDirectionFactor =
  *   https://www.fs.fed.us/rm/pubs_series/rmrs/gtr/rmrs_gtr371.pdf
  * and was made into a spreadsheet that can be seen at
  *   https://docs.google.com/spreadsheets/d/1ov3JUz6hXdnXChbXTz20Fo_9YoWmGukJgCaIMJeRUb4/
+ *   UPDATED version: https://drive.google.com/file/d/1ck0nwlawOtK-GjCV4qJ6ztMcxh3utbv-/view
  *
  * Still to do:
  *  * Calculate the slope between two cells
@@ -142,7 +136,6 @@ export const getDirectionFactor =
  * @param targetCell Adjacent grid cell that is currently UNBURNT
  * @param wind Wind properties, speed and direction
  * @param cellSize cell size in feet
- * @param moistureContent global moisture content (not currently used?)
  *
  * @return fire spread rate in ft/min
  */
@@ -159,10 +152,7 @@ export const getFireSpreadRate = (
   const sav = fuel.sav;
   const packingRatio = fuel.packingRatio;
   const netFuelLoad = fuel.netFuelLoad;
-  const heatContent = fuel.heatContent;
   const mx = fuel.mx;
-  const totalMineralContent = fuel.totalMineralContent;
-  const effectiveMineralContent = fuel.effectiveMineralContent;
   const fuelBedDepth = fuel.fuelBedDepth;
 
   const moistureContentRatio = targetCell.moistureContent / mx;

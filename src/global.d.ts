@@ -10,3 +10,4 @@ declare module "*.png" {
   export = value;
 }
 declare module "three-orbitcontrols";
+declare module "shutterbug";

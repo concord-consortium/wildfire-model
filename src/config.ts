@@ -31,6 +31,8 @@ export interface ISimulationConfig {
   // Time that needs to pass before next fire line can be added.
   fireLineDelay: number;
   maxFireLineLength: number; // ft
+  // Renders burn index.
+  showBurnIndex: boolean;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -79,7 +81,8 @@ export const defaultConfig: IUrlConfig = {
   // Scale wind values down for now, so changes are less dramatic.
   showModelDimensions: false,
   fireLineDelay: 1440, // a day
-  maxFireLineLength: 15000 // ft
+  maxFireLineLength: 15000, // ft
+  showBurnIndex: false
 };
 
 export const urlConfig: any = {};
