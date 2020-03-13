@@ -16,10 +16,25 @@
     .rightPanelContent{
       position: absolute;
       top:0;
-      width: 98%;
+      width: $rightPanelContentWidth;
       right: 0;
       bottom: 0;
       background-color:  rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      .title{
+        border-bottom: 1px solid $controlLabel;
+        text-align: center;
+        margin-bottom: 10px;
+        font-size: 14px;
+        font-weight: bold;
+        color: $controlLabel;
+      }
+      .chartContainer{
+        padding-top: 27px;
+        background-color: white;
+        border-radius: 45x;
+        border: 2px solid $controlGreenDark2;
+      }
     }
     &.open {
       right: 0;

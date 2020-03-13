@@ -23,7 +23,9 @@ export const addData = (
   seriesName?: string,
   seriesColor?: string,
   maxPoints?: number,
-  chartName?: string) => {
+  chartName?: string,
+  axisLabelA1?: string,
+  axisLabelA2?: string) => {
   if (chart) {
     if (chart.dataSets.length - 1 >= seriesIndex) {
       // we have a chart with existing datasets
@@ -34,7 +36,7 @@ export const addData = (
     } else {
       const points = [];
       points.push(new DataPoint({ a1: px, a2: py, label: pointLabel }));
-      addNewDataSetToChart(points, seriesName, seriesColor, maxPoints);
+      addNewDataSetToChart(points, seriesName, seriesColor, maxPoints, axisLabelA1, axisLabelA2);
     }
   } else {
     const chartDataSets: ChartDataSet[] = [];
@@ -44,11 +46,17 @@ export const addData = (
       name: chartName ? chartName : "Chart1",
       dataSets: chartDataSets
     });
-    addNewDataSetToChart(points, seriesName, seriesColor, maxPoints);
+    addNewDataSetToChart(points, seriesName, seriesColor, maxPoints, axisLabelA1, axisLabelA2);
   }
 };
 
-const addNewDataSetToChart = (points: DataPoint[], seriesName?: string, seriesColor?: string, maxPoints?: number) => {
+const addNewDataSetToChart = (
+  points: DataPoint[],
+  seriesName?: string,
+  seriesColor?: string,
+  maxPoints?: number,
+  axisLabelA1?: string,
+  axisLabelA2?: string) => {
   const chartDataSets = chart.dataSets;
   chartDataSets.push(new ChartDataSet({
     name: seriesName ? seriesName : "",
@@ -62,7 +70,9 @@ const addNewDataSetToChart = (points: DataPoint[], seriesName?: string, seriesCo
     fixedMaxA1: defaultMaxA1,
     fixedMinA2: 0,
     fixedMaxA2: 100,
-    fixedMinA1: 0
+    fixedMinA1: 0,
+    axisLabelA1,
+    axisLabelA2
   }));
 };
 

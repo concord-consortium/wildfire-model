@@ -747,7 +747,16 @@ export class SimulationModel {
     const timeInDays = Math.round(this.time / 1440);
     const timeInHours = Math.round(this.time / 60);
     for (let i = 0; i < this.zones.length; i++) {
-      addData(timeInHours, burnedCellsInZone[i] / totalCellCountByZone[i] * 100, i, undefined, `Zone ${i}`);
+      addData(
+        timeInHours,
+        burnedCellsInZone[i] / totalCellCountByZone[i] * 100,
+        i,
+        undefined,
+        `Zone ${i}`,
+        undefined,
+        undefined,
+        "Fire Area vs Time",
+        "Time (days)", "Area (Acres)");
     }
 
     if (fireDidStop) {

@@ -1,11 +1,11 @@
 import { inject, observer } from "mobx-react";
 import * as React from "react";
 import { BaseComponent, IBaseProps } from "./base";
-import { MapType } from "./right-panel";
+import { TabType } from "./right-panel";
 import * as css from "./right-panel-tab.scss";
 
 interface IProps extends IBaseProps {
-  tabType: MapType;
+  tabType: TabType;
   active: boolean;
 }
 interface IState { }

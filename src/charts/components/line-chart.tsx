@@ -147,6 +147,7 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
     const minMaxValues = chartData.minMaxAll;
     const options: ChartOptions = Object.assign({}, defaultOptions, {
       title: {
+        display: (chartData.name && chartData.name.length > 0),
         text: chartData.name
       },
       scales: {
