@@ -1,16 +1,18 @@
 import { inject, observer } from "mobx-react";
-import * as React from "react";
+import React, { useEffect, useState } from "react";
 import { BaseComponent, IBaseProps } from "./base";
 import { RightPanelTab } from "./right-panel-tab";
 import { Chart } from "../charts/components/chart";
-
+import { useStores } from "../use-stores";
 import * as css from "./right-panel.scss";
-import { DataPoint, ChartDataSet } from "../charts/models/chart-data-set";
 import { ChartDataModel } from "../charts/models/chart-data";
-import { SimulationModel } from "../models/simulation";
-import { getMockChartData, currentChart } from "../charts/data-store";
+import { currentChart, setChartColor } from "../charts/data-store";
 
 export type MapType = "graph";
+
+const chartColor0 = "#ffb7f5";
+const chartColor1 = "#6badff";
+const chartColor2 = "#ffc085";
 
 interface IProps extends IBaseProps {}
 
@@ -19,47 +21,44 @@ interface IState {
   selectedTab: MapType;
 }
 
-@inject("stores")
-@observer
-export class RightPanel extends BaseComponent<IProps, IState> {
-  constructor(props: IProps) {
-    super(props);
-    this.state = {
-      open: false,
-      selectedTab: "graph"
-    };
-  }
+export const RightPanel = observer(() => {
+  const { simulation, ui } = useStores();
+  const [open, setOpen ] = useState(false);
+  const [selectedTab, setSelectedTab] = useState("graph");
 
-  public render() {
-    const { open, selectedTab } = this.state;
-    const currentData: ChartDataModel = currentChart();
-    const showChart = currentData != null && currentData.dataSets.length > 0;
-    return (
-      <div className={`${css.rightPanel} ${open ? css.open : ""}`} data-test="right-panel">
-        <div className={css.rightPanelContent}>
-          {showChart && <Chart title="chart" chartType="line" chartData={currentData}
-            isPlaying={false} />}
-        </div>
-        <ul className={css.rightPanelTabs}>
-          <li>
-            <div id="base" className={css.rightPanelTab} onClick={this.handleToggleDrawer}>
-              <RightPanelTab tabType="graph" active={selectedTab === "graph" || !open} />
-            </div>
-          </li>
-        </ul>
-      </div>
-    );
-  }
-
-  public handleToggleDrawer = (e: React.SyntheticEvent) => {
-    const { selectedTab } = this.state;
-    if (e.currentTarget.id !== selectedTab) {
-      this.setState({ open: true, selectedTab: e.currentTarget.id as MapType });
-      this.stores.ui.showChart = true;
-    } else {
-      const isOpen = !this.state.open;
-      this.setState({ open: isOpen });
-      this.stores.ui.showChart = isOpen;
+  const currentData: ChartDataModel = currentChart();
+  const showChart = currentData != null;
+  if (showChart && currentData.dataSets.length === simulation.zones.length) {
+    for (let i = 0; i < simulation.zones.length; i++) {
+      const zoneColor = i === 0 ? chartColor0 : i === 2 ? chartColor1 : chartColor2;
+      setChartColor(i, zoneColor);
     }
   }
-}
+  const handleToggleDrawer = (e: React.SyntheticEvent) => {
+    if (e.currentTarget.id !== selectedTab) {
+      setOpen(true);
+      setSelectedTab(e.currentTarget.id as MapType);
+      ui.showChart = true;
+    } else {
+      const isOpen = !open;
+      setOpen(isOpen);
+      ui.showChart = isOpen;
+    }
+  };
+
+  return (
+    <div className={`${css.rightPanel} ${open ? css.open : ""}`} data-test="right-panel">
+      <div className={css.rightPanelContent}>
+        {showChart && <Chart title="chart" chartType="line" chartData={currentData}
+          isPlaying={simulation.simulationRunning} />}
+      </div>
+      <ul className={css.rightPanelTabs}>
+        <li>
+          <div id="base" className={css.rightPanelTab} onClick={handleToggleDrawer}>
+            <RightPanelTab tabType="graph" active={selectedTab === "graph" || !open} />
+          </div>
+        </li>
+      </ul>
+    </div>
+  );
+});

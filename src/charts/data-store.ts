@@ -6,7 +6,10 @@ const defaultMaxA1 = 100;
 const defaultDownsampleMaxLength = 10;
 const defaultDownsampleGrowWindow = 40;
 
-let chart: ChartDataModel;
+let chart: ChartDataModel = new ChartDataModel({
+  name: "",
+  dataSets: []
+});
 
 export const currentChart = (): ChartDataModel => {
   return chart;
@@ -50,7 +53,7 @@ const addNewDataSetToChart = (points: DataPoint[], seriesName?: string, seriesCo
   chartDataSets.push(new ChartDataSet({
     name: seriesName ? seriesName : "",
     dataPoints: points,
-    color: seriesColor ? seriesColor : "#ff0000",
+    color: seriesColor,
     maxPoints: maxPoints ? maxPoints : defaultMaxPoints,
     downsample: false,
     downsampleMaxLength: defaultDownsampleMaxLength,
@@ -70,6 +73,12 @@ export const setChartName = (name: string) => {
 export const clearData = () => {
   if (chart) {
     chart.dataSets = [];
+  }
+};
+
+export const setChartColor = (idx: number, color: string) => {
+  if (chart && chart.dataSets && chart.dataSets[idx]){
+    chart.dataSets[idx].changeColor(color);
   }
 };
 

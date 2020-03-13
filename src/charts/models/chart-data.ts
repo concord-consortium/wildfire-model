@@ -20,7 +20,9 @@ export class ChartDataModel implements IChartDataModel {
   }
 
   public get visibleDataSets() {
-    return this.dataSets.filter(d => d.display);
+    if (this.dataSets && this.dataSets.length > 0) {
+      return this.dataSets.filter(d => d.display);
+    }
   }
 
   public get chartLabels() {
@@ -45,35 +47,55 @@ export class ChartDataModel implements IChartDataModel {
     const maxA2Values: number[] = [];
     const minA1Values: number[] = [];
     const minA2Values: number[] = [];
-
-    this.visibleDataSets.forEach((d) => {
-      maxA1Values.push(d.maxA1 || 100);
-      maxA2Values.push(d.maxA2 || 100);
-      minA1Values.push(d.minA1 || 0);
-      minA2Values.push(d.minA2 || 0);
-    });
-
-    return {
-      maxA1: Math.max(...maxA1Values),
-      maxA2: Math.max(...maxA2Values),
-      minA1: Math.min(...minA1Values),
-      minA2: Math.min(...minA2Values),
-    };
+    if (this.visibleDataSets && this.visibleDataSets.length > 0) {
+      this.visibleDataSets.forEach((d) => {
+        maxA1Values.push(d.maxA1 || 100);
+        maxA2Values.push(d.maxA2 || 100);
+        minA1Values.push(d.minA1 || 0);
+        minA2Values.push(d.minA2 || 0);
+      });
+      return {
+        maxA1: Math.max(...maxA1Values),
+        maxA2: Math.max(...maxA2Values),
+        minA1: Math.min(...minA1Values),
+        minA2: Math.min(...minA2Values),
+      };
+    }
+    else {
+      return {
+        maxA1: 100,
+        maxA2: 100,
+        minA1: 0,
+        minA2: 0,
+      };
+    }
   }
   public get nextDataSeriesColor() {
     return ChartColors[this.dataSets.length];
   }
 
   public get maxPoints() {
-    return this.visibleDataSets[0].maxPoints;
+    if (this.visibleDataSets && this.visibleDataSets.length > 0) {
+      return this.visibleDataSets[0].maxPoints;
+    } else {
+      return 100;
+    }
   }
 
   public get pointCount() {
-    return this.visibleDataSets[0].dataPoints.length;
+    if (this.visibleDataSets && this.visibleDataSets.length > 0) {
+      return this.visibleDataSets[0].dataPoints.length;
+    }  else {
+      return 0;
+    }
   }
 
   public get subsetIdx() {
-    return this.visibleDataSets[0].dataStartIdx;
+    if (this.visibleDataSets && this.visibleDataSets.length > 0) {
+      return this.visibleDataSets[0].dataStartIdx;
+    } else {
+      return 0;
+    }
   }
 
   public get axisLabelA1() {

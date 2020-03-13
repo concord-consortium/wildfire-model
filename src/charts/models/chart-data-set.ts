@@ -1,7 +1,6 @@
 import { downsample } from "../downsample-data";
 import { observable } from "mobx";
-import css from "../../components/common.scss";
-import { NumberKeyframeTrack } from "three";
+import css from "../chart-colors.scss";
 
 const MAX_TOTAL_POINTS = 120;
 const GROW_WINDOW = 40;

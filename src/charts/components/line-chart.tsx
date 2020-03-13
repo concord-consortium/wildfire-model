@@ -88,43 +88,44 @@ const lineDatasetDefaults: ChartData<any> = {
 
 const lineData = (chartData: ChartDataModel) => {
   const lineDatasets = [];
-  for (const d of chartData.visibleDataSets) {
-    const dset = Object.assign({}, lineDatasetDefaults, {
-      label: d.name,
-      data: d.timeSeriesXY
-    });
-    if (d.color) {
-      // backgroundColor is the color under the line, if we decide to fill that area
-      dset.backgroundColor = hexToRGBValue(d.color, 0.4);
-      // borderColor is the color of the line
-      dset.borderColor = hexToRGBValue(d.color, 1);
-      dset.pointBorderColor = hexToRGBValue(d.color, 1);
-      dset.pointHoverBackgroundColor = hexToRGBValue(d.color, 1);
-      dset.pointHoverBorderColor = hexToRGBValue(d.color, 1);
-    }
-    if (d.pointColors) {
-      // If we have specified point colors, use those first,
-      // then if we run out of colors we fall back to the defaults
-      const colors = d.pointColors.concat(ChartColors.map(c => c.hex));
-      dset.pointBackgroundColor = colors.map(c => hexToRGBValue(c, 0.4));
-      dset.pointBorderColor = colors.map(c => hexToRGBValue(c, 1.0));
-      dset.pointHoverBackgroundColor = colors.map(c => hexToRGBValue(c, 1.0));
-      dset.pointHoverBorderColor = colors.map(c => hexToRGBValue(c, 1.0));
-    }
-    if (d.fixedLabelRotation) {
-      dset.minRotation = d.fixedLabelRotation;
-      dset.maxRotation = d.fixedLabelRotation;
-    }
-    // optimize rendering
-    if (d.visibleDataPoints.length >= 80) {
-      dset.lineTension = 0;
-    }
+  if (chartData.visibleDataSets) {
+    for (const d of chartData.visibleDataSets) {
+      const dset = Object.assign({}, lineDatasetDefaults, {
+        label: d.name,
+        data: d.timeSeriesXY
+      });
+      if (d.color) {
+        // backgroundColor is the color under the line, if we decide to fill that area
+        dset.backgroundColor = hexToRGBValue(d.color, 0.4);
+        // borderColor is the color of the line
+        dset.borderColor = hexToRGBValue(d.color, 1);
+        dset.pointBorderColor = hexToRGBValue(d.color, 1);
+        dset.pointHoverBackgroundColor = hexToRGBValue(d.color, 1);
+        dset.pointHoverBorderColor = hexToRGBValue(d.color, 1);
+      }
+      if (d.pointColors) {
+        // If we have specified point colors, use those first,
+        // then if we run out of colors we fall back to the defaults
+        const colors = d.pointColors.concat(ChartColors.map(c => c.hex));
+        dset.pointBackgroundColor = colors.map(c => hexToRGBValue(c, 0.4));
+        dset.pointBorderColor = colors.map(c => hexToRGBValue(c, 1.0));
+        dset.pointHoverBackgroundColor = colors.map(c => hexToRGBValue(c, 1.0));
+        dset.pointHoverBorderColor = colors.map(c => hexToRGBValue(c, 1.0));
+      }
+      if (d.fixedLabelRotation) {
+        dset.minRotation = d.fixedLabelRotation;
+        dset.maxRotation = d.fixedLabelRotation;
+      }
+      // optimize rendering
+      if (d.visibleDataPoints.length >= 80) {
+        dset.lineTension = 0;
+      }
 
-    dset.dataPoints = d.visibleDataPoints;
+      dset.dataPoints = d.visibleDataPoints;
 
-    lineDatasets.push(dset);
+      lineDatasets.push(dset);
+    }
   }
-
   const linePlotData = {
     labels: chartData.dataLabels,
     datasets: lineDatasets
