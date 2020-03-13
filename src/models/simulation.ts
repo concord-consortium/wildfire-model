@@ -6,11 +6,17 @@ import { getInputData } from "../utils";
 import { Vector2 } from "three";
 import { Zone } from "./zone";
 import { Town } from "../types";
+import { addData, clearData } from "../charts/data-store";
 
 interface ICoords {
   x: number;
   y: number;
 }
+
+interface IZoneStats{
+  [key: number]: number;
+}
+const totalCellCountByZone: IZoneStats = {};
 
 const getGridIndexForLocation = (x: number, y: number, width: number) => {
   return x + y * width;
@@ -325,6 +331,7 @@ export class SimulationModel {
       for (let y = 0; y < this.gridHeight; y++) {
         for (let x = 0; x < this.gridWidth; x++) {
           const index = getGridIndexForLocation(x, y, this.gridWidth);
+
           const isRiver = river && river[index] > 0;
           // When fillTerrainEdge is set to true, edges are set to elevation 0.
           const isEdge = this.config.fillTerrainEdges &&
@@ -334,13 +341,20 @@ export class SimulationModel {
           // rendering code is calculating colors for mesh faces.
           const isNonBurnable = this.config.fillTerrainEdges &&
             x <= 1 || x >= this.gridWidth - 2 || y <= 1 || y >= this.gridHeight - 2;
+          // store zone index for tracking burn percentage
+          const zi = zoneIndex ? zoneIndex[index] : 0;
           const cellOptions: CellOptions = {
             x, y,
-            zone: this.zones[zoneIndex ? zoneIndex[index] : 0],
+            zone: this.zones[zi],
+            zoneIdx: zi,
             isRiver,
             isUnburntIsland: unburntIsland && unburntIsland[index] > 0 || isNonBurnable,
             baseElevation: isEdge ? 0 : elevation && elevation[index]
           };
+          if (!totalCellCountByZone[zi]) totalCellCountByZone[zi] = 1;
+          else {
+            totalCellCountByZone[zi]++;
+          }
           this.cells.push(new Cell(cellOptions));
         }
       }
@@ -411,6 +425,7 @@ export class SimulationModel {
     this.updateCellsElevationFlag();
     // That's necessary because of the fire lines that have been removed.
     this.recalculateCellProps = true;
+    clearData();
   }
 
   @action.bound public reload() {
@@ -663,6 +678,9 @@ export class SimulationModel {
     const newFireStateData: FireState[] = [];
     let fireDidStop = true;
 
+    let totalBurnedCells = 0;
+    const burnedCellsInZone: IZoneStats = {};
+
     for (let i = 0; i < numCells; i++) {
       const cell = this.cells[i];
       if (cell.isBurningOrWillBurn) {
@@ -712,12 +730,24 @@ export class SimulationModel {
     }
 
     for (let i = 0; i < numCells; i++) {
+      const cell = this.cells[i];
       if (newFireStateData[i] !== undefined) {
-        this.cells[i].fireState = newFireStateData[i];
+        cell.fireState = newFireStateData[i];
       }
       if (newIgnitionData[i] !== undefined) {
-        this.cells[i].ignitionTime = newIgnitionData[i];
+        cell.ignitionTime = newIgnitionData[i];
       }
+      if (cell.fireState > 0) {
+        totalBurnedCells++;
+        if (!burnedCellsInZone[cell.zoneIdx]) burnedCellsInZone[cell.zoneIdx] = 1;
+        else burnedCellsInZone[cell.zoneIdx]++;
+      }
+    }
+    // Convert time from minutes to days.
+    const timeInDays = Math.round(this.time / 1440);
+    const timeInHours = Math.round(this.time / 60);
+    for (let i = 0; i < this.zones.length; i++) {
+      addData(timeInHours, burnedCellsInZone[i] / totalCellCountByZone[i] * 100, i, undefined, `Zone ${i}`);
     }
 
     if (fireDidStop) {

@@ -51,7 +51,8 @@
     "test:coverage:watch": "jest --coverage --watch",
     "test:cypress": "cypress run",
     "test:cypress:open": "cypress open",
-    "test:full": "npm-run-all test test:cypress"
+    "test:full": "npm-run-all test test:cypress",
+    "postinstall": "cd src/charts && npm install"
   },
   "repository": {
     "type": "git",

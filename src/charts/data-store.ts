@@ -1,8 +1,9 @@
 import { ChartDataModel } from "./models/chart-data";
 import { DataPoint, ChartDataSet } from "./models/chart-data-set";
 
-const defaultMaxPoints = 0;
-const defaultDownsampleMaxLength = 120;
+const defaultMaxPoints = 200;
+const defaultMaxA1 = 100;
+const defaultDownsampleMaxLength = 10;
 const defaultDownsampleGrowWindow = 40;
 
 let chart: ChartDataModel;
@@ -51,10 +52,11 @@ const addNewDataSetToChart = (points: DataPoint[], seriesName?: string, seriesCo
     dataPoints: points,
     color: seriesColor ? seriesColor : "#ff0000",
     maxPoints: maxPoints ? maxPoints : defaultMaxPoints,
-    downsample: true,
+    downsample: false,
     downsampleMaxLength: defaultDownsampleMaxLength,
     downsampleGrowWindow: defaultDownsampleGrowWindow,
     display: true,
+    fixedMaxA1: defaultMaxA1,
     fixedMinA2: 0,
     fixedMaxA2: 100,
     fixedMinA1: 0
@@ -66,7 +68,9 @@ export const setChartName = (name: string) => {
 };
 
 export const clearData = () => {
-  chart.dataSets = [];
+  if (chart) {
+    chart.dataSets = [];
+  }
 };
 
 export const getMockChartData = () => {
