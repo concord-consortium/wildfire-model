@@ -18,8 +18,6 @@ const getGridIndexForLocation = (x: number, y: number, width: number) => {
 };
 
 const modelDay = 1440; // minutes
-// ratio of unburnt islands that will be active per model run (random)
-const activeUnburntIslandsRatio = 0.5;
 
 const endOfLowIntensityFireProbability: {[key: number]: number} = {
   0: 0.0,
@@ -284,7 +282,7 @@ export class SimulationModel {
         const r = rgba[0];
         if (r < 255) {
           if (islandActive[r] === undefined) {
-            if (Math.random() < activeUnburntIslandsRatio) {
+            if (Math.random() < this.config.unburntIslandProbability) {
               islandActive[r] = 1;
             } else {
               islandActive[r] = 0;
