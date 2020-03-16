@@ -1,27 +1,26 @@
-import { getGridCellNeighbors, riverOrFireLineBetween, withinDist, SimulationModel } from "./simulation";
+import { getGridCellNeighbors, nonburnableCellBetween, withinDist, SimulationModel } from "./simulation";
 import { Cell } from "./cell";
-import presets from "../presets";
 
-describe("riverOrFileLineBetween", () => {
-  it("returns true if there's any river or fire line between two points", () => {
+describe("nonburnableCellBetween", () => {
+  it("returns true if there's any nonburnable cell between two points", () => {
     const cells = [
-      {isRiver: false}, {isRiver: false}, {isRiver: false}, {isRiver: false},
-      {isRiver: false}, {isRiver: false}, {isRiver: false}, {isRiver: false},
-      {isRiver: false}, {isRiver: true}, {isRiver: true}, {isRiver: true},
-      {isRiver: false}, {isRiver: false}, {isRiver: false}, {isRiver: false},
+      {isBurnable: true}, {isBurnable: true}, {isBurnable: true}, {isBurnable: true},
+      {isBurnable: true}, {isBurnable: true}, {isBurnable: true}, {isBurnable: true},
+      {isBurnable: true}, {isBurnable: false}, {isBurnable: false}, {isBurnable: false},
+      {isBurnable: true}, {isBurnable: true}, {isBurnable: true}, {isBurnable: true},
     ] as Cell[];
-    expect(riverOrFireLineBetween(cells, 4, 0, 0, 0, 3)).toEqual(false);
-    expect(riverOrFireLineBetween(cells, 4, 0, 0, 0, 3)).toEqual(false);
+    expect(nonburnableCellBetween(cells, 4, 0, 0, 0, 3)).toEqual(false);
+    expect(nonburnableCellBetween(cells, 4, 0, 0, 0, 3)).toEqual(false);
 
-    expect(riverOrFireLineBetween(cells, 4, 1, 0, 0, 3)).toEqual(false);
-    expect(riverOrFireLineBetween(cells, 4, 1, 1, 0, 2)).toEqual(false);
-    expect(riverOrFireLineBetween(cells, 4, 1, 1, 0, 3)).toEqual(true);
+    expect(nonburnableCellBetween(cells, 4, 1, 0, 0, 3)).toEqual(false);
+    expect(nonburnableCellBetween(cells, 4, 1, 1, 0, 2)).toEqual(false);
+    expect(nonburnableCellBetween(cells, 4, 1, 1, 0, 3)).toEqual(true);
 
-    expect(riverOrFireLineBetween(cells, 4, 1, 0, 1, 2)).toEqual(true);
-    expect(riverOrFireLineBetween(cells, 4, 1, 0, 1, 3)).toEqual(true);
+    expect(nonburnableCellBetween(cells, 4, 1, 0, 1, 2)).toEqual(true);
+    expect(nonburnableCellBetween(cells, 4, 1, 0, 1, 3)).toEqual(true);
 
-    expect(riverOrFireLineBetween(cells, 4, 1, 0, 2, 2)).toEqual(true);
-    expect(riverOrFireLineBetween(cells, 4, 1, 0, 2, 3)).toEqual(true);
+    expect(nonburnableCellBetween(cells, 4, 1, 0, 2, 2)).toEqual(true);
+    expect(nonburnableCellBetween(cells, 4, 1, 0, 2, 3)).toEqual(true);
   });
 });
 
@@ -35,12 +34,12 @@ describe("withinDist", () => {
 });
 
 describe("getGridCellNeighbors", () => {
-  it("returns array of neighbours without cells that are rivers, fire lines, or lay behind them", () => {
+  it("returns array of neighbours without cells that are nonburnable, or lay behind them", () => {
     const cells = [
-      {isRiver: false}, {isRiver: false}, {isRiver: false}, {isRiver: false},
-      {isRiver: false}, {isRiver: false}, {isRiver: false}, {isRiver: false},
-      {isRiver: false}, {isRiver: true}, {isRiver: true}, {isRiver: true},
-      {isRiver: false}, {isRiver: false}, {isRiver: false}, {isRiver: false},
+      {isBurnable: true}, {isBurnable: true}, {isBurnable: true}, {isBurnable: true},
+      {isBurnable: true}, {isBurnable: true}, {isBurnable: true}, {isBurnable: true},
+      {isBurnable: true}, {isBurnable: false}, {isBurnable: false}, {isBurnable: false},
+      {isBurnable: true}, {isBurnable: true}, {isBurnable: true}, {isBurnable: true},
     ] as Cell[];
     expect(getGridCellNeighbors(cells, 0, 4, 4, 1.5).sort()).toEqual([1, 4, 5]);
     expect(getGridCellNeighbors(cells, 5, 4, 4, 1.5).sort()).toEqual([0, 1, 2, 4, 6, 8]);

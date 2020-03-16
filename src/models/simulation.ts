@@ -18,6 +18,8 @@ const getGridIndexForLocation = (x: number, y: number, width: number) => {
 };
 
 const modelDay = 1440; // minutes
+// ratio of unburnt islands that will be active per model run (random)
+const activeUnburntIslandsRatio = 0.5;
 
 const endOfLowIntensityFireProbability: {[key: number]: number} = {
   0: 0.0,
@@ -54,13 +56,13 @@ export const forEachPointBetween = (
   }
 };
 
-export const riverOrFireLineBetween = (
+export const nonburnableCellBetween = (
   cells: Cell[], width: number, x0: number, y0: number, x1: number, y1: number
 ) => {
   let result = false;
   forEachPointBetween(x0, y0, x1, y1, (x: number, y: number) => {
     const idx = getGridIndexForLocation(x, y, width);
-    if (cells[idx].isRiver || cells[idx].isFireLine) {
+    if (!cells[idx].isBurnable) {
       result = true;
     }
   });
@@ -92,9 +94,9 @@ export const getGridCellNeighbors = (
   const processed: {[key: number]: boolean}  = {};
   const x0 = i % width;
   const y0 = Math.floor(i / width);
-  // Keep this flag for performance reasons. If there's no river or fire line in current grid area, it doesn't
-  // make sense to run Bresenham's algorithm for every cell (riverOrFireLineBetween).
-  let anyRiverOrFireLine = false;
+  // Keep this flag for performance reasons. If there's no nonburnable ceels in current grid area, it doesn't
+  // make sense to run Bresenham's algorithm for every cell (nonburnableCellBetween).
+  let anyNonburnableCells = false;
   // Start BFS.
   queue.push(i);
   processed[i] = true;
@@ -108,9 +110,9 @@ export const getGridCellNeighbors = (
         !processed[nIdx] &&
         withinDist(x0, y0, x1 + diff.x, y1 + diff.y, neighborsDist)
       ) {
-        if (cells[nIdx].isRiver || cells[nIdx].isFireLine) {
-          anyRiverOrFireLine = true;
-        } else if (!anyRiverOrFireLine || !riverOrFireLineBetween(cells, width, x1 + diff.x, y1 + diff.y, x0, y0)) {
+        if (!cells[nIdx].isBurnable) {
+          anyNonburnableCells = true;
+        } else if (!anyNonburnableCells || !nonburnableCellBetween(cells, width, x1 + diff.x, y1 + diff.y, x0, y0)) {
           neighbours.push(nIdx);
           queue.push(nIdx);
         }
@@ -260,6 +262,42 @@ export class SimulationModel {
     );
   }
 
+  public getUnburntIslandsData(): Promise<number[] | undefined> {
+    // Unburnt islands are available only for complex terrain types based on `terrainType` properties and height maps.
+    // If elevation is specified using elevation array, there will be NO unburnt islands.
+    let unburntIslands: number[][] | string = [ [ 0 ]  ];
+    if (!this.config.elevation) {
+      const prefix = "data/";
+      const zoneTypes: string[] = [];
+      this.zones.forEach((z, i) => {
+        if (i < this.config.zonesCount) {
+          zoneTypes.push(TerrainType[z.terrainType].toLowerCase());
+        }
+      });
+      unburntIslands = prefix + zoneTypes.join("-") + "-islands.png";
+    }
+    const islandActive: {[key: number]: number} = {};
+    return getInputData(unburntIslands, this.gridWidth, this.gridHeight, true,
+      (rgba: [number, number, number, number]) => {
+        // White areas are regular cells. Islands use gray scale colors, every island is supposed to have different
+        // shade. It's enough to look just at R value, as G and B will be equal.
+        const r = rgba[0];
+        if (r < 255) {
+          if (islandActive[r] === undefined) {
+            if (Math.random() < activeUnburntIslandsRatio) {
+              islandActive[r] = 1;
+            } else {
+              islandActive[r] = 0;
+            }
+          }
+          return islandActive[r]; // island activity, 0 or 1
+        } else {
+          return 0; // white color means we're dealing with regular cell, return 0 (inactive island)
+        }
+      }
+    );
+  }
+
   public getRiverData(): Promise<number[] | undefined> {
     if (!this.config.riverData) {
       return Promise.resolve(undefined);
@@ -275,11 +313,12 @@ export class SimulationModel {
   @action.bound public populateCellsData() {
     this.dataReady = false;
     this.dataReadyPromise = Promise.all([
-      this.getZoneIndex(), this.getElevationData(), this.getRiverData()
+      this.getZoneIndex(), this.getElevationData(), this.getRiverData(), this.getUnburntIslandsData()
     ]).then(values => {
       const zoneIndex = values[0];
       const elevation = values[1];
       const river = values[2];
+      const unburntIsland = values[3];
 
       this.cells.length = 0;
 
@@ -289,7 +328,8 @@ export class SimulationModel {
           const cellOptions: CellOptions = {
             x, y,
             zone: this.zones[zoneIndex ? zoneIndex[index] : 0],
-            isRiver: river && river[index] > 0
+            isRiver: river && river[index] > 0,
+            isUnburntIsland: unburntIsland && unburntIsland[index] > 0
           };
           if (elevation) {
             cellOptions.baseElevation = elevation[index];
@@ -527,7 +567,8 @@ export class SimulationModel {
     const endGridX = Math.floor(end.x / this.cellSize);
     const endGridY = Math.floor(end.y / this.cellSize);
     forEachPointBetween(startGridX, startGridY, endGridX, endGridY, (x: number, y: number) => {
-      this.cells[getGridIndexForLocation(x, y, this.gridWidth)].isFireLine = true;
+      const cell = this.cells[getGridIndexForLocation(x, y, this.gridWidth)];
+      cell.isFireLine = true;
     });
     this.lastFireLineTimestamp = this.time;
   }
