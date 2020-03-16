@@ -1,5 +1,5 @@
 import { ISimulationConfig } from "./config";
-import { DroughtLevel, Vegetation, TerrainType } from "./models/fire-model";
+import { DroughtLevel, TerrainType, Vegetation } from "./models/fire-model";
 
 export interface IPresetConfig extends ISimulationConfig {
   zoneIndex: number[][] | string;
@@ -134,6 +134,17 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     zones: [
       { terrainType: TerrainType.Foothills, vegetation: Vegetation.Grass, droughtLevel: DroughtLevel.SevereDrought },
       { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: DroughtLevel.MediumDrought },
+    ],
+    towns: [
+      { name: "Skyview", x: 0.12, y: 0.68, terrainType: TerrainType.Mountains },
+      { name: "Peaksburg", x: 0.77, y: 0.37, terrainType: TerrainType.Mountains },
+      { name: "Happy Valley", x: 0.31, y: 0.36, terrainType: TerrainType.Mountains },
+      { name: "Sunrise", x: 0.81, y: 0.60, terrainType: TerrainType.Foothills },
+      { name: "Hillsboro", x: 0.36, y: 0.55, terrainType: TerrainType.Foothills },
+      { name: "Rolling Rock", x: 0.60, y: 0.25, terrainType: TerrainType.Foothills },
+      { name: "Evensville", x: 0.78, y: 0.55, terrainType: TerrainType.Plains },
+      { name: "Meadowland", x: 0.15, y: 0.55, terrainType: TerrainType.Plains },
+      { name: "Greenfield", x: 0.40, y: 0.15, terrainType: TerrainType.Plains }
     ],
     zoneIndex: [
       [ 0, 1 ]

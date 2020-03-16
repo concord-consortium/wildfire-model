@@ -1,6 +1,13 @@
 import { ZoneOptions } from "./models/zone";
 import { DroughtLevel, Vegetation, TerrainType } from "./models/fire-model";
 
+interface TownOptions {
+  name: string;
+  x: number; // [0, 1], position relative to model width
+  y: number; // [0, 1], position relative to model height
+  terrainType: TerrainType | undefined; // limit town marker to given terrain type
+}
+
 export interface ISimulationConfig {
   modelWidth: number; // ft
   modelHeight: number; // ft
@@ -24,6 +31,7 @@ export interface ISimulationConfig {
   // Number of zones that the model is using. Zones are used to keep properties of some area of the model.
   zonesCount: 2 | 3;
   zones: [ZoneOptions, ZoneOptions, ZoneOptions?];
+  towns: TownOptions[];
   fillTerrainEdges: boolean;
   riverData: string | null;
   windScaleFactor: number;
@@ -75,6 +83,7 @@ export const defaultConfig: IUrlConfig = {
       droughtLevel: DroughtLevel.SevereDrought
     }
   ],
+  towns: [],
   fillTerrainEdges: true,
   riverData: "data/river-texmap-data.png",
   windScaleFactor: 0.2, // Note that model is very sensitive to wind.
