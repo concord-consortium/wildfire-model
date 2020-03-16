@@ -5,7 +5,7 @@ interface TownOptions {
   name: string;
   x: number; // [0, 1], position relative to model width
   y: number; // [0, 1], position relative to model height
-  terrainType: TerrainType | undefined; // limit town marker to given terrain type
+  terrainType?: TerrainType; // limit town marker to given terrain type
 }
 
 export interface ISimulationConfig {
