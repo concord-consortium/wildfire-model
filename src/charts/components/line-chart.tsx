@@ -11,9 +11,11 @@ import { BaseComponent } from "../../components/base";
 
 interface ILineProps {
   chartData: ChartDataModel;
+  chartFont?: string;
   width?: number;
   height?: number;
   isPlaying: boolean;
+  axisLabelConversion: any;
 }
 
 interface ILineState { }
@@ -112,6 +114,9 @@ const lineData = (chartData: ChartDataModel) => {
         dset.pointHoverBackgroundColor = colors.map(c => hexToRGBValue(c, 1.0));
         dset.pointHoverBorderColor = colors.map(c => hexToRGBValue(c, 1.0));
       }
+      if (d.dashStyle) {
+        dset.borderDash = d.dashStyle;
+      }
       if (d.fixedLabelRotation) {
         dset.minRotation = d.fixedLabelRotation;
         dset.maxRotation = d.fixedLabelRotation;
@@ -141,14 +146,15 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
   }
 
   public render() {
-    const { chartData, width, height, isPlaying } = this.props;
+    const { chartData, chartFont, width, height, isPlaying, axisLabelConversion } = this.props;
     const chartDisplay = lineData(chartData);
     const graphs: JSX.Element[] = [];
     const minMaxValues = chartData.minMaxAll;
     const options: ChartOptions = Object.assign({}, defaultOptions, {
       title: {
         display: (chartData.name && chartData.name.length > 0),
-        text: chartData.name
+        text: chartData.name,
+        fontFamily: chartFont
       },
       scales: {
         yAxes: [{
@@ -158,7 +164,8 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
           },
           scaleLabel: {
             display: !!chartData.axisLabelA2,
-            labelString: chartData.axisLabelA2
+            labelString: chartData.axisLabelA2,
+            fontFamily: chartFont
           }
         }],
         xAxes: [{
@@ -169,15 +176,24 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
             max: minMaxValues.maxA1,
             minRotation: chartData.dataLabelRotation,
             maxRotation: chartData.dataLabelRotation,
-            userCallback: (label: any) => {
-              return Math.ceil(label / 24);
-            },
+            userCallback: axisLabelConversion
+            // userCallback: (label: any) => {
+            //   return Math.ceil(label / 24);
+            // },
           },
           scaleLabel: {
             display: !!chartData.axisLabelA1,
-            labelString: chartData.axisLabelA1
+            labelString: chartData.axisLabelA1,
+            fontFamily: chartFont
           }
         }]
+      },
+      legend: {
+        display: true,
+        position: "bottom",
+        labels: {
+          fontFamily: chartFont
+        }
       },
       annotation: {
         annotations: chartData.formattedAnnotations

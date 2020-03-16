@@ -5,8 +5,13 @@ import { defaultConfig, ISimulationConfig, urlConfig } from "../config";
 import { getInputData } from "../utils";
 import { Vector2 } from "three";
 import { Zone } from "./zone";
+<<<<<<< HEAD
 import { Town } from "../types";
 import { addData, clearData } from "../charts/data-store";
+=======
+import { currentChart, addData, clearData, setChartProperties } from "../charts/data-store";
+import { ChartDataModel } from "../charts/models/chart-data";
+>>>>>>> aef2d3f... Styling updates for charts plus range defaults for axis scaling
 
 interface ICoords {
   x: number;
@@ -743,20 +748,19 @@ export class SimulationModel {
         else burnedCellsInZone[cell.zoneIdx]++;
       }
     }
-    // Convert time from minutes to days.
-    const timeInDays = Math.round(this.time / 1440);
+    // Convert time from minutes to hours.
     const timeInHours = Math.round(this.time / 60);
+    const currentData: ChartDataModel = currentChart();
+    if (!currentData.name || currentData.name.length === 0) {
+      setChartProperties("Fire Area vs Time", "Time (hours)", "Area (Acres)");
+    }
     for (let i = 0; i < this.zones.length; i++) {
       addData(
         timeInHours,
         burnedCellsInZone[i] / totalCellCountByZone[i] * 100,
         i,
         undefined,
-        `Zone ${i}`,
-        undefined,
-        undefined,
-        "Fire Area vs Time",
-        "Time (days)", "Area (Acres)");
+        `Zone ${i}`);
     }
 
     if (fireDidStop) {

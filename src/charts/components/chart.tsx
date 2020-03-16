@@ -15,6 +15,7 @@ interface IChartProps {
   width?: number;
   height?: number;
   isPlaying: boolean;
+  axisLabelConversion: any;
 }
 
 interface IChartState {}
@@ -23,17 +24,21 @@ interface IChartState {}
 export class Chart extends React.Component<IChartProps, IChartState> {
 
   public render() {
-    const { chartType, chartData, width, height, isPlaying } = this.props;
+    const { chartType, chartData, width, height, isPlaying, axisLabelConversion } = this.props;
     const chart = chartType === "line" ?
       <LineChart
         chartData={chartData}
+        chartFont={"'Roboto Condensed', 'Helvetica Condensed', 'Arial Narrow', 'Helvetica', 'Arial'"}
         width={this.props.width}
         height={this.props.height}
         isPlaying={isPlaying}
-        data-test="line-chart" />
+        data-test="line-chart"
+        axisLabelConversion={axisLabelConversion}
+      />
       :
       <BarChart
         chartData={chartData}
+        chartFont={"'Roboto Condensed', 'Helvetica Condensed', 'Arial Narrow', 'Helvetica', 'Arial'"}
         width={width}
         height={height}
         barChartType={chartType}

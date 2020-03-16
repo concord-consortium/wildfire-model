@@ -1,14 +1,19 @@
 import { ChartDataModel } from "./models/chart-data";
 import { DataPoint, ChartDataSet } from "./models/chart-data-set";
 
-const defaultMaxPoints = 200;
-const defaultMaxA1 = 100;
-const defaultDownsampleMaxLength = 10;
+const defaultMaxPoints = 20;
+const defaultMaxA1 = 20;
+const defaultInitialMaxA1 = 20;
+const defaultDownsampleMaxLength = 200;
 const defaultDownsampleGrowWindow = 40;
 
 let chart: ChartDataModel = new ChartDataModel({
   name: "",
-  dataSets: []
+  dataSets: [],
+  defaultAxisLabelA1: "Time",
+  defaultAxisLabelA2: "Value",
+  defaultMaxPoints,
+  defaultMaxA1
 });
 
 export const currentChart = (): ChartDataModel => {
@@ -22,10 +27,7 @@ export const addData = (
   pointLabel: string = "",
   seriesName?: string,
   seriesColor?: string,
-  maxPoints?: number,
-  chartName?: string,
-  axisLabelA1?: string,
-  axisLabelA2?: string) => {
+  maxPoints?: number) => {
   if (chart) {
     if (chart.dataSets.length - 1 >= seriesIndex) {
       // we have a chart with existing datasets
@@ -36,17 +38,14 @@ export const addData = (
     } else {
       const points = [];
       points.push(new DataPoint({ a1: px, a2: py, label: pointLabel }));
-      addNewDataSetToChart(points, seriesName, seriesColor, maxPoints, axisLabelA1, axisLabelA2);
+      addNewDataSetToChart(
+        points,
+        seriesName,
+        seriesColor,
+        maxPoints,
+        chart.defaultAxisLabelA1,
+        chart.defaultAxisLabelA2);
     }
-  } else {
-    const chartDataSets: ChartDataSet[] = [];
-    const points = [];
-    points.push(new DataPoint({ a1: px, a2: py, label: pointLabel }));
-    chart = new ChartDataModel ({
-      name: chartName ? chartName : "Chart1",
-      dataSets: chartDataSets
-    });
-    addNewDataSetToChart(points, seriesName, seriesColor, maxPoints, axisLabelA1, axisLabelA2);
   }
 };
 
@@ -63,21 +62,23 @@ const addNewDataSetToChart = (
     dataPoints: points,
     color: seriesColor,
     maxPoints: maxPoints ? maxPoints : defaultMaxPoints,
-    downsample: false,
+    downsample: true,
     downsampleMaxLength: defaultDownsampleMaxLength,
     downsampleGrowWindow: defaultDownsampleGrowWindow,
     display: true,
-    fixedMaxA1: defaultMaxA1,
+    initialMaxA1: maxPoints ? maxPoints : defaultInitialMaxA1,
     fixedMinA2: 0,
     fixedMaxA2: 100,
-    fixedMinA1: 0,
+    expandOnly: true,
     axisLabelA1,
     axisLabelA2
   }));
 };
 
-export const setChartName = (name: string) => {
+export const setChartProperties = (name: string, labelA1: string, labelA2: string) => {
   chart.name = name;
+  chart.defaultAxisLabelA1 = labelA1;
+  chart.defaultAxisLabelA2 = labelA2;
 };
 
 export const clearData = () => {
@@ -86,9 +87,10 @@ export const clearData = () => {
   }
 };
 
-export const setChartColor = (idx: number, color: string) => {
+export const setChartStyle = (idx: number, color: string, dashStyle?: number[]) => {
   if (chart && chart.dataSets && chart.dataSets[idx]){
     chart.dataSets[idx].changeColor(color);
+    if (dashStyle) chart.dataSets[idx].dashStyle = dashStyle;
   }
 };
 
@@ -132,27 +134,3 @@ export const getMockChartData = () => {
   });
   return chart;
 };
-/*
-const getChartDataFromSimulation = (simulation: SimulationModel) => {
-  const chartDataSets: ChartDataSet[] = [];
-
-  simulation.zones.forEach(zone => {
-    const points: DataPoint[] = [];
-    chartDataSets.push(new ChartDataSet ({
-      name: zone.terrainType.toString(),
-      dataPoints: points,
-      maxPoints: 100,
-      downsample: true,
-      downsampleMaxLength: 120,
-      downsampleGrowWindow: 40,
-      display: true
-    }));
-  });
-  let chart: ChartDataModel;
-  chart = new ChartDataModel({
-    name: "Fire Spread",
-    dataSets: chartDataSets
-  });
-  return chart;
-};
-**/

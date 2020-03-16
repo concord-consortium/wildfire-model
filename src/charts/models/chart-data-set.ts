@@ -89,7 +89,7 @@ export class DataPoint implements IDataPoint{
 export interface IChartDataSet{
   name: string;
   dataPoints: IDataPoint[];
-
+  display: boolean;
   // optional properties
   color?: string;
   pointColors?: string[];
@@ -106,8 +106,8 @@ export interface IChartDataSet{
   stack?: string;
   axisLabelA1?: string;
   axisLabelA2?: string;
-  expandOnly?: false;
-  display: boolean;
+  expandOnly?: boolean;
+  dashStyle?: number[];
   downsample?: boolean;
   downsampleMaxLength?: number;
   downsampleGrowWindow?: number;
@@ -135,8 +135,9 @@ export class ChartDataSet implements IChartDataSet {
   public stack?: string;
   public axisLabelA1?: string = "";
   public axisLabelA2?: string = "";
-  public expandOnly?: false;
+  public expandOnly?: boolean = false;
   public display: boolean = true;
+  public dashStyle?: number[];
   public downsample?: boolean;
   public downsampleMaxLength?: number;
   public downsampleGrowWindow?: number;

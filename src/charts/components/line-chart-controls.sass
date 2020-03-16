@@ -1,11 +1,10 @@
 @import "../../components/common.scss"
 
-.line-chart-controls
+.lineChartControls
   position: relative
-  width: 88%
-  height: 10px
-  margin-left: 8%
-  margin-right: 4%
+  width: 220px
+  height: 20px
+  margin-left: 50px
   margin-top: 5px
   flex: 0 0 20px
   transform: translate3d(0px, 0px, 0px)  // needed to keep visibility after scaling
@@ -14,6 +13,8 @@
     position: absolute
     width: 100%
     margin-top: -5px
+    &:hover
+      background-color: green
 
-  .rc-slider-disabled
+  .rcSliderDisabled
     background-color: $controlGrayLight1

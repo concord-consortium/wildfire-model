@@ -6,13 +6,16 @@ import { Chart } from "../charts/components/chart";
 import { useStores } from "../use-stores";
 import * as css from "./right-panel.scss";
 import { ChartDataModel } from "../charts/models/chart-data";
-import { currentChart, setChartColor, setChartName } from "../charts/data-store";
+import { currentChart, setChartStyle, setChartProperties } from "../charts/data-store";
 
 export type TabType = "graph";
 
 const chartColor0 = "#ffb7f5";
 const chartColor1 = "#6badff";
 const chartColor2 = "#ffc085";
+const borderDash0 = [];
+const borderDash1 = [5, 5];
+const borderDash2 = [10, 5];
 
 export const RightPanel = observer(() => {
   const { simulation, ui } = useStores();
@@ -26,13 +29,30 @@ export const RightPanel = observer(() => {
 
   const currentData: ChartDataModel = currentChart();
   if (!currentData.name || currentData.name.length === 0) {
-    setChartName("Fire Area vs Time");
+    setChartProperties("Fire Area vs Time", "Time (hours)", "Area (Acres)");
   }
   const showChart = currentData != null;
   if (showChart && !hasSetColor && currentData.dataSets.length === simulation.zones.length) {
     for (let i = 0; i < simulation.zones.length; i++) {
-      const zoneColor = i === 0 ? chartColor0 : i === 2 ? chartColor1 : chartColor2;
-      setChartColor(i, zoneColor);
+      let zoneColor;
+      let dashStyle;
+      switch (i) {
+        case 0:
+          zoneColor = chartColor0;
+          break;
+        case 1:
+          zoneColor = chartColor1;
+          dashStyle = borderDash1;
+          break;
+        case 2:
+          zoneColor = chartColor2;
+          dashStyle = borderDash2;
+          break;
+        default:
+          zoneColor = chartColor2;
+          break;
+      }
+      setChartStyle(i, zoneColor, dashStyle);
     }
     setHasSetColor(true);
   }
@@ -48,14 +68,19 @@ export const RightPanel = observer(() => {
     }
   };
 
+  const axisLabelConversion = (label: any) => {
+    return label;
+    return Math.ceil(label / 24);
+  };
+
   return (
     <div className={`${css.rightPanel} ${open ? css.open : ""}`} data-test="right-panel">
       <div className={css.rightPanelContent}>
         <div className={css.title}>Graph</div>
         {showChart &&
           <div className={css.chartContainer}>
-            <Chart title="chart" chartType="line" chartData={currentData}
-              isPlaying={simulation.simulationRunning} />
+          <Chart title="chart" chartType="line" chartData={currentData}
+            isPlaying={simulation.simulationRunning} axisLabelConversion={axisLabelConversion}/>
           </div>
         }
       </div>

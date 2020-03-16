@@ -7,6 +7,11 @@ export interface IChartDataModel{
   dataSets: ChartDataSet[];
   labels?: string[];
   annotations?: ChartAnnotation[];
+  defaultAxisLabelA1?: string;
+  defaultAxisLabelA2?: string;
+  defaultMaxPoints?: number;
+  defaultMaxA1?: number;
+  defaultMaxA2?: number;
 }
 
 export class ChartDataModel implements IChartDataModel {
@@ -14,6 +19,11 @@ export class ChartDataModel implements IChartDataModel {
   @observable public dataSets: ChartDataSet[];
   public labels?: string[];
   public annotations?: ChartAnnotation[];
+  public defaultAxisLabelA1?: string;
+  public defaultAxisLabelA2?: string;
+  public defaultMaxPoints?: number = 100;
+  public defaultMaxA1: number = 100;
+  public defaultMaxA2: number = 100;
 
   constructor(props: IChartDataModel) {
     Object.assign(this, props);
@@ -49,8 +59,8 @@ export class ChartDataModel implements IChartDataModel {
     const minA2Values: number[] = [];
     if (this.visibleDataSets && this.visibleDataSets.length > 0) {
       this.visibleDataSets.forEach((d) => {
-        maxA1Values.push(d.maxA1 || 100);
-        maxA2Values.push(d.maxA2 || 100);
+        maxA1Values.push(d.maxA1 || this.defaultMaxA1);
+        maxA2Values.push(d.maxA2 || this.defaultMaxA2);
         minA1Values.push(d.minA1 || 0);
         minA2Values.push(d.minA2 || 0);
       });
@@ -63,8 +73,8 @@ export class ChartDataModel implements IChartDataModel {
     }
     else {
       return {
-        maxA1: 100,
-        maxA2: 100,
+        maxA1: this.defaultMaxA1,
+        maxA2: this.defaultMaxA2,
         minA1: 0,
         minA2: 0,
       };
@@ -78,7 +88,7 @@ export class ChartDataModel implements IChartDataModel {
     if (this.visibleDataSets && this.visibleDataSets.length > 0) {
       return this.visibleDataSets[0].maxPoints;
     } else {
-      return 100;
+      return this.defaultMaxPoints;
     }
   }
 
@@ -99,7 +109,8 @@ export class ChartDataModel implements IChartDataModel {
   }
 
   public get axisLabelA1() {
-    if (this.visibleDataSets && this.visibleDataSets.length > 0) {
+    if (this.defaultAxisLabelA1) return this.defaultAxisLabelA1;
+    else if (this.visibleDataSets && this.visibleDataSets.length > 0) {
       return this.visibleDataSets[0].axisLabelA1;
     } else {
       return "";
@@ -107,7 +118,8 @@ export class ChartDataModel implements IChartDataModel {
   }
 
   public get axisLabelA2() {
-    if (this.visibleDataSets && this.visibleDataSets.length > 0) {
+    if (this.defaultAxisLabelA2) return this.defaultAxisLabelA2;
+    else if (this.visibleDataSets && this.visibleDataSets.length > 0) {
       return this.visibleDataSets[0].axisLabelA2;
     } else {
       return "";
@@ -121,6 +133,8 @@ export class ChartDataModel implements IChartDataModel {
   }
 
   public addDataSet = (dataSet: ChartDataSet) => {
+    if (this.defaultAxisLabelA1) dataSet.axisLabelA1 = this.defaultAxisLabelA1;
+    if (this.defaultAxisLabelA2) dataSet.axisLabelA2 = this.defaultAxisLabelA2;
     this.dataSets.push(dataSet);
   }
   // If we want to scrub back and forth along a timeline of data points, but still need

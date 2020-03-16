@@ -9,6 +9,7 @@ import { draw } from "patternomaly";
 
 interface IBarProps {
   chartData: ChartDataModel;
+  chartFont?: string;
   width?: number;
   height?: number;
   barChartType: ChartType;
@@ -127,9 +128,12 @@ export class BarChart extends React.Component<IBarProps> {
   }
 
   public render() {
-    const { chartData, width, height, barChartType } = this.props;
+    const { chartData, chartFont, width, height, barChartType } = this.props;
     const chartDisplay = barData(chartData);
     const options: ChartOptions = Object.assign({}, defaultOptions, {
+      title: {
+        fontFamily: chartFont ? chartFont : undefined
+      },
       scales: {
         xAxes: [{
           ticks: {

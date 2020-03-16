@@ -5,7 +5,7 @@ import { baseColors } from "../models/chart-data-set";
 import Slider from "rc-slider";
 import { BaseComponent } from "../../components/base";
 
-import "./line-chart-controls.sass";
+import * as css from "./line-chart-controls.sass";
 import "rc-slider/assets/index.css";
 
 interface IChartControlProps {
@@ -47,7 +47,8 @@ export class LineChartControls extends BaseComponent<IChartControlProps, IChartC
     const { chartData, isPlaying } = this.props;
     const { scrubberPosition, scrubberMin, scrubberMax } = this.state;
     const pos = scrubberPosition ? scrubberPosition : 0;
-    const timelineVisible = chartData.maxPoints > 0 && chartData.pointCount > chartData.maxPoints;
+    const timelineVisible = chartData.maxPoints && chartData.maxPoints > 0 &&
+      chartData.pointCount > chartData.maxPoints;
 
     const trackStyle = { backgroundColor: baseColors.chartColor5, height: 10 };
     const handleStyle = {
@@ -55,12 +56,11 @@ export class LineChartControls extends BaseComponent<IChartControlProps, IChartC
       height: 20,
       width: 20
     };
-    const railStyle = { backgroundColor: baseColors.chartColor7, height: 10 };
-
+    const railStyle = { backgroundColor: baseColors.chartColor7, height: 10, track: 4 };
     return (
-      <div className="line-chart-controls" id="line-chart-controls">
+      <div className={css.lineChartControls} id="line-chart-controls">
         {timelineVisible &&
-          <Slider className="scrubber"
+          <Slider className={css.scrubber}
           trackStyle={trackStyle}
           handleStyle={handleStyle}
           railStyle={railStyle}
@@ -68,7 +68,7 @@ export class LineChartControls extends BaseComponent<IChartControlProps, IChartC
           min={scrubberMin}
           max={scrubberMax}
           value={pos}
-          disabled={isPlaying}
+          disabled={false}
           />
         }
       </div>
@@ -81,11 +81,11 @@ export class LineChartControls extends BaseComponent<IChartControlProps, IChartC
     // slider covers whole dataset
     // retrieve maxPoints for subset based on percentage along of the slider
     const sliderPercentage = value / chartData.pointCount;
-    const dataRangeMax = chartData.pointCount - chartData.maxPoints;
-
+    const maxPoints = chartData.maxPoints ? chartData.maxPoints : 100;
+    const dataRangeMax = chartData.pointCount - maxPoints;
     if (dataRangeMax > 0) {
       const startIdx = Math.round(sliderPercentage * dataRangeMax);
-      chartData.setDataSetSubset(startIdx, chartData.maxPoints);
+      chartData.setDataSetSubset(startIdx, maxPoints);
       this.setState({
         scrubberPosition: value,
         scrubberMax: chartData.pointCount
