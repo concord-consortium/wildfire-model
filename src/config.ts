@@ -41,6 +41,8 @@ export interface ISimulationConfig {
   maxFireLineLength: number; // ft
   // Renders burn index.
   showBurnIndex: boolean;
+  // Displays alert with current coordinates on mouse click. Useful for authoring.
+  showCoordsOnClick: boolean;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -91,7 +93,8 @@ export const defaultConfig: IUrlConfig = {
   showModelDimensions: false,
   fireLineDelay: 1440, // a day
   maxFireLineLength: 15000, // ft
-  showBurnIndex: false
+  showBurnIndex: false,
+  showCoordsOnClick: false
 };
 
 export const urlConfig: any = {};

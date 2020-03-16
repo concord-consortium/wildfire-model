@@ -16,6 +16,7 @@ import { DroughtLevel } from "../../models/fire-model";
 import { FireLineMarkersContainer } from "./fire-line-marker";
 import { TownMarkersContainer } from "./town-marker";
 import { ISimulationConfig } from "../../config";
+import { ShowCoordsInteraction } from "./show-coords-interaction";
 
 const getTerrainColor = (droughtLevel: number) => {
   switch (droughtLevel) {
@@ -138,5 +139,6 @@ export const Terrain = observer(() => {
     <TownMarkersContainer/>
     { ui.interaction === Interaction.PlaceSpark && <AddSparkInteraction getTerrain={getEntity} /> }
     { ui.interaction === Interaction.DrawFireLine && <DrawFireLineInteraction getTerrain={getEntity} /> }
+    { simulation.config.showCoordsOnClick && <ShowCoordsInteraction getTerrain={getEntity} /> }
   </>;
 });
