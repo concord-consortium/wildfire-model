@@ -263,10 +263,10 @@ export class SimulationModel {
   }
 
   public getUnburntIslandsData(): Promise<number[] | undefined> {
-    // Unburnt islands are available only for complex terrain types based on `terrainType` properties and height maps.
-    // If elevation is specified using elevation array, there will be NO unburnt islands.
-    let unburntIslands: number[][] | string = [ [ 0 ]  ];
-    if (!this.config.elevation) {
+    // Unburnt islands can be specified directly using unburntIslands property or they'll be generated automatically
+    // using zones terrain type.
+    let unburntIslands: number[][] | string | undefined = this.config.unburntIslands;
+    if (!unburntIslands) {
       const prefix = "data/";
       const zoneTypes: string[] = [];
       this.zones.forEach((z, i) => {
@@ -499,10 +499,10 @@ export class SimulationModel {
       directNeighbours.forEach(diff => {
         const x1 = c.x + diff.x;
         const y1 = c.y + diff.y;
-        const neighbour = this.cells[getGridIndexForLocation(x1, y1, this.gridWidth)];
-        if (x1 >= 0 && x1 < this.gridWidth && y1 >= 0 && y1 < this.gridHeight && neighbour.isUnburntIsland) {
-          neighbour.isUnburntIsland = false;
-          queue.push(neighbour);
+        const nIdx = getGridIndexForLocation(x1, y1, this.gridWidth);
+        if (x1 >= 0 && x1 < this.gridWidth && y1 >= 0 && y1 < this.gridHeight && this.cells[nIdx].isUnburntIsland) {
+          this.cells[nIdx].isUnburntIsland = false;
+          queue.push(this.cells[nIdx]);
         }
       });
     }

@@ -54,10 +54,11 @@ describe("SimulationModel", () => {
     const sim = new SimulationModel({
       modelWidth: 100000,
       modelHeight: 100000,
-      gridWidth: 2,
+      gridWidth: 5,
       sparks: [ [50000, 50000] ],
       zoneIndex: [[0]],
       elevation: [[0]],
+      unburntIslands: [[0]],
       riverData: null
     });
     await sim.dataReadyPromise;
@@ -70,17 +71,40 @@ describe("SimulationModel", () => {
     const sim = new SimulationModel({
       modelWidth: 100000,
       modelHeight: 100000,
-      gridWidth: 20,
+      gridWidth: 5,
       sparks: [ [50000, 50000] ],
       zoneIndex: [[0]],
       elevation: [[0]],
+      unburntIslands: [[0]],
       riverData: null
     });
     await sim.dataReadyPromise;
     sim.simulationRunning = true;
     sim.tick(1440 * 5);
+    expect(sim.cells.filter(c => c.isBurningOrWillBurn).length).toBeGreaterThan(0);
     sim.tick(1440);
     sim.tick(1440);
+    expect(sim.cells.filter(c => c.isBurningOrWillBurn).length).toEqual(0);
     expect(sim.simulationRunning).toBe(false);
+  });
+
+  it("should mark unburnt islands cell and remove this flag from cells are directly under the spark", async () => {
+    const sim = new SimulationModel({
+      modelWidth: 100000,
+      modelHeight: 100000,
+      gridWidth: 5,
+      sparks: [ [50000, 50000] ],
+      zoneIndex: [[0]],
+      elevation: [[0]],
+      unburntIslands: [[1]],
+      unburntIslandProbability: 1,
+      riverData: null,
+    });
+    await sim.dataReadyPromise;
+    sim.cells.forEach(c => expect(c.isUnburntIsland).toEqual(true));
+    expect(sim.cells.filter(c => c.isBurningOrWillBurn).length).toEqual(0);
+    sim.tick(1440);
+    sim.cells.forEach(c => expect(c.isUnburntIsland).toEqual(false));
+    expect(sim.cells.filter(c => c.isBurningOrWillBurn).length).toBeGreaterThan(0);
   });
 });
