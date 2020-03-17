@@ -5,13 +5,9 @@ import { defaultConfig, ISimulationConfig, urlConfig } from "../config";
 import { getInputData } from "../utils";
 import { Vector2 } from "three";
 import { Zone } from "./zone";
-<<<<<<< HEAD
 import { Town } from "../types";
-import { addData, clearData } from "../charts/data-store";
-=======
-import { currentChart, addData, clearData, setChartProperties } from "../charts/data-store";
+import { currentChart, addData, clearData, setChartProperties } from "../charts/chart-utils";
 import { ChartDataModel } from "../charts/models/chart-data";
->>>>>>> aef2d3f... Styling updates for charts plus range defaults for axis scaling
 
 interface ICoords {
   x: number;
@@ -754,13 +750,17 @@ export class SimulationModel {
     if (!currentData.name || currentData.name.length === 0) {
       setChartProperties("Fire Area vs Time", "Time (hours)", "Area (Acres)");
     }
+    // dimensions in feet, convert sqft to acres
+    const simulationAreaAcres = this.gridWidth * this.gridHeight * this.cellSize / 43560;
+
     for (let i = 0; i < this.zones.length; i++) {
+      const burnPercentage = burnedCellsInZone[i] / totalCellCountByZone[i];
       addData(
         timeInHours,
-        burnedCellsInZone[i] / totalCellCountByZone[i] * 100,
+        Math.ceil(simulationAreaAcres * burnPercentage),
         i,
         undefined,
-        `Zone ${i}`);
+        `Zone ${i + 1}`);
     }
 
     if (fireDidStop) {

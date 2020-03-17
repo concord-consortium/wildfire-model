@@ -15,7 +15,8 @@ interface IChartProps {
   width?: number;
   height?: number;
   isPlaying: boolean;
-  axisLabelConversion: any;
+  axisLabelA1Function: any;
+  axisLabelA2Function: any;
 }
 
 interface IChartState {}
@@ -24,7 +25,7 @@ interface IChartState {}
 export class Chart extends React.Component<IChartProps, IChartState> {
 
   public render() {
-    const { chartType, chartData, width, height, isPlaying, axisLabelConversion } = this.props;
+    const { chartType, chartData, width, height, isPlaying, axisLabelA1Function, axisLabelA2Function } = this.props;
     const chart = chartType === "line" ?
       <LineChart
         chartData={chartData}
@@ -33,7 +34,8 @@ export class Chart extends React.Component<IChartProps, IChartState> {
         height={this.props.height}
         isPlaying={isPlaying}
         data-test="line-chart"
-        axisLabelConversion={axisLabelConversion}
+        axisLabelA1Function={axisLabelA1Function}
+        axisLabelA2Function={axisLabelA2Function}
       />
       :
       <BarChart

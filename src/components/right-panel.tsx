@@ -6,7 +6,7 @@ import { Chart } from "../charts/components/chart";
 import { useStores } from "../use-stores";
 import * as css from "./right-panel.scss";
 import { ChartDataModel } from "../charts/models/chart-data";
-import { currentChart, setChartStyle, setChartProperties } from "../charts/data-store";
+import { currentChart, setChartStyle, setChartProperties } from "../charts/chart-utils";
 
 export type TabType = "graph";
 
@@ -68,19 +68,26 @@ export const RightPanel = observer(() => {
     }
   };
 
-  const axisLabelConversion = (label: any) => {
+  const axisLabelA1 = (label: any) => {
     return label;
-    return Math.ceil(label / 24);
+  };
+
+  const axisLabelA2 = (label: any) => {
+    return label;
   };
 
   return (
     <div className={`${css.rightPanel} ${open ? css.open : ""}`} data-test="right-panel">
       <div className={css.rightPanelContent}>
-        <div className={css.title}>Graph</div>
         {showChart &&
           <div className={css.chartContainer}>
-          <Chart title="chart" chartType="line" chartData={currentData}
-            isPlaying={simulation.simulationRunning} axisLabelConversion={axisLabelConversion}/>
+          <Chart
+            title="Acres Burned vs. Time"
+            chartType="line"
+            chartData={currentData}
+            isPlaying={simulation.simulationRunning}
+            axisLabelA1Function={axisLabelA1}
+            axisLabelA2Function={axisLabelA2} />
           </div>
         }
       </div>

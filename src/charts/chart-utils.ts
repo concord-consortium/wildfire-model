@@ -71,7 +71,8 @@ const addNewDataSetToChart = (
     fixedMaxA2: 100,
     expandOnly: true,
     axisLabelA1,
-    axisLabelA2
+    axisLabelA2,
+    axisRoundValueA2: 10
   }));
 };
 

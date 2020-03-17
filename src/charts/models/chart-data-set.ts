@@ -111,6 +111,7 @@ export interface IChartDataSet{
   downsample?: boolean;
   downsampleMaxLength?: number;
   downsampleGrowWindow?: number;
+  axisRoundValueA2?: number;
 }
 
 export type GraphPatternType = "diagonal" | "diagonal-right-left";
@@ -131,7 +132,7 @@ export class ChartDataSet implements IChartDataSet {
   public fixedMaxA2?: number;
   public initialMaxA1?: number;
   public fixedLabelRotation?: number;
-  public dataStartIdx?: number;
+  @observable public dataStartIdx?: number;
   public stack?: string;
   public axisLabelA1?: string = "";
   public axisLabelA2?: string = "";
@@ -141,6 +142,7 @@ export class ChartDataSet implements IChartDataSet {
   public downsample?: boolean;
   public downsampleMaxLength?: number;
   public downsampleGrowWindow?: number;
+  public axisRoundValueA2?: number;
 
   constructor(props: IChartDataSet) {
     Object.assign(this, props);
@@ -191,7 +193,6 @@ export class ChartDataSet implements IChartDataSet {
     } else {
       return visiblePoints.map(p => p.label);
     }
-    return visiblePoints.map(p => p.a2);
   }
 
   // Determine minimum and maximum values on each axis
@@ -228,7 +229,11 @@ export class ChartDataSet implements IChartDataSet {
       // always return max from all points so y axis only scales up, never down
       if (this.fixedMaxA2) {
         // use fixedMax as a minimum value for max
-        const dataMax = Math.max(...this.dataPoints.map(p => p.a2));
+        let dataMax = Math.max(...this.dataPoints.map(p => p.a2));
+        // if we want the axis value to round up to nearest 10, or 100, use the axisRoundValueA2
+        if (this.axisRoundValueA2) {
+          dataMax = (Math.ceil(dataMax / this.axisRoundValueA2) * this.axisRoundValueA2) + this.axisRoundValueA2;
+        }
         return this.fixedMaxA2 > dataMax ? this.fixedMaxA2 : dataMax;
       } else {
         return Math.max(...this.dataPoints.map(p => p.a2));

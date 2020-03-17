@@ -8,6 +8,7 @@ import { ChartColors } from "../models/chart-data-set";
 import { hexToRGBValue } from "../../utils";
 import { LineChartControls } from "./line-chart-controls";
 import { BaseComponent } from "../../components/base";
+import { ChartAnnotation } from "../models/chart-annotation";
 
 interface ILineProps {
   chartData: ChartDataModel;
@@ -15,7 +16,8 @@ interface ILineProps {
   width?: number;
   height?: number;
   isPlaying: boolean;
-  axisLabelConversion: any;
+  axisLabelA1Function: any;
+  axisLabelA2Function: any;
 }
 
 interface ILineState { }
@@ -62,7 +64,7 @@ const defaultOptions: ChartOptions = {
       display: true,
       ticks: {
         min: 0,
-        max: 20
+        max: 100
       }
     }]
   },
@@ -72,7 +74,7 @@ const defaultOptions: ChartOptions = {
 const lineDatasetDefaults: ChartData<any> = {
   label: "",
   fill: false,
-  lineTension: 0.1,
+  lineTension: 0.2,
   pointBorderWidth: 1,
   pointHoverRadius: 5,
   pointHoverBorderWidth: 2,
@@ -146,7 +148,7 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
   }
 
   public render() {
-    const { chartData, chartFont, width, height, isPlaying, axisLabelConversion } = this.props;
+    const { chartData, chartFont, width, height, isPlaying, axisLabelA1Function, axisLabelA2Function } = this.props;
     const chartDisplay = lineData(chartData);
     const graphs: JSX.Element[] = [];
     const minMaxValues = chartData.minMaxAll;
@@ -160,7 +162,9 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
         yAxes: [{
           ticks: {
             min: minMaxValues.minA2,
-            max: minMaxValues.maxA2
+            max: minMaxValues.maxA2,
+            fontFamily: chartFont,
+            userCallback: axisLabelA2Function
           },
           scaleLabel: {
             display: !!chartData.axisLabelA2,
@@ -176,10 +180,8 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
             max: minMaxValues.maxA1,
             minRotation: chartData.dataLabelRotation,
             maxRotation: chartData.dataLabelRotation,
-            userCallback: axisLabelConversion
-            // userCallback: (label: any) => {
-            //   return Math.ceil(label / 24);
-            // },
+            fontFamily: chartFont,
+            userCallback: axisLabelA1Function
           },
           scaleLabel: {
             display: !!chartData.axisLabelA1,

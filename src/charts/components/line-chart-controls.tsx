@@ -27,8 +27,9 @@ export class LineChartControls extends BaseComponent<IChartControlProps, IChartC
 
     if (isPlaying) {
       nextState.scrubberPosition = chartData.pointCount;
+      const maxPoints = chartData.maxPoints ? chartData.maxPoints : 100;
       if (chartData.subsetIdx !== -1) {
-        chartData.setDataSetSubset(-1, chartData.maxPoints);
+        chartData.setDataSetSubset(-1, maxPoints);
       }
       if (prevState.scrubberMax !== chartData.pointCount) {
         nextState.scrubberMax = chartData.pointCount;
@@ -81,7 +82,7 @@ export class LineChartControls extends BaseComponent<IChartControlProps, IChartC
     // slider covers whole dataset
     // retrieve maxPoints for subset based on percentage along of the slider
     const sliderPercentage = value / chartData.pointCount;
-    const maxPoints = chartData.maxPoints ? chartData.maxPoints : 100;
+    const maxPoints = chartData.maxPoints ? chartData.maxPoints : 20;
     const dataRangeMax = chartData.pointCount - maxPoints;
     if (dataRangeMax > 0) {
       const startIdx = Math.round(sliderPercentage * dataRangeMax);

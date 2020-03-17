@@ -11,7 +11,7 @@
     border-left: 2px solid $controlGreenDark2;
     border-top: 1px solid $controlGreenDark2;
     background-color: $controlGreenDark2;
-    z-index: 10;
+    z-index: 0;
 
     .rightPanelContent{
       position: absolute;
@@ -57,7 +57,7 @@
     }
 
     .tabContentBack {
-      z-index: 400;
+      z-index: 1;
       position: absolute;
       width: $rightPanelWidth;
       bottom: 0;

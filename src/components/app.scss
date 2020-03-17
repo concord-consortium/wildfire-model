@@ -29,10 +29,8 @@
   height: calc(100% - #{$bottomBarHeight + $bottomBarBorderWidth});
   min-height: 551px;
   position: fixed;
-  z-index: 1000;
   top: 0;
   right: 0;
-  pointer-events: none;
   transition: 1s;
   &.grow{
     right: 0;
