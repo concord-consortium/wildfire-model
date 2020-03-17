@@ -189,19 +189,7 @@ export class SimulationModel {
   @observable public cellsElevationFlag = 0;
 
   constructor(presetConfig: Partial<IPresetConfig>) {
-    // Configuration are joined together. Default values can be replaced by preset, and preset values can be replaced
-    // by URL parameters.
-    const config: IPresetConfig = Object.assign({}, defaultConfig, presetConfig, urlConfig);
-
-    this.config = config;
-    this.cellSize = config.modelWidth / config.gridWidth;
-    this.gridWidth = config.gridWidth;
-    this.gridHeight = Math.ceil(config.modelHeight / this.cellSize);
-    this.setInputParamsFromConfig();
-    this.populateCellsData();
-
-    // Make simulation available in browser console for manual tests.
-    (window as any).sim = this;
+    this.load(presetConfig);
   }
 
   @computed public get ready() {
@@ -219,6 +207,20 @@ export class SimulationModel {
     config.sparks.forEach(s => {
       this.addSpark(s[0], s[1]);
     });
+  }
+
+  public load(presetConfig: Partial<IPresetConfig>) {
+    this.restart();
+    // Configuration are joined together. Default values can be replaced by preset, and preset values can be replaced
+    // by URL parameters.
+    const config: IPresetConfig = Object.assign({}, defaultConfig, presetConfig, urlConfig);
+
+    this.config = config;
+    this.cellSize = config.modelWidth / config.gridWidth;
+    this.gridWidth = config.gridWidth;
+    this.gridHeight = Math.ceil(config.modelHeight / this.cellSize);
+    this.setInputParamsFromConfig();
+    this.populateCellsData();
   }
 
   public getZoneIndex(): Promise<number[] | undefined> {
