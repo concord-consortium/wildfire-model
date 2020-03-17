@@ -21,6 +21,7 @@ export interface CellOptions {
   baseElevation?: number;
   ignitionTime?: number;
   fireState?: FireState;
+  isUnburntIsland?: boolean;
   isRiver?: boolean;
   isFireLine?: boolean;
   isFireLineUnderConstruction?: boolean;
@@ -30,14 +31,15 @@ const FIRE_LINE_DEPTH = 2000;
 const MAX_BURN_TIME = 500;
 
 export class Cell {
-  public x: number;
-  public y: number;
+  public x: number; // grid X coord
+  public y: number; // grid Y coord
   public zone: Zone;
   public baseElevation: number = 0;
   public ignitionTime: number = Infinity;
   public spreadRate: number = 0;
   public burnTime: number = MAX_BURN_TIME;
   public fireState: FireState = FireState.Unburnt;
+  public isUnburntIsland: boolean = false;
   public isRiver: boolean = false;
   public isFireLine: boolean = false;
   public isFireLineUnderConstruction: boolean = false;
@@ -58,10 +60,14 @@ export class Cell {
   }
 
   public get moistureContent() {
-    if (this.isRiver || this.isFireLine) {
-      return Infinity;
+    if (this.isBurnable) {
+      return this.zone.moistureContent;
     }
-    return this.zone.moistureContent;
+    return Infinity;
+  }
+
+  public get isBurnable() {
+    return !this.isRiver && !this.isUnburntIsland && !this.isFireLine;
   }
 
   public get droughtLevel() {

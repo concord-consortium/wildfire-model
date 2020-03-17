@@ -33,7 +33,6 @@ export interface ICellProps {
   vegetation: Vegetation;
   moistureContent: number;
   elevation: number;
-  isRiver: boolean;
 }
 
 const heatContent = 8000;

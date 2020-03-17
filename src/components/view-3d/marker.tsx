@@ -39,14 +39,16 @@ const setupMesh = ({ scene }: IThreeContext) => {
 
 const getMaterial = (imgSrcOrCanvas: string | HTMLCanvasElement) => {
   let source;
+  let Texture = THREE.Texture;
   if (typeof imgSrcOrCanvas === "string") {
     source = document.createElement("img");
     source.src = imgSrcOrCanvas;
+    source.onload = () => texture.needsUpdate = true;
   } else {
     source = imgSrcOrCanvas; // canvas
+    Texture = THREE.CanvasTexture;
   }
-  const texture = new THREE.Texture(source);
-  texture.needsUpdate = true;
+  const texture = new Texture(source);
   const material = new THREE.SpriteMaterial({ map: texture });
   material.depthTest = false;
   return material;

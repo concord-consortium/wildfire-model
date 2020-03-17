@@ -54,13 +54,13 @@ export const forEachPointBetween = (
   }
 };
 
-export const riverOrFireLineBetween = (
+export const nonburnableCellBetween = (
   cells: Cell[], width: number, x0: number, y0: number, x1: number, y1: number
 ) => {
   let result = false;
   forEachPointBetween(x0, y0, x1, y1, (x: number, y: number) => {
     const idx = getGridIndexForLocation(x, y, width);
-    if (cells[idx].isRiver || cells[idx].isFireLine) {
+    if (!cells[idx].isBurnable) {
       result = true;
     }
   });
@@ -92,9 +92,9 @@ export const getGridCellNeighbors = (
   const processed: {[key: number]: boolean}  = {};
   const x0 = i % width;
   const y0 = Math.floor(i / width);
-  // Keep this flag for performance reasons. If there's no river or fire line in current grid area, it doesn't
-  // make sense to run Bresenham's algorithm for every cell (riverOrFireLineBetween).
-  let anyRiverOrFireLine = false;
+  // Keep this flag for performance reasons. If there's no nonburnable ceels in current grid area, it doesn't
+  // make sense to run Bresenham's algorithm for every cell (nonburnableCellBetween).
+  let anyNonburnableCells = false;
   // Start BFS.
   queue.push(i);
   processed[i] = true;
@@ -108,9 +108,9 @@ export const getGridCellNeighbors = (
         !processed[nIdx] &&
         withinDist(x0, y0, x1 + diff.x, y1 + diff.y, neighborsDist)
       ) {
-        if (cells[nIdx].isRiver || cells[nIdx].isFireLine) {
-          anyRiverOrFireLine = true;
-        } else if (!anyRiverOrFireLine || !riverOrFireLineBetween(cells, width, x1 + diff.x, y1 + diff.y, x0, y0)) {
+        if (!cells[nIdx].isBurnable) {
+          anyNonburnableCells = true;
+        } else if (!anyNonburnableCells || !nonburnableCellBetween(cells, width, x1 + diff.x, y1 + diff.y, x0, y0)) {
           neighbours.push(nIdx);
           queue.push(nIdx);
         }
@@ -189,19 +189,7 @@ export class SimulationModel {
   @observable public cellsElevationFlag = 0;
 
   constructor(presetConfig: Partial<IPresetConfig>) {
-    // Configuration are joined together. Default values can be replaced by preset, and preset values can be replaced
-    // by URL parameters.
-    const config: IPresetConfig = Object.assign({}, defaultConfig, presetConfig, urlConfig);
-
-    this.config = config;
-    this.cellSize = config.modelWidth / config.gridWidth;
-    this.gridWidth = config.gridWidth;
-    this.gridHeight = Math.ceil(config.modelHeight / this.cellSize);
-    this.setInputParamsFromConfig();
-    this.populateCellsData();
-
-    // Make simulation available in browser console for manual tests.
-    (window as any).sim = this;
+    this.load(presetConfig);
   }
 
   @computed public get ready() {
@@ -219,6 +207,20 @@ export class SimulationModel {
     config.sparks.forEach(s => {
       this.addSpark(s[0], s[1]);
     });
+  }
+
+  public load(presetConfig: Partial<IPresetConfig>) {
+    this.restart();
+    // Configuration are joined together. Default values can be replaced by preset, and preset values can be replaced
+    // by URL parameters.
+    const config: IPresetConfig = Object.assign({}, defaultConfig, presetConfig, urlConfig);
+
+    this.config = config;
+    this.cellSize = config.modelWidth / config.gridWidth;
+    this.gridWidth = config.gridWidth;
+    this.gridHeight = Math.ceil(config.modelHeight / this.cellSize);
+    this.setInputParamsFromConfig();
+    this.populateCellsData();
   }
 
   public getZoneIndex(): Promise<number[] | undefined> {
@@ -260,6 +262,42 @@ export class SimulationModel {
     );
   }
 
+  public getUnburntIslandsData(): Promise<number[] | undefined> {
+    // Unburnt islands can be specified directly using unburntIslands property or they'll be generated automatically
+    // using zones terrain type.
+    let unburntIslands: number[][] | string | undefined = this.config.unburntIslands;
+    if (!unburntIslands) {
+      const prefix = "data/";
+      const zoneTypes: string[] = [];
+      this.zones.forEach((z, i) => {
+        if (i < this.config.zonesCount) {
+          zoneTypes.push(TerrainType[z.terrainType].toLowerCase());
+        }
+      });
+      unburntIslands = prefix + zoneTypes.join("-") + "-islands.png";
+    }
+    const islandActive: {[key: number]: number} = {};
+    return getInputData(unburntIslands, this.gridWidth, this.gridHeight, true,
+      (rgba: [number, number, number, number]) => {
+        // White areas are regular cells. Islands use gray scale colors, every island is supposed to have different
+        // shade. It's enough to look just at R value, as G and B will be equal.
+        const r = rgba[0];
+        if (r < 255) {
+          if (islandActive[r] === undefined) {
+            if (Math.random() < this.config.unburntIslandProbability) {
+              islandActive[r] = 1;
+            } else {
+              islandActive[r] = 0;
+            }
+          }
+          return islandActive[r]; // island activity, 0 or 1
+        } else {
+          return 0; // white color means we're dealing with regular cell, return 0 (inactive island)
+        }
+      }
+    );
+  }
+
   public getRiverData(): Promise<number[] | undefined> {
     if (!this.config.riverData) {
       return Promise.resolve(undefined);
@@ -275,11 +313,12 @@ export class SimulationModel {
   @action.bound public populateCellsData() {
     this.dataReady = false;
     this.dataReadyPromise = Promise.all([
-      this.getZoneIndex(), this.getElevationData(), this.getRiverData()
+      this.getZoneIndex(), this.getElevationData(), this.getRiverData(), this.getUnburntIslandsData()
     ]).then(values => {
       const zoneIndex = values[0];
       const elevation = values[1];
       const river = values[2];
+      const unburntIsland = values[3];
 
       this.cells.length = 0;
 
@@ -289,7 +328,8 @@ export class SimulationModel {
           const cellOptions: CellOptions = {
             x, y,
             zone: this.zones[zoneIndex ? zoneIndex[index] : 0],
-            isRiver: river && river[index] > 0
+            isRiver: river && river[index] > 0,
+            isUnburntIsland: unburntIsland && unburntIsland[index] > 0
           };
           if (elevation) {
             cellOptions.baseElevation = elevation[index];
@@ -402,10 +442,18 @@ export class SimulationModel {
     if (this.time === 0) {
       // Use sparks to start the simulation.
       this.sparks.forEach(spark => {
-        this.cellAt(spark.x, spark.y).ignitionTime = 0;
+        const sparkCell = this.cellAt(spark.x, spark.y);
+        sparkCell.ignitionTime = 0;
+        if (sparkCell.isUnburntIsland) {
+          // If spark is placed inside unburnt island, remove this island as otherwise the fire won't pick up.
+          this.removeUnburntIsland(sparkCell);
+        }
       });
     }
 
+    // Note that in most cases this function will immediately return. It's only necessary once when model starts
+    // or when fire line is added. It's necessary for this function to be executed while time is still equal to 0
+    // at least once, so the copies of neighbor list and ignition times are created.
     this.calculateCellProps();
 
     const dayChange = Math.floor(this.time / modelDay) !== Math.floor((this.time + modelTimeDiff) / modelDay);
@@ -440,6 +488,24 @@ export class SimulationModel {
         this.townMarkers.push({ name: town.name, position: new Vector2(x, y) });
       }
     });
+  }
+
+  @action.bound public removeUnburntIsland(startingCell: Cell) {
+    const queue: Cell[] = [];
+    startingCell.isUnburntIsland = false;
+    queue.push(startingCell);
+    while (queue.length > 0) {
+      const c = queue.shift()!;
+      directNeighbours.forEach(diff => {
+        const x1 = c.x + diff.x;
+        const y1 = c.y + diff.y;
+        const nIdx = getGridIndexForLocation(x1, y1, this.gridWidth);
+        if (x1 >= 0 && x1 < this.gridWidth && y1 >= 0 && y1 < this.gridHeight && this.cells[nIdx].isUnburntIsland) {
+          this.cells[nIdx].isUnburntIsland = false;
+          queue.push(this.cells[nIdx]);
+        }
+      });
+    }
   }
 
   @action.bound public addSpark(x: number, y: number) {
@@ -527,7 +593,8 @@ export class SimulationModel {
     const endGridX = Math.floor(end.x / this.cellSize);
     const endGridY = Math.floor(end.y / this.cellSize);
     forEachPointBetween(startGridX, startGridY, endGridX, endGridY, (x: number, y: number) => {
-      this.cells[getGridIndexForLocation(x, y, this.gridWidth)].isFireLine = true;
+      const cell = this.cells[getGridIndexForLocation(x, y, this.gridWidth)];
+      cell.isFireLine = true;
     });
     this.lastFireLineTimestamp = this.time;
   }
@@ -569,10 +636,6 @@ export class SimulationModel {
   }
 
   @action.bound private updateFire() {
-    // Note that in most cases this function will immediately return. It's only necessary once when model starts
-    // or when fire line is added.
-    this.calculateCellProps();
-
     const numCells = this.cells.length;
     // Run through all cells. Check the unburnt neighbors of currently-burning cells. If the current time
     // is greater than the ignition time of the cell and the delta time for the neighbor, update

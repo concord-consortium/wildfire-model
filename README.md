@@ -1,52 +1,58 @@
-# Starter Projects
+# Wildfire Model
 
-## Development
+Latest **stable** version:
 
-### Copying a starter project
+https://wildfire.concord.org
 
-1. Create a new public repository for your project (e.g. `new-repository`)
-2. Create a clone of the starter repo
-    ```
-    git clone --single-branch https://github.com/concord-consortium/wildfire-model.git new-repository
-    ```
-3. Update the starter repo
+A particular model can be loaded using `preset` URL parameter, e.g.:
 
-    First, update and run the starter project:
-    ```
-    cd new-repository
-    npm install
-    npm update
-    npm start
-    ``` 
-    Then, verify the project works by visiting [localhost:8080](http://localhost:8080) and checking for the words "Hello World". 
-    Also verify that the test suite still passes:
-    ```
-    npm run test:full
-    ```
-    If the updates are functional, please commit any changes to `package.json` or `package-lock.json` back to the 
-    Starter Projects repository for future use.
+https://wildfire.concord.org/index.html?preset=defaultThreeZone
 
-4. Next, re-initialize the repo to create a new history
-    ```
-    rm -rf .git
-    git init
-    ```
-5. Create an initial commit for your new project
-    ```
-    git add .
-    git commit -m "Initial commit"
-    ```
-6. Push to your new repository
-    ```
-    git remote add origin https://github.com/concord-consortium/new-repository.git
-    git push -u origin master
-    ```
-7. Open your new repository and update all instances of `wildfire-model` to `new-repository` and `Starter Projects` to `New Repository`. 
-   Note: this will do some of the configuration for Travis deployment to S3, but you'll still need to follow 
-   the instructions [here](https://docs.google.com/document/d/e/2PACX-1vTpYjbGmUMxk_FswUmapK_RzVyEtm1WdnFcNByp9mqwHnp0nR_EzRUOiubuUCsGwzQgOnut_UiabYOM/pub).
-8. Your new repository is ready! Remove this section of the `README`, and follow the steps below to use it.
+Latest **development** version:
 
-### Initial steps
+https://wildfire.concord.org/branch/master/index.html
+
+## Configuration
+
+Available presets:
+
+https://github.com/concord-consortium/wildfire-model/blob/production/src/presets.ts
+
+All the available options can be seen here (including default values):
+
+https://github.com/concord-consortium/wildfire-model/blob/production/src/config.ts
+
+Note that these URLs point to production branch. If you're working with `master` or other branch, you might
+want to replace `production` with your branch name.
+
+The final configuration is build using default configuration, preset options and URL parameters.
+URL parameters have higher priority than preset options (so it's possible to customize a preset).
+
+## Testing a preset
+
+It's possible to dynamically load a new preset in the browser. Open browser console (e.g. in Chrome: Ctrl Shift J on 
+Windows or Ctrl Option J on Mac) and type:
+
+```
+sim.load({
+  modelWidth: 120000,
+  modelHeight: 80000,
+  gridWidth: 240,
+  heightmapMaxElevation: 20000,
+  zones: [
+    { terrainType: TerrainType.Foothills, vegetation: Vegetation.Grass, droughtLevel: DroughtLevel.SevereDrought },
+    { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: DroughtLevel.MediumDrought },
+  ],
+  zoneIndex: [
+    [ 0, 1 ]
+  ]
+})
+```
+
+This will load set of provided options. You can use examples from preset.ts file (see section above). It can be useful
+to test new presets before modifying `preset.ts` file.
+
+### Development
 
 1. Clone this repo and `cd` into it
 2. Run `npm install` to pull dependencies
@@ -57,20 +63,14 @@
 If you want to build a local version run `npm build`, it will create the files in the `dist` folder.
 You *do not* need to build to deploy the code, that is automatic.  See more info in the Deployment section below.
 
-### Notes
-
-1. Make sure if you are using Visual Studio Code that you use the workspace version of TypeScript.
-   To ensure that you are open a TypeScript file in VSC and then click on the version number next to
-   `TypeScript React` in the status bar and select 'Use Workspace Version' in the popup menu.
-
 ## Deployment
 
 Production releases to S3 are based on the contents of the /dist folder and are built automatically by Travis
 for each branch pushed to GitHub and each merge into production.
 
-Merges into production are deployed to http://wildfire.concord.org.
+Merges into production are deployed to https://wildfire.concord.org.
 
-Other branches are deployed to http://wildfire.concord.org/branch/<name>.
+Other branches are deployed to https://wildfire.concord.org/branch/<name>.
 
 You can view the status of all the branch deploys [here](https://travis-ci.org/concord-consortium/wildfire-model/branches).
 
@@ -112,6 +112,6 @@ Inside of your `package.json` file:
 
 ## License
 
-Starter Projects are Copyright 2018 (c) by the Concord Consortium and is distributed under the [MIT license](http://www.opensource.org/licenses/MIT).
+Starter Projects are Copyright 2020 (c) by the Concord Consortium and is distributed under the [MIT license](http://www.opensource.org/licenses/MIT).
 
 See license.md for the complete license text.

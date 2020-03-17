@@ -43,6 +43,9 @@ export interface ISimulationConfig {
   showBurnIndex: boolean;
   // Displays alert with current coordinates on mouse click. Useful for authoring.
   showCoordsOnClick: boolean;
+  // Number between 0 and 1 which decides how likely is for unburnt island to form (as it's random).
+  // 1 means that all the unburnt islands will be visible, 0 means that none of them will be visible.
+  unburntIslandProbability: number;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -94,7 +97,8 @@ export const defaultConfig: IUrlConfig = {
   fireLineDelay: 1440, // a day
   maxFireLineLength: 15000, // ft
   showBurnIndex: false,
-  showCoordsOnClick: false
+  showCoordsOnClick: false,
+  unburntIslandProbability: 0.5 // [0, 1]
 };
 
 export const urlConfig: any = {};
