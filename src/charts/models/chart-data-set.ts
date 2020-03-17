@@ -34,7 +34,9 @@ export const baseColors = {
   chartColor10: css.color6,
 
   colorChartRed: css.chartRed,
-  colorChartYellow: css.chartYellow
+  colorChartYellow: css.chartYellow,
+
+  controlGray: css.controlGray
 };
 
 export const ChartColors: Color[] = [

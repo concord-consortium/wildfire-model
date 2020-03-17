@@ -51,13 +51,11 @@ export class LineChartControls extends BaseComponent<IChartControlProps, IChartC
     const timelineVisible = chartData.maxPoints && chartData.maxPoints > 0 &&
       chartData.pointCount > chartData.maxPoints;
 
-    const trackStyle = { backgroundColor: baseColors.chartColor5, height: 10 };
+    const trackStyle = { backgroundColor: baseColors.chartColor5, height: 2 };
     const handleStyle = {
-      borderColor: baseColors.chartColor6,
-      height: 20,
-      width: 20
+      borderColor: baseColors.controlGray
     };
-    const railStyle = { backgroundColor: baseColors.chartColor7, height: 10, track: 4 };
+    const railStyle = { backgroundColor: baseColors.controlGray, height: 2 };
     return (
       <div className={css.lineChartControls} id="line-chart-controls">
         {timelineVisible &&
