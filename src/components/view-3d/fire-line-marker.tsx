@@ -15,7 +15,7 @@ export const FireLineMarkersContainer = observer(({ getTerrain }) => {
           key={idx}
           markerImg={fireLineImg}
           markerHighlightImg={fireLineHighlightImg}
-          position={simulation.fireLineMarkers[idx]}
+          position={fl}
           setPosition={setPosition}
           getTerrain={getTerrain}
         />;

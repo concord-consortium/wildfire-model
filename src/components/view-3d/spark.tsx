@@ -15,7 +15,7 @@ export const SparksContainer = observer(({ getTerrain }) => {
           key={idx}
           markerImg={sparkImg}
           markerHighlightImg={sparkHighlightImg}
-          position={simulation.sparks[idx]}
+          position={s}
           setPosition={setPosition}
           getTerrain={getTerrain}
           lockOnSimStart={true}

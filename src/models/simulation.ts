@@ -6,6 +6,7 @@ import { IPresetConfig } from "../presets";
 import { getInputData } from "../utils";
 import { Vector2 } from "three";
 import { Zone } from "./zone";
+import { Town } from "../types";
 
 interface ICoords {
   x: number;
@@ -171,6 +172,7 @@ export class SimulationModel {
   @observable public wind: IWindProps;
   @observable public sparks: Vector2[] = [];
   @observable public fireLineMarkers: Vector2[] = [];
+  @observable public townMarkers: Town[] = [];
   @observable public cellSize: number;
   @observable public gridWidth: number;
   @observable public gridHeight: number;
@@ -297,6 +299,7 @@ export class SimulationModel {
       }
       this.updateCellsElevationFlag();
       this.updateCellsStateFlag();
+      this.updateTownMarkers();
       this.dataReady = true;
       this.recalculateCellProps = true;
     });
@@ -425,6 +428,18 @@ export class SimulationModel {
 
   @action.bound public updateCellsStateFlag() {
     this.cellsStateFlag += 1;
+  }
+
+  @action.bound public updateTownMarkers() {
+    this.townMarkers.length = 0;
+    this.config.towns.forEach(town => {
+      const x = town.x * this.config.modelWidth;
+      const y = town.y * this.config.modelHeight;
+      const cell = this.cellAt(x, y);
+      if (town.terrainType === undefined || town.terrainType === cell.zone.terrainType) {
+        this.townMarkers.push({ name: town.name, position: new Vector2(x, y) });
+      }
+    });
   }
 
   @action.bound public addSpark(x: number, y: number) {

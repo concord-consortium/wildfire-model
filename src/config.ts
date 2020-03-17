@@ -1,6 +1,13 @@
 import { ZoneOptions } from "./models/zone";
 import { DroughtLevel, Vegetation, TerrainType } from "./models/fire-model";
 
+interface TownOptions {
+  name: string;
+  x: number; // [0, 1], position relative to model width
+  y: number; // [0, 1], position relative to model height
+  terrainType?: TerrainType; // limit town marker to given terrain type
+}
+
 export interface ISimulationConfig {
   modelWidth: number; // ft
   modelHeight: number; // ft
@@ -24,6 +31,7 @@ export interface ISimulationConfig {
   // Number of zones that the model is using. Zones are used to keep properties of some area of the model.
   zonesCount: 2 | 3;
   zones: [ZoneOptions, ZoneOptions, ZoneOptions?];
+  towns: TownOptions[];
   fillTerrainEdges: boolean;
   riverData: string | null;
   windScaleFactor: number;
@@ -33,6 +41,8 @@ export interface ISimulationConfig {
   maxFireLineLength: number; // ft
   // Renders burn index.
   showBurnIndex: boolean;
+  // Displays alert with current coordinates on mouse click. Useful for authoring.
+  showCoordsOnClick: boolean;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -75,6 +85,7 @@ export const defaultConfig: IUrlConfig = {
       droughtLevel: DroughtLevel.SevereDrought
     }
   ],
+  towns: [],
   fillTerrainEdges: true,
   riverData: "data/river-texmap-data.png",
   windScaleFactor: 0.2, // Note that model is very sensitive to wind.
@@ -82,7 +93,8 @@ export const defaultConfig: IUrlConfig = {
   showModelDimensions: false,
   fireLineDelay: 1440, // a day
   maxFireLineLength: 15000, // ft
-  showBurnIndex: false
+  showBurnIndex: false,
+  showCoordsOnClick: false
 };
 
 export const urlConfig: any = {};
