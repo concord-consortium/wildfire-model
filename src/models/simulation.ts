@@ -442,10 +442,18 @@ export class SimulationModel {
     if (this.time === 0) {
       // Use sparks to start the simulation.
       this.sparks.forEach(spark => {
-        this.cellAt(spark.x, spark.y).ignitionTime = 0;
+        const sparkCell = this.cellAt(spark.x, spark.y);
+        sparkCell.ignitionTime = 0;
+        if (sparkCell.isUnburntIsland) {
+          // If spark is placed inside unburnt island, remove this island as otherwise the fire won't pick up.
+          this.removeUnburntIsland(sparkCell);
+        }
       });
     }
 
+    // Note that in most cases this function will immediately return. It's only necessary once when model starts
+    // or when fire line is added. It's necessary for this function to be executed while time is still equal to 0
+    // at least once, so the copies of neighbor list and ignition times are created.
     this.calculateCellProps();
 
     const dayChange = Math.floor(this.time / modelDay) !== Math.floor((this.time + modelTimeDiff) / modelDay);
@@ -480,6 +488,24 @@ export class SimulationModel {
         this.townMarkers.push({ name: town.name, position: new Vector2(x, y) });
       }
     });
+  }
+
+  @action.bound public removeUnburntIsland(startingCell: Cell) {
+    const queue: Cell[] = [];
+    startingCell.isUnburntIsland = false;
+    queue.push(startingCell);
+    while (queue.length > 0) {
+      const c = queue.shift()!;
+      directNeighbours.forEach(diff => {
+        const x1 = c.x + diff.x;
+        const y1 = c.y + diff.y;
+        const neighbour = this.cells[getGridIndexForLocation(x1, y1, this.gridWidth)];
+        if (x1 >= 0 && x1 < this.gridWidth && y1 >= 0 && y1 < this.gridHeight && neighbour.isUnburntIsland) {
+          neighbour.isUnburntIsland = false;
+          queue.push(neighbour);
+        }
+      });
+    }
   }
 
   @action.bound public addSpark(x: number, y: number) {
@@ -610,10 +636,6 @@ export class SimulationModel {
   }
 
   @action.bound private updateFire() {
-    // Note that in most cases this function will immediately return. It's only necessary once when model starts
-    // or when fire line is added.
-    this.calculateCellProps();
-
     const numCells = this.cells.length;
     // Run through all cells. Check the unburnt neighbors of currently-burning cells. If the current time
     // is greater than the ignition time of the cell and the delta time for the neighbor, update
