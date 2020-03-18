@@ -399,6 +399,7 @@ export class SimulationModel {
     this.endOfLowIntensityFire = false;
     this.cells.forEach(cell => cell.reset());
     this.fireLineMarkers.length = 0;
+    this.lastFireLineTimestamp = -Infinity;
     this.updateCellsStateFlag();
     this.updateCellsElevationFlag();
     // That's necessary because of the fire lines that have been removed.
@@ -425,20 +426,30 @@ export class SimulationModel {
       realTimeDiffInMinutes = (time - this.prevTickTime) / 60000;
       this.prevTickTime = time;
     }
-    let timeDiff;
+    let timeStep;
     if (realTimeDiffInMinutes) {
       // One day in model time (86400 seconds) should last X seconds in real time.
       const ratio = 86400 / this.config.modelDayInSeconds;
-      timeDiff = Math.min(this.config.maxTimeStep, ratio * realTimeDiffInMinutes);
+      // Optimal time step assumes we have stable 60 FPS:
+      // realTime = 1000ms / 60 = 16.666ms
+      // timeStepInMs = ratio * realTime
+      // timeStepInMinutes = timeStepInMs / 1000 / 60
+      // Below, these calculations are just simplified (1000 / 60 / 1000 / 60 = 0.000277):
+      const optimalTimeStep = ratio * 0.000277;
+      // Final time step should be limited by:
+      // - maxTimeStep that model can handle
+      // - reasonable multiplication of the "optimal time step" so user doesn't see significant jumps in the simulation
+      //   when one tick takes much longer time (e.g. when cell properties are recalculated after adding fire line)
+      timeStep = Math.min(this.config.maxTimeStep, optimalTimeStep * 4, ratio * realTimeDiffInMinutes);
     } else {
       // We don't know performance yet, so simply increase time by some safe value and wait for the next tick.
-      timeDiff = 1;
+      timeStep = 1;
     }
 
-    this.tick(timeDiff);
+    this.tick(timeStep);
   }
 
-  @action.bound public tick(modelTimeDiff: number) {
+  @action.bound public tick(timeStep: number) {
     if (this.time === 0) {
       // Use sparks to start the simulation.
       this.sparks.forEach(spark => {
@@ -456,8 +467,8 @@ export class SimulationModel {
     // at least once, so the copies of neighbor list and ignition times are created.
     this.calculateCellProps();
 
-    const dayChange = Math.floor(this.time / modelDay) !== Math.floor((this.time + modelTimeDiff) / modelDay);
-    this.time += modelTimeDiff;
+    const dayChange = Math.floor(this.time / modelDay) !== Math.floor((this.time + timeStep) / modelDay);
+    this.time += timeStep;
 
     if (dayChange) {
       const day = Math.floor(this.time / modelDay);
