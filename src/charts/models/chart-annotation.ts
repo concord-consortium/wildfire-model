@@ -36,24 +36,24 @@ export interface IChartAnnotation{
   chartInstance: ChartData;
 }
 export class ChartAnnotation implements IChartAnnotation {
-  @observable public type: string;
+  public type: string;
   @observable public value?: number;
   @observable public color?: string = "red";
-  @observable public thickness?: number = 2;
-  @observable public dashArray: number[];
+  public thickness?: number = 2;
+  public dashArray: number[];
   @observable public label: string;
-  @observable public labelColor: string = "white";
-  @observable public labelBackgroundColor: string = "rgba(0,0,0,0.8)";
-  @observable public labelXOffset: number = 0;
-  @observable public labelYOffset: number = 0;
-  @observable public expandLabel?: string;
-  @observable public expandOffset?: number = 0;
-  @observable public xMin?: number;
-  @observable public xMax?: number;
-  @observable public yMax?: number;
-  @observable public yMin?: number;
-  @observable public showingExpandLabel: boolean;
-  @observable public chartInstance: ChartData;
+  public labelColor: string = "white";
+  public labelBackgroundColor: string = "rgba(0,0,0,0.8)";
+  public labelXOffset: number = 0;
+  public labelYOffset: number = 0;
+  public expandLabel?: string;
+  public expandOffset?: number = 0;
+  public xMin?: number;
+  public xMax?: number;
+  public yMax?: number;
+  public yMin?: number;
+  public showingExpandLabel: boolean = true;
+  public chartInstance: ChartData;
 
   constructor(props: IChartAnnotation) {
     Object.assign(this, props);
@@ -113,7 +113,7 @@ export class ChartAnnotation implements IChartAnnotation {
         enabled: true,
         content,
         xAdjust,
-        yAdjust: 305 - this.labelYOffset,
+        yAdjust: this.labelYOffset,
         fontColor: this.labelColor,
         backgroundColor: this.labelBackgroundColor
       };

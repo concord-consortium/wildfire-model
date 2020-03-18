@@ -6,7 +6,7 @@ import { getInputData } from "../utils";
 import { Vector2 } from "three";
 import { Zone } from "./zone";
 import { Town } from "../types";
-import { currentChart, addData, clearData, setChartProperties } from "../charts/chart-utils";
+import { currentChart, addData, clearData, setChartProperties, addAnnotation } from "../charts/chart-utils";
 import { ChartDataModel } from "../charts/models/chart-data";
 
 interface ICoords {
@@ -612,6 +612,8 @@ export class SimulationModel {
       if (i + 1 < this.fireLineMarkers.length) {
         this.markFireLineUnderConstruction(this.fireLineMarkers[i], this.fireLineMarkers[i + 1], false);
         this.buildFireLine(this.fireLineMarkers[i], this.fireLineMarkers[i + 1]);
+        const timeInHours = Math.round(this.time / 60);
+        addAnnotation(timeInHours, "Fire Line Added");
       }
     }
     this.fireLineMarkers.length = 0;

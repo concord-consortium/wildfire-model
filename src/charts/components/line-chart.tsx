@@ -3,12 +3,11 @@ import { Scatter, ChartData } from "react-chartjs-2";
 import { observer } from "mobx-react";
 import { ChartDataModel } from "../models/chart-data";
 import { ChartOptions } from "chart.js";
-// import * as ChartAnnotation from "chartjs-plugin-annotation";
+import * as ChartAnnotation from "chartjs-plugin-annotation";
 import { ChartColors } from "../models/chart-data-set";
 import { hexToRGBValue } from "../../utils";
 import { LineChartControls } from "./line-chart-controls";
 import { BaseComponent } from "../../components/base";
-import { ChartAnnotation } from "../models/chart-annotation";
 
 interface ILineProps {
   chartData: ChartDataModel;
@@ -212,7 +211,7 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
         height={h}
         width={w}
         redraw={true}
-        // plugins={[ChartAnnotation]}
+        plugins={[ChartAnnotation]}
       />
     );
 

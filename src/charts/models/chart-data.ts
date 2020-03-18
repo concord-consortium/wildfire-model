@@ -129,6 +129,9 @@ export class ChartDataModel implements IChartDataModel {
   public get formattedAnnotations() {
     if (this.annotations && this.annotations.length > 0) {
       return this.annotations!.map(a => a.formatted);
+    } else {
+      this.annotations = [];
+      return this.annotations;
     }
   }
 
@@ -158,14 +161,19 @@ export class ChartDataModel implements IChartDataModel {
   }
 
   public addAnnotation = (annotation: ChartAnnotation) => {
-    this.annotations!.push(annotation);
+    if (!this.annotations) {
+      this.annotations = [];
+    }
+    this.annotations.push(annotation);
   }
 
   public removeAnnotation = (annotation: ChartAnnotation) => {
-    // this.annotations.remove(annotation);
+    if (this.annotations) {
+      this.annotations.splice(this.annotations.indexOf(annotation));
+    }
   }
 
   public clearAnnotations = () => {
-    // this.annotations.clear();
+    this.annotations = [];
   }
 }

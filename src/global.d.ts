@@ -10,3 +10,4 @@ declare module "*.png" {
   export = value;
 }
 declare module "shutterbug";
+declare module "chartjs-plugin-annotation";

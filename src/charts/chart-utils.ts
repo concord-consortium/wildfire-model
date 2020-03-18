@@ -1,5 +1,6 @@
 import { ChartDataModel } from "./models/chart-data";
 import { DataPoint, ChartDataSet } from "./models/chart-data-set";
+import { ChartAnnotation } from "./models/chart-annotation";
 
 const defaultMaxPoints = 20;
 const defaultMaxA1 = 20;
@@ -13,7 +14,8 @@ let chart: ChartDataModel = new ChartDataModel({
   defaultAxisLabelA1: "Time",
   defaultAxisLabelA2: "Value",
   defaultMaxPoints,
-  defaultMaxA1
+  defaultMaxA1,
+  annotations: []
 });
 
 export const currentChart = (): ChartDataModel => {
@@ -73,6 +75,20 @@ const addNewDataSetToChart = (
     axisLabelA1,
     axisLabelA2,
     axisRoundValueA2: 10
+  }));
+};
+
+export const addAnnotation = (value: number, label: string) => {
+  chart.addAnnotation(new ChartAnnotation({
+    type: "verticalLine",
+    value,
+    label,
+    labelXOffset: 0,
+    labelYOffset: 30,
+    chartInstance: chart,
+    dashArray: [5, 5],
+    labelBackgroundColor: "#00ff00",
+    labelColor: "#ff9900"
   }));
 };
 
