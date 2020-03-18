@@ -156,7 +156,8 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
       title: {
         display: (chartData.name && chartData.name.length > 0),
         text: chartData.name,
-        fontFamily: chartFont
+        fontFamily: chartFont,
+        fontSize: 15
       },
       scales: {
         yAxes: [{

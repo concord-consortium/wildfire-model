@@ -56,20 +56,47 @@ export class LineChartControls extends BaseComponent<IChartControlProps, IChartC
       borderColor: baseColors.controlGray
     };
     const railStyle = { backgroundColor: baseColors.controlGray, height: 2 };
+    const toggleShowAllOrRecent = () => {
+      if (chartData) {
+        if (!chartData.maxPoints || chartData.maxPoints > -1) {
+          chartData.dataSets.forEach((dataSet: any) => {
+            dataSet.setMaxDataPoints(-1);
+          });
+        } else {
+          chartData.dataSets.forEach((dataSet: any) => {
+            dataSet.setMaxDataPoints(20);
+          });
+        }
+      }
+    };
+    const toggleButtonText = () => {
+      if (chartData) {
+        if (!chartData.maxPoints || chartData.maxPoints > -1) {
+          return "Show All Data";
+        } else {
+          return "Show Recent Data";
+        }
+      } else {
+        return "No Data Available";
+      }
+    };
     return (
       <div className={css.lineChartControls} id="line-chart-controls">
-        {timelineVisible &&
-          <Slider className={css.scrubber}
-          trackStyle={trackStyle}
-          handleStyle={handleStyle}
-          railStyle={railStyle}
-          onChange={this.handleDragChange}
-          min={scrubberMin}
-          max={scrubberMax}
-          value={pos}
-          disabled={false}
-          />
-        }
+        <div className={css.sliderContainer}>
+          {timelineVisible &&
+            <Slider className={css.scrubber}
+              trackStyle={trackStyle}
+              handleStyle={handleStyle}
+              railStyle={railStyle}
+              onChange={this.handleDragChange}
+              min={scrubberMin}
+              max={scrubberMax}
+              value={pos}
+              disabled={false}
+            />
+          }
+          </div>
+        <div className={css.toggleDataSubset} onClick={toggleShowAllOrRecent}>{toggleButtonText()}</div>
       </div>
     );
   }

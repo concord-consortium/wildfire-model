@@ -4,7 +4,7 @@ import { BarChart } from "./bar-chart";
 import { LineChart } from "./line-chart";
 import { ChartDataModel } from "../models/chart-data";
 
-import "./chart.sass";
+import * as css from "./chart.sass";
 
 export type ChartType = "line" | "bar" | "horizontalBar";
 

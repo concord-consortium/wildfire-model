@@ -127,7 +127,7 @@ export class ChartDataSet implements IChartDataSet {
   public pointColors?: string[];
   public backgroundOpacity?: number;
   public graphPattern?: GraphPatternType;
-  public maxPoints: number = -1;
+  @observable public maxPoints: number = -1;
   public fixedMinA1?: number;
   public fixedMaxA1?: number;
   public fixedMinA2?: number;

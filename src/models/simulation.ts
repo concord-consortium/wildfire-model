@@ -754,7 +754,8 @@ export class SimulationModel {
     const simulationAreaAcres = this.gridWidth * this.gridHeight * this.cellSize / 43560;
 
     for (let i = 0; i < this.zones.length; i++) {
-      const burnPercentage = burnedCellsInZone[i] / totalCellCountByZone[i];
+      const burnedCells = burnedCellsInZone[i] ? burnedCellsInZone[i] : 0;
+      const burnPercentage = burnedCells / totalCellCountByZone[i];
       addData(
         timeInHours,
         Math.ceil(simulationAreaAcres * burnPercentage),
