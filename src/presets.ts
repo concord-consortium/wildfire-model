@@ -168,12 +168,11 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
       { name: "Skyview", x: 0.12, y: 0.68, terrainType: TerrainType.Mountains },
       { name: "Rolling Rock", x: 0.60, y: 0.25, terrainType: TerrainType.Foothills },
       { name: "Evensville", x: 0.78, y: 0.55, terrainType: TerrainType.Plains },
-    ],  
+    ],
     zoneIndex: [
       [ 0, 1, 2 ]
     ]
   },
-  
   defaultThreeZone: {
     modelWidth: 120000,
     modelHeight: 80000,
