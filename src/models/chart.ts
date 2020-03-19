@@ -87,7 +87,6 @@ export class ChartModel {
       label,
       labelXOffset: 0,
       labelYOffset: 30,
-      chartInstance: this.chart,
       dashArray: [5, 5],
       labelBackgroundColor: "#00ff00",
       labelColor: "#ff9900"
@@ -103,6 +102,7 @@ export class ChartModel {
   @action.bound public clearData = () => {
     if (this.chart) {
       this.chart.dataSets = [];
+      this.chart.annotations = [];
     }
   }
 

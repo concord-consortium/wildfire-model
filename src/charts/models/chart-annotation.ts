@@ -17,11 +17,11 @@ export interface IChartAnnotation{
   // line styling
   color?: string;
   thickness?: number;
-  dashArray: number[];
+  dashArray?: number[];
   // text label. Note: only available for line annotations.
-  label: string;
-  labelColor: string;
-  labelBackgroundColor: string;
+  label?: string;
+  labelColor?: string;
+  labelBackgroundColor?: string;
   labelXOffset?: number;
   labelYOffset?: number;
   // if present, will add mouse rollover and click handlers
@@ -33,27 +33,25 @@ export interface IChartAnnotation{
   xMax?: number;
   yMax?: number;
   yMin?: number;
-  chartInstance: ChartData;
 }
 export class ChartAnnotation implements IChartAnnotation {
   public type: string;
   @observable public value?: number;
   @observable public color?: string = "red";
   public thickness?: number = 2;
-  public dashArray: number[];
-  @observable public label: string;
-  public labelColor: string = "white";
-  public labelBackgroundColor: string = "rgba(0,0,0,0.8)";
-  public labelXOffset: number = 0;
-  public labelYOffset: number = 0;
+  public dashArray?: number[];
+  @observable public label?: string;
+  public labelColor?: string = "white";
+  public labelBackgroundColor?: string = "rgba(0,0,0,0.8)";
+  public labelXOffset?: number = 0;
+  public labelYOffset?: number = 0;
   public expandLabel?: string;
   public expandOffset?: number = 0;
   public xMin?: number;
   public xMax?: number;
   public yMax?: number;
   public yMin?: number;
-  public showingExpandLabel: boolean = true;
-  public chartInstance: ChartData;
+  public showingExpandLabel?: boolean = false;
 
   constructor(props: IChartAnnotation) {
     Object.assign(this, props);
@@ -119,7 +117,7 @@ export class ChartAnnotation implements IChartAnnotation {
       };
     }
 
-    if (this.dashArray.length) {
+    if (this.dashArray && this.dashArray.length) {
       formatted.borderDash = this.dashArray;
     }
 

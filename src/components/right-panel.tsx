@@ -1,11 +1,9 @@
-import { inject, observer } from "mobx-react";
+import { observer } from "mobx-react";
 import React, { useEffect, useState } from "react";
-import { BaseComponent, IBaseProps } from "./base";
 import { RightPanelTab } from "./right-panel-tab";
 import { Chart } from "../charts/components/chart";
 import { useStores } from "../use-stores";
 import * as css from "./right-panel.scss";
-import { ChartDataModel } from "../charts/models/chart-data";
 
 export type TabType = "graph";
 
@@ -20,7 +18,6 @@ export const RightPanel = observer(() => {
   const { simulation, chartData, ui } = useStores();
   const [open, setOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("graph");
-  const [hasSetColor, setHasSetColor] = useState(false);
 
   useEffect(() => {
     const fireLineMarkerCount = simulation.fireLineMarkers.length;
@@ -34,10 +31,6 @@ export const RightPanel = observer(() => {
   useEffect(() => {
     // Convert time from minutes to hours.
     const timeInHours = Math.round(simulation.time / 60);
-    if (!chartData.chart.name || chartData.chart.name.length === 0) {
-      chartData.setChartProperties("Fire Area vs Time", "Time (hours)", "Area (Acres)");
-    }
-
     for (let i = 0; i < simulation.zones.length; i++) {
       const burnedCells = simulation.burnedCellsInZone[i] ? simulation.burnedCellsInZone[i] : 0;
       const burnPercentage = burnedCells / simulation.totalCellCountByZone[i];
@@ -51,14 +44,29 @@ export const RightPanel = observer(() => {
   }, [simulation.time]);
 
   useEffect(() => {
-    setHasSetColor(false);
-  }, [simulation.simulationRunning]);
+    if (!chartData.chart.name || chartData.chart.name.length === 0) {
+      chartData.setChartProperties("Fire Area vs Time", "Time (hours)", "Area (Acres)");
+    }
+    if (chartData.chart.dataSets.length !== simulation.zones.length) {
+      const timeInHours = Math.round(simulation.time / 60);
+      for (let i = 0; i < simulation.zones.length; i++){
+        if (!chartData.chart.dataSets[i]) {
+          const burnedCells = simulation.burnedCellsInZone[i] ? simulation.burnedCellsInZone[i] : 0;
+          const burnPercentage = burnedCells / simulation.totalCellCountByZone[i];
+          chartData.addData(
+            timeInHours,
+            Math.ceil(simulation.simulationAreaAcres * burnPercentage),
+            i,
+            undefined,
+            `Zone ${i + 1}`);
+        }
+      }
+    }
+    // update chart colors
+    updateChartColors();
+  }, [open, simulation.simulationStarted]);
 
-  if (!chartData.chart.name || chartData.chart.name.length === 0) {
-    chartData.setChartProperties("Fire Area vs Time", "Time (hours)", "Area (Acres)");
-  }
-  const showChart = chartData.chart != null;
-  if (showChart && !hasSetColor && chartData.chart.dataSets.length === simulation.zones.length) {
+  const updateChartColors = () => {
     for (let i = 0; i < simulation.zones.length; i++) {
       let zoneColor;
       let dashStyle;
@@ -80,8 +88,8 @@ export const RightPanel = observer(() => {
       }
       chartData.setChartStyle(i, zoneColor, dashStyle);
     }
-    setHasSetColor(true);
-  }
+  };
+
   const handleToggleDrawer = (e: React.SyntheticEvent) => {
     if (e.currentTarget.id !== selectedTab) {
       setOpen(true);
@@ -105,17 +113,15 @@ export const RightPanel = observer(() => {
   return (
     <div className={`${css.rightPanel} ${open ? css.open : ""}`} data-test="right-panel">
       <div className={css.rightPanelContent}>
-        {showChart &&
-          <div className={css.chartContainer}>
-          <Chart
-            title="Acres Burned vs. Time"
-            chartType="line"
-            chartData={chartData.chart}
-            isPlaying={simulation.simulationRunning}
-            axisLabelA1Function={axisLabelA1}
-            axisLabelA2Function={axisLabelA2} />
-          </div>
-        }
+        <div className={css.chartContainer}>
+        <Chart
+          title="Acres Burned vs. Time"
+          chartType="line"
+          chartData={chartData.chart}
+          isPlaying={simulation.simulationRunning}
+          axisLabelA1Function={axisLabelA1}
+          axisLabelA2Function={axisLabelA2} />
+        </div>
       </div>
       <ul className={css.rightPanelTabs}>
         <li>
