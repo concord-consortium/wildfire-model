@@ -1,5 +1,4 @@
 import { observable } from "mobx";
-import { ChartData } from "chart.js";
 
 /**
  * This model tries to reduce the number of options that need to be specified when defining an
@@ -34,7 +33,7 @@ export interface IChartAnnotation{
   yMax?: number;
   yMin?: number;
 }
-export class ChartAnnotation implements IChartAnnotation {
+export class Annotation implements IChartAnnotation {
   public type: string;
   @observable public value?: number;
   @observable public color?: string = "red";

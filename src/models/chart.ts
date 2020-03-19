@@ -1,7 +1,7 @@
 import { observable, action } from "mobx";
 import { ChartDataModel } from "../charts/models/chart-data";
 import { DataPoint, ChartDataSet } from "../charts/models/chart-data-set";
-import { ChartAnnotation } from "../charts/models/chart-annotation";
+import { Annotation } from "../charts/models/chart-annotation";
 
 export class ChartModel {
 
@@ -80,15 +80,12 @@ export class ChartModel {
   }
 
   @action.bound public addAnnotation = (value: number, label: string) => {
-    this.chart.addAnnotation(new ChartAnnotation({
+    this.chart.addAnnotation(new Annotation({
       type: "verticalLine",
       value,
       label,
       labelXOffset: 0,
-      labelYOffset: 30,
-      dashArray: [5, 5],
-      labelBackgroundColor: "#00ff00",
-      labelColor: "#ff9900"
+      labelYOffset: 30
     }));
   }
 

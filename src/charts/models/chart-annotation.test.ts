@@ -1,9 +1,9 @@
-import { ChartAnnotation } from "./chart-annotation";
+import { Annotation } from "./chart-annotation";
 import { ChartDataModel } from "./chart-data";
 import { DataPoint, ChartDataSet } from "./chart-data-set";
 
 describe("chart annotations", () => {
-  let annotation: ChartAnnotation;
+  let annotation: Annotation;
   let chart: ChartDataModel;
   beforeEach(() => {
     const chartDataSets = [];
@@ -42,7 +42,7 @@ describe("chart annotations", () => {
   });
 
   it("can create a vertical line annotation", () => {
-    annotation = new ChartAnnotation ({
+    annotation = new Annotation ({
       type: "verticalLine",
       value: 10,
       label: "Test",
@@ -70,7 +70,7 @@ describe("chart annotations", () => {
   });
 
   it("can create a horizontal line annotation", () => {
-    annotation = new ChartAnnotation ({
+    annotation = new Annotation ({
       type: "horizontalLine",
       value: 10,
       label: "Test",
@@ -99,7 +99,7 @@ describe("chart annotations", () => {
   });
 
   it("can create a box annotation", () => {
-    annotation = new ChartAnnotation ({
+    annotation = new Annotation ({
       type: "box",
       xMin: 25,
       xMax: 40,
@@ -127,7 +127,7 @@ describe("chart annotations", () => {
     chart = new ChartDataModel({
       name: "Samples",
       dataSets: [],
-      annotations: [new ChartAnnotation({
+      annotations: [new Annotation({
         type: "verticalLine",
         value: 20
       })]
@@ -152,7 +152,7 @@ describe("chart annotations", () => {
       dataSets: []
     });
 
-    chart.addAnnotation(new ChartAnnotation({
+    chart.addAnnotation(new Annotation({
       type: "horizontalLine",
       value: 0
     }));
@@ -176,11 +176,11 @@ describe("chart annotations", () => {
       dataSets: []
     });
 
-    chart.addAnnotation(new ChartAnnotation({
+    chart.addAnnotation(new Annotation({
       type: "horizontalLine",
       value: 0
     }));
-    chart.addAnnotation(new ChartAnnotation({
+    chart.addAnnotation(new Annotation({
       type: "horizontalLine",
       value: 1
     }));

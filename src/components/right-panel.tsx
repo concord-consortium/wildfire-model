@@ -4,6 +4,7 @@ import { RightPanelTab } from "./right-panel-tab";
 import { Chart } from "../charts/components/chart";
 import { useStores } from "../use-stores";
 import * as css from "./right-panel.scss";
+import { Interaction } from "../models/ui";
 
 export type TabType = "graph";
 
@@ -20,13 +21,11 @@ export const RightPanel = observer(function WrappedComponent() {
   const [selectedTab, setSelectedTab] = useState("graph");
 
   useEffect(() => {
-    const fireLineMarkerCount = simulation.fireLineMarkers.length;
-    const annotationCount = chartData.chart.annotations ? chartData.chart.annotations.length : 0;
-    if (fireLineMarkerCount > annotationCount) {
+    if (ui.interaction === Interaction.DrawFireLine) {
       const timeInHours = Math.round(simulation.time / 60);
       chartData.addAnnotation(timeInHours, "Fire Line Added");
     }
-  }, [simulation.fireLineMarkers]);
+  }, [ui.interaction]);
 
   useEffect(() => {
     // Convert time from minutes to hours.

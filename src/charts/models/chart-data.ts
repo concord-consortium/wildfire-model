@@ -1,12 +1,12 @@
 import { ChartDataSet, ChartColors } from "./chart-data-set";
-import { ChartAnnotation } from "./chart-annotation";
+import { Annotation } from "./chart-annotation";
 import { observable } from "mobx";
 
 export interface IChartDataModel{
   name: string;
   dataSets: ChartDataSet[];
   labels?: string[];
-  annotations?: ChartAnnotation[];
+  annotations?: Annotation[];
   defaultAxisLabelA1?: string;
   defaultAxisLabelA2?: string;
   defaultMaxPoints?: number;
@@ -18,7 +18,7 @@ export class ChartDataModel implements IChartDataModel {
   public name: string;
   @observable public dataSets: ChartDataSet[];
   public labels?: string[];
-  public annotations?: ChartAnnotation[];
+  public annotations?: Annotation[];
   public defaultAxisLabelA1?: string;
   public defaultAxisLabelA2?: string;
   public defaultMaxPoints?: number = 100;
@@ -160,14 +160,14 @@ export class ChartDataModel implements IChartDataModel {
     });
   }
 
-  public addAnnotation = (annotation: ChartAnnotation) => {
+  public addAnnotation = (annotation: Annotation) => {
     if (!this.annotations) {
       this.annotations = [];
     }
     this.annotations.push(annotation);
   }
 
-  public removeAnnotation = (annotation: ChartAnnotation) => {
+  public removeAnnotation = (annotation: Annotation) => {
     if (this.annotations) {
       this.annotations.splice(this.annotations.indexOf(annotation));
     }

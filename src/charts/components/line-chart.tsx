@@ -160,6 +160,7 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
       },
       scales: {
         yAxes: [{
+          id: "y-axis-0",
           ticks: {
             min: minMaxValues.minA2,
             max: minMaxValues.maxA2,
@@ -173,6 +174,7 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
           }
         }],
         xAxes: [{
+          id: "x-axis-0",
           ticks: {
             beginAtZero: minMaxValues.minA1 === 0,
             precision: 0,
@@ -198,33 +200,45 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
         }
       },
       annotation: {
+        drawTime: "afterDraw",
+        events: ["click", "mouseenter", "mouseleave"],
         annotations: chartData.formattedAnnotations
       }
     });
     const w = width ? width : 400;
     const h = height ? height : 400;
-    if (chartData.annotations && chartData.annotations.length > 0) {
-      graphs.push(
-        <Scatter
-          key={3}
-          data={chartDisplay}
-          options={options}
-          height={h}
-          width={w}
-          redraw={true}
-          plugins={[ChartAnnotation]}
-        />);
-    } else {
-      graphs.push(
-        <Scatter
-          key={3}
-          data={chartDisplay}
-          options={options}
-          height={h}
-          width={w}
-          redraw={true}
-        />);
-    }
+    graphs.push(
+      <Scatter
+        key={3}
+        data={chartDisplay}
+        options={options}
+        height={h}
+        width={w}
+        redraw={true}
+        plugins={[ChartAnnotation]}
+      />);
+    // if (chartData.annotations && chartData.annotations.length > 0) {
+    //   graphs.push(
+    //     <Scatter
+    //       key={3}
+    //       data={chartDisplay}
+    //       options={options}
+    //       height={h}
+    //       width={w}
+    //       redraw={true}
+    //       plugins={[ChartAnnotation]}
+    //     />);
+    // } else {
+    //   graphs.push(
+    //     <Scatter
+    //       key={3}
+    //       data={chartDisplay}
+    //       options={options}
+    //       height={h}
+    //       width={w}
+    //       redraw={true}
+    //     />);
+    // }
 
     return (
       <div className="line-chart-container">
