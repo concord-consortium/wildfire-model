@@ -170,6 +170,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   }
 
   public handleRestart = () => {
+    this.stores.chartData.clearData();
     this.stores.simulation.restart();
   }
 

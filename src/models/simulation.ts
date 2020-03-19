@@ -6,8 +6,6 @@ import { getInputData } from "../utils";
 import { Vector2 } from "three";
 import { Zone } from "./zone";
 import { Town } from "../types";
-import { currentChart, addData, clearData, setChartProperties, addAnnotation } from "../charts/chart-utils";
-import { ChartDataModel } from "../charts/models/chart-data";
 
 interface ICoords {
   x: number;
@@ -17,7 +15,6 @@ interface ICoords {
 interface IZoneStats{
   [key: number]: number;
 }
-const totalCellCountByZone: IZoneStats = {};
 
 const getGridIndexForLocation = (x: number, y: number, width: number) => {
   return x + y * width;
@@ -193,6 +190,9 @@ export class SimulationModel {
   // specific moments and usually for all the cells, so this approach can be way more efficient.
   @observable public cellsStateFlag = 0;
   @observable public cellsElevationFlag = 0;
+  @observable public totalCellCountByZone: IZoneStats = {};
+  @observable public burnedCellsInZone: IZoneStats = {};
+  @observable public simulationAreaAcres = 0;
 
   constructor(presetConfig: Partial<ISimulationConfig>) {
     this.load(presetConfig);
@@ -352,9 +352,13 @@ export class SimulationModel {
             isUnburntIsland: unburntIsland && unburntIsland[index] > 0 || isNonBurnable,
             baseElevation: isEdge ? 0 : elevation && elevation[index]
           };
-          if (!totalCellCountByZone[zi]) totalCellCountByZone[zi] = 1;
+
+          if (!this.totalCellCountByZone[zi]) this.totalCellCountByZone[zi] = 1;
           else {
-            totalCellCountByZone[zi]++;
+            this.totalCellCountByZone[zi]++;
+          }
+          if (elevation) {
+            cellOptions.baseElevation = elevation[index];
           }
           this.cells.push(new Cell(cellOptions));
         }
@@ -362,6 +366,8 @@ export class SimulationModel {
       this.updateCellsElevationFlag();
       this.updateCellsStateFlag();
       this.updateTownMarkers();
+      // dimensions in feet, convert sqft to acres
+      this.simulationAreaAcres = this.gridWidth * this.gridHeight * this.cellSize / 43560;
       this.dataReady = true;
       this.recalculateCellProps = true;
     });
@@ -426,7 +432,6 @@ export class SimulationModel {
     this.updateCellsElevationFlag();
     // That's necessary because of the fire lines that have been removed.
     this.recalculateCellProps = true;
-    clearData();
   }
 
   @action.bound public reload() {
@@ -612,8 +617,6 @@ export class SimulationModel {
       if (i + 1 < this.fireLineMarkers.length) {
         this.markFireLineUnderConstruction(this.fireLineMarkers[i], this.fireLineMarkers[i + 1], false);
         this.buildFireLine(this.fireLineMarkers[i], this.fireLineMarkers[i + 1]);
-        const timeInHours = Math.round(this.time / 60);
-        addAnnotation(timeInHours, "Fire Line Added");
       }
     }
     this.fireLineMarkers.length = 0;
@@ -682,7 +685,6 @@ export class SimulationModel {
     let fireDidStop = true;
 
     let totalBurnedCells = 0;
-    const burnedCellsInZone: IZoneStats = {};
 
     for (let i = 0; i < numCells; i++) {
       const cell = this.cells[i];
@@ -731,7 +733,7 @@ export class SimulationModel {
         }
       }
     }
-
+    this.burnedCellsInZone = {};
     for (let i = 0; i < numCells; i++) {
       const cell = this.cells[i];
       if (newFireStateData[i] !== undefined) {
@@ -742,30 +744,10 @@ export class SimulationModel {
       }
       if (cell.fireState > 0) {
         totalBurnedCells++;
-        if (!burnedCellsInZone[cell.zoneIdx]) burnedCellsInZone[cell.zoneIdx] = 1;
-        else burnedCellsInZone[cell.zoneIdx]++;
+        if (!this.burnedCellsInZone[cell.zoneIdx]) this.burnedCellsInZone[cell.zoneIdx] = 1;
+        else this.burnedCellsInZone[cell.zoneIdx]++;
       }
     }
-    // Convert time from minutes to hours.
-    const timeInHours = Math.round(this.time / 60);
-    const currentData: ChartDataModel = currentChart();
-    if (!currentData.name || currentData.name.length === 0) {
-      setChartProperties("Fire Area vs Time", "Time (hours)", "Area (Acres)");
-    }
-    // dimensions in feet, convert sqft to acres
-    const simulationAreaAcres = this.gridWidth * this.gridHeight * this.cellSize / 43560;
-
-    for (let i = 0; i < this.zones.length; i++) {
-      const burnedCells = burnedCellsInZone[i] ? burnedCellsInZone[i] : 0;
-      const burnPercentage = burnedCells / totalCellCountByZone[i];
-      addData(
-        timeInHours,
-        Math.ceil(simulationAreaAcres * burnPercentage),
-        i,
-        undefined,
-        `Zone ${i + 1}`);
-    }
-
     if (fireDidStop) {
       this.simulationRunning = false;
     }

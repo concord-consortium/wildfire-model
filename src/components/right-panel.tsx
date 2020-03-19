@@ -6,7 +6,6 @@ import { Chart } from "../charts/components/chart";
 import { useStores } from "../use-stores";
 import * as css from "./right-panel.scss";
 import { ChartDataModel } from "../charts/models/chart-data";
-import { currentChart, setChartStyle, setChartProperties } from "../charts/chart-utils";
 
 export type TabType = "graph";
 
@@ -18,21 +17,48 @@ const borderDash1 = [5, 5];
 const borderDash2 = [10, 5];
 
 export const RightPanel = observer(() => {
-  const { simulation, ui } = useStores();
+  const { simulation, chartData, ui } = useStores();
   const [open, setOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("graph");
   const [hasSetColor, setHasSetColor] = useState(false);
 
   useEffect(() => {
+    const fireLineMarkerCount = simulation.fireLineMarkers.length;
+    const annotationCount = chartData.chart.annotations ? chartData.chart.annotations.length : 0;
+    if (fireLineMarkerCount > annotationCount) {
+      const timeInHours = Math.round(simulation.time / 60);
+      chartData.addAnnotation(timeInHours, "Fire Line Added");
+    }
+  }, [simulation.fireLineMarkers]);
+
+  useEffect(() => {
+    // Convert time from minutes to hours.
+    const timeInHours = Math.round(simulation.time / 60);
+    if (!chartData.chart.name || chartData.chart.name.length === 0) {
+      chartData.setChartProperties("Fire Area vs Time", "Time (hours)", "Area (Acres)");
+    }
+
+    for (let i = 0; i < simulation.zones.length; i++) {
+      const burnedCells = simulation.burnedCellsInZone[i] ? simulation.burnedCellsInZone[i] : 0;
+      const burnPercentage = burnedCells / simulation.totalCellCountByZone[i];
+      chartData.addData(
+        timeInHours,
+        Math.ceil(simulation.simulationAreaAcres * burnPercentage),
+        i,
+        undefined,
+        `Zone ${i + 1}`);
+    }
+  }, [simulation.time]);
+
+  useEffect(() => {
     setHasSetColor(false);
   }, [simulation.simulationRunning]);
 
-  const currentData: ChartDataModel = currentChart();
-  if (!currentData.name || currentData.name.length === 0) {
-    setChartProperties("Fire Area vs Time", "Time (hours)", "Area (Acres)");
+  if (!chartData.chart.name || chartData.chart.name.length === 0) {
+    chartData.setChartProperties("Fire Area vs Time", "Time (hours)", "Area (Acres)");
   }
-  const showChart = currentData != null;
-  if (showChart && !hasSetColor && currentData.dataSets.length === simulation.zones.length) {
+  const showChart = chartData.chart != null;
+  if (showChart && !hasSetColor && chartData.chart.dataSets.length === simulation.zones.length) {
     for (let i = 0; i < simulation.zones.length; i++) {
       let zoneColor;
       let dashStyle;
@@ -52,7 +78,7 @@ export const RightPanel = observer(() => {
           zoneColor = chartColor2;
           break;
       }
-      setChartStyle(i, zoneColor, dashStyle);
+      chartData.setChartStyle(i, zoneColor, dashStyle);
     }
     setHasSetColor(true);
   }
@@ -84,7 +110,7 @@ export const RightPanel = observer(() => {
           <Chart
             title="Acres Burned vs. Time"
             chartType="line"
-            chartData={currentData}
+            chartData={chartData.chart}
             isPlaying={simulation.simulationRunning}
             axisLabelA1Function={axisLabelA1}
             axisLabelA2Function={axisLabelA2} />
