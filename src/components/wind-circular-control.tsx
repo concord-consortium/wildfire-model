@@ -28,7 +28,7 @@ const windSpeedMarks = [
   }
 ];
 
-export const WindCircularControl = observer(() => {
+export const WindCircularControl = observer(function WrappedComponent() {
   const { simulation } = useStores();
   const windScaleFactor = simulation.config.windScaleFactor;
 

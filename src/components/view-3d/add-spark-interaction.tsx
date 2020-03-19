@@ -10,7 +10,7 @@ interface IProps {
   getTerrain: () => THREE.Mesh | undefined;
 }
 
-export const AddSparkInteraction: React.FC<IProps> = observer(({ getTerrain }) => {
+export const AddSparkInteraction: React.FC<IProps> = observer(function WrappedComponent({ getTerrain }) {
   const { simulation, ui } = useStores();
   const addSpark = useInteractions({
     getObject: getTerrain,

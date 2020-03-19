@@ -9,7 +9,7 @@ import Shutterbug from "shutterbug";
 
 import css from "./app.scss";
 
-export const AppComponent = observer(() => {
+export const AppComponent = observer(function WrappedComponent() {
   const { simulation } = useStores();
 
   useEffect(() => {

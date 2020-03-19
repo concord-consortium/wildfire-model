@@ -2,6 +2,7 @@ import React from "react";
 import { observer } from "mobx-react";
 import { useStores } from "../../use-stores";
 import { Marker } from "./marker";
+import * as THREE from "three";
 
 const font = (size: number) => {
   return `${size}px Lato, arial, helvetica, sans-serif`;
@@ -33,7 +34,7 @@ const labelCanvas = (label: string) => {
   return canvas;
 };
 
-export const TownMarkersContainer = observer(({ getTerrain }) => {
+export const TownMarkersContainer: React.FC = observer(function WrappedComponent() {
   const { simulation } = useStores();
   return <>
     {

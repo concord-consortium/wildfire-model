@@ -20,7 +20,6 @@ export interface ISimulationConfig {
   modelDayInSeconds: number;
   windSpeed: number; // mph
   windDirection: number; // degrees, 0 is northern wind
-  moistureContent: number;
   neighborsDist: number;
   // In min - note that larger cells will burn the same amount of time. Cell doesn't burn from edge to edge, but
   // its whole area is supposed to burn at the same time. We might consider whether it should be different for
@@ -62,7 +61,6 @@ export const defaultConfig: IUrlConfig = {
   modelDayInSeconds: 8, // one day in model should last X seconds in real world
   windSpeed: 0, // mph
   windDirection: 0, // degrees, northern wind
-  moistureContent: 0.07,
   // Note that 0.5 helps to create a nicer, more round shape of neighbours set for a given cell
   // on the rectangular grid when small radius values are used (like 2.5).
   // 2.5 seems to be first value that ensures that fire front looks pretty round.

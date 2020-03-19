@@ -4,8 +4,13 @@ import { useStores } from "../../use-stores";
 import sparkImg from "../../assets/interactions/spark.png";
 import sparkHighlightImg from "../../assets/interactions/spark-highlight.png";
 import { Marker } from "./marker";
+import * as THREE from "three";
 
-export const SparksContainer = observer(({ getTerrain }) => {
+interface IProps {
+  getTerrain: () => THREE.Mesh | undefined;
+}
+
+export const SparksContainer: React.FC<IProps> = observer(function WrappedComponent({ getTerrain }) {
   const { simulation } = useStores();
   return <>
     {

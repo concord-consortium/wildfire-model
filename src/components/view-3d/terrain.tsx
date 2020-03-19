@@ -112,7 +112,7 @@ const updateColors = (plane: THREE.Mesh, simulation: SimulationModel) => {
   (geometry.attributes.color as BufferAttribute).needsUpdate = true;
 };
 
-export const Terrain = observer(() => {
+export const Terrain = observer(function WrappedComponent() {
   const { simulation, ui } = useStores();
   const { getEntity } = useThree<THREE.Mesh>(setupMesh(simulation));
 

@@ -9,7 +9,7 @@ interface IProps {
   getTerrain: () => THREE.Mesh | undefined;
 }
 
-export const ShowCoordsInteraction: React.FC<IProps> = observer(({ getTerrain }) => {
+export const ShowCoordsInteraction: React.FC<IProps> = observer(function WrappedComponent({ getTerrain }) {
   const { simulation } = useStores();
   const showCoords = useInteractions({
     getObject: getTerrain,

@@ -4,8 +4,13 @@ import { useStores } from "../../use-stores";
 import fireLineImg from "../../assets/interactions/fire-line.png";
 import fireLineHighlightImg from "../../assets/interactions/fire-line-highlight.png";
 import { Marker } from "./marker";
+import * as THREE from "three";
 
-export const FireLineMarkersContainer = observer(({ getTerrain }) => {
+interface IProps {
+  getTerrain: () => THREE.Mesh | undefined;
+}
+
+export const FireLineMarkersContainer: React.FC<IProps> = observer(function WrappedComponent({ getTerrain }) {
   const { simulation } = useStores();
   return <>
     {

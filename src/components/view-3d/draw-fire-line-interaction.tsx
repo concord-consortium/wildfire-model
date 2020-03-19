@@ -12,7 +12,7 @@ interface IProps {
 
 const MIN_DIST = 1500; // feet
 
-export const DrawFireLineInteraction: React.FC<IProps> = observer(({ getTerrain }) => {
+export const DrawFireLineInteraction: React.FC<IProps> = observer(function WrappedComponent({ getTerrain }) {
   const { simulation, ui } = useStores();
   let mouseDown = false;
   const addSpark = useInteractions({
