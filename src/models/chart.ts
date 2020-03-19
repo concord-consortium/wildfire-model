@@ -19,8 +19,7 @@ export class ChartModel {
       defaultAxisLabelA1: "Time",
       defaultAxisLabelA2: "Value",
       defaultMaxPoints: this.defaultMaxPoints,
-      defaultMaxA1: this.defaultMaxA1,
-      annotations: []
+      defaultMaxA1: this.defaultMaxA1
     });
   }
 

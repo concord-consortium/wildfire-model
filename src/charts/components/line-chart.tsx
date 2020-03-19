@@ -203,17 +203,28 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
     });
     const w = width ? width : 400;
     const h = height ? height : 400;
-    graphs.push(
-      <Scatter
-        key={3}
-        data={chartDisplay}
-        options={options}
-        height={h}
-        width={w}
-        redraw={true}
-        plugins={[ChartAnnotation]}
-      />
-    );
+    if (chartData.annotations && chartData.annotations.length > 0) {
+      graphs.push(
+        <Scatter
+          key={3}
+          data={chartDisplay}
+          options={options}
+          height={h}
+          width={w}
+          redraw={true}
+          plugins={[ChartAnnotation]}
+        />);
+    } else {
+      graphs.push(
+        <Scatter
+          key={3}
+          data={chartDisplay}
+          options={options}
+          height={h}
+          width={w}
+          redraw={true}
+        />);
+    }
 
     return (
       <div className="line-chart-container">

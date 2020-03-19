@@ -14,7 +14,7 @@ const borderDash0 = [];
 const borderDash1 = [5, 5];
 const borderDash2 = [10, 5];
 
-export const RightPanel = observer(() => {
+export const RightPanel = observer(function WrappedComponent() {
   const { simulation, chartData, ui } = useStores();
   const [open, setOpen] = useState(false);
   const [selectedTab, setSelectedTab] = useState("graph");
@@ -49,7 +49,7 @@ export const RightPanel = observer(() => {
     }
     if (chartData.chart.dataSets.length !== simulation.zones.length) {
       const timeInHours = Math.round(simulation.time / 60);
-      for (let i = 0; i < simulation.zones.length; i++){
+      for (let i = 0; i < simulation.zones.length; i++) {
         if (!chartData.chart.dataSets[i]) {
           const burnedCells = simulation.burnedCellsInZone[i] ? simulation.burnedCellsInZone[i] : 0;
           const burnPercentage = burnedCells / simulation.totalCellCountByZone[i];
@@ -114,13 +114,15 @@ export const RightPanel = observer(() => {
     <div className={`${css.rightPanel} ${open ? css.open : ""}`} data-test="right-panel">
       <div className={css.rightPanelContent}>
         <div className={css.chartContainer}>
-        <Chart
-          title="Acres Burned vs. Time"
-          chartType="line"
-          chartData={chartData.chart}
-          isPlaying={simulation.simulationRunning}
-          axisLabelA1Function={axisLabelA1}
-          axisLabelA2Function={axisLabelA2} />
+          {chartData.chart && chartData.chart.dataSets &&
+            <Chart
+              title="Acres Burned vs. Time"
+              chartType="line"
+              chartData={chartData.chart}
+              isPlaying={simulation.simulationRunning}
+              axisLabelA1Function={axisLabelA1}
+              axisLabelA2Function={axisLabelA2} />
+          }
         </div>
       </div>
       <ul className={css.rightPanelTabs}>

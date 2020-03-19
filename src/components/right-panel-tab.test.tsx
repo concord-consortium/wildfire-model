@@ -2,7 +2,7 @@ import * as React from "react";
 import { mount } from "enzyme";
 import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
-import { RightPanelTab } from "./right-panel-tab";\
+import { RightPanelTab } from "./right-panel-tab";
 
 describe("MapTab component", () => {
   let stores = createStores();
