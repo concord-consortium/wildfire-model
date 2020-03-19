@@ -5,7 +5,7 @@ import { useStores } from "../../use-stores";
 import { observer } from "mobx-react";
 import { useEffect } from "react";
 
-export const CameraControls = observer(() => {
+export const CameraControls = observer(function WrappedComponent() {
   const { simulation, ui } = useStores();
   const { getEntity } = useThree(({ camera, canvas }) => {
     camera.up.copy(DEFAULT_UP);

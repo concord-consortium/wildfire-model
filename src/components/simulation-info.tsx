@@ -1,7 +1,7 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { observer } from "mobx-react";
 import { useStores } from "../use-stores";
-import { droughtIcons, droughtLabels, vegetationIcons, vegetationLabels } from "./vertical-selectors";
+import { droughtIcons, vegetationIcons } from "./vertical-selectors";
 import { Zone } from "../models/zone";
 import { windDial, degToCompass } from "./wind-dial";
 
@@ -35,7 +35,7 @@ const zoneDetails = (zones: Zone[]) => {
   return detailView;
 };
 
-export const SimulationInfo = observer(() => {
+export const SimulationInfo = observer(function WrappedComponent() {
   const { simulation } = useStores();
   const scaledWind = simulation.wind.speed / simulation.config.windScaleFactor;
   return (

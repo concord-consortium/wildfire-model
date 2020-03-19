@@ -21,7 +21,7 @@ interface IProps {
   // setPosition enabled dragging
   setPosition?: (x: number, y: number) => void;
   // getTerrain provides a based mesh used for dragging. Necessary for dragging to work.
-  getTerrain?: () => THREE.Mesh;
+  getTerrain?: () => THREE.Mesh | undefined;
   // Optional highlight image that we'll be activated on hover.
   markerHighlightImg?: string | HTMLCanvasElement;
   lockOnSimStart?: boolean;
@@ -54,10 +54,10 @@ const getMaterial = (imgSrcOrCanvas: string | HTMLCanvasElement) => {
   return material;
 };
 
-export const Marker: React.FC<IProps> = observer(({
+export const Marker: React.FC<IProps> = observer(function WrappedComponent({
   markerImg, markerHighlightImg, position, setPosition, getTerrain,
   width = 0.06, height = 0.06, anchorX = 0.5, anchorY = 0, lockOnSimStart = false
-}) => {
+}) {
   const defMaterial = useRef<SpriteMaterial>();
   const highlightMaterial = useRef<SpriteMaterial>();
   const { simulation, ui } = useStores();
@@ -99,39 +99,42 @@ export const Marker: React.FC<IProps> = observer(({
     }
   }, [position, simulation.dataReady]);
 
-  if (setPosition && getTerrain) {
-    const dragging = useInteractions({
-      getObject: getEntity,
-      getDragBaseObject: getTerrain,
-      onDrag: (x: number, y: number) => {
+  const dragging = useInteractions({
+    getObject: getEntity,
+    getDragBaseObject: getTerrain,
+    onDrag: (x: number, y: number) => {
+      if (setPosition) {
         const ratio = ftToViewUnit(simulation);
         setPosition(x / ratio, y / ratio);
-      },
-      onMouseOver: () => {
-        const sprite = getEntity();
-        if (sprite && highlightMaterial.current) {
-          sprite.material = highlightMaterial.current;
-        }
-        return "grab"; // cursor
-      },
-      onMouseOut: () => {
-        const sprite = getEntity();
-        if (sprite) {
-          sprite.material = defMaterial.current!;
-        }
       }
-    });
+    },
+    onMouseOver: () => {
+      const sprite = getEntity();
+      if (sprite && highlightMaterial.current) {
+        sprite.material = highlightMaterial.current;
+      }
+      return "grab"; // cursor
+    },
+    onMouseOut: () => {
+      const sprite = getEntity();
+      if (sprite) {
+        sprite.material = defMaterial.current!;
+      }
+    }
+  });
 
-    useEffect(() => {
+  useEffect(() => {
+    const draggable = setPosition && getTerrain;
+    if (draggable) {
       if (ui.interaction === null && (!lockOnSimStart || !simulation.simulationStarted)) {
         dragging.enable();
       }
       return dragging.disable;
-    }, [ui.interaction, simulation.simulationStarted]);
-  }
+    }
+  }, [ui.interaction, simulation.simulationStarted]);
 
-  if (lockOnSimStart) {
-    useEffect(() => {
+  useEffect(() => {
+    if (lockOnSimStart) {
       const sprite = getEntity();
       if (!sprite) {
         return;
@@ -141,8 +144,8 @@ export const Marker: React.FC<IProps> = observer(({
       } else {
         sprite.scale.set(width * PLANE_WIDTH, height * PLANE_WIDTH, 1);
       }
-    }, [simulation.simulationStarted]);
-  }
+    }
+  }, [simulation.simulationStarted]);
 
   return null;
 });
