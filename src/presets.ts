@@ -153,6 +153,27 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
       [ 0, 1 ]
     ]
   },
+ townsThreeZone: {
+    modelWidth: 120000,
+    modelHeight: 80000,
+    gridWidth: 240,
+    heightmapMaxElevation: 20000,
+    zonesCount: 3,
+    zones: [
+      { terrainType: TerrainType.Mountains, vegetation: Vegetation.Shrub, droughtLevel: 0 },
+      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: 0 },
+      { terrainType: TerrainType.Plains, vegetation: Vegetation.Shrub, droughtLevel: 0 },
+    ],
+    towns: [
+      { name: "Skyview", x: 0.12, y: 0.68, terrainType: TerrainType.Mountains },
+      { name: "Rolling Rock", x: 0.60, y: 0.25, terrainType: TerrainType.Foothills },
+      { name: "Evensville", x: 0.78, y: 0.55, terrainType: TerrainType.Plains },
+    ],  
+    zoneIndex: [
+      [ 0, 1, 2 ]
+    ]
+  },
+  
   defaultThreeZone: {
     modelWidth: 120000,
     modelHeight: 80000,
