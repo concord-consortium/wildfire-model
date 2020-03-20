@@ -123,6 +123,18 @@ const isArray = (value: any) => {
   return typeof value === "string" && value.match(/^\[.*\]$/);
 };
 
+const isJSON = (value: any) => {
+  if (typeof value !== "string") {
+    return false;
+  }
+  try {
+    JSON.parse(value);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
 // Populate `urlConfig` with values read from URL.
 Object.keys(defaultConfig).forEach((key) => {
   const urlValue: any = getURLParam(key);
@@ -130,6 +142,8 @@ Object.keys(defaultConfig).forEach((key) => {
     urlConfig[key] = true;
   } else if (urlValue === "false") {
     urlConfig[key] = false;
+  } else if (isJSON(urlValue)) {
+    urlConfig[key] = JSON.parse(urlValue);
   } else if (isArray(urlValue)) {
     // Array can be provided in URL using following format:
     // &parameter=[value1,value2,value3]
