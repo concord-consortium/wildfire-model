@@ -58,9 +58,11 @@ export interface IUrlConfig extends ISimulationConfig {
 
 export const defaultConfig: IUrlConfig = {
   preset: "defaultTwoZone",
-  modelWidth: 100000,
-  modelHeight: 100000,
-  gridWidth: 100,
+  // Most of the presets will use heightmap images that work the best with 120000x80000ft dimensions.
+  modelWidth: 120000,
+  modelHeight: 80000,
+  // 240 works well with presets based on heightmap images.
+  gridWidth: 240,
   sparks: [],
   maxTimeStep: 180, // minutes
   modelDayInSeconds: 8, // one day in model should last X seconds in real world
@@ -72,6 +74,7 @@ export const defaultConfig: IUrlConfig = {
   // Higher values will make this shape better, but performance will be affected.
   neighborsDist: 2.5,
   minCellBurnTime: 200, // minutes
+  // This value works well with existing heightmap images.
   heightmapMaxElevation: 20000,
   riverElevation: 1500,
   zonesCount: 2,
