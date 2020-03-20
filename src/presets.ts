@@ -135,8 +135,8 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     gridWidth: 480,
     heightmapMaxElevation: 20000,
     zones: [
-      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Grass, droughtLevel: DroughtLevel.SevereDrought },
-      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: DroughtLevel.MediumDrought },
+      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Grass, droughtLevel: DroughtLevel.MediumDrought },
+      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: DroughtLevel.MildDrought },
     ],
     towns: [
       { name: "Skyview", x: 0.12, y: 0.68, terrainType: TerrainType.Mountains },
@@ -257,7 +257,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
       {
         terrainType: TerrainType.Mountains,
         vegetation: Vegetation.ForestLargeLitter,
-        droughtLevel: DroughtLevel.SevereDrought
+        droughtLevel: DroughtLevel.MediumDrought
       },
       {
         terrainType: TerrainType.Foothills,

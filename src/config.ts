@@ -48,6 +48,8 @@ export interface ISimulationConfig {
   unburntIslandProbability: number;
   // Locks drought index slider in Terrain Setup dialog.
   droughtIndexLocked: boolean;
+  // Makes severe drought option available in Terrain Setup dialog.
+  severeDroughtAvailable: boolean;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -101,7 +103,8 @@ export const defaultConfig: IUrlConfig = {
   showBurnIndex: false,
   showCoordsOnClick: false,
   unburntIslandProbability: 0.5, // [0, 1]
-  droughtIndexLocked: false
+  droughtIndexLocked: false,
+  severeDroughtAvailable: false
 };
 
 export const urlConfig: any = {};

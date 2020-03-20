@@ -84,6 +84,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
                   <DroughtSelector
                     droughtLevel={zone.droughtLevel}
                     onChange={this.handleDroughtChange}
+                    severeDroughtAvailable={simulation.config.severeDroughtAvailable}
                     disabled={simulation.config.droughtIndexLocked}
                   />
                 </div>
