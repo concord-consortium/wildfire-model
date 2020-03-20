@@ -27,6 +27,7 @@ export interface ISimulationConfig {
   minCellBurnTime: number;
   // Max elevation of 100% white points in heightmap (image used for elevation data).
   heightmapMaxElevation: number; // ft
+  riverElevation: number; // ft
   // Number of zones that the model is using. Zones are used to keep properties of some area of the model.
   zonesCount: 2 | 3;
   zones: [ZoneOptions, ZoneOptions, ZoneOptions?];
@@ -68,6 +69,7 @@ export const defaultConfig: IUrlConfig = {
   neighborsDist: 2.5,
   minCellBurnTime: 200, // minutes
   heightmapMaxElevation: 20000,
+  riverElevation: 1500,
   zonesCount: 2,
   zones: [
     {
@@ -88,7 +90,7 @@ export const defaultConfig: IUrlConfig = {
   ],
   towns: [],
   fillTerrainEdges: true,
-  riverData: "data/river-texmap-data.png",
+  riverData: "data/river-texmap.png",
   windScaleFactor: 0.2, // Note that model is very sensitive to wind.
   // Scale wind values down for now, so changes are less dramatic.
   showModelDimensions: false,

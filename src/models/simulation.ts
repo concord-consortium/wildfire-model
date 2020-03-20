@@ -325,15 +325,14 @@ export class SimulationModel {
       for (let y = 0; y < this.gridHeight; y++) {
         for (let x = 0; x < this.gridWidth; x++) {
           const index = getGridIndexForLocation(x, y, this.gridWidth);
+          const isRiver = river && river[index] > 0;
           const cellOptions: CellOptions = {
             x, y,
             zone: this.zones[zoneIndex ? zoneIndex[index] : 0],
-            isRiver: river && river[index] > 0,
-            isUnburntIsland: unburntIsland && unburntIsland[index] > 0
+            isRiver,
+            isUnburntIsland: unburntIsland && unburntIsland[index] > 0,
+            baseElevation: isRiver ? this.config.riverElevation : elevation && elevation[index]
           };
-          if (elevation) {
-            cellOptions.baseElevation = elevation[index];
-          }
           this.cells.push(new Cell(cellOptions));
         }
       }

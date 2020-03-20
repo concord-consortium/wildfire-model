@@ -132,7 +132,7 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
   defaultTwoZone: {
     modelWidth: 120000,
     modelHeight: 80000,
-    gridWidth: 240,
+    gridWidth: 480,
     heightmapMaxElevation: 20000,
     zones: [
       { terrainType: TerrainType.Foothills, vegetation: Vegetation.Grass, droughtLevel: DroughtLevel.SevereDrought },
