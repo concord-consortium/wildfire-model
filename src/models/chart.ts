@@ -85,7 +85,11 @@ export class ChartModel {
       value,
       label,
       labelXOffset: 0,
-      labelYOffset: 30
+      labelYOffset: 4,
+      labelPosition: "top",
+      labelBackgroundColor: "rgba(255,255,255,0.5)",
+    // tslint:disable-next-line:max-line-length
+      fontFamily: "Noto Color Emoji, Apple Color Emoji, Segoe UI Emoji, Times, Symbola, Aegyptus, Code2000, Code2001, Code2002, Musica, serif, LastResort"
     }));
   }
 

@@ -23,6 +23,7 @@ export interface IChartAnnotation{
   labelBackgroundColor?: string;
   labelXOffset?: number;
   labelYOffset?: number;
+  labelPosition?: string;
   // if present, will add mouse rollover and click handlers
   expandLabel?: string;
   // additional offset for rollovers of different lenghts
@@ -32,18 +33,20 @@ export interface IChartAnnotation{
   xMax?: number;
   yMax?: number;
   yMin?: number;
+  fontFamily?: string;
 }
 export class Annotation implements IChartAnnotation {
   public type: string;
   @observable public value?: number;
-  @observable public color?: string = "red";
+  @observable public color?: string = "#797979";
   public thickness?: number = 2;
-  public dashArray?: number[];
+  public dashArray?: number[] = [5, 5];
   @observable public label?: string;
-  public labelColor?: string = "white";
-  public labelBackgroundColor?: string = "rgba(0,0,0,0.8)";
+  public labelColor?: string = "black";
+  public labelBackgroundColor?: string;
   public labelXOffset?: number = 0;
   public labelYOffset?: number = 0;
+  public labelPosition?: string = "top";
   public expandLabel?: string;
   public expandOffset?: number = 0;
   public xMin?: number;
@@ -51,6 +54,7 @@ export class Annotation implements IChartAnnotation {
   public yMax?: number;
   public yMin?: number;
   public showingExpandLabel?: boolean = false;
+  public fontFamily?: string;
 
   constructor(props: IChartAnnotation) {
     Object.assign(this, props);
@@ -84,7 +88,13 @@ export class Annotation implements IChartAnnotation {
         scaleID: "x-axis-0",
         value: this.value,
         label: {
-          position: "bottom"
+          position: this.labelPosition ? this.labelPosition : "top",
+          fontFamily: this.fontFamily ? this.fontFamily : undefined,
+          fontSize: 20,
+          cornerRadius: 20,
+          labelHeight: 16,
+          yPadding: 0,
+          xPadding: 2
         },
         ...formatted
       };

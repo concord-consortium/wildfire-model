@@ -23,7 +23,7 @@ export const RightPanel = observer(function WrappedComponent() {
   useEffect(() => {
     if (ui.interaction === Interaction.DrawFireLine) {
       const timeInHours = Math.round(simulation.time / 60);
-      chartData.addAnnotation(timeInHours, "Fire Line Added");
+      chartData.addAnnotation(timeInHours, "🪓");
     }
   }, [ui.interaction]);
 
