@@ -13,6 +13,15 @@ export interface ISimulationConfig {
   modelHeight: number; // ft
   // Note that modelHeight % gridWidth should always be 0!
   gridWidth: number; // ft
+  // If `elevation` height map is provided, it will be loaded during model initialization and terrain setup dialog
+  // won't let users change terrain type. Otherwise, height map URL will be derived from zones `terrainType` properties.
+  elevation?: number[][] | string;
+  // `unburntIslands` data can provided using image url or 2D array.
+  // Otherwise, unburnt islands map URL will be derived from zones `terrainType` properties.
+  unburntIslands?: number[][] | string;
+  // `zoneIndex` data can provided using image url or 2D array. If it's an array, it should include two or three
+  // numbers, depending if model is using two or three zones (0 and 1, or 0, 1, and 2).
+  zoneIndex: number[][] | string;
   // Spark positions, in ft.
   sparks: number[][];
   maxTimeStep: number; // minutes
@@ -27,7 +36,6 @@ export interface ISimulationConfig {
   minCellBurnTime: number;
   // Max elevation of 100% white points in heightmap (image used for elevation data).
   heightmapMaxElevation: number; // ft
-  riverElevation: number; // ft
   // Number of zones that the model is using. Zones are used to keep properties of some area of the model.
   zonesCount: 2 | 3;
   zones: [ZoneOptions, ZoneOptions, ZoneOptions?];
@@ -64,6 +72,9 @@ export const defaultConfig: IUrlConfig = {
   modelHeight: 80000,
   // 240 works well with presets based on heightmap images.
   gridWidth: 240,
+  elevation: undefined, // will be derived from zone properties
+  unburntIslands: undefined, // will be derived from zone properties
+  zoneIndex: [[0, 1]],
   sparks: [],
   maxTimeStep: 180, // minutes
   modelDayInSeconds: 8, // one day in model should last X seconds in real world
@@ -77,7 +88,6 @@ export const defaultConfig: IUrlConfig = {
   minCellBurnTime: 200, // minutes
   // This value works well with existing heightmap images.
   heightmapMaxElevation: 20000,
-  riverElevation: 0,
   zonesCount: 2,
   zones: [
     {
