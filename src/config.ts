@@ -76,7 +76,7 @@ export const defaultConfig: IUrlConfig = {
   minCellBurnTime: 200, // minutes
   // This value works well with existing heightmap images.
   heightmapMaxElevation: 20000,
-  riverElevation: 1500,
+  riverElevation: 0,
   zonesCount: 2,
   zones: [
     {

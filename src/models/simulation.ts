@@ -199,6 +199,7 @@ export class SimulationModel {
   @action.bound public setInputParamsFromConfig() {
     const config = this.config;
     this.zones = config.zones.map(options => new Zone(options!));
+    this.zones.length = config.zonesCount;
     this.wind = {
       speed: config.windSpeed,
       direction: config.windDirection
@@ -219,6 +220,7 @@ export class SimulationModel {
     this.cellSize = config.modelWidth / config.gridWidth;
     this.gridWidth = config.gridWidth;
     this.gridHeight = Math.ceil(config.modelHeight / this.cellSize);
+
     this.setInputParamsFromConfig();
     this.populateCellsData();
   }

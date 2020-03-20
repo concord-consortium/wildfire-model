@@ -20,16 +20,10 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     zoneIndex: [
       [ 0, 1 ]
     ],
+    elevation: [
+      [ 0 ]
+    ],
     riverData: null
-  },
-  threeZones: {
-    modelWidth: 100000,
-    modelHeight: 100000,
-    gridWidth: 100,
-    sparks: [ [50000, 50000] ],
-    zoneIndex: [
-      [ 0, 1, 2 ]
-    ]
   },
   basicWithWind: {
     modelWidth: 100000,
@@ -40,7 +34,11 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     windDirection: 0,
     zoneIndex: [
       [ 0, 1 ]
-    ]
+    ],
+    elevation: [
+      [ 0 ]
+    ],
+    riverData: null
   },
   slope45deg: {
     modelWidth: 100000,
@@ -54,7 +52,8 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     elevation: [
       [ 100000, 0 ],
       [ 100000, 0 ]
-    ]
+    ],
+    riverData: null
   },
   basicWithSlopeAndWind: {
     modelWidth: 100000,
@@ -70,36 +69,11 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     elevation: [
       [ 10000, 0 ],
       [ 10000, 0 ]
-    ]
-  },
-  hills: {
-    modelWidth: 25000,
-    modelHeight: 25000,
-    gridWidth: 100,
-    sparks: [ [5000, 12500] ],
-    maxTimeStep: 10,
-    heightmapMaxElevation: 3000,
-    zoneIndex: [
-      [ 0, 1 ]
     ],
-    elevation: "data/hills.png"
-  },
-  randomHeightmap: {
-    modelWidth: 100000,
-    modelHeight: 100000,
-    gridWidth: 100,
-    sparks: [ [50000, 50000] ],
-    heightmapMaxElevation: 7000,
-    zoneIndex: [
-      [ 0, 1 ]
-    ],
-    elevation: "data/randomHeightmap.png"
+    riverData: null
   },
   complexZones: {
-    modelWidth: 100000,
-    modelHeight: 100000,
-    gridWidth: 100,
-    sparks: [ [50000, 50000] ],
+    zonesCount: 3,
     zoneIndex: [
       [ 0, 0, 0, 0, 0, 0, 2, 2, 2 ],
       [ 0, 0, 0, 0, 0, 0, 0, 2, 2 ],
@@ -115,15 +89,8 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     ]
   },
   zonesFromImage: {
-    modelWidth: 100000,
-    modelHeight: 100000,
-    gridWidth: 100,
-    sparks: [ [50000, 50000] ],
+    zonesCount: 3,
     zoneIndex: "data/complexZones.png",
-  },
-  test01: {
-    zoneIndex: "data/test01_zonemap.png",
-    elevation: "data/test01_heightmap.png",
   },
   defaultTwoZone: {
     zones: [
