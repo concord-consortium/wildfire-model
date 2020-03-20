@@ -46,7 +46,7 @@ describe("chart annotations", () => {
       type: "verticalLine",
       value: 10,
       label: "Test",
-      dashArray: [10, 3]
+      dashArray: [10, 3],
     });
 
     expect(annotation.formatted).toEqual({
@@ -55,15 +55,21 @@ describe("chart annotations", () => {
       scaleID: "x-axis-0",
       value: 10,
       label: {
+        backgroundColor: undefined,
         content: "Test",
+        cornerRadius: 20,
         enabled: true,
-        position: "bottom",
+        fontColor: "black",
+        fontFamily: undefined,
+        fontSize: 20,
+        labelHeight: 16,
+        position: "top",
         xAdjust: 0,
+        xPadding: 2,
         yAdjust: 0,
-        backgroundColor: "rgba(0,0,0,0.8)",
-        fontColor: "white"
+        yPadding: 0
       },
-      borderColor: "red",
+      borderColor: "#797979",
       borderDash: [10, 3],
       borderWidth: 2
     });
@@ -84,14 +90,15 @@ describe("chart annotations", () => {
       mode: "horizontal",
       scaleID: "y-axis-0",
       value: 10,
+      borderDash: [5, 5],
       label: {
         content: "Test",
         enabled: true,
         position: "right",
         xAdjust: 10,
         yAdjust: 0,
-        backgroundColor: "rgba(0,0,0,0.8)",
-        fontColor: "white"
+        backgroundColor: undefined,
+        fontColor: "black"
       },
       borderColor: "blue",
       borderWidth: 5
@@ -116,7 +123,8 @@ describe("chart annotations", () => {
       xMin: 25,
       xMax: 40,
       yMax: 20,
-      yMin:  15,
+      yMin: 15,
+      borderDash: [5, 5],
       borderColor: "red",
       borderWidth: 2,
       backgroundColor: "red",
@@ -139,9 +147,16 @@ describe("chart annotations", () => {
       scaleID: "x-axis-0",
       value: 20,
       label: {
-        position: "bottom"
+        cornerRadius: 20,
+        fontFamily: undefined,
+        fontSize: 20,
+        labelHeight: 16,
+        position: "top",
+        xPadding: 2,
+        yPadding: 0
       },
-      borderColor: "red",
+      borderColor: "#797979",
+      borderDash: [5, 5],
       borderWidth: 2
     }]);
   });
@@ -165,7 +180,8 @@ describe("chart annotations", () => {
       label: {
         position: "right"
       },
-      borderColor: "red",
+      borderColor: "#797979",
+      borderDash: [5, 5],
       borderWidth: 2
     }]);
   });
