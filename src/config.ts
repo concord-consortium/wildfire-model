@@ -32,6 +32,7 @@ export interface ISimulationConfig {
   zonesCount: 2 | 3;
   zones: [ZoneOptions, ZoneOptions, ZoneOptions?];
   towns: TownOptions[];
+  // Visually fills edges of the terrain by setting elevation to 0.
   fillTerrainEdges: boolean;
   riverData: string | null;
   windScaleFactor: number;

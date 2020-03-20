@@ -142,11 +142,8 @@ export const getFireSpreadRate = (
   sourceCell: ICellProps,
   targetCell: ICellProps,
   wind: IWindProps,
-  cellSize: number,
-  gridWidth: number, gridHeight: number
+  cellSize: number
 ) => {
-  // small tweak to prevent the extreme edges of the simulation from burning
-  if (targetCell.x < 2 || targetCell.y < 2 || targetCell.x > gridWidth - 3 || targetCell.y > gridHeight - 3) return 0;
   const fuel = FuelConstants[targetCell.vegetation];
   const sav = fuel.sav;
   const packingRatio = fuel.packingRatio;

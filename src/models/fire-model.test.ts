@@ -37,14 +37,11 @@ describe("getFireSpreadRate", () => {
     // cells F13:
     // Wind speed in the spreadsheet uses feet/min, but we use mph here for better readability.
     // Also, note that target cell lies perfectly aligned with wind direction (northern).
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 1, direction: 0 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(19.40563588);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 1, direction: 0 }, cellSize)).toBeCloseTo(19.40563588);
     // cells F14:
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: 0 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(33.46252017);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: 0 }, cellSize)).toBeCloseTo(33.46252017);
     // cells F32:
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 20, direction: 0 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(802.7428356);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 20, direction: 0 }, cellSize)).toBeCloseTo(802.7428356);
   });
 
   it("calculates the fireSpreadRate correctly for shrub fuel type", () => {
@@ -55,14 +52,11 @@ describe("getFireSpreadRate", () => {
     // cells F13:
     // Wind speed in the spreadsheet uses feet/min, but we use mph here for better readability.
     // Also, note that target cell lies perfectly aligned with wind direction (northern).
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 1, direction: 0 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(14.1437344760995);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 1, direction: 0 }, cellSize)).toBeCloseTo(14.1437344760);
     // cells F14:
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: 0 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(27.6472608800662);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: 0 }, cellSize)).toBeCloseTo(27.647260880);
     // cells F32:
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 20, direction: 0 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(541.687795792985);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 20, direction: 0 }, cellSize)).toBeCloseTo(541.68779579);
   });
 
   it("calculates the fireSpreadRate correctly for forest small litter fuel type", () => {
@@ -73,14 +67,11 @@ describe("getFireSpreadRate", () => {
     // cells F13:
     // Wind speed in the spreadsheet uses feet/min, but we use mph here for better readability.
     // Also, note that target cell lies perfectly aligned with wind direction (northern).
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 1, direction: 0 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(1.275686811);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 1, direction: 0 }, cellSize)).toBeCloseTo(1.275686811);
     // cells F14:
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: 0 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(2.831591284);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: 0 }, cellSize)).toBeCloseTo(2.831591284);
     // cells F32:
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 20, direction: 0 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(64.40222588);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 20, direction: 0 }, cellSize)).toBeCloseTo(64.40222588);
   });
 
   it("calculates the fireSpreadRate correctly for forest large litter fuel type", () => {
@@ -91,25 +82,18 @@ describe("getFireSpreadRate", () => {
     // cells F13:
     // Wind speed in the spreadsheet uses feet/min, but we use mph here for better readability.
     // Also, note that target cell lies perfectly aligned with wind direction (northern).
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 1, direction: 0 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(6.268576733);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 1, direction: 0 }, cellSize)).toBeCloseTo(6.268576733);
     // cells F14:
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: 0 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(12.42085772);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: 0 }, cellSize)).toBeCloseTo(12.42085772);
     // cells F32:
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 20, direction: 0 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(212.927632);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 20, direction: 0 }, cellSize)).toBeCloseTo(212.927632);
   });
 
   it("takes into account wind direction", () => {
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: 0 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(27.6472608800662);
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: 90 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(7.0274244);
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: -90 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(7.0274244);
-    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: 180 }, cellSize,
-      gridWidth, gridHeight)).toBeCloseTo(3.86127);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: 0 }, cellSize)).toBeCloseTo(27.647260880);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: 90 }, cellSize)).toBeCloseTo(7.0274244);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: -90 }, cellSize)).toBeCloseTo(7.0274244);
+    expect(getFireSpreadRate(sourceCell, targetCell, { speed: 2, direction: 180 }, cellSize)).toBeCloseTo(3.86127);
   });
 });
 
