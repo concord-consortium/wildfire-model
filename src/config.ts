@@ -46,6 +46,8 @@ export interface ISimulationConfig {
   // Number between 0 and 1 which decides how likely is for unburnt island to form (as it's random).
   // 1 means that all the unburnt islands will be visible, 0 means that none of them will be visible.
   unburntIslandProbability: number;
+  // Locks drought index slider in Terrain Setup dialog.
+  droughtIndexLocked: boolean;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -98,7 +100,8 @@ export const defaultConfig: IUrlConfig = {
   maxFireLineLength: 15000, // ft
   showBurnIndex: false,
   showCoordsOnClick: false,
-  unburntIslandProbability: 0.5 // [0, 1]
+  unburntIslandProbability: 0.5, // [0, 1]
+  droughtIndexLocked: false
 };
 
 export const urlConfig: any = {};

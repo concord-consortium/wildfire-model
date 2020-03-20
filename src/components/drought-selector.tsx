@@ -9,10 +9,11 @@ import { DroughtLevel } from "../models/fire-model";
 interface IProps {
   droughtLevel: number;
   onChange?: any;
+  disabled?: boolean;
 }
 
-export const DroughtSelector = ({ droughtLevel, onChange }: IProps) => (
-  <div className={`${css.selector} ${css.drought}`}>
+export const DroughtSelector = ({ droughtLevel, onChange, disabled }: IProps) => (
+  <div className={`${css.selector} ${css.drought} ${disabled ? css.disabled : ""}`}>
     <div className={css.header}>Drought Index</div>
     <div className={css.sliderContainer}>
       <div className={css.sliderIcons}>
