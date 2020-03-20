@@ -3,12 +3,12 @@ import { UIModel } from "./ui";
 import presets from "../presets";
 import { defaultConfig, urlConfig } from "../config";
 import { DroughtLevel, TerrainType, Vegetation } from "./fire-model";
-import { ChartModel } from "./chart";
+import { ChartStore } from "./chart-store";
 
 export interface IStores {
   simulation: SimulationModel;
   ui: UIModel;
-  chartData: ChartModel;
+  chartData: ChartStore;
 }
 
 export const createStores = (): IStores => {
@@ -34,6 +34,6 @@ export const createStores = (): IStores => {
   return {
     simulation,
     ui: new UIModel(),
-    chartData: new ChartModel()
+    chartData: new ChartStore()
   };
 };

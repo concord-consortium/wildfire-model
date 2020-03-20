@@ -3,7 +3,7 @@ import { ChartDataModel } from "../charts/models/chart-data";
 import { DataPoint, ChartDataSet } from "../charts/models/chart-data-set";
 import { Annotation } from "../charts/models/chart-annotation";
 
-export class ChartModel {
+export class ChartStore {
 
   public defaultMaxPoints = 20;
   public defaultMaxA1 = 20;
@@ -87,7 +87,7 @@ export class ChartModel {
       labelXOffset: 0,
       labelYOffset: 4,
       labelPosition: "top",
-      labelBackgroundColor: "rgba(255,255,255,0.5)",
+      labelBackgroundColor: "rgba(255,255,255,0.3)",
     // tslint:disable-next-line:max-line-length
       fontFamily: "Noto Color Emoji, Apple Color Emoji, Segoe UI Emoji, Times, Symbola, Aegyptus, Code2000, Code2001, Code2002, Musica, serif, LastResort"
     }));

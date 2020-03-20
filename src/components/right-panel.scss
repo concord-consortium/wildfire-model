@@ -30,7 +30,7 @@
         color: $controlLabel;
       }
       .chartContainer{
-        padding-top: 27px;
+        padding-top: 10px;
         background-color: white;
         border-radius: 5px;
         border: 2px solid $controlGreenDark2;
@@ -50,6 +50,7 @@
       right: 0;
       list-style-type: none;
       padding-top: $tabVerticalSpacing;
+      bottom: 20px;
     }
 
     .rightPanelTab {

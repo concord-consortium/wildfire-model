@@ -44,7 +44,7 @@ export const RightPanel = observer(function WrappedComponent() {
 
   useEffect(() => {
     if (!chartData.chart.name || chartData.chart.name.length === 0) {
-      chartData.setChartProperties("Fire Area vs Time", "Time (hours)", "Area (Acres)");
+      chartData.setChartProperties("Acres Burned vs. Time", "Time (hours)", "Acres Burned");
     }
     if (chartData.chart.dataSets.length !== simulation.zones.length) {
       const timeInHours = Math.round(simulation.time / 60);
