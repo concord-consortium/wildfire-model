@@ -27,10 +27,12 @@ export interface ISimulationConfig {
   minCellBurnTime: number;
   // Max elevation of 100% white points in heightmap (image used for elevation data).
   heightmapMaxElevation: number; // ft
+  riverElevation: number; // ft
   // Number of zones that the model is using. Zones are used to keep properties of some area of the model.
   zonesCount: 2 | 3;
   zones: [ZoneOptions, ZoneOptions, ZoneOptions?];
   towns: TownOptions[];
+  // Visually fills edges of the terrain by setting elevation to 0.
   fillTerrainEdges: boolean;
   riverData: string | null;
   windScaleFactor: number;
@@ -45,6 +47,10 @@ export interface ISimulationConfig {
   // Number between 0 and 1 which decides how likely is for unburnt island to form (as it's random).
   // 1 means that all the unburnt islands will be visible, 0 means that none of them will be visible.
   unburntIslandProbability: number;
+  // Locks drought index slider in Terrain Setup dialog.
+  droughtIndexLocked: boolean;
+  // Makes severe drought option available in Terrain Setup dialog.
+  severeDroughtAvailable: boolean;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -53,9 +59,11 @@ export interface IUrlConfig extends ISimulationConfig {
 
 export const defaultConfig: IUrlConfig = {
   preset: "defaultTwoZone",
-  modelWidth: 100000,
-  modelHeight: 100000,
-  gridWidth: 100,
+  // Most of the presets will use heightmap images that work the best with 120000x80000ft dimensions.
+  modelWidth: 120000,
+  modelHeight: 80000,
+  // 240 works well with presets based on heightmap images.
+  gridWidth: 240,
   sparks: [],
   maxTimeStep: 180, // minutes
   modelDayInSeconds: 8, // one day in model should last X seconds in real world
@@ -67,7 +75,9 @@ export const defaultConfig: IUrlConfig = {
   // Higher values will make this shape better, but performance will be affected.
   neighborsDist: 2.5,
   minCellBurnTime: 200, // minutes
+  // This value works well with existing heightmap images.
   heightmapMaxElevation: 20000,
+  riverElevation: 0,
   zonesCount: 2,
   zones: [
     {
@@ -88,7 +98,7 @@ export const defaultConfig: IUrlConfig = {
   ],
   towns: [],
   fillTerrainEdges: true,
-  riverData: "data/river-texmap-data.png",
+  riverData: "data/river-texmap.png",
   windScaleFactor: 0.2, // Note that model is very sensitive to wind.
   // Scale wind values down for now, so changes are less dramatic.
   showModelDimensions: false,
@@ -96,7 +106,9 @@ export const defaultConfig: IUrlConfig = {
   maxFireLineLength: 15000, // ft
   showBurnIndex: false,
   showCoordsOnClick: false,
-  unburntIslandProbability: 0.5 // [0, 1]
+  unburntIslandProbability: 0.5, // [0, 1]
+  droughtIndexLocked: false,
+  severeDroughtAvailable: false
 };
 
 export const urlConfig: any = {};
@@ -115,6 +127,18 @@ const isArray = (value: any) => {
   return typeof value === "string" && value.match(/^\[.*\]$/);
 };
 
+const isJSON = (value: any) => {
+  if (typeof value !== "string") {
+    return false;
+  }
+  try {
+    JSON.parse(value);
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
 // Populate `urlConfig` with values read from URL.
 Object.keys(defaultConfig).forEach((key) => {
   const urlValue: any = getURLParam(key);
@@ -122,6 +146,8 @@ Object.keys(defaultConfig).forEach((key) => {
     urlConfig[key] = true;
   } else if (urlValue === "false") {
     urlConfig[key] = false;
+  } else if (isJSON(urlValue)) {
+    urlConfig[key] = JSON.parse(urlValue);
   } else if (isArray(urlValue)) {
     // Array can be provided in URL using following format:
     // &parameter=[value1,value2,value3]

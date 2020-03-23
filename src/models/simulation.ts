@@ -147,7 +147,7 @@ const calculateTimeToIgniteNeighbors = (
   for (let i = 0; i < cells.length; i++) {
     const neighbors = cellNeighbors[i];
     const timeToIgniteMyNeighbors = neighbors.map(n =>
-      1 / getFireSpreadRate(cells[i], cells[n], wind, cellSize, gridWidth, gridHeight)
+      1 / getFireSpreadRate(cells[i], cells[n], wind, cellSize)
     );
     timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
   }
@@ -199,6 +199,7 @@ export class SimulationModel {
   @action.bound public setInputParamsFromConfig() {
     const config = this.config;
     this.zones = config.zones.map(options => new Zone(options!));
+    this.zones.length = config.zonesCount;
     this.wind = {
       speed: config.windSpeed,
       direction: config.windDirection
@@ -219,6 +220,7 @@ export class SimulationModel {
     this.cellSize = config.modelWidth / config.gridWidth;
     this.gridWidth = config.gridWidth;
     this.gridHeight = Math.ceil(config.modelHeight / this.cellSize);
+
     this.setInputParamsFromConfig();
     this.populateCellsData();
   }
@@ -241,8 +243,8 @@ export class SimulationModel {
   public getElevationData(): Promise<number[] | undefined> {
     // If `elevation` height map is provided, it will be loaded during model initialization.
     // Otherwise, height map URL will be derived from zones `terrainType` properties.
-    let heightmapUrl = this.config.elevation;
-    if (!heightmapUrl) {
+    let elevation = this.config.elevation;
+    if (!elevation) {
       const prefix = "data/";
       const zoneTypes: string[] = [];
       this.zones.forEach((z, i) => {
@@ -250,10 +252,9 @@ export class SimulationModel {
           zoneTypes.push(TerrainType[z.terrainType].toLowerCase());
         }
       });
-      const edgeStyle = this.config.fillTerrainEdges ? "-edge" : "";
-      heightmapUrl = prefix + zoneTypes.join("-") + "-heightmap" + edgeStyle + ".png";
+      elevation = prefix + zoneTypes.join("-") + "-heightmap.png";
     }
-    return getInputData(heightmapUrl, this.gridWidth, this.gridHeight, true,
+    return getInputData(elevation, this.gridWidth, this.gridHeight, true,
       (rgba: [number, number, number, number]) => {
         // Elevation data is supposed to black & white image, where black is the lowest point and
         // white is the highest.
@@ -325,15 +326,22 @@ export class SimulationModel {
       for (let y = 0; y < this.gridHeight; y++) {
         for (let x = 0; x < this.gridWidth; x++) {
           const index = getGridIndexForLocation(x, y, this.gridWidth);
+          const isRiver = river && river[index] > 0;
+          // When fillTerrainEdge is set to true, edges are set to elevation 0.
+          const isEdge = this.config.fillTerrainEdges &&
+            (x === 0 || x === this.gridWidth - 1 || y === 0 || y === this.gridHeight);
+          // Also, edges and their neighboring cells need to be marked as nonburnable to avoid fire spreading over
+          // the terrain edge. Note that in this case two cells need to be marked as nonburnable due to way how
+          // rendering code is calculating colors for mesh faces.
+          const isNonBurnable = this.config.fillTerrainEdges &&
+            x <= 1 || x >= this.gridWidth - 2 || y <= 1 || y >= this.gridHeight - 2;
           const cellOptions: CellOptions = {
             x, y,
             zone: this.zones[zoneIndex ? zoneIndex[index] : 0],
-            isRiver: river && river[index] > 0,
-            isUnburntIsland: unburntIsland && unburntIsland[index] > 0
+            isRiver,
+            isUnburntIsland: unburntIsland && unburntIsland[index] > 0 || isNonBurnable,
+            baseElevation: isEdge ? 0 : (isRiver ? this.config.riverElevation : elevation && elevation[index])
           };
-          if (elevation) {
-            cellOptions.baseElevation = elevation[index];
-          }
           this.cells.push(new Cell(cellOptions));
         }
       }

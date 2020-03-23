@@ -81,8 +81,12 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
                     onChange={this.handleVegetationChange} />
                 </div>
                 <div className={css.selector}>
-                  <DroughtSelector droughtLevel={zone.droughtLevel}
-                    onChange={this.handleDroughtChange} />
+                  <DroughtSelector
+                    droughtLevel={zone.droughtLevel}
+                    onChange={this.handleDroughtChange}
+                    severeDroughtAvailable={simulation.config.severeDroughtAvailable}
+                    disabled={simulation.config.droughtIndexLocked}
+                  />
                 </div>
               </div>
               <div className={css.buttonContainer}>

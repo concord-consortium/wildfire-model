@@ -15,21 +15,15 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
   basic: {
     modelWidth: 100000,
     modelHeight: 100000,
-    gridWidth: 20,
+    gridWidth: 100,
     sparks: [ [50000, 50000] ],
     zoneIndex: [
       [ 0, 1 ]
     ],
+    elevation: [
+      [ 0 ]
+    ],
     riverData: null
-  },
-  threeZones: {
-    modelWidth: 100000,
-    modelHeight: 100000,
-    gridWidth: 100,
-    sparks: [ [50000, 50000] ],
-    zoneIndex: [
-      [ 0, 1, 2 ]
-    ]
   },
   basicWithWind: {
     modelWidth: 100000,
@@ -40,7 +34,11 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     windDirection: 0,
     zoneIndex: [
       [ 0, 1 ]
-    ]
+    ],
+    elevation: [
+      [ 0 ]
+    ],
+    riverData: null
   },
   slope45deg: {
     modelWidth: 100000,
@@ -54,7 +52,8 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     elevation: [
       [ 100000, 0 ],
       [ 100000, 0 ]
-    ]
+    ],
+    riverData: null
   },
   basicWithSlopeAndWind: {
     modelWidth: 100000,
@@ -70,36 +69,11 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     elevation: [
       [ 10000, 0 ],
       [ 10000, 0 ]
-    ]
-  },
-  hills: {
-    modelWidth: 25000,
-    modelHeight: 25000,
-    gridWidth: 100,
-    sparks: [ [5000, 12500] ],
-    maxTimeStep: 10,
-    heightmapMaxElevation: 3000,
-    zoneIndex: [
-      [ 0, 1 ]
     ],
-    elevation: "data/hills.png"
-  },
-  randomHeightmap: {
-    modelWidth: 100000,
-    modelHeight: 100000,
-    gridWidth: 100,
-    sparks: [ [50000, 50000] ],
-    heightmapMaxElevation: 7000,
-    zoneIndex: [
-      [ 0, 1 ]
-    ],
-    elevation: "data/randomHeightmap.png"
+    riverData: null
   },
   complexZones: {
-    modelWidth: 100000,
-    modelHeight: 100000,
-    gridWidth: 100,
-    sparks: [ [50000, 50000] ],
+    zonesCount: 3,
     zoneIndex: [
       [ 0, 0, 0, 0, 0, 0, 2, 2, 2 ],
       [ 0, 0, 0, 0, 0, 0, 0, 2, 2 ],
@@ -115,28 +89,13 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     ]
   },
   zonesFromImage: {
-    modelWidth: 100000,
-    modelHeight: 100000,
-    gridWidth: 100,
-    sparks: [ [50000, 50000] ],
+    zonesCount: 3,
     zoneIndex: "data/complexZones.png",
   },
-  test01: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
-    zoneIndex: "data/test01_zonemap.png",
-    elevation: "data/test01_heightmap.png",
-  },
   defaultTwoZone: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
     zones: [
-      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Grass, droughtLevel: DroughtLevel.SevereDrought },
-      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: DroughtLevel.MediumDrought },
+      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Grass, droughtLevel: DroughtLevel.MediumDrought },
+      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: DroughtLevel.MildDrought },
     ],
     towns: [
       { name: "Skyview", x: 0.12, y: 0.68, terrainType: TerrainType.Mountains },
@@ -154,10 +113,6 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     ]
   },
  townsThreeZone: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
     zonesCount: 3,
     zones: [
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.Shrub, droughtLevel: 0 },
@@ -174,10 +129,6 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     ]
   },
   defaultThreeZone: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
     zonesCount: 3,
     zones: [
       { terrainType: TerrainType.Foothills, vegetation: Vegetation.Grass, droughtLevel: 3 },
@@ -189,75 +140,56 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     ]
   },
   threeZonePlains: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
+    zonesCount: 3,
     zones: [
       { terrainType: TerrainType.Plains, vegetation: Vegetation.Grass, droughtLevel: 3 },
       { terrainType: TerrainType.Plains, vegetation: Vegetation.Shrub, droughtLevel: 2 },
       { terrainType: TerrainType.Plains, vegetation: Vegetation.ForestSmallLitter, droughtLevel: 0 },
     ],
-    zonesCount: 3,
     zoneIndex: [
       [ 0, 1, 2 ]
     ]
   },
   threeZoneFoothills: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
+    zonesCount: 3,
     zones: [
       { terrainType: TerrainType.Foothills, vegetation: Vegetation.Grass, droughtLevel: 1 },
       { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: 1 },
       { terrainType: TerrainType.Foothills, vegetation: Vegetation.ForestSmallLitter, droughtLevel: 1 },
     ],
-    zonesCount: 3,
     zoneIndex: [
       [ 0, 1, 2 ]
     ]
   },
   threeZoneMountains: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
+    zonesCount: 3,
     zones: [
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.Shrub, droughtLevel: 1 },
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.ForestSmallLitter, droughtLevel: 1 },
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.ForestLargeLitter, droughtLevel: 1 },
     ],
-    zonesCount: 3,
     zoneIndex: [
       [ 0, 1, 2 ]
     ]
   },
   threeZoneMix: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
+    zonesCount: 3,
     zones: [
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.Grass, droughtLevel: 3 },
       { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: 3 },
       { terrainType: TerrainType.Plains, vegetation: Vegetation.ForestSmallLitter, droughtLevel: 3 },
     ],
-    zonesCount: 3,
     zoneIndex: [
       [ 0, 1, 2 ]
     ]
   },
   extremeZones: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
+    zonesCount: 3,
     zones: [
       {
         terrainType: TerrainType.Mountains,
         vegetation: Vegetation.ForestLargeLitter,
-        droughtLevel: DroughtLevel.SevereDrought
+        droughtLevel: DroughtLevel.MediumDrought
       },
       {
         terrainType: TerrainType.Foothills,
@@ -266,16 +198,11 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
       },
       { terrainType: TerrainType.Plains, vegetation: Vegetation.Grass, droughtLevel: DroughtLevel.NoDrought }
     ],
-    zonesCount: 3,
     zoneIndex: [
       [ 0, 1, 2 ]
     ]
   },
   shrubThreeZone: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
     zonesCount: 3,
     zones: [
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.Shrub, droughtLevel: 1 },
@@ -287,10 +214,6 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     ]
   },
   mountainTwoZone: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
     zones: [
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.Shrub, droughtLevel: 1 },
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.Shrub, droughtLevel: 1 },
@@ -300,10 +223,6 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     ]
   },
   plainsTwoZone: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
     zones: [
       { terrainType: TerrainType.Plains, vegetation: Vegetation.Shrub, droughtLevel: 1 },
       { terrainType: TerrainType.Plains, vegetation: Vegetation.Shrub, droughtLevel: 1 },
@@ -313,10 +232,6 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     ]
   },
   mountainsandplainsTwoZone: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
     zones: [
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.Shrub, droughtLevel: 1 },
       { terrainType: TerrainType.Plains, vegetation: Vegetation.Shrub, droughtLevel: 1 },
@@ -326,10 +241,6 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     ]
   },
   hillThreeZone: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
     zonesCount: 3,
     zones: [
       { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: 0 },
@@ -341,10 +252,6 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     ]
   },
   hillTwoZone: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
     zones: [
       { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: 1 },
       { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: 1 },
@@ -354,16 +261,12 @@ const presets: {[key: string]: Partial<IPresetConfig>} = {
     ]
   },
   extremeZoneMix: {
-    modelWidth: 120000,
-    modelHeight: 80000,
-    gridWidth: 240,
-    heightmapMaxElevation: 20000,
+    zonesCount: 3,
     zones: [
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.Grass, droughtLevel: 3 },
       { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: 3 },
       { terrainType: TerrainType.Plains, vegetation: Vegetation.ForestSmallLitter, droughtLevel: 3 },
     ],
-    zonesCount: 3,
     zoneIndex: [
       [ 0, 1, 2 ]
     ]
