@@ -29,7 +29,7 @@ export const CameraControls = observer(function WrappedComponent() {
     controls.update();
 
     controlsRef.current = controls;
-  });
+  }, []);
 
   useEffect(() => {
     if (controlsRef.current) {
