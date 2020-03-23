@@ -59,6 +59,9 @@ export interface ISimulationConfig {
   droughtIndexLocked: boolean;
   // Makes severe drought option available in Terrain Setup dialog.
   severeDroughtAvailable: boolean;
+  // River color, RGBA values (range: [0, 1]). Suggested colors:
+  // [0.663,0.855,1,1], [0.337,0.69,0.957,1] or [0.067,0.529,0.882,1]
+  riverColor: [number, number, number, number];
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -118,7 +121,8 @@ export const defaultConfig: IUrlConfig = {
   showCoordsOnClick: false,
   unburntIslandProbability: 0.5, // [0, 1]
   droughtIndexLocked: false,
-  severeDroughtAvailable: false
+  severeDroughtAvailable: false,
+  riverColor: [0.067, 0.529, 0.882, 1]
 };
 
 export const urlConfig: any = {};
