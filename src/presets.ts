@@ -2,13 +2,6 @@ import { ISimulationConfig } from "./config";
 import { DroughtLevel, TerrainType, Vegetation } from "./models/fire-model";
 
 export interface IPresetConfig extends ISimulationConfig {
-  zoneIndex: number[][] | string;
-  // If `elevation` height map is provided, it will be loaded during model initialization and terrain setup dialog
-  // won't let users change terrain type. Otherwise, height map URL will be derived from zones `terrainType` properties.
-  elevation?: number[][] | string;
-  // `unburntIslands` data can provided using image url or 2D array.
-  // Otherwise, unburnt islands map URL will be derived from zones `terrainType` properties.
-  unburntIslands?: number[][] | string;
 }
 
 const presets: {[key: string]: Partial<IPresetConfig>} = {

@@ -340,7 +340,7 @@ export class SimulationModel {
             zone: this.zones[zoneIndex ? zoneIndex[index] : 0],
             isRiver,
             isUnburntIsland: unburntIsland && unburntIsland[index] > 0 || isNonBurnable,
-            baseElevation: isEdge ? 0 : (isRiver ? this.config.riverElevation : elevation && elevation[index])
+            baseElevation: isEdge ? 0 : elevation && elevation[index]
           };
           this.cells.push(new Cell(cellOptions));
         }
