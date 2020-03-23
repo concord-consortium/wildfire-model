@@ -332,7 +332,6 @@ export class SimulationModel {
       for (let y = 0; y < this.gridHeight; y++) {
         for (let x = 0; x < this.gridWidth; x++) {
           const index = getGridIndexForLocation(x, y, this.gridWidth);
-
           const isRiver = river && river[index] > 0;
           // When fillTerrainEdge is set to true, edges are set to elevation 0.
           const isEdge = this.config.fillTerrainEdges &&
@@ -352,13 +351,9 @@ export class SimulationModel {
             isUnburntIsland: unburntIsland && unburntIsland[index] > 0 || isNonBurnable,
             baseElevation: isEdge ? 0 : elevation && elevation[index]
           };
-
           if (!this.totalCellCountByZone[zi]) this.totalCellCountByZone[zi] = 1;
           else {
             this.totalCellCountByZone[zi]++;
-          }
-          if (elevation) {
-            cellOptions.baseElevation = elevation[index];
           }
           this.cells.push(new Cell(cellOptions));
         }
