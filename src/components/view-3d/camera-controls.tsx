@@ -1,13 +1,17 @@
-import OrbitControls from "three-orbitcontrols";
-import { useThree } from "../../react-three-hook";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { DEFAULT_UP, PLANE_WIDTH, planeHeight } from "./helpers";
 import { useStores } from "../../use-stores";
 import { observer } from "mobx-react";
-import { useEffect } from "react";
+import { useContext, useEffect, useRef } from "react";
+import { ThreeJSContext } from "../../react-three-hook/threejs-manager";
 
 export const CameraControls = observer(function WrappedComponent() {
   const { simulation, ui } = useStores();
-  const { getEntity } = useThree(({ camera, canvas }) => {
+  const context = useContext(ThreeJSContext);
+  const controlsRef = useRef<OrbitControls>();
+
+  useEffect(() => {
+    const { camera, canvas } = context;
     camera.up.copy(DEFAULT_UP);
 
     const controls = new OrbitControls(camera, canvas);
@@ -24,13 +28,12 @@ export const CameraControls = observer(function WrappedComponent() {
     camera.position.set(PLANE_WIDTH * 0.5, planeHeight(simulation) * -1.5, PLANE_WIDTH * 1.5);
     controls.update();
 
-    return controls;
+    controlsRef.current = controls;
   });
 
   useEffect(() => {
-    const controls = getEntity();
-    if (controls) {
-      controls.enableRotate = !ui.dragging;
+    if (controlsRef.current) {
+      controlsRef.current.enableRotate = !ui.dragging;
     }
   }, [ui.dragging]);
 

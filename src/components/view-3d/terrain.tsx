@@ -77,10 +77,11 @@ const setupMesh = (simulation: SimulationModel) => ({ scene }: IThreeContext) =>
   const planeGeometry = new THREE.PlaneBufferGeometry(
     PLANE_WIDTH, height, simulation.gridWidth - 1, simulation.gridHeight - 1
   );
-  planeGeometry.addAttribute("color",
+  planeGeometry.setAttribute("color",
     new Float32BufferAttribute(new Array((simulation.gridWidth) * (simulation.gridHeight) * 4), 4)
   );
-  const planeMaterial = new THREE.MeshPhongMaterial({ vertexColors: THREE.VertexColors, side: THREE.DoubleSide });
+  const planeMaterial = new THREE.MeshPhongMaterial();
+  planeMaterial.vertexColors = true;
   const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
   planeMesh.lookAt(new THREE.Vector3(0, 0, 1));
   // Move plane so bottom-left corner is at (0, 0) point;
