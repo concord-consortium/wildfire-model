@@ -1,10 +1,7 @@
 import { ISimulationConfig } from "./config";
 import { DroughtLevel, TerrainType, Vegetation } from "./models/fire-model";
 
-export interface IPresetConfig extends ISimulationConfig {
-}
-
-const presets: {[key: string]: Partial<IPresetConfig>} = {
+const presets: {[key: string]: Partial<ISimulationConfig>} = {
   basic: {
     modelWidth: 100000,
     modelHeight: 100000,

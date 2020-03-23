@@ -3,7 +3,7 @@ import { Zone } from "../models/zone";
 import * as css from "./zone-selector.scss";
 import { TerrainType, DroughtLevel } from "../models/fire-model";
 import { vegetationIcons } from "./vertical-selectors";
-import { IPresetConfig } from "../presets";
+import { ISimulationConfig } from "../config";
 
 interface IProps {
   zones: Zone[];
@@ -45,7 +45,7 @@ const getColorFilter = (droughtLevel: DroughtLevel) => {
 };
 
 export const renderZones = (
-  zones: Zone[], selectedZone: number, readonly: boolean, config: IPresetConfig, onChange: any) => {
+  zones: Zone[], selectedZone: number, readonly: boolean, config: ISimulationConfig, onChange: any) => {
   const zoneUI: any[] = [];
   // handle two, three (or more) zones
   zones.forEach((z, i) => {

@@ -1,8 +1,7 @@
 import { action, computed, observable } from "mobx";
 import { DroughtLevel, getFireSpreadRate, IWindProps, TerrainType, Vegetation } from "./fire-model";
 import { BurnIndex, Cell, CellOptions, FireState } from "./cell";
-import { defaultConfig, urlConfig } from "../config";
-import { IPresetConfig } from "../presets";
+import { defaultConfig, ISimulationConfig, urlConfig } from "../config";
 import { getInputData } from "../utils";
 import { Vector2 } from "three";
 import { Zone } from "./zone";
@@ -155,7 +154,7 @@ const calculateTimeToIgniteNeighbors = (
 };
 
 export class SimulationModel {
-  public config: IPresetConfig;
+  public config: ISimulationConfig;
   // initialCellNeighbors list doesn't include user-defined fire lines (and other modifications of the original
   // simulation state that we might add in the future).
   public initialCellNeighbors: number[][];
@@ -188,7 +187,7 @@ export class SimulationModel {
   @observable public cellsStateFlag = 0;
   @observable public cellsElevationFlag = 0;
 
-  constructor(presetConfig: Partial<IPresetConfig>) {
+  constructor(presetConfig: Partial<ISimulationConfig>) {
     this.load(presetConfig);
   }
 
@@ -210,11 +209,11 @@ export class SimulationModel {
     });
   }
 
-  public load(presetConfig: Partial<IPresetConfig>) {
+  public load(presetConfig: Partial<ISimulationConfig>) {
     this.restart();
     // Configuration are joined together. Default values can be replaced by preset, and preset values can be replaced
     // by URL parameters.
-    const config: IPresetConfig = Object.assign({}, defaultConfig, presetConfig, urlConfig);
+    const config: ISimulationConfig = Object.assign({}, defaultConfig, presetConfig, urlConfig);
 
     this.config = config;
     this.cellSize = config.modelWidth / config.gridWidth;
