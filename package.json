@@ -116,6 +116,7 @@
     "react": "^16.13.1",
     "react-circular-input": "^0.1.7",
     "react-dom": "^16.13.1",
+    "react-three-fiber": "^4.0.22",
     "screenfull": "^5.0.2",
     "shutterbug": "^1.2.0",
     "three": "^0.114.0"

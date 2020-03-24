@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { observer } from "mobx-react";
-import { View3D } from "./view-3d/view-3d";
+import { View3d } from "./view-3d/view-3d";
 import { SimulationInfo } from "./simulation-info";
 import { TerrainPanel } from "./terrain-panel";
 import { BottomBar } from "./bottom-bar";
@@ -34,7 +34,7 @@ export const AppComponent = observer(function WrappedComponent() {
       <div className={css.timeDisplay}>{ timeInDays.toFixed(1) } days</div>
 
       <SimulationInfo />
-      <View3D />
+      <View3d />
       <TerrainPanel />
       <BottomBar />
     </div>
