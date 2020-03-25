@@ -1,4 +1,4 @@
-import React, { useMemo, useState, RefObject } from "react";
+import React, { useMemo, RefObject } from "react";
 import * as THREE from "three";
 import { observer } from "mobx-react";
 import { ftToViewUnit, PLANE_WIDTH } from "./helpers";
@@ -31,8 +31,8 @@ interface IProps {
   height?: number;
   anchorX?: number;
   anchorY?: number;
-  // setPosition enables dragging
-  setPosition?: (x: number, y: number) => void;
+  // onDrag and dragPlane enable dragging.
+  onDrag?: (x: number, y: number) => void;
   dragPlane?: RefObject<THREE.Mesh>;
   // Optional highlight image that we'll be activated on hover.
   markerHighlightImg?: string | HTMLCanvasElement;
@@ -40,14 +40,16 @@ interface IProps {
 }
 
 export const Marker: React.FC<IProps> = observer(function WrappedComponent({
- markerImg, markerHighlightImg, position, setPosition, dragPlane,
+ markerImg, markerHighlightImg, position, onDrag, dragPlane,
  width = 0.06, height = 0.06, anchorX = 0.5, anchorY = 0, lockOnSimStart = false
 }) {
   const { simulation } = useStores();
   const defTexture = useMemo(() => getTexture(markerImg), [markerImg]);
   const highlightTexture = useMemo(() => markerHighlightImg && getTexture(markerHighlightImg), [markerHighlightImg]);
-  const draggingEnabled = !(lockOnSimStart && simulation.simulationStarted);
-  const draggingInteraction = useDraggingOverPlaneInteraction(draggingEnabled, setPosition, dragPlane);
+  const lockedOnSimStart = lockOnSimStart && simulation.simulationStarted;
+  // Dragging is disabled when onDrag and dragPlane are missing, or when marker is locked on sim start.
+  const draggingEnabled = !!onDrag && !!dragPlane && !lockedOnSimStart;
+  const draggingInteraction = useDraggingOverPlaneInteraction(draggingEnabled, onDrag, dragPlane);
 
   if (!simulation.dataReady) {
     // Don't render markers when simulation data isn't downloaded yet.
@@ -59,10 +61,9 @@ export const Marker: React.FC<IProps> = observer(function WrappedComponent({
   const y = position.y * ratio;
   const z = simulation.cellAt(position.x, position.y).elevation * ratio;
 
-  const scaleMult = draggingEnabled ? 1: 0.5;
+  const scaleMult = lockedOnSimStart ? 0.5 : 1;
 
-  const texture = (draggingInteraction.hovered || draggingInteraction.dragged) && highlightTexture ?
-    highlightTexture : defTexture;
+  const texture = draggingInteraction.hovered && highlightTexture ? highlightTexture : defTexture;
 
   const eventHandlers = getEventHandlers([ draggingInteraction ]);
   return (

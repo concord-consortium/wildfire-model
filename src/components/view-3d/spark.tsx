@@ -15,13 +15,13 @@ export const SparksContainer: React.FC<IProps> = observer(function WrappedCompon
   return <>
     {
       simulation.sparks.map((s, idx) => {
-        const setPosition = (x: number, y: number) => simulation.setSpark(idx, x, y);
+        const onDrag = (x: number, y: number) => simulation.setSpark(idx, x, y);
         return <Marker
           key={idx}
           markerImg={sparkImg}
           markerHighlightImg={sparkHighlightImg}
           position={s}
-          setPosition={setPosition}
+          onDrag={onDrag}
           dragPlane={dragPlane}
           lockOnSimStart={true}
         />;

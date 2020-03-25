@@ -15,13 +15,13 @@ export const FireLineMarkersContainer: React.FC<IProps> = observer(function Wrap
   return <>
     {
       simulation.fireLineMarkers.map((fl, idx) => {
-        const setPosition = (x: number, y: number) => simulation.setFireLineMarker(idx, x, y);
+        const onDrag = (x: number, y: number) => simulation.setFireLineMarker(idx, x, y);
         return <Marker
           key={idx}
           markerImg={fireLineImg}
           markerHighlightImg={fireLineHighlightImg}
           position={fl}
-          setPosition={setPosition}
+          onDrag={onDrag}
           dragPlane={dragPlane}
         />;
       })
