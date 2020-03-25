@@ -8,6 +8,7 @@ import { useStores } from "../use-stores";
 import Shutterbug from "shutterbug";
 
 import css from "./app.scss";
+import { useCustomCursor } from "./use-custom-cursors";
 
 export const AppComponent = observer(function WrappedComponent() {
   const { simulation } = useStores();
@@ -18,6 +19,9 @@ export const AppComponent = observer(function WrappedComponent() {
       Shutterbug.disable();
     };
   }, []);
+
+  // This will setup document cursor based on various states of UI store (interactions).
+  useCustomCursor();
 
   const config = simulation.config;
   // Convert time from minutes to days.
