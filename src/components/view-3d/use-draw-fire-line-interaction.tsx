@@ -12,7 +12,9 @@ export const useDrawFireLineInteraction = () => {
   const { simulation, ui } = useStores();
   const dragPlane = useRef<THREE.Mesh>();
 
-  const { startDragging } = useDragging(dragPlane, {
+  const { startDragging } = useDragging({
+    useOffset: false,
+    dragPlane,
     onDrag: (point: THREE.Vector3) => {
       const ratio = ftToViewUnit(simulation);
       const x = point.x / ratio;

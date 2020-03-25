@@ -13,7 +13,9 @@ export const useDraggingOverPlaneInteraction = (
 ) => {
   const { simulation, ui } = useStores();
   const [ hovered, setHover ] = useState(false);
-  const { dragged, startDragging } = useDragging(dragPlane, {
+  const { dragged, startDragging } = useDragging({
+    useOffset: true,
+    dragPlane,
     onDrag: (p: THREE.Vector3) => {
       if (onDrag) {
         const r = ftToViewUnit(simulation);
