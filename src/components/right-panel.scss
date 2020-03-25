@@ -29,12 +29,7 @@
         font-weight: bold;
         color: $controlLabel;
       }
-      .chartContainer{
-        padding-top: 10px;
-        background-color: white;
-        border-radius: 5px;
-        border: 2px solid $controlGreenDark2;
-      }
+
     }
     &.open {
       right: 0;

@@ -1,19 +1,20 @@
 import * as React from "react";
-import { observer } from "mobx-react";
+import { observer, inject } from "mobx-react";
 import { HorizontalBar, Bar, ChartData } from "react-chartjs-2";
 import { ChartDataModel } from "../models/chart-data";
 import { ChartOptions, ChartType } from "chart.js";
 import { ChartColors } from "../models/chart-data-set";
 import { hexToRGBValue } from "../../utils";
 import { draw } from "patternomaly";
+import { BaseComponent } from "../../components/base";
 
 interface IBarProps {
-  chartData: ChartDataModel;
   chartFont?: string;
   width?: number;
   height?: number;
   barChartType: ChartType;
 }
+interface IBarState { }
 
 const defaultOptions: ChartOptions = {
   plugins: {
@@ -121,15 +122,17 @@ const barData = (chartData: ChartDataModel) => {
   return barChartData;
 };
 
+@inject("stores")
 @observer
-export class BarChart extends React.Component<IBarProps> {
+export class BarChart extends BaseComponent<IBarProps, IBarState> {
   constructor(props: IBarProps) {
     super(props);
   }
 
   public render() {
-    const { chartData, chartFont, width, height, barChartType } = this.props;
-    const chartDisplay = barData(chartData);
+    const { chartStore } = this.stores;
+    const { chartFont, width, height, barChartType } = this.props;
+    const chartDisplay = barData(chartStore.chart);
     const options: ChartOptions = Object.assign({}, defaultOptions, {
       title: {
         fontFamily: chartFont ? chartFont : undefined
@@ -138,14 +141,14 @@ export class BarChart extends React.Component<IBarProps> {
         xAxes: [{
           ticks: {
             min: 0,
-            max: chartData.minMaxAll.maxA1
+            max: chartStore.chart.minMaxAll.maxA1
           },
           stacked: true
         }],
         yAxes: [{
           ticks: {
             min: 0,
-            max: chartData.minMaxAll.maxA1
+            max: chartStore.chart.minMaxAll.maxA1
           },
           stacked: true
         }]

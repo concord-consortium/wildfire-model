@@ -8,7 +8,7 @@ import { ChartStore } from "./chart-store";
 export interface IStores {
   simulation: SimulationModel;
   ui: UIModel;
-  chartData: ChartStore;
+  chartStore: ChartStore;
 }
 
 export const createStores = (): IStores => {
@@ -34,6 +34,6 @@ export const createStores = (): IStores => {
   return {
     simulation,
     ui: new UIModel(),
-    chartData: new ChartStore()
+    chartStore: new ChartStore()
   };
 };

@@ -1,5 +1,5 @@
 import { downsample } from "../downsample-data";
-import { observable } from "mobx";
+import { observable, action, computed } from "mobx";
 import css from "../chart-colors.scss";
 
 const MAX_TOTAL_POINTS = 120;
@@ -102,13 +102,14 @@ export interface IChartDataSet{
   fixedMaxA1?: number;
   fixedMinA2?: number;
   fixedMaxA2?: number;
+  currentMaxA2?: number;
   initialMaxA1?: number;
   fixedLabelRotation?: number;
   dataStartIdx?: number;
   stack?: string;
   axisLabelA1?: string;
   axisLabelA2?: string;
-  expandOnly?: boolean;
+  allowExpandA2?: boolean;
   dashStyle?: number[];
   downsample?: boolean;
   downsampleMaxLength?: number;
@@ -119,7 +120,7 @@ export interface IChartDataSet{
 export type GraphPatternType = "diagonal" | "diagonal-right-left";
 
 export class ChartDataSet implements IChartDataSet {
-  public name: string;
+  @observable public name: string;
   @observable public dataPoints: IDataPoint[];
 
   // optional properties
@@ -128,18 +129,19 @@ export class ChartDataSet implements IChartDataSet {
   public backgroundOpacity?: number;
   public graphPattern?: GraphPatternType;
   @observable public maxPoints: number = -1;
-  public fixedMinA1?: number;
-  public fixedMaxA1?: number;
-  public fixedMinA2?: number;
-  public fixedMaxA2?: number;
+  @observable public fixedMinA1?: number;
+  @observable public fixedMaxA1?: number;
+  @observable public fixedMinA2?: number;
+  @observable public fixedMaxA2?: number;
+  @observable public currentMaxA2?: number;
   public initialMaxA1?: number;
   public fixedLabelRotation?: number;
   @observable public dataStartIdx?: number;
   public stack?: string;
   public axisLabelA1?: string = "";
   public axisLabelA2?: string = "";
-  public expandOnly?: boolean = false;
-  public display: boolean = true;
+  @observable public allowExpandA2?: boolean = true;
+  @observable public display: boolean = true;
   public dashStyle?: number[];
   public downsample?: boolean;
   public downsampleMaxLength?: number;
@@ -150,7 +152,7 @@ export class ChartDataSet implements IChartDataSet {
     Object.assign(this, props);
   }
 
-  public get visibleDataPoints(): IDataPoint[]{
+  @computed public get visibleDataPoints(): IDataPoint[]{
     let points: IDataPoint[];
     if (this.maxPoints && this.maxPoints > 0 &&
       this.dataPoints.length >= this.maxPoints) {
@@ -184,11 +186,11 @@ export class ChartDataSet implements IChartDataSet {
   }
 
   // Axis 1 data, for a line will be point x value, for bar will be quantity
-  public get dataA1() {
+  @computed public get dataA1() {
     return this.visibleDataPoints.map(p => p.a1);
   }
   // Axis 2 data for a line will be y value, for a bar will be label
-  public get dataA2() {
+  @computed public get dataA2() {
     const visiblePoints = this.visibleDataPoints;
     if (visiblePoints.length > 0 && visiblePoints[0].a2) {
       return visiblePoints.map(p => p.a2);
@@ -198,7 +200,7 @@ export class ChartDataSet implements IChartDataSet {
   }
 
   // Determine minimum and maximum values on each axis
-  public get maxA1(): number | undefined {
+  @computed public get maxA1(): number | undefined {
     const visiblePoints: IDataPoint[] = this.visibleDataPoints;
     if (this.fixedMaxA1 !== undefined && this.dataPoints.length <= this.fixedMaxA1) {
       return this.fixedMaxA1;
@@ -222,12 +224,18 @@ export class ChartDataSet implements IChartDataSet {
     }
   }
 
-  public get maxA2(): number | undefined {
-    if (this.fixedMaxA2 !== undefined && !this.expandOnly) {
+  @computed public get maxA2(): number | undefined {
+    if (this.allowExpandA2 && this.currentMaxA2) {
+      // for graphs that only go up, a slightly less intensive way to get the current max value
+      return this.currentMaxA2;
+    }
+    const visiblePoints: IDataPoint[] = this.visibleDataPoints;
+    if (this.fixedMaxA2 !== undefined && this.allowExpandA2 === false) {
       return this.fixedMaxA2;
-    } else if (!this.visibleDataPoints || this.visibleDataPoints.length === 0) {
+    } else
+    if (!visiblePoints || visiblePoints.length === 0) {
       return defaultMax;
-    } else if (this.expandOnly) {
+    } else if (this.allowExpandA2) {
       // always return max from all points so y axis only scales up, never down
       if (this.fixedMaxA2) {
         // use fixedMax as a minimum value for max
@@ -242,10 +250,10 @@ export class ChartDataSet implements IChartDataSet {
       }
     } else {
       // only return max of visible subset of data
-      return Math.max(...this.visibleDataPoints.map(p => p.a2));
+      return Math.max(...visiblePoints.map(p => p.a2));
     }
   }
-  public get minA1(): number | undefined {
+  @computed public get minA1(): number | undefined {
     if (this.fixedMinA1 !== undefined) {
       return this.fixedMinA1;
     } else if (!this.visibleDataPoints || this.visibleDataPoints.length === 0) {
@@ -254,7 +262,7 @@ export class ChartDataSet implements IChartDataSet {
       return Math.min(...this.visibleDataPoints.map(p => p.a1));
     }
   }
-  public get minA2(): number | undefined {
+  @computed public get minA2(): number | undefined {
     if (this.fixedMinA2 !== undefined) {
       return this.fixedMinA2;
     } else if (!this.visibleDataPoints || this.visibleDataPoints.length === 0) {
@@ -312,7 +320,7 @@ export class ChartDataSet implements IChartDataSet {
   }
 
   public clearDataPoints = () => {
-    this.dataPoints.splice(0, this.dataPoints.length);
+    this.dataPoints = [];
   }
 
   // used to filter data to a fixed number of points, or returns all points if set to -1

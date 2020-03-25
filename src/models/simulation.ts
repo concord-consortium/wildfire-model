@@ -180,6 +180,7 @@ export class SimulationModel {
   @observable public gridWidth: number;
   @observable public gridHeight: number;
   @observable public time = 0; // in minutes
+  @observable public timeInHours = 0; // in hours for charts
   @observable public zones: Zone[] = [];
   @observable public cells: Cell[] = [];
   @observable public simulationStarted = false;
@@ -419,6 +420,8 @@ export class SimulationModel {
     this.simulationRunning = false;
     this.simulationStarted = false;
     this.time = 0;
+    this.timeInHours = 0;
+    this.burnedCellsInZone = {};
     this.endOfLowIntensityFire = false;
     this.cells.forEach(cell => cell.reset());
     this.fireLineMarkers.length = 0;
@@ -492,6 +495,10 @@ export class SimulationModel {
 
     const dayChange = Math.floor(this.time / modelDay) !== Math.floor((this.time + timeStep) / modelDay);
     this.time += timeStep;
+    const nextTimeInHours = Math.round(this.time / 60);
+    if (nextTimeInHours !== this.timeInHours) {
+      this.timeInHours = nextTimeInHours;
+    }
 
     if (dayChange) {
       const day = Math.floor(this.time / modelDay);

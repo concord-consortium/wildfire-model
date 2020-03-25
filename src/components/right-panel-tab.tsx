@@ -1,4 +1,3 @@
-import { inject, observer } from "mobx-react";
 import * as React from "react";
 import { BaseComponent, IBaseProps } from "./base";
 import { TabType } from "./right-panel";
@@ -10,13 +9,9 @@ interface IProps extends IBaseProps {
 }
 interface IState { }
 
-@inject("stores")
-@observer
 export class RightPanelTab extends BaseComponent<IProps, IState> {
 
   public render() {
-    const { tabType, active } = this.props;
-    const activeStyle = active ? css.active : "";
     const tabText = "Graph";
     return (
       <div className={css.tab} data-test="right-panel-tab">

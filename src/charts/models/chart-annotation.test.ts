@@ -24,7 +24,7 @@ describe("chart annotations", () => {
       initialMaxA1: 20,
       fixedMinA2: 0,
       fixedMaxA2: 50,
-      expandOnly: true,
+      allowExpandA2: true,
       axisLabelA1: "Time",
       axisLabelA2: "Value",
       axisRoundValueA2: 10

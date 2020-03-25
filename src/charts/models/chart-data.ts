@@ -1,6 +1,6 @@
 import { ChartDataSet, ChartColors } from "./chart-data-set";
 import { Annotation } from "./chart-annotation";
-import { observable } from "mobx";
+import { observable, computed } from "mobx";
 
 export interface IChartDataModel{
   name: string;
@@ -15,10 +15,10 @@ export interface IChartDataModel{
 }
 
 export class ChartDataModel implements IChartDataModel {
-  public name: string;
+  @observable public name: string;
   @observable public dataSets: ChartDataSet[];
   public labels?: string[];
-  public annotations?: Annotation[];
+  public annotations?: Annotation[] = [];
   public defaultAxisLabelA1?: string;
   public defaultAxisLabelA2?: string;
   public defaultMaxPoints?: number = 100;
@@ -52,7 +52,7 @@ export class ChartDataModel implements IChartDataModel {
       return this.visibleDataSets[0].fixedLabelRotation;
     } else return;
   }
-  public get minMaxAll() {
+  @computed public get minMaxAll() {
     const maxA1Values: number[] = [];
     const maxA2Values: number[] = [];
     const minA1Values: number[] = [];

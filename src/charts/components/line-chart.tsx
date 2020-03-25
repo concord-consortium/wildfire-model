@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Scatter, ChartData } from "react-chartjs-2";
-import { observer } from "mobx-react";
+import { observer, inject } from "mobx-react";
 import { ChartDataModel } from "../models/chart-data";
 import { ChartOptions } from "chart.js";
 import * as ChartAnnotation from "chartjs-plugin-annotation";
@@ -10,13 +10,13 @@ import { LineChartControls } from "./line-chart-controls";
 import { BaseComponent } from "../../components/base";
 
 interface ILineProps {
-  chartData: ChartDataModel;
   chartFont?: string;
   width?: number;
   height?: number;
   isPlaying: boolean;
   axisLabelA1Function: any;
   axisLabelA2Function: any;
+  key: number;
 }
 
 interface ILineState { }
@@ -140,6 +140,7 @@ const lineData = (chartData: ChartDataModel) => {
   return linePlotData;
 };
 
+@inject("stores")
 @observer
 export class LineChart extends BaseComponent<ILineProps, ILineState> {
   constructor(props: ILineProps) {
@@ -147,14 +148,21 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
   }
 
   public render() {
-    const { chartData, chartFont, width, height, isPlaying, axisLabelA1Function, axisLabelA2Function } = this.props;
-    const chartDisplay = lineData(chartData);
-    const graphs: JSX.Element[] = [];
-    const minMaxValues = chartData.minMaxAll;
+    const { chartStore: { chart } } = this.stores;
+    const {
+      chartFont,
+      width,
+      height,
+      isPlaying,
+      axisLabelA1Function,
+      axisLabelA2Function,
+      key } = this.props;
+    const chartDisplay = lineData(chart);
+    const minMaxValues = chart.minMaxAll;
     const options: ChartOptions = Object.assign({}, defaultOptions, {
       title: {
-        display: (chartData.name && chartData.name.length > 0),
-        text: chartData.name,
+        display: (chart.name && chart.name.length > 0),
+        text: chart.name,
         fontFamily: chartFont,
         fontSize: 15
       },
@@ -168,8 +176,8 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
             userCallback: axisLabelA2Function
           },
           scaleLabel: {
-            display: !!chartData.axisLabelA2,
-            labelString: chartData.axisLabelA2,
+            display: !!chart.axisLabelA2,
+            labelString: chart.axisLabelA2,
             fontFamily: chartFont
           }
         }],
@@ -180,14 +188,14 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
             precision: 0,
             min: minMaxValues.minA1,
             max: minMaxValues.maxA1,
-            minRotation: chartData.dataLabelRotation,
-            maxRotation: chartData.dataLabelRotation,
+            minRotation: chart.dataLabelRotation,
+            maxRotation: chart.dataLabelRotation,
             fontFamily: chartFont,
             userCallback: axisLabelA1Function
           },
           scaleLabel: {
-            display: !!chartData.axisLabelA1,
-            labelString: chartData.axisLabelA1,
+            display: !!chart.axisLabelA1,
+            labelString: chart.axisLabelA1,
             fontFamily: chartFont
           }
         }]
@@ -202,27 +210,27 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
       annotation: {
         drawTime: "afterDraw",
         events: ["click", "mouseenter", "mouseleave"],
-        annotations: chartData.formattedAnnotations
+        annotations: chart.formattedAnnotations
       }
     });
     const w = width ? width : 400;
     const h = height ? height : 400;
-    graphs.push(
+    const graph: JSX.Element =
       <Scatter
-        key={3}
+        key={key}
         data={chartDisplay}
         options={options}
         height={h}
         width={w}
         redraw={true}
         plugins={[ChartAnnotation]}
-      />);
+      />;
     return (
       <div className="line-chart-container">
         <div className="line-chart-container" data-test="line-chart">
-          {graphs}
+          {graph}
         </div>
-        <LineChartControls chartData={chartData} isPlaying={isPlaying} />
+        <LineChartControls chartData={chart} isPlaying={isPlaying} />
       </div>
     );
   }

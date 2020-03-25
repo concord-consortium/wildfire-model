@@ -4,7 +4,7 @@ import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
 import { RightPanelTab } from "./right-panel-tab";
 
-describe("MapTab component", () => {
+describe("RightPanelTab component", () => {
   let stores = createStores();
   beforeEach(() => {
     stores = createStores();

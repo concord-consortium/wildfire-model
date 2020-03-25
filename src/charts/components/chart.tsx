@@ -1,14 +1,13 @@
 import * as React from "react";
-import { observer } from "mobx-react";
+import { observer, inject } from "mobx-react";
 import { BarChart } from "./bar-chart";
 import { LineChart } from "./line-chart";
-import { ChartDataModel } from "../models/chart-data";
+import { BaseComponent } from "../../components/base";
 
 export type ChartType = "line" | "bar" | "horizontalBar";
 
 interface IChartProps {
   title: string;
-  chartData: ChartDataModel;
   chartType: ChartType;
   width?: number;
   height?: number;
@@ -19,14 +18,15 @@ interface IChartProps {
 
 interface IChartState {}
 
+@inject("stores")
 @observer
-export class Chart extends React.Component<IChartProps, IChartState> {
+export class Chart extends BaseComponent<IChartProps, IChartState> {
 
   public render() {
-    const { chartType, chartData, width, height, isPlaying, axisLabelA1Function, axisLabelA2Function } = this.props;
+    const { chartStore } = this.stores;
+    const { chartType, width, height, isPlaying, axisLabelA1Function, axisLabelA2Function } = this.props;
     const chart = chartType === "line" ?
       <LineChart
-        chartData={chartData}
         chartFont={"'Roboto Condensed', 'Helvetica Condensed', 'Arial Narrow', 'Helvetica', 'Arial'"}
         width={this.props.width}
         height={this.props.height}
@@ -34,15 +34,16 @@ export class Chart extends React.Component<IChartProps, IChartState> {
         data-test="line-chart"
         axisLabelA1Function={axisLabelA1Function}
         axisLabelA2Function={axisLabelA2Function}
+        key={chartStore.chartVersion}
       />
       :
       <BarChart
-        chartData={chartData}
         chartFont={"'Roboto Condensed', 'Helvetica Condensed', 'Arial Narrow', 'Helvetica', 'Arial'"}
         width={width}
         height={height}
         barChartType={chartType}
         data-test="bar-chart"
+        key={chartStore.chartVersion}
       />;
     return (
       <div className="chart-container">
