@@ -1,12 +1,57 @@
 import { PointerEvent } from "react-three-fiber/canvas";
 
+// All the events listed here:
+// https://github.com/react-spring/react-three-fiber#events
+// It might be necessary to add more in the future.
 export enum InteractionAction {
   onClick = "onClick",
   onPointerDown = "onPointerDown",
   onPointerUp = "onPointerUp",
-  onPointerMove = "onPointerMove"
+  onPointerOver = "onPointerOver",
+  onPointerOut = "onPointerOut",
+  onPointerEnter = "onPointerEnter",
+  onPointerLeave = "onPointerLeave",
+  onPointerMove = "onPointerMove",
+  onWheel = "onWheel"
 }
 
+type EventHandler = (e: PointerEvent) => void;
+
 export type InteractionHandler = {
-  [action in InteractionAction]?: (e: PointerEvent) => void;
+  [action in InteractionAction]?: EventHandler;
+} & {
+  active: boolean
 }
+
+// Takes list of interactions and returns object with event handlers necessary for **active** interactions.
+// Note that it's very important to avoid defining event handlers when no interaction is active.
+// Even a single event handler triggers raycasting machinery in react-three-fiber and it can has significant
+// performance cost. Example how to use this function:
+// const interactions = [ useTestInteraction(), useAnotherInteraction() ];
+// const eventHandlers = getEventHandlers(interactions);
+// return <mesh {...eventHandlers> /* ... */ </mesh>
+export const getEventHandlers = (interactions: InteractionHandler[]) => {
+  const handlers: {[action in InteractionAction]?: EventHandler[]} = {};
+  interactions.forEach((interaction: InteractionHandler) => {
+    if (interaction.active) {
+      Object.values(InteractionAction).forEach(eventName => {
+        const eventHandler = interaction[eventName];
+        if (eventHandler) {
+          if (!handlers[eventName]) {
+            handlers[eventName] = [];
+          }
+          handlers[eventName]!.push(eventHandler);
+        }
+      });
+    }
+  });
+  const result: {[action in InteractionAction]?: EventHandler} = {};
+  Object.keys(handlers).forEach((eventName: InteractionAction) => {
+    result[eventName] = (e: PointerEvent) => {
+      handlers[eventName]?.forEach(handler => {
+        handler(e);
+      });
+    };
+  });
+  return result;
+};

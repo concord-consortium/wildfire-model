@@ -4,6 +4,7 @@ import { useThree } from "react-three-fiber";
 import { useStores } from "../../use-stores";
 import { PointerEvent } from "react-three-fiber/canvas";
 
+// This helper can be used by interactions.
 export const useDragging = (
   dragPlane: RefObject<THREE.Mesh | undefined | null> | undefined | null,
   {

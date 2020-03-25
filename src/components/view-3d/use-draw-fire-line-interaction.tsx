@@ -39,16 +39,16 @@ export const useDrawFireLineInteraction = () => {
   });
 
   return {
+    active: ui.interaction === Interaction.DrawFireLine,
     onPointerDown: (e: PointerEvent) => {
-      if (ui.interaction === Interaction.DrawFireLine) {
-        const ratio = ftToViewUnit(simulation);
-        const x = e.point.x;
-        const y = e.point.y;
-        simulation.addFireLineMarker(x / ratio, y / ratio);
-        simulation.addFireLineMarker(x / ratio, y / ratio);
-        dragPlane.current = e.object as THREE.Mesh;
-        startDragging(e);
-      }
+      const ratio = ftToViewUnit(simulation);
+      const x = e.point.x;
+      const y = e.point.y;
+      simulation.addFireLineMarker(x / ratio, y / ratio);
+      simulation.addFireLineMarker(x / ratio, y / ratio);
+      // There's assumption that user will click on terrain mesh to start drawing fire line.
+      dragPlane.current = e.object as THREE.Mesh;
+      startDragging(e);
     }
   };
 };

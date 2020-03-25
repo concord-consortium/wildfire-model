@@ -3,8 +3,8 @@ import * as THREE from "three";
 import { observer } from "mobx-react";
 import { ftToViewUnit, PLANE_WIDTH } from "./helpers";
 import { useStores } from "../../use-stores";
-import { useDragging } from "./use-dragging";
-import { PointerEvent } from "react-three-fiber/canvas";
+import { getEventHandlers } from "./interaction-handler";
+import { useDraggingOverPlaneInteraction } from "./use-dragging-over-plane-interaction";
 
 const getTexture = (imgSrcOrCanvas: string | HTMLCanvasElement) => {
   let source;
@@ -46,39 +46,25 @@ export const Marker: React.FC<IProps> = observer(function WrappedComponent({
   const { simulation } = useStores();
   const defTexture = useMemo(() => getTexture(markerImg), [markerImg]);
   const highlightTexture = useMemo(() => markerHighlightImg && getTexture(markerHighlightImg), [markerHighlightImg]);
-  const [hovered, setHover] = useState(false);
-  const { dragged, startDragging } = useDragging(dragPlane, {
-    onDrag: (p: THREE.Vector3) => {
-      if (setPosition) {
-        const r = ftToViewUnit(simulation);
-        setPosition(p.x / r, p.y / r);
-      }
-    }
-  });
-  const draggingEnabled = setPosition && dragPlane?.current && !(lockOnSimStart && simulation.simulationStarted);
+  const draggingEnabled = !(lockOnSimStart && simulation.simulationStarted);
+  const draggingInteraction = useDraggingOverPlaneInteraction(draggingEnabled, setPosition, dragPlane);
 
   if (!simulation.dataReady) {
     // Don't render markers when simulation data isn't downloaded yet.
     return null;
   }
 
-  const onPointerOver = (e: PointerEvent) => {
-    e.stopPropagation();
-    setHover(true);
-  };
-  const onPointerOut = (e: PointerEvent) => {
-    e.stopPropagation();
-    setHover(false);
-  };
-
   const ratio = ftToViewUnit(simulation);
   const x = position.x * ratio;
   const y = position.y * ratio;
   const z = simulation.cellAt(position.x, position.y).elevation * ratio;
 
-  const scaleMult = lockOnSimStart && simulation.simulationStarted ? 0.5 : 1;
+  const scaleMult = draggingEnabled ? 1: 0.5;
 
-  const texture = ((hovered && draggingEnabled) || dragged) && highlightTexture ? highlightTexture : defTexture;
+  const texture = (draggingInteraction.hovered || draggingInteraction.dragged) && highlightTexture ?
+    highlightTexture : defTexture;
+
+  const eventHandlers = getEventHandlers([ draggingInteraction ]);
   return (
     <sprite
       renderOrder={1}
@@ -86,9 +72,7 @@ export const Marker: React.FC<IProps> = observer(function WrappedComponent({
       scale={[width * PLANE_WIDTH * scaleMult, height * PLANE_WIDTH * scaleMult, 1]}
       center-x={anchorX}
       center-y={anchorY}
-      onPointerOver={onPointerOver}
-      onPointerOut={onPointerOut}
-      onPointerDown={draggingEnabled ? startDragging : undefined}
+      {...eventHandlers}
     >
       <spriteMaterial attach="material" map={texture} depthTest={false} />
     </sprite>

@@ -1,4 +1,4 @@
-import React, { forwardRef, RefObject } from "react";
+import React, { forwardRef } from "react";
 import { DroughtLevel } from "../../models/fire-model";
 import { BurnIndex, Cell, FireState } from "../../models/cell";
 import { ISimulationConfig } from "../../config";
@@ -9,7 +9,7 @@ import { ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
 import { observer } from "mobx-react";
 import { useStores } from "../../use-stores";
 import { useUpdate } from "react-three-fiber";
-import { InteractionAction, InteractionHandler } from "./interaction-handler";
+import { getEventHandlers, InteractionAction, InteractionHandler } from "./interaction-handler";
 import { PointerEvent } from "react-three-fiber/canvas";
 import { usePlaceSparkInteraction } from "./use-place-spark-interaction";
 import { useDrawFireLineInteraction } from "./use-draw-fire-line-interaction";
@@ -113,24 +113,17 @@ export const Terrain = observer(forwardRef<THREE.Mesh>(function WrappedComponent
     useShowCoordsInteraction()
   ];
 
-  const executeInteractionHandlers = (name: InteractionAction, e: PointerEvent) => {
-    interactions.forEach((int: InteractionHandler) => {
-      const handler = int[name];
-      if (handler) {
-        handler(e);
-      }
-    })
-  };
-
-  const onClick = (e: PointerEvent) => executeInteractionHandlers(InteractionAction.onClick, e);
-  const onPointerDown = (e: PointerEvent) => executeInteractionHandlers(InteractionAction.onPointerDown, e);
+  // Note that getEventHandlers won't return event handlers if it's not necessary. This is important,
+  // as adding even an empty event handler enables raycasting machinery in react-three-fiber and it has big
+  // performance cost in case of fairly complex terrain mesh. That's why when all the interactions are disabled,
+  // eventHandlers will be an empty object and nothing will be attached to the terrain mesh.
+  const eventHandlers = getEventHandlers(interactions);
 
   return (
     <mesh
       ref={ref}
       position={[PLANE_WIDTH * 0.5, height * 0.5, 0]}
-      onClick={onClick}
-      onPointerDown={onPointerDown}
+      {...eventHandlers}
     >
       <planeBufferGeometry
         attach="geometry"
