@@ -25,8 +25,11 @@ export const View3d = () => {
     return () => Shutterbug.off("saycheese", renderRef.current);
   }, []);
 
+  // If pixelRatio is 2 or more, use a bit reduced value. It seems to be a good compromise between
+  // rendering quality and performance (PJ: on my 2017 MacBook Pro 15", pixelRatio = 2 was causing visible FPS drop).
+  const pixelRatio = window.devicePixelRatio > 1 ? Math.max(1, window.devicePixelRatio * 0.75) : 1;
   return (
-    <Canvas camera={{fov: 33, up: DEFAULT_UP, position: cameraPos}} pixelRatio={window.devicePixelRatio}>
+    <Canvas camera={{fov: 33, up: DEFAULT_UP, position: cameraPos}} pixelRatio={pixelRatio}>
       {/* Why do we need to setup provider again? No idea. It seems that components inside Canvas don't have
           access to MobX stores anymore. */}
       <Provider stores={stores}>
