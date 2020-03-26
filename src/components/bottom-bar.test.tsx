@@ -49,6 +49,33 @@ describe("BottomBar component", () => {
     expect(start.prop("disabled")).toEqual(false);
   });
 
+  it("start button is disabled when model recalculates cell properties", () => {
+    // simulation will not be ready until at least one spark is defined
+    stores.simulation.sparks = [];
+    stores.simulation.dataReady = true;
+    stores.simulation.sparks[0] = new Vector2(100, 100);
+    expect(stores.simulation.ready).toEqual(true);
+    expect(stores.simulation.recalculateCellProps).toEqual(true);
+    let wrapper = mount(
+      <Provider stores={stores}>
+        <BottomBar />
+      </Provider>
+    );
+    let start = wrapper.find('[data-test="start-button"]').first();
+    expect(start.prop("disabled")).toEqual(false); // it's possible to start the model
+
+    stores.simulation.start();
+
+    wrapper = mount(
+      <Provider stores={stores}>
+        <BottomBar />
+      </Provider>
+    );
+    start = wrapper.find('[data-test="start-button"]').first();
+    // it's not possible to pause the model at the very beginning when cell properties are being recalculated
+    expect(start.prop("disabled")).toEqual(true);
+  });
+
   describe("restart button", () => {
     it("restarts simulation", () => {
       jest.spyOn(stores.simulation, "restart");
