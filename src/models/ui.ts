@@ -1,8 +1,9 @@
-import { observable, action } from "mobx";
+import { observable } from "mobx";
 
 export enum Interaction {
   PlaceSpark = "PlaceSpark",
   DrawFireLine = "DrawFireLine",
+  HoverOverDraggable = "HoverOverDraggable"
 }
 
 export class UIModel {
@@ -10,18 +11,5 @@ export class UIModel {
   @observable public maxSparks: number;
 
   @observable public interaction: Interaction | null = null;
-
   @observable public dragging: boolean = false;
-  @observable public hoverDistance: number = Infinity;
-  @observable public hoverTarget: THREE.Object3D | null = null;
-
-  @action.bound public setHoverTarget(target: THREE.Object3D, distance: number) {
-    this.hoverTarget = target;
-    this.hoverDistance = distance;
-  }
-
-  @action.bound public resetHoverTarget() {
-    this.hoverTarget = null;
-    this.hoverDistance = Infinity;
-  }
 }

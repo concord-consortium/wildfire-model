@@ -1,22 +1,21 @@
-import React, { useEffect } from "react";
+import React, { forwardRef } from "react";
+import { DroughtLevel } from "../../models/fire-model";
+import { BurnIndex, Cell, FireState } from "../../models/cell";
+import { ISimulationConfig } from "../../config";
 import * as THREE from "three";
-import { BufferAttribute, Float32BufferAttribute, PlaneBufferGeometry } from "three";
-import { useThree } from "../../react-three-hook";
+import { BufferAttribute } from "three";
+import { SimulationModel } from "../../models/simulation";
+import { ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
 import { observer } from "mobx-react";
 import { useStores } from "../../use-stores";
-import { BurnIndex, Cell, FireState } from "../../models/cell";
-import { SimulationModel } from "../../models/simulation";
-import { IThreeContext } from "../../react-three-hook/threejs-manager";
-import { ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
-import { SparksContainer } from "./spark";
-import { Interaction } from "../../models/ui";
-import { AddSparkInteraction } from "./add-spark-interaction";
-import { DrawFireLineInteraction } from "./draw-fire-line-interaction";
-import { DroughtLevel } from "../../models/fire-model";
-import { FireLineMarkersContainer } from "./fire-line-marker";
-import { TownMarkersContainer } from "./town-marker";
-import { ISimulationConfig } from "../../config";
-import { ShowCoordsInteraction } from "./show-coords-interaction";
+import { useUpdate } from "react-three-fiber";
+import { getEventHandlers, InteractionAction, InteractionHandler } from "./interaction-handler";
+import { PointerEvent } from "react-three-fiber/canvas";
+import { usePlaceSparkInteraction } from "./use-place-spark-interaction";
+import { useDrawFireLineInteraction } from "./use-draw-fire-line-interaction";
+import { useShowCoordsInteraction } from "./use-show-coords-interaction";
+
+const vertexIdx = (cell: Cell, gridWidth: number, gridHeight: number) => (gridHeight - 1 - cell.y) * gridWidth + cell.x;
 
 const getTerrainColor = (droughtLevel: number) => {
   switch (droughtLevel) {
@@ -37,8 +36,6 @@ const FIRE_LINE_UNDER_CONSTRUCTION_COLOR = [0.5, 0.5, 0, 1];
 const BURN_INDEX_LOW = [1, 0.7, 0, 1];
 const BURN_INDEX_MEDIUM = [1, 0.35, 0, 1];
 const BURN_INDEX_HIGH = [1, 0, 0, 1];
-
-const vertexIdx = (cell: Cell, gridWidth: number, gridHeight: number) => (gridHeight - 1 - cell.y) * gridWidth + cell.x;
 
 const burnIndexColor = (burnIndex: BurnIndex) => {
   if (burnIndex === BurnIndex.Low) {
@@ -72,25 +69,15 @@ const setVertexColor = (
   colArray[idx + 3] = color[3];
 };
 
-const setupMesh = (simulation: SimulationModel) => ({ scene }: IThreeContext) => {
-  const height = planeHeight(simulation);
-  const planeGeometry = new THREE.PlaneBufferGeometry(
-    PLANE_WIDTH, height, simulation.gridWidth - 1, simulation.gridHeight - 1
-  );
-  planeGeometry.addAttribute("color",
-    new Float32BufferAttribute(new Array((simulation.gridWidth) * (simulation.gridHeight) * 4), 4)
-  );
-  const planeMaterial = new THREE.MeshPhongMaterial({ vertexColors: THREE.VertexColors, side: THREE.DoubleSide });
-  const planeMesh = new THREE.Mesh(planeGeometry, planeMaterial);
-  planeMesh.lookAt(new THREE.Vector3(0, 0, 1));
-  // Move plane so bottom-left corner is at (0, 0) point;
-  planeMesh.position.set(PLANE_WIDTH * 0.5, height * 0.5, 0);
-  scene.add(planeMesh);
-  return planeMesh;
+const updateColors = (geometry: THREE.PlaneBufferGeometry, simulation: SimulationModel) => {
+  const colArray = geometry.attributes.color.array as number[];
+  simulation.cells.forEach(cell => {
+    setVertexColor(colArray, cell, simulation.gridWidth, simulation.gridHeight, simulation.config);
+  });
+  (geometry.attributes.color as BufferAttribute).needsUpdate = true;
 };
 
-const setupElevation = (plane: THREE.Mesh, simulation: SimulationModel) => {
-  const geometry = plane.geometry as PlaneBufferGeometry;
+const setupElevation = (geometry: THREE.PlaneBufferGeometry, simulation: SimulationModel) => {
   const posArray = geometry.attributes.position.array as number[];
   const mult = ftToViewUnit(simulation);
   // Apply height map to vertices of plane.
@@ -102,42 +89,50 @@ const setupElevation = (plane: THREE.Mesh, simulation: SimulationModel) => {
   (geometry.attributes.position as BufferAttribute).needsUpdate = true;
 };
 
-const updateColors = (plane: THREE.Mesh, simulation: SimulationModel) => {
-  const geometry = plane.geometry as PlaneBufferGeometry;
-  const colArray = geometry.attributes.color.array as number[];
-  simulation.cells.forEach(cell => {
-    setVertexColor(colArray, cell, simulation.gridWidth, simulation.gridHeight, simulation.config);
-  });
-  (geometry.attributes.color as BufferAttribute).needsUpdate = true;
-};
+export const Terrain = observer(forwardRef<THREE.Mesh>(function WrappedComponent(props, ref) {
+  const { simulation } = useStores();
+  const height = planeHeight(simulation);
 
-export const Terrain = observer(function WrappedComponent() {
-  const { simulation, ui } = useStores();
-  const { getEntity } = useThree<THREE.Mesh>(setupMesh(simulation));
+  const geometryRef = useUpdate<THREE.PlaneBufferGeometry>(geometry => {
+    geometry.setAttribute("color",
+      new THREE.Float32BufferAttribute(new Array((simulation.gridWidth) * (simulation.gridHeight) * 4), 4)
+    );
+  }, [simulation.gridWidth, simulation.gridHeight]);
 
-  useEffect(() => {
-    const plane = getEntity();
-    if (plane) {
-      setupElevation(plane, simulation);
-    }
-  }, [simulation.cellsElevationFlag]);
+  useUpdate<THREE.PlaneBufferGeometry>(geometry => {
+    setupElevation(geometry, simulation);
+  }, [simulation.cellsElevationFlag], geometryRef);
 
-  useEffect(() => {
-    const plane = getEntity();
-    if (plane) {
-      updateColors(plane, simulation);
-    }
-  }, [simulation.cellsStateFlag]);
+  useUpdate<THREE.PlaneBufferGeometry>(geometry => {
+    updateColors(geometry, simulation);
+  }, [simulation.cellsStateFlag], geometryRef);
 
-  // Note that we don't want to conditionally render <PlaceSparkInteraction> or provide more props to it.
-  // If <PlaceSparkInteraction> subscribes to stores directly, we can avoid unnecessary re-renders of parent component
-  // (Terrain) when some properties change.
-  return <>
-    <SparksContainer getTerrain={getEntity}/>
-    <FireLineMarkersContainer getTerrain={getEntity}/>
-    <TownMarkersContainer/>
-    { ui.interaction === Interaction.PlaceSpark && <AddSparkInteraction getTerrain={getEntity} /> }
-    { ui.interaction === Interaction.DrawFireLine && <DrawFireLineInteraction getTerrain={getEntity} /> }
-    { simulation.config.showCoordsOnClick && <ShowCoordsInteraction getTerrain={getEntity} /> }
-  </>;
-});
+  const interactions: InteractionHandler[] = [
+    usePlaceSparkInteraction(),
+    useDrawFireLineInteraction(),
+    useShowCoordsInteraction()
+  ];
+
+  // Note that getEventHandlers won't return event handlers if it's not necessary. This is important,
+  // as adding even an empty event handler enables raycasting machinery in react-three-fiber and it has big
+  // performance cost in case of fairly complex terrain mesh. That's why when all the interactions are disabled,
+  // eventHandlers will be an empty object and nothing will be attached to the terrain mesh.
+  const eventHandlers = getEventHandlers(interactions);
+
+  return (
+    <mesh
+      ref={ref}
+      position={[PLANE_WIDTH * 0.5, height * 0.5, 0]}
+      {...eventHandlers}
+    >
+      <planeBufferGeometry
+        attach="geometry"
+        ref={geometryRef}
+        center-x={0} center-y={0}
+        args={[PLANE_WIDTH, height, simulation.gridWidth - 1, simulation.gridHeight - 1]}
+      />
+      <meshPhongMaterial attach="material" vertexColors={true} />
+    </mesh>
+  )
+}));
+

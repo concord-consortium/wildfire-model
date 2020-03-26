@@ -1,38 +1,34 @@
-import OrbitControls from "three-orbitcontrols";
-import { useThree } from "../../react-three-hook";
-import { DEFAULT_UP, PLANE_WIDTH, planeHeight } from "./helpers";
-import { useStores } from "../../use-stores";
 import { observer } from "mobx-react";
-import { useEffect } from "react";
+import { useStores } from "../../use-stores";
+import { extend, useFrame, useThree } from "react-three-fiber";
+import React, { useRef } from "react";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
+import { PLANE_WIDTH, planeHeight } from "./helpers";
+
+extend({ OrbitControls });
 
 export const CameraControls = observer(function WrappedComponent() {
   const { simulation, ui } = useStores();
-  const { getEntity } = useThree(({ camera, canvas }) => {
-    camera.up.copy(DEFAULT_UP);
+  const { camera, gl } = useThree();
+  const ref = useRef<OrbitControls>();
 
-    const controls = new OrbitControls(camera, canvas);
-    controls.target.set(PLANE_WIDTH * 0.5, planeHeight(simulation) * 0.5, 0.2);
-    controls.enablePan = false;
-    controls.rotateSpeed = 0.5;
-    controls.zoomSpeed = 0.5;
-    controls.minDistance = 0.8;
-    controls.maxDistance = 3;
-    controls.maxPolarAngle = Math.PI * 0.4; // don't let users look at the backside of the terrain
-    controls.minAzimuthAngle = -Math.PI * 0.25;
-    controls.maxAzimuthAngle = Math.PI * 0.25;
+  useFrame(() => ref.current && ref.current.update());
 
-    camera.position.set(PLANE_WIDTH * 0.5, planeHeight(simulation) * -1.5, PLANE_WIDTH * 1.5);
-    controls.update();
-
-    return controls;
-  });
-
-  useEffect(() => {
-    const controls = getEntity();
-    if (controls) {
-      controls.enableRotate = !ui.dragging;
-    }
-  }, [ui.dragging]);
-
-  return null;
+  // See: https://github.com/react-spring/react-three-fiber/issues/130
+  // extend doesn't work too well with TypeScript. @ts-ignore is the easiest solution.
+  // @ts-ignore
+  return <orbitControls
+    args={[camera, gl.domElement]}
+    ref={ref}
+    target={[PLANE_WIDTH * 0.5, planeHeight(simulation) * 0.5, 0.2]}
+    enableRotate={!ui.dragging} // disable rotation when something is being dragged
+    enablePan={false}
+    rotateSpeed={0.5}
+    zoomSpeed={0.5}
+    minDistance={0.8}
+    maxDistance={5}
+    maxPolarAngle={Math.PI * 0.4}
+    minAzimuthAngle={-Math.PI * 0.25}
+    maxAzimuthAngle={Math.PI * 0.25}
+  />;
 });

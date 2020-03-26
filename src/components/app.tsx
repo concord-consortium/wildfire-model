@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { observer } from "mobx-react";
-import { View3D } from "./view-3d/view-3d";
+import { View3d } from "./view-3d/view-3d";
 import { SimulationInfo } from "./simulation-info";
 import { TerrainPanel } from "./terrain-panel";
 import { BottomBar } from "./bottom-bar";
@@ -8,6 +8,7 @@ import { useStores } from "../use-stores";
 import Shutterbug from "shutterbug";
 
 import css from "./app.scss";
+import { useCustomCursor } from "./use-custom-cursors";
 
 export const AppComponent = observer(function WrappedComponent() {
   const { simulation } = useStores();
@@ -18,6 +19,9 @@ export const AppComponent = observer(function WrappedComponent() {
       Shutterbug.disable();
     };
   }, []);
+
+  // This will setup document cursor based on various states of UI store (interactions).
+  useCustomCursor();
 
   const config = simulation.config;
   // Convert time from minutes to days.
@@ -34,7 +38,7 @@ export const AppComponent = observer(function WrappedComponent() {
       <div className={css.timeDisplay}>{ timeInDays.toFixed(1) } days</div>
 
       <SimulationInfo />
-      <View3D />
+      <View3d />
       <TerrainPanel />
       <BottomBar />
     </div>

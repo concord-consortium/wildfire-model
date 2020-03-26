@@ -4,7 +4,6 @@ import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
 import { BottomBar } from "./bottom-bar";
 import Button from "@material-ui/core/Button";
-import css from "./bottom-bar.scss";
 import { Vector2 } from "three";
 
 describe("BottomBar component", () => {
