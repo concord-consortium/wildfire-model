@@ -1,26 +1,28 @@
-import { getGridCellNeighbors, nonburnableCellBetween, withinDist, SimulationModel } from "./simulation";
-import { Cell } from "./cell";
+import { getGridCellNeighbors, nonburnableCellBetween, SimulationModel, withinDist } from "./simulation";
+import { BurnIndex, Cell } from "./cell";
 
 describe("nonburnableCellBetween", () => {
   it("returns true if there's any nonburnable cell between two points", () => {
+    const burnable = (bi: BurnIndex) => true;
+    const nonburnable = (bi: BurnIndex) => false;
     const cells = [
-      {isBurnable: true}, {isBurnable: true}, {isBurnable: true}, {isBurnable: true},
-      {isBurnable: true}, {isBurnable: true}, {isBurnable: true}, {isBurnable: true},
-      {isBurnable: true}, {isBurnable: false}, {isBurnable: false}, {isBurnable: false},
-      {isBurnable: true}, {isBurnable: true}, {isBurnable: true}, {isBurnable: true},
+      {isBurnableForBI: burnable}, {isBurnableForBI: burnable}, {isBurnableForBI: burnable}, {isBurnableForBI: burnable},
+      {isBurnableForBI: burnable}, {isBurnableForBI: burnable}, {isBurnableForBI: burnable}, {isBurnableForBI: burnable},
+      {isBurnableForBI: burnable}, {isBurnableForBI: nonburnable}, {isBurnableForBI: nonburnable}, {isBurnableForBI: nonburnable},
+      {isBurnableForBI: burnable}, {isBurnableForBI: burnable}, {isBurnableForBI: burnable}, {isBurnableForBI: burnable},
     ] as Cell[];
-    expect(nonburnableCellBetween(cells, 4, 0, 0, 0, 3)).toEqual(false);
-    expect(nonburnableCellBetween(cells, 4, 0, 0, 0, 3)).toEqual(false);
+    expect(nonburnableCellBetween(cells, 4, 0, 0, 0, 3, BurnIndex.Low)).toEqual(false);
+    expect(nonburnableCellBetween(cells, 4, 0, 0, 0, 3, BurnIndex.Low)).toEqual(false);
 
-    expect(nonburnableCellBetween(cells, 4, 1, 0, 0, 3)).toEqual(false);
-    expect(nonburnableCellBetween(cells, 4, 1, 1, 0, 2)).toEqual(false);
-    expect(nonburnableCellBetween(cells, 4, 1, 1, 0, 3)).toEqual(true);
+    expect(nonburnableCellBetween(cells, 4, 1, 0, 0, 3, BurnIndex.Low)).toEqual(false);
+    expect(nonburnableCellBetween(cells, 4, 1, 1, 0, 2, BurnIndex.Low)).toEqual(false);
+    expect(nonburnableCellBetween(cells, 4, 1, 1, 0, 3, BurnIndex.Low)).toEqual(true);
 
-    expect(nonburnableCellBetween(cells, 4, 1, 0, 1, 2)).toEqual(true);
-    expect(nonburnableCellBetween(cells, 4, 1, 0, 1, 3)).toEqual(true);
+    expect(nonburnableCellBetween(cells, 4, 1, 0, 1, 2, BurnIndex.Low)).toEqual(true);
+    expect(nonburnableCellBetween(cells, 4, 1, 0, 1, 3, BurnIndex.Low)).toEqual(true);
 
-    expect(nonburnableCellBetween(cells, 4, 1, 0, 2, 2)).toEqual(true);
-    expect(nonburnableCellBetween(cells, 4, 1, 0, 2, 3)).toEqual(true);
+    expect(nonburnableCellBetween(cells, 4, 1, 0, 2, 2, BurnIndex.Low)).toEqual(true);
+    expect(nonburnableCellBetween(cells, 4, 1, 0, 2, 3, BurnIndex.Low)).toEqual(true);
   });
 });
 
@@ -35,17 +37,19 @@ describe("withinDist", () => {
 
 describe("getGridCellNeighbors", () => {
   it("returns array of neighbours without cells that are nonburnable, or lay behind them", () => {
+    const burnable = (bi: BurnIndex) => true;
+    const nonburnable = (bi: BurnIndex) => false;
     const cells = [
-      {isBurnable: true}, {isBurnable: true}, {isBurnable: true}, {isBurnable: true},
-      {isBurnable: true}, {isBurnable: true}, {isBurnable: true}, {isBurnable: true},
-      {isBurnable: true}, {isBurnable: false}, {isBurnable: false}, {isBurnable: false},
-      {isBurnable: true}, {isBurnable: true}, {isBurnable: true}, {isBurnable: true},
+      {isBurnableForBI: burnable}, {isBurnableForBI: burnable}, {isBurnableForBI: burnable}, {isBurnableForBI: burnable},
+      {isBurnableForBI: burnable}, {isBurnableForBI: burnable}, {isBurnableForBI: burnable}, {isBurnableForBI: burnable},
+      {isBurnableForBI: burnable}, {isBurnableForBI: nonburnable}, {isBurnableForBI: nonburnable}, {isBurnableForBI: nonburnable},
+      {isBurnableForBI: burnable}, {isBurnableForBI: burnable}, {isBurnableForBI: burnable}, {isBurnableForBI: burnable},
     ] as Cell[];
-    expect(getGridCellNeighbors(cells, 0, 4, 4, 1.5).sort()).toEqual([1, 4, 5]);
-    expect(getGridCellNeighbors(cells, 5, 4, 4, 1.5).sort()).toEqual([0, 1, 2, 4, 6, 8]);
-    expect(getGridCellNeighbors(cells, 5, 4, 4, 2.5).sort()).toEqual([0, 1, 12, 2, 3, 4, 6, 7, 8]);
-    expect(getGridCellNeighbors(cells, 14, 4, 4, 2.5).sort()).toEqual([12, 13, 15]);
-    expect(getGridCellNeighbors(cells, 15, 4, 4, 2.5).sort()).toEqual([13, 14]);
+    expect(getGridCellNeighbors(cells, 0, 4, 4, 1.5, BurnIndex.Low).sort()).toEqual([1, 4, 5]);
+    expect(getGridCellNeighbors(cells, 5, 4, 4, 1.5, BurnIndex.Low).sort()).toEqual([0, 1, 2, 4, 6, 8]);
+    expect(getGridCellNeighbors(cells, 5, 4, 4, 2.5, BurnIndex.Low).sort()).toEqual([0, 1, 12, 2, 3, 4, 6, 7, 8]);
+    expect(getGridCellNeighbors(cells, 14, 4, 4, 2.5, BurnIndex.Low).sort()).toEqual([12, 13, 15]);
+    expect(getGridCellNeighbors(cells, 15, 4, 4, 2.5, BurnIndex.Low).sort()).toEqual([13, 14]);
   });
 });
 

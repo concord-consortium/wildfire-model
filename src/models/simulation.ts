@@ -54,12 +54,12 @@ export const forEachPointBetween = (
 };
 
 export const nonburnableCellBetween = (
-  cells: Cell[], width: number, x0: number, y0: number, x1: number, y1: number
+  cells: Cell[], width: number, x0: number, y0: number, x1: number, y1: number, burnIndex: BurnIndex
 ) => {
   let result = false;
   forEachPointBetween(x0, y0, x1, y1, (x: number, y: number) => {
     const idx = getGridIndexForLocation(x, y, width);
-    if (!cells[idx].isBurnable) {
+    if (!cells[idx].isBurnableForBI(burnIndex)) {
       result = true;
     }
   });
@@ -84,7 +84,7 @@ const directNeighbours = [ {x: -1, y: 0}, {x: 1, y: 0}, {x: 0, y: -1}, {x: 0, y:
  * this cell and cell `i`.
  */
 export const getGridCellNeighbors = (
-  cells: Cell[], i: number, width: number, height: number, neighborsDist: number
+  cells: Cell[], i: number, width: number, height: number, neighborsDist: number, burnIndex: BurnIndex
 ) => {
   const neighbours: number[] = [];
   const queue: number[] = [];
@@ -107,9 +107,9 @@ export const getGridCellNeighbors = (
         !processed[nIdx] &&
         withinDist(x0, y0, x1 + diff.x, y1 + diff.y, neighborsDist)
       ) {
-        if (!cells[nIdx].isBurnable) {
+        if (!cells[nIdx].isBurnableForBI(burnIndex)) {
           anyNonburnableCells = true;
-        } else if (!anyNonburnableCells || !nonburnableCellBetween(cells, width, x1 + diff.x, y1 + diff.y, x0, y0)) {
+        } else if (!anyNonburnableCells || !nonburnableCellBetween(cells, width, x1 + diff.x, y1 + diff.y, x0, y0, burnIndex)) {
           neighbours.push(nIdx);
           queue.push(nIdx);
         }
@@ -120,51 +120,10 @@ export const getGridCellNeighbors = (
   return neighbours;
 };
 
-const calculateCellNeighbors = (cells: Cell[], width: number, height: number, neighborsDist: number) => {
-  const result = [];
-  for (let i = 0; i < width * height; i++) {
-    result.push(getGridCellNeighbors(cells, i, width, height, neighborsDist));
-  }
-  return result;
-};
-
-/**
- * Returns 2d array of times it takes each cell to ignite each neighbor.
- *
- * For instance, for a 5x5 array, cellNeighbors will be a 2d array:
- *     [[1, 5, 6], [0, 2, 5, 6,7], ...]
- * describing cell 0 as being neighbors with cells 1, 5, 6, etc.
- *
- * timeToIgniteNeighbors might then look something like
- *     [[0.5, 0.7, 0.5], [1.2, ...]]
- * which means that, if cell 0 is ignited, cell 1 will ignite 0.5 seconds later.
- */
-const calculateTimeToIgniteNeighbors = (
-  cells: Cell[], cellNeighbors: number[][], wind: IWindProps, cellSize: number, gridWidth: number, gridHeight: number
-) => {
-  const timeToIgniteNeighbors = [];
-  for (let i = 0; i < cells.length; i++) {
-    const neighbors = cellNeighbors[i];
-    const timeToIgniteMyNeighbors = neighbors.map(n =>
-      1 / getFireSpreadRate(cells[i], cells[n], wind, cellSize)
-    );
-    timeToIgniteNeighbors.push(timeToIgniteMyNeighbors);
-  }
-  return timeToIgniteNeighbors;
-};
 
 export class SimulationModel {
   public config: ISimulationConfig;
-  // initialCellNeighbors list doesn't include user-defined fire lines (and other modifications of the original
-  // simulation state that we might add in the future).
-  public initialCellNeighbors: number[][];
-  public cellNeighbors: number[][];
-  // initialTimeToIgniteNeighbors list doesn't include user-defined fire lines (and other modifications of the original
-  // simulation state that we might add in the future).
-  public initialTimeToIgniteNeighbors: number[][];
-  public timeToIgniteNeighbors: number[][];
   public prevTickTime: number | null;
-  public recalculateCellProps: boolean = true;
   public endOfLowIntensityFire = false;
   public dataReadyPromise: Promise<void>;
   @observable public dataReady = false;
@@ -348,36 +307,7 @@ export class SimulationModel {
       this.updateCellsStateFlag();
       this.updateTownMarkers();
       this.dataReady = true;
-      this.recalculateCellProps = true;
     });
-  }
-
-  @action.bound public calculateCellProps() {
-    if (this.recalculateCellProps) {
-      // tslint:disable-next-line:no-console
-      console.time("neighbors calc");
-      this.cellNeighbors = calculateCellNeighbors(
-        this.cells, this.gridWidth, this.gridHeight, this.config.neighborsDist
-      );
-      if (this.time === 0) {
-        // Copy 2d array.
-        this.initialCellNeighbors = this.cellNeighbors.map(row => row.slice());
-      }
-      // tslint:disable-next-line:no-console
-      console.timeEnd("neighbors calc");
-      // tslint:disable-next-line:no-console
-      console.time("ignition time calc");
-      this.timeToIgniteNeighbors = calculateTimeToIgniteNeighbors(
-        this.cells, this.cellNeighbors, this.wind, this.cellSize, this.gridWidth, this.gridHeight
-      );
-      if (this.time === 0) {
-        // Copy 2d array.
-        this.initialTimeToIgniteNeighbors = this.timeToIgniteNeighbors.map(row => row.slice());
-      }
-      // tslint:disable-next-line:no-console
-      console.timeEnd("ignition time calc");
-      this.recalculateCellProps = false;
-    }
   }
 
   @action.bound public start() {
@@ -409,8 +339,6 @@ export class SimulationModel {
     this.lastFireLineTimestamp = -Infinity;
     this.updateCellsStateFlag();
     this.updateCellsElevationFlag();
-    // That's necessary because of the fire lines that have been removed.
-    this.recalculateCellProps = true;
   }
 
   @action.bound public reload() {
@@ -468,11 +396,6 @@ export class SimulationModel {
         }
       });
     }
-
-    // Note that in most cases this function will immediately return. It's only necessary once when model starts
-    // or when fire line is added. It's necessary for this function to be executed while time is still equal to 0
-    // at least once, so the copies of neighbor list and ignition times are created.
-    this.calculateCellProps();
 
     const dayChange = Math.floor(this.time / modelDay) !== Math.floor((this.time + timeStep) / modelDay);
     this.time += timeStep;
@@ -601,8 +524,6 @@ export class SimulationModel {
     this.fireLineMarkers.length = 0;
     this.updateCellsStateFlag();
     this.updateCellsElevationFlag();
-    // Neighbours will be affected, so it's necessary to recalulate neighbours list and ignition times.
-    this.recalculateCellProps = true;
   }
 
   @action.bound public buildFireLine(start: ICoords, end: ICoords) {
@@ -613,6 +534,7 @@ export class SimulationModel {
     forEachPointBetween(startGridX, startGridY, endGridX, endGridY, (x: number, y: number) => {
       const cell = this.cells[getGridIndexForLocation(x, y, this.gridWidth)];
       cell.isFireLine = true;
+      cell.ignitionTime = Infinity;
     });
     this.lastFireLineTimestamp = this.time;
   }
@@ -682,28 +604,25 @@ export class SimulationModel {
         if (fireShouldSpread) {
           // Fire lines and other fire control methods will work only if burn index is low or medium.
           // If it's high, fire cannot be controlled.
-          const controlMethodsWork = cell.burnIndex !== BurnIndex.High;
-          const neighbors = controlMethodsWork ? this.cellNeighbors[i] : this.initialCellNeighbors[i];
-          const ignitionDeltas = controlMethodsWork ?
-            this.timeToIgniteNeighbors[i] : this.initialTimeToIgniteNeighbors[i];
-          neighbors.forEach((n, j) => {
+          const neighbors = getGridCellNeighbors(this.cells, i, this.gridWidth, this.gridHeight, this.config.neighborsDist, cell.burnIndex);
+          neighbors.forEach(n => {
             const neighCell = this.cells[n];
+            const distInFt = dist(cell.x, cell.y, neighCell.x, neighCell.y) * this.cellSize;
+            const spreadRate = getFireSpreadRate(cell, neighCell, this.wind, this.cellSize);
+            const spreadRateIncDistance = spreadRate / distInFt;
+            const ignitionDelta = 1 / spreadRateIncDistance;
             if (neighCell.fireState === FireState.Unburnt) {
               newIgnitionData[n] = Math.min(
-                ignitionTime + ignitionDeltas[j], newIgnitionData[n] || neighCell.ignitionTime
+                ignitionTime + ignitionDelta, newIgnitionData[n] || neighCell.ignitionTime
               );
               // Make cell burn time proportional to fire spread rate.
               const newBurnTime = (newIgnitionData[n] - ignitionTime) + this.config.minCellBurnTime;
               if (newBurnTime < neighCell.burnTime) {
                 neighCell.burnTime = newBurnTime;
               }
-              // Calculate distance-independent spread rate using ignition delta. Note that ignition delta is just
-              // inverted spread rate. See `calculateTimeToIgniteNeighbors` function. This value is later used to
-              // calculate burn index.
-              const distInFt = dist(cell.x, cell.y, neighCell.x, neighCell.y) * this.cellSize;
-              const newSpreadRate = distInFt / ignitionDeltas[j];
-              if (newSpreadRate > neighCell.spreadRate) {
-                neighCell.spreadRate = newSpreadRate;
+              // Save max spread rate.
+              if (spreadRate > neighCell.spreadRate) {
+                neighCell.spreadRate = spreadRate;
               }
             }
           });

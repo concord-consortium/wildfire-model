@@ -224,5 +224,5 @@ export const getFireSpreadRate = (
           (c * Math.pow(packingRatio / optimumPackingRatio, -e)), 1 / b);
 
   const directionFactor = getDirectionFactor(sourceCell, targetCell, effectiveWindSpeed, maxSpreadRateVector.angle());
-  return rh * directionFactor / distInFt;
+  return rh * directionFactor;
 };
