@@ -168,7 +168,7 @@ const presets: {[key: string]: Partial<ISimulationConfig>} = {
     zoneIndex: [
       [ 0, 1, 2 ]
     ]
-  },  
+  },
   threeZoneFoothills: {
     zonesCount: 3,
     zones: [
