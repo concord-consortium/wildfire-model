@@ -744,7 +744,7 @@ export class SimulationModel {
       if (newIgnitionData[i] !== undefined) {
         cell.ignitionTime = newIgnitionData[i];
       }
-      if (cell.fireState > 0) {
+      if (cell.fireState !== FireState.Unburnt) {
         totalBurnedCells++;
         if (!this.burnedCellsInZone[cell.zoneIdx]) this.burnedCellsInZone[cell.zoneIdx] = 1;
         else this.burnedCellsInZone[cell.zoneIdx]++;
