@@ -363,7 +363,7 @@ export class SimulationModel {
       this.updateCellsStateFlag();
       this.updateTownMarkers();
       // dimensions in feet, convert sqft to acres
-      this.simulationAreaAcres = this.gridWidth * this.gridHeight * this.cellSize / 43560;
+      this.simulationAreaAcres = this.config.modelWidth * this.config.modelHeight / 43560;
       this.dataReady = true;
       this.recalculateCellProps = true;
     });
