@@ -38,3 +38,9 @@
   padding: 4px;
   padding-top: 8px;
 }
+
+.progress {
+  top: calc(50% - 80);
+  position: absolute;
+  z-index: 1000;
+}

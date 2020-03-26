@@ -164,9 +164,9 @@ export class SimulationModel {
   public initialTimeToIgniteNeighbors: number[][];
   public timeToIgniteNeighbors: number[][];
   public prevTickTime: number | null;
-  public recalculateCellProps: boolean = true;
   public endOfLowIntensityFire = false;
   public dataReadyPromise: Promise<void>;
+  @observable public recalculateCellProps: boolean = true;
   @observable public dataReady = false;
   @observable public wind: IWindProps;
   @observable public sparks: Vector2[] = [];
@@ -392,7 +392,13 @@ export class SimulationModel {
 
     this.simulationRunning = true;
     this.prevTickTime = null;
-    requestAnimationFrame(this.rafCallback);
+
+    // Recalculation of the cell props will take a long time in the upcoming frame. Additional timeout lets browser
+    // finish rendering progress bars and disable some buttons (e.g. play/pause).
+    const timeout = this.recalculateCellProps ? 250 : 0;
+    setTimeout(() => {
+      requestAnimationFrame(this.rafCallback);
+    }, timeout);
   }
 
   @action.bound public stop() {

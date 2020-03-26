@@ -123,7 +123,9 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           <div className={`${css.widgetGroup} ${css.startStop}`}>
             <Button
               onClick={this.handleStart}
-              disabled={!simulation.ready}
+              // Block start/pause when simulation model has to recalculate cell props. It's an action that takes
+              // a long time so user might be confused and try to click on this button again (=> stopping the model).
+              disabled={!simulation.ready || simulation.simulationRunning && simulation.recalculateCellProps}
               className={css.playbackButton}
               data-test="start-button"
               disableRipple={true}

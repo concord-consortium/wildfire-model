@@ -9,6 +9,7 @@ import Shutterbug from "shutterbug";
 
 import css from "./app.scss";
 import { useCustomCursor } from "./use-custom-cursors";
+import { CircularProgress } from "@material-ui/core";
 
 export const AppComponent = observer(function WrappedComponent() {
   const { simulation } = useStores();
@@ -27,6 +28,9 @@ export const AppComponent = observer(function WrappedComponent() {
   // Convert time from minutes to days.
   const timeInDays = simulation.time / 1440;
   const showModelScale = config.showModelDimensions;
+  // Recalculating cell properties happens once model is started (thus simulationRunning check)
+  // and it takes significant time.
+  const showProgress = simulation.simulationRunning && simulation.recalculateCellProps;
   return (
     <div className={css.app}>
       { showModelScale &&
@@ -36,7 +40,9 @@ export const AppComponent = observer(function WrappedComponent() {
         </div>
       }
       <div className={css.timeDisplay}>{ timeInDays.toFixed(1) } days</div>
-
+      {
+        showProgress && <CircularProgress className={css.progress} size={160} color={"secondary"}/>
+      }
       <SimulationInfo />
       <View3d />
       <TerrainPanel />
