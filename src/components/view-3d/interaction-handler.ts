@@ -4,7 +4,9 @@ import { PointerEvent } from "react-three-fiber/canvas";
 // https://github.com/react-spring/react-three-fiber#events
 // It might be necessary to add more in the future.
 export enum InteractionAction {
-  onClick = "onClick",
+  // Note that onClick is intentionally not listed here. It won't work on touch devices because of OrbitControls.
+  // It seems that once OrbitControls are added, they swallow onClick event generation on touch devices.
+  // Probably it adds touch events and browser stops generating synthetic click events. Use onPointerDown or Up instead.
   onPointerDown = "onPointerDown",
   onPointerUp = "onPointerUp",
   onPointerOver = "onPointerOver",

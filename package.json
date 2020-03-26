@@ -119,6 +119,6 @@
     "react-three-fiber": "^4.0.23",
     "screenfull": "^5.0.2",
     "shutterbug": "^1.2.0",
-    "three": "^0.114.0"
+    "three": "^0.115.0"
   }
 }

@@ -5,10 +5,11 @@ import { PointerEvent } from "react-three-fiber/canvas";
 import { Interaction } from "../../models/ui";
 import { useDragging } from "./use-dragging";
 import * as THREE from "three";
+import { InteractionHandler } from "./interaction-handler";
 
 const MIN_DIST = 1500; // feet
 
-export const useDrawFireLineInteraction = () => {
+export const useDrawFireLineInteraction: () => InteractionHandler = () => {
   const { simulation, ui } = useStores();
   const dragPlane = useRef<THREE.Mesh>();
 

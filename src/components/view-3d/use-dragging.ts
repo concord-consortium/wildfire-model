@@ -35,8 +35,8 @@ export const useDragging = ({ useOffset, dragPlane, onDrag, onDragEnd }: UseDrag
   });
 
   const pointerUpHandler = useRef(() => {
-    window.removeEventListener("mousemove", pointerMoveHandler.current);
-    window.removeEventListener("mouseup", pointerUpHandler.current);
+    window.removeEventListener("pointermove", pointerMoveHandler.current);
+    window.removeEventListener("pointerup", pointerUpHandler.current);
     ui.dragging = false; // necessary to re-enable orbit controls
     setDragged(false);
     if (onDragEnd) {
@@ -58,8 +58,8 @@ export const useDragging = ({ useOffset, dragPlane, onDrag, onDragEnd }: UseDrag
       if (!dragPlane || !dragPlane.current) {
         return;
       }
-      window.addEventListener("mousemove", pointerMoveHandler.current);
-      window.addEventListener("mouseup", pointerUpHandler.current);
+      window.addEventListener("pointermove", pointerMoveHandler.current);
+      window.addEventListener("pointerup", pointerUpHandler.current);
       ui.dragging = true; // necessary to disable orbit controls
       setDragged(true);
     }
