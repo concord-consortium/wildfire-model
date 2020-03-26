@@ -55,7 +55,7 @@ export const Graph = observer(function WrappedComponent() {
       }
       updateChartColors();
     }
-  }, [simulation.dataReady, chartStore.chartVersion]);
+  }, [simulation.dataReady]);
 
   useEffect(() => {
     if (simulation.dataReady) {
