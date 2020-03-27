@@ -115,6 +115,7 @@ export class SimulationModel {
     this.dataReady = false;
     const config = this.config;
     const zones = this.zones;
+    this.totalCellCountByZone = {};
     this.dataReadyPromise = Promise.all([
       getZoneIndex(config), getElevationData(config, zones), getRiverData(config), getUnburntIslandsData(config, zones)
     ]).then(values => {

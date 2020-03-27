@@ -6,6 +6,8 @@ describe("SimulationModel", () => {
       modelWidth: 100000,
       modelHeight: 100000,
       gridWidth: 5,
+      gridHeight: 5,
+      cellSize: 20000,
       sparks: [ [50000, 50000] ],
       zoneIndex: [[0]],
       elevation: [[0]],
@@ -19,5 +21,26 @@ describe("SimulationModel", () => {
     expect(sim.canAddFireLineMarker).toEqual(false);
     sim.restart();
     expect(sim.canAddFireLineMarker).toEqual(true);
+  });
+
+  it("should report constant totalCellCountByZone values after model reload", async () => {
+    const sim = new SimulationModel({
+      modelWidth: 100000,
+      modelHeight: 100000,
+      gridWidth: 5,
+      gridHeight: 5,
+      cellSize: 20000,
+      sparks: [ [50000, 50000] ],
+      zoneIndex: [[0]],
+      elevation: [[0]],
+      unburntIslands: [[1]],
+      unburntIslandProbability: 1,
+      riverData: null,
+    });
+    await sim.dataReadyPromise;
+    expect(sim.totalCellCountByZone[0]).toEqual(25);
+    sim.reload();
+    await sim.dataReadyPromise;
+    expect(sim.totalCellCountByZone[0]).toEqual(25);
   });
 });
