@@ -61,15 +61,15 @@ export class Cell {
     return this.baseElevation;
   }
 
-  public get moistureContent() {
-    if (this.isBurnable) {
-      return this.zone.moistureContent;
-    }
-    return Infinity;
+  public get isNonburnable() {
+    return this.isRiver || this.isUnburntIsland;
   }
 
-  public get isBurnable() {
-    return !this.isRiver && !this.isUnburntIsland && !this.isFireLine;
+  public get moistureContent() {
+    if (this.isNonburnable) {
+      return Infinity;
+    }
+    return this.zone.moistureContent;
   }
 
   public get droughtLevel() {
@@ -111,6 +111,11 @@ export class Cell {
       return BurnIndex.Medium;
     }
     return BurnIndex.High;
+  }
+
+  public isBurnableForBI(burnIndex: BurnIndex) {
+    // Fire lines will burn when burn index is high.
+    return !this.isNonburnable && (!this.isFireLine || burnIndex === BurnIndex.High);
   }
 
   public reset() {
