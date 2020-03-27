@@ -180,6 +180,17 @@ const presets: {[key: string]: Partial<ISimulationConfig>} = {
       [ 0, 1, 2 ]
     ]
   },
+  threeGreenZoneFoothills: {
+    zonesCount: 3,
+    zones: [
+      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Grass, droughtLevel: 1 },
+      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Grass, droughtLevel: 1 },
+      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Grass, droughtLevel: 1 },
+    ],
+    zoneIndex: [
+      [ 0, 1, 2 ]
+    ]
+  },
   threeZoneMountains: {
     zonesCount: 3,
     zones: [
