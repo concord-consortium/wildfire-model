@@ -12,6 +12,10 @@ interface ICoords {
   y: number;
 }
 
+interface IZoneStats{
+  [key: number]: number;
+}
+
 const getGridIndexForLocation = (x: number, y: number, width: number) => {
   return x + y * width;
 };
@@ -176,6 +180,7 @@ export class SimulationModel {
   @observable public gridWidth: number;
   @observable public gridHeight: number;
   @observable public time = 0; // in minutes
+  @observable public timeInHours = 0; // in hours for charts
   @observable public zones: Zone[] = [];
   @observable public cells: Cell[] = [];
   @observable public simulationStarted = false;
@@ -186,6 +191,9 @@ export class SimulationModel {
   // specific moments and usually for all the cells, so this approach can be way more efficient.
   @observable public cellsStateFlag = 0;
   @observable public cellsElevationFlag = 0;
+  @observable public totalCellCountByZone: IZoneStats = {};
+  @observable public burnedCellsInZone: IZoneStats = {};
+  @observable public simulationAreaAcres = 0;
 
   constructor(presetConfig: Partial<ISimulationConfig>) {
     this.load(presetConfig);
@@ -334,19 +342,28 @@ export class SimulationModel {
           // rendering code is calculating colors for mesh faces.
           const isNonBurnable = this.config.fillTerrainEdges &&
             x <= 1 || x >= this.gridWidth - 2 || y <= 1 || y >= this.gridHeight - 2;
+          // store zone index for tracking burn percentage
+          const zi = zoneIndex ? zoneIndex[index] : 0;
           const cellOptions: CellOptions = {
             x, y,
-            zone: this.zones[zoneIndex ? zoneIndex[index] : 0],
+            zone: this.zones[zi],
+            zoneIdx: zi,
             isRiver,
             isUnburntIsland: unburntIsland && unburntIsland[index] > 0 || isNonBurnable,
             baseElevation: isEdge ? 0 : elevation && elevation[index]
           };
+          if (!this.totalCellCountByZone[zi]) this.totalCellCountByZone[zi] = 1;
+          else {
+            this.totalCellCountByZone[zi]++;
+          }
           this.cells.push(new Cell(cellOptions));
         }
       }
       this.updateCellsElevationFlag();
       this.updateCellsStateFlag();
       this.updateTownMarkers();
+      // dimensions in feet, convert sqft to acres
+      this.simulationAreaAcres = this.config.modelWidth * this.config.modelHeight / 43560;
       this.dataReady = true;
       this.recalculateCellProps = true;
     });
@@ -403,6 +420,8 @@ export class SimulationModel {
     this.simulationRunning = false;
     this.simulationStarted = false;
     this.time = 0;
+    this.timeInHours = 0;
+    this.burnedCellsInZone = {};
     this.endOfLowIntensityFire = false;
     this.cells.forEach(cell => cell.reset());
     this.fireLineMarkers.length = 0;
@@ -476,6 +495,10 @@ export class SimulationModel {
 
     const dayChange = Math.floor(this.time / modelDay) !== Math.floor((this.time + timeStep) / modelDay);
     this.time += timeStep;
+    const nextTimeInHours = Math.round(this.time / 60);
+    if (nextTimeInHours !== this.timeInHours) {
+      this.timeInHours = nextTimeInHours;
+    }
 
     if (dayChange) {
       const day = Math.floor(this.time / modelDay);
@@ -663,6 +686,8 @@ export class SimulationModel {
     const newFireStateData: FireState[] = [];
     let fireDidStop = true;
 
+    let totalBurnedCells = 0;
+
     for (let i = 0; i < numCells; i++) {
       const cell = this.cells[i];
       if (cell.isBurningOrWillBurn) {
@@ -710,16 +735,21 @@ export class SimulationModel {
         }
       }
     }
-
+    this.burnedCellsInZone = {};
     for (let i = 0; i < numCells; i++) {
+      const cell = this.cells[i];
       if (newFireStateData[i] !== undefined) {
-        this.cells[i].fireState = newFireStateData[i];
+        cell.fireState = newFireStateData[i];
       }
       if (newIgnitionData[i] !== undefined) {
-        this.cells[i].ignitionTime = newIgnitionData[i];
+        cell.ignitionTime = newIgnitionData[i];
+      }
+      if (cell.fireState !== FireState.Unburnt) {
+        totalBurnedCells++;
+        if (!this.burnedCellsInZone[cell.zoneIdx]) this.burnedCellsInZone[cell.zoneIdx] = 1;
+        else this.burnedCellsInZone[cell.zoneIdx]++;
       }
     }
-
     if (fireDidStop) {
       this.simulationRunning = false;
     }

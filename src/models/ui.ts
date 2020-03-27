@@ -7,6 +7,7 @@ export enum Interaction {
 }
 
 export class UIModel {
+  @observable public showChart = false;
   @observable public showTerrainUI = false;
   @observable public maxSparks: number;
 

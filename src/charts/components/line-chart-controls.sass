@@ -1,0 +1,36 @@
+@import "../../components/common.scss"
+
+.lineChartControls
+  position: relative
+  width: 220px
+  height: 60px
+  margin-left: 50px
+  margin-top: 5px
+  flex: 0 0 20px
+  transform: translate3d(0px, 0px, 0px)  // needed to keep visibility after scaling
+
+  .sliderContainer
+    height: 20px
+  .scrubber
+    position: absolute
+    width: 100%
+    margin-top: -5px
+
+  .rcSliderDisabled
+    background-color: $controlGray
+
+  .toggleDataSubset
+    text-align: center
+    height: 29px
+    border: 1px solid silver
+    width: 100px
+    margin-left: auto
+    margin-right: auto
+    margin-bottom: 10px
+    border-radius: 5px
+    font-size: 12px
+    line-height: 29px
+    &:hover
+      background-color: $controlGrayLight1
+    &:active
+      background-color: $controlGray

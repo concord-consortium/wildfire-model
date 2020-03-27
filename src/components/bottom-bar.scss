@@ -25,6 +25,7 @@ $overflowHeight: 11px;
   display: flex;
   justify-content: space-between;
   border-top: $bottomBarBorderStyle;
+  z-index: 1;
 
   .leftContainer {
     position: relative;
