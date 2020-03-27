@@ -45,7 +45,7 @@ export const Graph = observer(function WrappedComponent() {
     if (!chartStore.chart.name || chartStore.chart.name.length === 0) {
       chartStore.chart.name = "Acres Burned vs. Time";
       chartStore.chart.defaultAxisLabelA1 = "Time (hours)";
-      chartStore.chart.defaultAxisLabelA2 =  "Acres Burned";
+      chartStore.chart.defaultAxisLabelA2 =  "Acres Burned (thousands)";
     }
     if (chartStore.chart && chartStore.chart.dataSets) {
       if (chartStore.chart.dataSets.length < simulation.zones.length) {
@@ -70,7 +70,8 @@ export const Graph = observer(function WrappedComponent() {
     const burnedCells = simulation.burnedCellsInZone && simulation.burnedCellsInZone[zoneIdx] ?
       simulation.burnedCellsInZone[zoneIdx] : 0;
     const burnPercentage = burnedCells / simulation.totalCellCountByZone[zoneIdx];
-    const burnAcres = Math.ceil(simulation.simulationAreaAcres * burnPercentage);
+    // Burn acres is in thousands to simplify the y-axis
+    const burnAcres = Math.ceil(simulation.simulationAreaAcres * burnPercentage / 1000);
 
     if (zoneIdx <= chartStore.chart.dataSets.length - 1) {
       // we have a chart with existing datasets that contains this zone
