@@ -1,0 +1,57 @@
+@import "common";
+
+.tab {
+  display: inline-block;
+  width: $tabWidth;
+  height: $tabHeight;
+
+  .tabBack {
+    width: $tabWidth;
+    height: $tabHeight;
+    border-radius: 9px;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    position: relative;
+    border: 2px solid $controlGreenDark2;
+    background-color: $controlGreenDark2;
+
+    &.active {
+      width: $tabWidth + 1px; // to cover border on the right side
+    }
+
+    .tabImage {
+      position: absolute;
+      width: 60px;
+      height: 44px;
+      border-radius: 6px;
+      border-top-right-radius: 0;
+      border-bottom-right-radius: 0;
+      top: $tabPadding;
+      left: $tabPadding;
+      background-repeat: no-repeat;
+      background-size: contain;
+      background-color: #fff;
+      cursor: pointer;
+      &:hover {
+        opacity: 0.75;
+      }
+    }
+    .tabContent {
+      position: relative;
+      width: 64px;
+      top: 11px;
+      left: $tabPadding;
+      height: 30px;
+      font-size: 14px;
+      font-weight: bold;
+      font-style: normal;
+      font-stretch: normal;
+      line-height: 1;
+      letter-spacing: normal;
+      text-align: center;
+      color: $controlLabel;
+      padding-top: 6px;
+      pointer-events: none;
+    }
+  }
+}

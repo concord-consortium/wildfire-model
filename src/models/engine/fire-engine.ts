@@ -92,6 +92,7 @@ export class FireEngine {
   public endOfLowIntensityFire = false;
   public fireDidStop = false;
   public day: number = 0;
+  public burnedCellsInZone: {[key: number]: number} = {};
 
   constructor(cells: Cell[], wind: IWindProps, sparks: Vector2[], config: IFireEngineConfig) {
     this.cells = cells;
@@ -171,6 +172,11 @@ export class FireEngine {
         // above, this not only allows us to pre-set ignition times for testing, but will also allow us to
         // run forward or backward through a simulation.
         newFireStateData[i] = FireState.Burning;
+        if (!this.burnedCellsInZone[cell.zoneIdx]) {
+          this.burnedCellsInZone[cell.zoneIdx] = 1;
+        } else {
+          this.burnedCellsInZone[cell.zoneIdx] += 1;
+        }
         // Fire should spread if endOfLowIntensityFire flag is false or burn index is high enough.
         const fireShouldSpread = !this.endOfLowIntensityFire || cell.burnIndex !== BurnIndex.Low;
         if (fireShouldSpread) {

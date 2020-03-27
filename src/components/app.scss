@@ -8,6 +8,34 @@
   align-items: center;
   height: 100%;
   flex-direction: column;
+  background-color: #c8c8c8;
+}
+.mainContent{
+  overflow: hidden;
+  width: 100%;
+  height: calc(100% - #{$bottomBarHeight + $bottomBarBorderWidth});
+  position: fixed;
+  top: 0;
+  left: 0;
+  transition: 1s;
+  &.shrink{
+    width: calc(100% - #{$rightPanelContainerWidth});
+    left: 0;
+  }
+}
+
+.rightContent{
+  overflow-x: hidden;
+  width: $rightPanelContainerWidth + $tabWidth;
+  height: calc(100% - #{$bottomBarHeight + $bottomBarBorderWidth});
+  min-height: 551px;
+  position: fixed;
+  top: 0;
+  right: 0;
+  transition: 1s;
+  &.grow{
+    right: 0;
+  }
 }
 
 .modelInfo {

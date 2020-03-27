@@ -34,6 +34,8 @@ export class SimulationModel {
   @observable public simulationStarted = false;
   @observable public simulationRunning = false;
   @observable public lastFireLineTimestamp = -Infinity;
+  @observable public totalCellCountByZone: {[key: number]: number} = {};
+  @observable public burnedCellsInZone: {[key: number]: number} = {};
   // These flags can be used by view to trigger appropriate rendering. Theoretically, view could/should check
   // every single cell and re-render when it detects some changes. In practice, we perform these updates in very
   // specific moments and usually for all the cells, so this approach can be way more efficient.
@@ -56,6 +58,15 @@ export class SimulationModel {
     return this.config.gridHeight;
   }
 
+  @computed public get simulationAreaAcres() {
+    // dimensions in feet, convert sqft to acres
+    return this.config.modelWidth * this.config.modelHeight / 43560;
+  }
+
+  @computed public get timeInHours() {
+    return Math.floor(this.time / 60);
+  }
+
   @computed public get canAddSpark() {
     // There's an assumption that number of sparks should be smaller than number of zones.
     return this.sparks.length < this.config.zonesCount;
@@ -64,6 +75,11 @@ export class SimulationModel {
   @computed public get canAddFireLineMarker() {
     // Only one fire line can be added at given time.
     return this.fireLineMarkers.length < 2 && this.time - this.lastFireLineTimestamp > this.config.fireLineDelay;
+  }
+
+  public getZoneBurnPercentage(zoneIdx: number) {
+    const burnedCells = this.engine?.burnedCellsInZone[zoneIdx] || 0;
+    return burnedCells / this.totalCellCountByZone[zoneIdx];
   }
 
   public cellAt(x: number, y: number) {
@@ -112,6 +128,7 @@ export class SimulationModel {
       for (let y = 0; y < this.gridHeight; y++) {
         for (let x = 0; x < this.gridWidth; x++) {
           const index = getGridIndexForLocation(x, y, this.gridWidth);
+          const zi = zoneIndex ? zoneIndex[index] : 0;
           const isRiver = river && river[index] > 0;
           // When fillTerrainEdge is set to true, edges are set to elevation 0.
           const isEdge = config.fillTerrainEdges &&
@@ -123,11 +140,17 @@ export class SimulationModel {
             x <= 1 || x >= this.gridWidth - 2 || y <= 1 || y >= this.gridHeight - 2;
           const cellOptions: CellOptions = {
             x, y,
-            zone: zones[zoneIndex ? zoneIndex[index] : 0],
+            zone: zones[zi],
+            zoneIdx: zi,
             isRiver,
             isUnburntIsland: unburntIsland && unburntIsland[index] > 0 || isNonBurnable,
             baseElevation: isEdge ? 0 : elevation && elevation[index]
           };
+          if (!this.totalCellCountByZone[zi]) {
+            this.totalCellCountByZone[zi] = 1;
+          } else {
+            this.totalCellCountByZone[zi]++;
+          }
           this.cells.push(new Cell(cellOptions));
         }
       }
