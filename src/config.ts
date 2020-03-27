@@ -13,6 +13,10 @@ export interface ISimulationConfig {
   modelHeight: number; // ft
   // Note that modelHeight % gridWidth should always be 0!
   gridWidth: number; // ft
+  // It will be calculated automatically using model dimensions and grid width.
+  readonly gridHeight: number; // ft
+  // It will be calculated automatically using model dimensions and grid width.
+  readonly cellSize: number; // ft
   // If `elevation` height map is provided, it will be loaded during model initialization and terrain setup dialog
   // won't let users change terrain type. Otherwise, height map URL will be derived from zones `terrainType` properties.
   elevation?: number[][] | string;
@@ -75,6 +79,8 @@ export const defaultConfig: IUrlConfig = {
   modelHeight: 80000,
   // 240 works well with presets based on heightmap images.
   gridWidth: 240,
+  get cellSize() { return this.modelWidth / this.gridWidth },
+  get gridHeight() { return Math.ceil(this.modelHeight / this.cellSize) },
   elevation: undefined, // will be derived from zone properties
   unburntIslands: undefined, // will be derived from zone properties
   zoneIndex: [[0, 1]],

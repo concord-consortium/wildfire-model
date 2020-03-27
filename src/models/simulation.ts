@@ -2,8 +2,8 @@ import { action, computed, observable } from "mobx";
 import { DroughtLevel, getFireSpreadRate, IWindProps, TerrainType, Vegetation } from "./fire-model";
 import { BurnIndex, Cell, CellOptions, FireState } from "./cell";
 import { defaultConfig, ISimulationConfig, urlConfig } from "../config";
-import { getInputData } from "../utils";
 import { Vector2 } from "three";
+import { getElevationData, getRiverData, getUnburntIslandsData, getZoneIndex } from "./utils/data-loaders";
 import { Zone } from "./zone";
 import { Town } from "../types";
 
@@ -183,96 +183,12 @@ export class SimulationModel {
     this.populateCellsData();
   }
 
-  public getZoneIndex(): Promise<number[] | undefined> {
-    return getInputData(this.config.zoneIndex, this.gridWidth, this.gridHeight, false,
-      (rgba: [number, number, number, number]) => {
-        // Red is zone 1, green is zone 2, and blue is zone 3.
-        if (rgba[0] >= rgba[1] && rgba[0] >= rgba[2]) {
-          return 0;
-        }
-        if (rgba[1] >= rgba[0] && rgba[1] >= rgba[2]) {
-          return 1;
-        }
-        return 2;
-      }
-    );
-  }
-
-  public getElevationData(): Promise<number[] | undefined> {
-    // If `elevation` height map is provided, it will be loaded during model initialization.
-    // Otherwise, height map URL will be derived from zones `terrainType` properties.
-    let elevation = this.config.elevation;
-    if (!elevation) {
-      const prefix = "data/";
-      const zoneTypes: string[] = [];
-      this.zones.forEach((z, i) => {
-        if (i < this.config.zonesCount) {
-          zoneTypes.push(TerrainType[z.terrainType].toLowerCase());
-        }
-      });
-      elevation = prefix + zoneTypes.join("-") + "-heightmap.png";
-    }
-    return getInputData(elevation, this.gridWidth, this.gridHeight, true,
-      (rgba: [number, number, number, number]) => {
-        // Elevation data is supposed to black & white image, where black is the lowest point and
-        // white is the highest.
-        return rgba[0] / 255 * this.config.heightmapMaxElevation;
-      }
-    );
-  }
-
-  public getUnburntIslandsData(): Promise<number[] | undefined> {
-    // Unburnt islands can be specified directly using unburntIslands property or they'll be generated automatically
-    // using zones terrain type.
-    let unburntIslands: number[][] | string | undefined = this.config.unburntIslands;
-    if (!unburntIslands) {
-      const prefix = "data/";
-      const zoneTypes: string[] = [];
-      this.zones.forEach((z, i) => {
-        if (i < this.config.zonesCount) {
-          zoneTypes.push(TerrainType[z.terrainType].toLowerCase());
-        }
-      });
-      unburntIslands = prefix + zoneTypes.join("-") + "-islands.png";
-    }
-    const islandActive: {[key: number]: number} = {};
-    return getInputData(unburntIslands, this.gridWidth, this.gridHeight, true,
-      (rgba: [number, number, number, number]) => {
-        // White areas are regular cells. Islands use gray scale colors, every island is supposed to have different
-        // shade. It's enough to look just at R value, as G and B will be equal.
-        const r = rgba[0];
-        if (r < 255) {
-          if (islandActive[r] === undefined) {
-            if (Math.random() < this.config.unburntIslandProbability) {
-              islandActive[r] = 1;
-            } else {
-              islandActive[r] = 0;
-            }
-          }
-          return islandActive[r]; // island activity, 0 or 1
-        } else {
-          return 0; // white color means we're dealing with regular cell, return 0 (inactive island)
-        }
-      }
-    );
-  }
-
-  public getRiverData(): Promise<number[] | undefined> {
-    if (!this.config.riverData) {
-      return Promise.resolve(undefined);
-    }
-    return getInputData(this.config.riverData, this.gridWidth, this.gridHeight, true,
-      (rgba: [number, number, number, number]) => {
-        // River texture is mostly transparent, so look for non-transparent cells to define shape
-        return rgba[3] > 0 ? 1 : 0;
-      }
-    );
-  }
-
   @action.bound public populateCellsData() {
     this.dataReady = false;
+    const config = this.config;
+    const zones = this.zones;
     this.dataReadyPromise = Promise.all([
-      this.getZoneIndex(), this.getElevationData(), this.getRiverData(), this.getUnburntIslandsData()
+      getZoneIndex(config), getElevationData(config, zones), getRiverData(config), getUnburntIslandsData(config, zones)
     ]).then(values => {
       const zoneIndex = values[0];
       const elevation = values[1];
@@ -286,16 +202,16 @@ export class SimulationModel {
           const index = getGridIndexForLocation(x, y, this.gridWidth);
           const isRiver = river && river[index] > 0;
           // When fillTerrainEdge is set to true, edges are set to elevation 0.
-          const isEdge = this.config.fillTerrainEdges &&
+          const isEdge = config.fillTerrainEdges &&
             (x === 0 || x === this.gridWidth - 1 || y === 0 || y === this.gridHeight);
           // Also, edges and their neighboring cells need to be marked as nonburnable to avoid fire spreading over
           // the terrain edge. Note that in this case two cells need to be marked as nonburnable due to way how
           // rendering code is calculating colors for mesh faces.
-          const isNonBurnable = this.config.fillTerrainEdges &&
+          const isNonBurnable = config.fillTerrainEdges &&
             x <= 1 || x >= this.gridWidth - 2 || y <= 1 || y >= this.gridHeight - 2;
           const cellOptions: CellOptions = {
             x, y,
-            zone: this.zones[zoneIndex ? zoneIndex[index] : 0],
+            zone: zones[zoneIndex ? zoneIndex[index] : 0],
             isRiver,
             isUnburntIsland: unburntIsland && unburntIsland[index] > 0 || isNonBurnable,
             baseElevation: isEdge ? 0 : elevation && elevation[index]

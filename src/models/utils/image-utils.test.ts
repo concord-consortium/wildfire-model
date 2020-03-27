@@ -1,4 +1,4 @@
-import { populateGrid } from "./utils";
+import { populateGrid } from "./image-utils";
 
 describe("populateGrid", () => {
   it("returns grid array from image with any dimensions without any interpolation", () => {
