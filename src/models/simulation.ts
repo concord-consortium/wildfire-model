@@ -1,158 +1,46 @@
 import { action, computed, observable } from "mobx";
-import { DroughtLevel, getFireSpreadRate, IWindProps, TerrainType, Vegetation } from "./fire-model";
-import { BurnIndex, Cell, CellOptions, FireState } from "./cell";
+import { DroughtLevel, IWindProps, TerrainType, Vegetation } from "../types";
+import {  Cell, CellOptions } from "./cell";
 import { defaultConfig, ISimulationConfig, urlConfig } from "../config";
-import { getInputData } from "../utils";
 import { Vector2 } from "three";
+import { getElevationData, getRiverData, getUnburntIslandsData, getZoneIndex } from "./utils/data-loaders";
 import { Zone } from "./zone";
 import { Town } from "../types";
+import { FireEngine } from "./engine/fire-engine";
+import { getGridIndexForLocation, forEachPointBetween, dist } from "./utils/grid-utils";
 
 interface ICoords {
   x: number;
   y: number;
 }
 
-interface IZoneStats{
-  [key: number]: number;
-}
-
-const getGridIndexForLocation = (x: number, y: number, width: number) => {
-  return x + y * width;
-};
-
-const modelDay = 1440; // minutes
-
-const endOfLowIntensityFireProbability: {[key: number]: number} = {
-  0: 0.0,
-  1: 0.6,
-  2: 0.6,
-  3: 0.7,
-  4: 0.8,
-  5: 1.0
-};
-
-// Bresenham's line algorithm.
-export const forEachPointBetween = (
-  x0: number, y0: number, x1: number, y1: number, callback: (x: number, y: number, idx: number) => void
-) => {
-  const dx = Math.abs(x1 - x0);
-  const dy = Math.abs(y1 - y0);
-  const sx = (x0 < x1) ? 1 : -1;
-  const sy = (y0 < y1) ? 1 : -1;
-  let err = dx - dy;
-  let idx = 0;
-  while (true) {
-    callback(x0, y0, idx);
-    idx += 1;
-    if ((x0 === x1) && (y0 === y1)) break;
-    const e2 = 2 * err;
-    if (e2 > -dy) {
-      err -= dy;
-      x0 += sx;
-    }
-    if (e2 < dx) {
-      err += dx;
-      y0 += sy;
-    }
-  }
-};
-
-export const nonburnableCellBetween = (
-  cells: Cell[], width: number, x0: number, y0: number, x1: number, y1: number, burnIndex: BurnIndex
-) => {
-  let result = false;
-  forEachPointBetween(x0, y0, x1, y1, (x: number, y: number) => {
-    const idx = getGridIndexForLocation(x, y, width);
-    if (!cells[idx].isBurnableForBI(burnIndex)) {
-      result = true;
-    }
-  });
-  return result;
-};
-
-export const dist = (x0: number, y0: number, x1: number, y1: number) => {
-  return Math.sqrt((x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1));
-};
-
-export const withinDist = (x0: number, y0: number, x1: number, y1: number, maxDist: number) => {
-  return (x0 - x1) * (x0 - x1) + (y0 - y1) * (y0 - y1) <= maxDist * maxDist;
-};
-
-// Only four directions. It's important, as it makes less likely the river or fire line is accidentally crossed by the
-// fire (e.g. when it's really narrow and drawn at 45* angle).
-const directNeighbours = [ {x: -1, y: 0}, {x: 1, y: 0}, {x: 0, y: -1}, {x: 0, y: 1} ];
-
-/**
- * Returns an array of indices of all cells neighboring `i`.
- * Each cell within `neighborsDist` is considered to be a neighbour if there's no river or fire line between
- * this cell and cell `i`.
- */
-export const getGridCellNeighbors = (
-  cells: Cell[], i: number, width: number, height: number, neighborsDist: number, burnIndex: BurnIndex
-) => {
-  const neighbours: number[] = [];
-  const queue: number[] = [];
-  const processed: {[key: number]: boolean}  = {};
-  const x0 = i % width;
-  const y0 = Math.floor(i / width);
-  // Keep this flag for performance reasons. If there's no nonburnable ceels in current grid area, it doesn't
-  // make sense to run Bresenham's algorithm for every cell (nonburnableCellBetween).
-  let anyNonburnableCells = false;
-  // Start BFS.
-  queue.push(i);
-  processed[i] = true;
-  while (queue.length > 0) {
-    const j = queue.shift()!;
-    const x1 = j % width;
-    const y1 = Math.floor(j / width);
-    directNeighbours.forEach(diff => {
-      const nIdx = getGridIndexForLocation(x1 + diff.x, y1 + diff.y, width);
-      if (x1 + diff.x >= 0 && x1 + diff.x < width && y1 + diff.y >= 0 &&  y1 + diff.y < height &&
-        !processed[nIdx] &&
-        withinDist(x0, y0, x1 + diff.x, y1 + diff.y, neighborsDist)
-      ) {
-        if (!cells[nIdx].isBurnableForBI(burnIndex)) {
-          anyNonburnableCells = true;
-        } else if (!anyNonburnableCells || !nonburnableCellBetween(cells, width, x1 + diff.x, y1 + diff.y, x0, y0, burnIndex)) {
-          neighbours.push(nIdx);
-          queue.push(nIdx);
-        }
-        processed[nIdx] = true;
-      }
-    });
-  }
-  return neighbours;
-};
-
-
+// This class is responsible for data loading, adding sparks and fire lines and so on. It's more focused
+// on management and interactions handling. Core calculations are delegated to FireEngine.
+// Also, all the observable properties should be here, so the view code can observe them.
 export class SimulationModel {
   public config: ISimulationConfig;
   public prevTickTime: number | null;
-  public endOfLowIntensityFire = false;
   public dataReadyPromise: Promise<void>;
+  public engine: FireEngine | null = null;
+  // Cells are not directly observable. Changes are broadcasted using cellsStateFlag and cellsElevationFlag.
+  public cells: Cell[] = [];
+  @observable public time = 0;
   @observable public dataReady = false;
   @observable public wind: IWindProps;
   @observable public sparks: Vector2[] = [];
   @observable public fireLineMarkers: Vector2[] = [];
   @observable public townMarkers: Town[] = [];
-  @observable public cellSize: number;
-  @observable public gridWidth: number;
-  @observable public gridHeight: number;
-  @observable public time = 0; // in minutes
-  @observable public timeInHours = 0; // in hours for charts
   @observable public zones: Zone[] = [];
-  @observable public cells: Cell[] = [];
   @observable public simulationStarted = false;
   @observable public simulationRunning = false;
   @observable public lastFireLineTimestamp = -Infinity;
+  @observable public totalCellCountByZone: {[key: number]: number} = {};
+  @observable public burnedCellsInZone: {[key: number]: number} = {};
   // These flags can be used by view to trigger appropriate rendering. Theoretically, view could/should check
   // every single cell and re-render when it detects some changes. In practice, we perform these updates in very
   // specific moments and usually for all the cells, so this approach can be way more efficient.
   @observable public cellsStateFlag = 0;
   @observable public cellsElevationFlag = 0;
-  @observable public totalCellCountByZone: IZoneStats = {};
-  @observable public burnedCellsInZone: IZoneStats = {};
-  @observable public simulationAreaAcres = 0;
 
   constructor(presetConfig: Partial<ISimulationConfig>) {
     this.load(presetConfig);
@@ -160,6 +48,44 @@ export class SimulationModel {
 
   @computed public get ready() {
     return this.dataReady && this.sparks.length > 0;
+  }
+
+  @computed public get gridWidth() {
+    return this.config.gridWidth;
+  }
+
+  @computed public get gridHeight() {
+    return this.config.gridHeight;
+  }
+
+  @computed public get simulationAreaAcres() {
+    // dimensions in feet, convert sqft to acres
+    return this.config.modelWidth * this.config.modelHeight / 43560;
+  }
+
+  @computed public get timeInHours() {
+    return Math.floor(this.time / 60);
+  }
+
+  @computed public get canAddSpark() {
+    // There's an assumption that number of sparks should be smaller than number of zones.
+    return this.sparks.length < this.config.zonesCount;
+  }
+
+  @computed public get canAddFireLineMarker() {
+    // Only one fire line can be added at given time.
+    return this.fireLineMarkers.length < 2 && this.time - this.lastFireLineTimestamp > this.config.fireLineDelay;
+  }
+
+  public getZoneBurnPercentage(zoneIdx: number) {
+    const burnedCells = this.engine?.burnedCellsInZone[zoneIdx] || 0;
+    return burnedCells / this.totalCellCountByZone[zoneIdx];
+  }
+
+  public cellAt(x: number, y: number) {
+    const gridX = Math.floor(x / this.config.cellSize);
+    const gridY = Math.floor(y / this.config.cellSize);
+    return this.cells[getGridIndexForLocation(gridX, gridY, this.config.gridWidth)];
   }
 
   @action.bound public setInputParamsFromConfig() {
@@ -176,111 +102,22 @@ export class SimulationModel {
     });
   }
 
-  public load(presetConfig: Partial<ISimulationConfig>) {
+  @action.bound public load(presetConfig: Partial<ISimulationConfig>) {
     this.restart();
     // Configuration are joined together. Default values can be replaced by preset, and preset values can be replaced
     // by URL parameters.
-    const config: ISimulationConfig = Object.assign({}, defaultConfig, presetConfig, urlConfig);
-
-    this.config = config;
-    this.cellSize = config.modelWidth / config.gridWidth;
-    this.gridWidth = config.gridWidth;
-    this.gridHeight = Math.ceil(config.modelHeight / this.cellSize);
-
+    this.config = Object.assign({}, defaultConfig, presetConfig, urlConfig);
     this.setInputParamsFromConfig();
     this.populateCellsData();
   }
 
-  public getZoneIndex(): Promise<number[] | undefined> {
-    return getInputData(this.config.zoneIndex, this.gridWidth, this.gridHeight, false,
-      (rgba: [number, number, number, number]) => {
-        // Red is zone 1, green is zone 2, and blue is zone 3.
-        if (rgba[0] >= rgba[1] && rgba[0] >= rgba[2]) {
-          return 0;
-        }
-        if (rgba[1] >= rgba[0] && rgba[1] >= rgba[2]) {
-          return 1;
-        }
-        return 2;
-      }
-    );
-  }
-
-  public getElevationData(): Promise<number[] | undefined> {
-    // If `elevation` height map is provided, it will be loaded during model initialization.
-    // Otherwise, height map URL will be derived from zones `terrainType` properties.
-    let elevation = this.config.elevation;
-    if (!elevation) {
-      const prefix = "data/";
-      const zoneTypes: string[] = [];
-      this.zones.forEach((z, i) => {
-        if (i < this.config.zonesCount) {
-          zoneTypes.push(TerrainType[z.terrainType].toLowerCase());
-        }
-      });
-      elevation = prefix + zoneTypes.join("-") + "-heightmap.png";
-    }
-    return getInputData(elevation, this.gridWidth, this.gridHeight, true,
-      (rgba: [number, number, number, number]) => {
-        // Elevation data is supposed to black & white image, where black is the lowest point and
-        // white is the highest.
-        return rgba[0] / 255 * this.config.heightmapMaxElevation;
-      }
-    );
-  }
-
-  public getUnburntIslandsData(): Promise<number[] | undefined> {
-    // Unburnt islands can be specified directly using unburntIslands property or they'll be generated automatically
-    // using zones terrain type.
-    let unburntIslands: number[][] | string | undefined = this.config.unburntIslands;
-    if (!unburntIslands) {
-      const prefix = "data/";
-      const zoneTypes: string[] = [];
-      this.zones.forEach((z, i) => {
-        if (i < this.config.zonesCount) {
-          zoneTypes.push(TerrainType[z.terrainType].toLowerCase());
-        }
-      });
-      unburntIslands = prefix + zoneTypes.join("-") + "-islands.png";
-    }
-    const islandActive: {[key: number]: number} = {};
-    return getInputData(unburntIslands, this.gridWidth, this.gridHeight, true,
-      (rgba: [number, number, number, number]) => {
-        // White areas are regular cells. Islands use gray scale colors, every island is supposed to have different
-        // shade. It's enough to look just at R value, as G and B will be equal.
-        const r = rgba[0];
-        if (r < 255) {
-          if (islandActive[r] === undefined) {
-            if (Math.random() < this.config.unburntIslandProbability) {
-              islandActive[r] = 1;
-            } else {
-              islandActive[r] = 0;
-            }
-          }
-          return islandActive[r]; // island activity, 0 or 1
-        } else {
-          return 0; // white color means we're dealing with regular cell, return 0 (inactive island)
-        }
-      }
-    );
-  }
-
-  public getRiverData(): Promise<number[] | undefined> {
-    if (!this.config.riverData) {
-      return Promise.resolve(undefined);
-    }
-    return getInputData(this.config.riverData, this.gridWidth, this.gridHeight, true,
-      (rgba: [number, number, number, number]) => {
-        // River texture is mostly transparent, so look for non-transparent cells to define shape
-        return rgba[3] > 0 ? 1 : 0;
-      }
-    );
-  }
-
   @action.bound public populateCellsData() {
     this.dataReady = false;
+    const config = this.config;
+    const zones = this.zones;
+    this.totalCellCountByZone = {};
     this.dataReadyPromise = Promise.all([
-      this.getZoneIndex(), this.getElevationData(), this.getRiverData(), this.getUnburntIslandsData()
+      getZoneIndex(config), getElevationData(config, zones), getRiverData(config), getUnburntIslandsData(config, zones)
     ]).then(values => {
       const zoneIndex = values[0];
       const elevation = values[1];
@@ -292,27 +129,27 @@ export class SimulationModel {
       for (let y = 0; y < this.gridHeight; y++) {
         for (let x = 0; x < this.gridWidth; x++) {
           const index = getGridIndexForLocation(x, y, this.gridWidth);
+          const zi = zoneIndex ? zoneIndex[index] : 0;
           const isRiver = river && river[index] > 0;
           // When fillTerrainEdge is set to true, edges are set to elevation 0.
-          const isEdge = this.config.fillTerrainEdges &&
+          const isEdge = config.fillTerrainEdges &&
             (x === 0 || x === this.gridWidth - 1 || y === 0 || y === this.gridHeight);
           // Also, edges and their neighboring cells need to be marked as nonburnable to avoid fire spreading over
           // the terrain edge. Note that in this case two cells need to be marked as nonburnable due to way how
           // rendering code is calculating colors for mesh faces.
-          const isNonBurnable = this.config.fillTerrainEdges &&
+          const isNonBurnable = config.fillTerrainEdges &&
             x <= 1 || x >= this.gridWidth - 2 || y <= 1 || y >= this.gridHeight - 2;
-          // store zone index for tracking burn percentage
-          const zi = zoneIndex ? zoneIndex[index] : 0;
           const cellOptions: CellOptions = {
             x, y,
-            zone: this.zones[zi],
+            zone: zones[zi],
             zoneIdx: zi,
             isRiver,
             isUnburntIsland: unburntIsland && unburntIsland[index] > 0 || isNonBurnable,
             baseElevation: isEdge ? 0 : elevation && elevation[index]
           };
-          if (!this.totalCellCountByZone[zi]) this.totalCellCountByZone[zi] = 1;
-          else {
+          if (!this.totalCellCountByZone[zi]) {
+            this.totalCellCountByZone[zi] = 1;
+          } else {
             this.totalCellCountByZone[zi]++;
           }
           this.cells.push(new Cell(cellOptions));
@@ -321,8 +158,6 @@ export class SimulationModel {
       this.updateCellsElevationFlag();
       this.updateCellsStateFlag();
       this.updateTownMarkers();
-      // dimensions in feet, convert sqft to acres
-      this.simulationAreaAcres = this.config.modelWidth * this.config.modelHeight / 43560;
       this.dataReady = true;
     });
   }
@@ -334,11 +169,15 @@ export class SimulationModel {
     if (!this.simulationStarted) {
       this.simulationStarted = true;
     }
+    if (!this.engine) {
+      this.engine = new FireEngine(this.cells, this.wind, this.sparks, this.config);
+    }
 
     this.applyFireLineMarkers();
 
     this.simulationRunning = true;
     this.prevTickTime = null;
+
     requestAnimationFrame(this.rafCallback);
   }
 
@@ -349,15 +188,13 @@ export class SimulationModel {
   @action.bound public restart() {
     this.simulationRunning = false;
     this.simulationStarted = false;
-    this.time = 0;
-    this.timeInHours = 0;
-    this.burnedCellsInZone = {};
-    this.endOfLowIntensityFire = false;
     this.cells.forEach(cell => cell.reset());
     this.fireLineMarkers.length = 0;
     this.lastFireLineTimestamp = -Infinity;
     this.updateCellsStateFlag();
     this.updateCellsElevationFlag();
+    this.time = 0;
+    this.engine = null;
   }
 
   @action.bound public reload() {
@@ -400,37 +237,14 @@ export class SimulationModel {
       timeStep = 1;
     }
 
-    this.tick(timeStep);
-  }
-
-  @action.bound public tick(timeStep: number) {
-    if (this.time === 0) {
-      // Use sparks to start the simulation.
-      this.sparks.forEach(spark => {
-        const sparkCell = this.cellAt(spark.x, spark.y);
-        sparkCell.ignitionTime = 0;
-        if (sparkCell.isUnburntIsland) {
-          // If spark is placed inside unburnt island, remove this island as otherwise the fire won't pick up.
-          this.removeUnburntIsland(sparkCell);
-        }
-      });
-    }
-
-    const dayChange = Math.floor(this.time / modelDay) !== Math.floor((this.time + timeStep) / modelDay);
-    this.time += timeStep;
-    const nextTimeInHours = Math.round(this.time / 60);
-    if (nextTimeInHours !== this.timeInHours) {
-      this.timeInHours = nextTimeInHours;
-    }
-
-    if (dayChange) {
-      const day = Math.floor(this.time / modelDay);
-      if (Math.random() <= endOfLowIntensityFireProbability[day]) {
-        this.endOfLowIntensityFire = true;
+    if (this.engine) {
+      this.time += timeStep;
+      this.engine.updateFire(this.time);
+      if (this.engine.fireDidStop) {
+        this.simulationRunning = false;
       }
     }
 
-    this.updateFire();
     this.updateCellsStateFlag();
   }
 
@@ -454,26 +268,8 @@ export class SimulationModel {
     });
   }
 
-  @action.bound public removeUnburntIsland(startingCell: Cell) {
-    const queue: Cell[] = [];
-    startingCell.isUnburntIsland = false;
-    queue.push(startingCell);
-    while (queue.length > 0) {
-      const c = queue.shift()!;
-      directNeighbours.forEach(diff => {
-        const x1 = c.x + diff.x;
-        const y1 = c.y + diff.y;
-        const nIdx = getGridIndexForLocation(x1, y1, this.gridWidth);
-        if (x1 >= 0 && x1 < this.gridWidth && y1 >= 0 && y1 < this.gridHeight && this.cells[nIdx].isUnburntIsland) {
-          this.cells[nIdx].isUnburntIsland = false;
-          queue.push(this.cells[nIdx]);
-        }
-      });
-    }
-  }
-
   @action.bound public addSpark(x: number, y: number) {
-    if (this.canAddSpark()) {
+    if (this.canAddSpark) {
       this.sparks.push(new Vector2(x, y));
     }
   }
@@ -484,7 +280,7 @@ export class SimulationModel {
   }
 
   @action.bound public addFireLineMarker(x: number, y: number) {
-    if (this.canAddFireLineMarker()) {
+    if (this.canAddFireLineMarker) {
       this.fireLineMarkers.push(new Vector2(x, y));
       const count = this.fireLineMarkers.length;
       if (count % 2 === 0) {
@@ -512,10 +308,10 @@ export class SimulationModel {
   }
 
   @action.bound public markFireLineUnderConstruction(start: ICoords, end: ICoords, value: boolean) {
-    const startGridX = Math.floor(start.x / this.cellSize);
-    const startGridY = Math.floor(start.y / this.cellSize);
-    const endGridX = Math.floor(end.x / this.cellSize);
-    const endGridY = Math.floor(end.y / this.cellSize);
+    const startGridX = Math.floor(start.x / this.config.cellSize);
+    const startGridY = Math.floor(start.y / this.config.cellSize);
+    const endGridX = Math.floor(end.x / this.config.cellSize);
+    const endGridY = Math.floor(end.y / this.config.cellSize);
     forEachPointBetween(startGridX, startGridY, endGridX, endGridY, (x: number, y: number, idx: number) => {
       if (idx % 2 === 0) {
         // idx % 2 === 0 to make dashed line.
@@ -550,10 +346,10 @@ export class SimulationModel {
   }
 
   @action.bound public buildFireLine(start: ICoords, end: ICoords) {
-    const startGridX = Math.floor(start.x / this.cellSize);
-    const startGridY = Math.floor(start.y / this.cellSize);
-    const endGridX = Math.floor(end.x / this.cellSize);
-    const endGridY = Math.floor(end.y / this.cellSize);
+    const startGridX = Math.floor(start.x / this.config.cellSize);
+    const startGridY = Math.floor(start.y / this.config.cellSize);
+    const endGridX = Math.floor(end.x / this.config.cellSize);
+    const endGridY = Math.floor(end.y / this.config.cellSize);
     forEachPointBetween(startGridX, startGridY, endGridX, endGridY, (x: number, y: number) => {
       const cell = this.cells[getGridIndexForLocation(x, y, this.gridWidth)];
       cell.isFireLine = true;
@@ -580,97 +376,5 @@ export class SimulationModel {
 
   @action.bound public updateZoneVegetation(zoneIdx: number, vegetation: Vegetation) {
     this.zones[zoneIdx].vegetation = vegetation;
-  }
-
-  public canAddSpark() {
-    // There's an assumption that number of sparks should be smaller than number of zones.
-    return this.sparks.length < this.config.zonesCount;
-  }
-
-  public canAddFireLineMarker() {
-    // Only one fire line can be added at given time.
-    return this.fireLineMarkers.length < 2 && this.time - this.lastFireLineTimestamp > this.config.fireLineDelay;
-  }
-
-  public cellAt(x: number, y: number) {
-    const gridX = Math.floor(x / this.cellSize);
-    const gridY = Math.floor(y / this.cellSize);
-    return this.cells[gridY * this.gridWidth + gridX];
-  }
-
-  @action.bound private updateFire() {
-    const numCells = this.cells.length;
-    // Run through all cells. Check the unburnt neighbors of currently-burning cells. If the current time
-    // is greater than the ignition time of the cell and the delta time for the neighbor, update
-    // the neighbor's ignition time.
-    // At the same time, we update the unburnt/burning/burnt states of the cells.
-    const newIgnitionData: number[] = [];
-    const newFireStateData: FireState[] = [];
-    let fireDidStop = true;
-
-    let totalBurnedCells = 0;
-
-    for (let i = 0; i < numCells; i++) {
-      const cell = this.cells[i];
-      if (cell.isBurningOrWillBurn) {
-        fireDidStop = false; // fire still going on
-      }
-      const ignitionTime = cell.ignitionTime;
-      if (cell.fireState === FireState.Burning && this.time - ignitionTime > cell.burnTime) {
-        newFireStateData[i] = FireState.Burnt;
-      } else if (cell.fireState === FireState.Unburnt && this.time > ignitionTime ) {
-        // Sets any unburnt cells to burning if we are passed their ignition time.
-        // Although during a simulation all cells will have their state sent to BURNING through the process
-        // above, this not only allows us to pre-set ignition times for testing, but will also allow us to
-        // run forward or backward through a simulation.
-        newFireStateData[i] = FireState.Burning;
-        // Fire should spread if endOfLowIntensityFire flag is false or burn index is high enough.
-        const fireShouldSpread = !this.endOfLowIntensityFire || cell.burnIndex !== BurnIndex.Low;
-        if (fireShouldSpread) {
-          // Fire lines and other fire control methods will work only if burn index is low or medium.
-          // If it's high, fire cannot be controlled.
-          const neighbors = getGridCellNeighbors(this.cells, i, this.gridWidth, this.gridHeight, this.config.neighborsDist, cell.burnIndex);
-          neighbors.forEach(n => {
-            const neighCell = this.cells[n];
-            const distInFt = dist(cell.x, cell.y, neighCell.x, neighCell.y) * this.cellSize;
-            const spreadRate = getFireSpreadRate(cell, neighCell, this.wind, this.cellSize);
-            const spreadRateIncDistance = spreadRate / distInFt;
-            const ignitionDelta = 1 / spreadRateIncDistance;
-            if (neighCell.fireState === FireState.Unburnt) {
-              newIgnitionData[n] = Math.min(
-                ignitionTime + ignitionDelta, newIgnitionData[n] || neighCell.ignitionTime
-              );
-              // Make cell burn time proportional to fire spread rate.
-              const newBurnTime = (newIgnitionData[n] - ignitionTime) + this.config.minCellBurnTime;
-              if (newBurnTime < neighCell.burnTime) {
-                neighCell.burnTime = newBurnTime;
-              }
-              // Save max spread rate.
-              if (spreadRate > neighCell.spreadRate) {
-                neighCell.spreadRate = spreadRate;
-              }
-            }
-          });
-        }
-      }
-    }
-    this.burnedCellsInZone = {};
-    for (let i = 0; i < numCells; i++) {
-      const cell = this.cells[i];
-      if (newFireStateData[i] !== undefined) {
-        cell.fireState = newFireStateData[i];
-      }
-      if (newIgnitionData[i] !== undefined) {
-        cell.ignitionTime = newIgnitionData[i];
-      }
-      if (cell.fireState !== FireState.Unburnt) {
-        totalBurnedCells++;
-        if (!this.burnedCellsInZone[cell.zoneIdx]) this.burnedCellsInZone[cell.zoneIdx] = 1;
-        else this.burnedCellsInZone[cell.zoneIdx]++;
-      }
-    }
-    if (fireDidStop) {
-      this.simulationRunning = false;
-    }
   }
 }

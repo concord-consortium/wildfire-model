@@ -2,7 +2,7 @@ import React from "react";
 import { Slider } from "@material-ui/core";
 import VerticalHandle from "../assets/slider-vertical.svg";
 import { generateMarks, droughtIcons, droughtLabels } from "./vertical-selectors";
-import { DroughtLevel } from "../models/fire-model";
+import { DroughtLevel } from "../types";
 import * as css from "./vertical-selectors.scss";
 
 interface IProps {

@@ -4,7 +4,7 @@ import { HorizontalBar, Bar, ChartData } from "react-chartjs-2";
 import { ChartDataModel } from "../models/chart-data";
 import { ChartOptions, ChartType } from "chart.js";
 import { ChartColors } from "../models/chart-data-set";
-import { hexToRGBValue } from "../../utils";
+import { hexToRGBValue } from "../utils";
 import { draw } from "patternomaly";
 import { BaseComponent } from "../../components/base";
 

@@ -67,11 +67,8 @@ export const Graph = observer(function WrappedComponent() {
   }, [simulation.timeInHours]);
 
   const updateChartData = (zoneIdx: number) => {
-    const burnedCells = simulation.burnedCellsInZone && simulation.burnedCellsInZone[zoneIdx] ?
-      simulation.burnedCellsInZone[zoneIdx] : 0;
-    const burnPercentage = burnedCells / simulation.totalCellCountByZone[zoneIdx];
     // Burn acres is in thousands to simplify the y-axis
-    const burnAcres = Math.ceil(simulation.simulationAreaAcres * burnPercentage / 1000);
+    const burnAcres = Math.ceil(simulation.simulationAreaAcres * simulation.getZoneBurnPercentage(zoneIdx) / 1000);
 
     if (zoneIdx <= chartStore.chart.dataSets.length - 1) {
       // we have a chart with existing datasets that contains this zone

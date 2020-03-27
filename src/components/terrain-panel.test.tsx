@@ -4,7 +4,7 @@ import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
 import { TerrainPanel } from "./terrain-panel";
 import { Slider } from "@material-ui/core";
-import { Vegetation, TerrainType } from "../models/fire-model";
+import { Vegetation, TerrainType } from "../types";
 
 const defaultTwoZones = [
   {

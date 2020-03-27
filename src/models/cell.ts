@@ -1,5 +1,5 @@
 import { Zone } from "./zone";
-import { Vegetation } from "./fire-model";
+import { Vegetation } from "../types";
 
 export enum FireState {
   Unburnt = 0,

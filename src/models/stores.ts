@@ -2,7 +2,7 @@ import { SimulationModel } from "./simulation";
 import { UIModel } from "./ui";
 import presets from "../presets";
 import { defaultConfig, urlConfig } from "../config";
-import { DroughtLevel, TerrainType, Vegetation } from "./fire-model";
+import { DroughtLevel, TerrainType, Vegetation } from "../types";
 import { ChartStore } from "./chart-store";
 
 export interface IStores {

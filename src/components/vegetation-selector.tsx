@@ -1,10 +1,9 @@
 import React from "react";
 import { Slider } from "@material-ui/core";
 import VerticalHandle from "../assets/slider-vertical.svg";
-import { TerrainType } from "../models/fire-model";
-
-import * as css from "./vertical-selectors.scss";
+import { TerrainType } from "../types";
 import { vegetationLabels, generateMarks, vegetationIcons } from "./vertical-selectors";
+import * as css from "./vertical-selectors.scss";
 
 interface IProps {
   vegetation: number;

@@ -1,16 +1,9 @@
 import React from "react";
 import { Zone } from "../models/zone";
 import * as css from "./zone-selector.scss";
-import { TerrainType, DroughtLevel } from "../models/fire-model";
+import { TerrainType, DroughtLevel } from "../types";
 import { vegetationIcons } from "./vertical-selectors";
 import { ISimulationConfig } from "../config";
-
-interface IProps {
-  zones: Zone[];
-  selectedZone: number;
-  readonly: boolean;
-  onChange?: any;
-}
 
 const cssClasses = [css.zone1, css.zone2, css.zone3];
 
