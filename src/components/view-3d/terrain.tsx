@@ -1,5 +1,5 @@
 import React, { forwardRef } from "react";
-import { DroughtLevel } from "../../models/fire-model";
+import { DroughtLevel } from "../../types";
 import { BurnIndex, Cell, FireState } from "../../models/cell";
 import { ISimulationConfig } from "../../config";
 import * as THREE from "three";
@@ -9,8 +9,7 @@ import { ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
 import { observer } from "mobx-react";
 import { useStores } from "../../use-stores";
 import { useUpdate } from "react-three-fiber";
-import { getEventHandlers, InteractionAction, InteractionHandler } from "./interaction-handler";
-import { PointerEvent } from "react-three-fiber/canvas";
+import { getEventHandlers, InteractionHandler } from "./interaction-handler";
 import { usePlaceSparkInteraction } from "./use-place-spark-interaction";
 import { useDrawFireLineInteraction } from "./use-draw-fire-line-interaction";
 import { useShowCoordsInteraction } from "./use-show-coords-interaction";

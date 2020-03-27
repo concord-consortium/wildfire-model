@@ -1,6 +1,6 @@
-import { TerrainType } from "../fire-model";
-import { getInputData } from "./image-utils";
+import { TerrainType } from "../../types";
 import { ISimulationConfig } from "../../config";
+import { getInputData } from "./image-utils";
 import { Zone } from "../zone";
 
 // Maps zones config to image data files (see data dir). E.g. it can generate file names like:

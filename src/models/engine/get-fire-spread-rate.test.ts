@@ -1,4 +1,5 @@
-import { getDirectionFactor, getFireSpreadRate, Vegetation } from "./fire-model";
+import { getDirectionFactor, getFireSpreadRate } from "./get-fire-spread-rate";
+import { Vegetation } from "../../types";
 
 const cellSize = 1;
 
@@ -19,9 +20,6 @@ const targetCell = {
   // Ensure that we use the same slope here (so calculate elevation accordingly).
   elevation: Math.tan(0.1) * cellSize
 };
-
-const gridWidth = 100;
-const gridHeight = 100;
 
 describe("getFireSpreadRate", () => {
   beforeEach(() => {

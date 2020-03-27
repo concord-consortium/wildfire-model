@@ -1,5 +1,5 @@
 import { ZoneOptions } from "./models/zone";
-import { DroughtLevel, Vegetation, TerrainType } from "./models/fire-model";
+import { DroughtLevel, Vegetation, TerrainType } from "./types";
 
 interface TownOptions {
   name: string;

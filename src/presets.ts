@@ -1,5 +1,5 @@
 import { ISimulationConfig } from "./config";
-import { DroughtLevel, TerrainType, Vegetation } from "./models/fire-model";
+import { DroughtLevel, TerrainType, Vegetation } from "./types";
 
 const presets: {[key: string]: Partial<ISimulationConfig>} = {
   basic: {

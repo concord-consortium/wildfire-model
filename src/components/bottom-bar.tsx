@@ -58,12 +58,12 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   get sparkBtnDisabled() {
     const { simulation, ui } = this.stores;
-    return ui.interaction === Interaction.PlaceSpark || !simulation.canAddSpark() || simulation.simulationStarted;
+    return ui.interaction === Interaction.PlaceSpark || !simulation.canAddSpark || simulation.simulationStarted;
   }
 
   get fireLineBtnDisabled() {
     const { simulation, ui } = this.stores;
-    return ui.interaction === Interaction.DrawFireLine || !simulation.canAddFireLineMarker() ||
+    return ui.interaction === Interaction.DrawFireLine || !simulation.canAddFireLineMarker ||
       !simulation.simulationStarted;
   }
 
