@@ -1,7 +1,7 @@
 import { action, computed, observable } from "mobx";
 import { DroughtLevel, IWindProps, TerrainType, Vegetation } from "../types";
 import {  Cell, CellOptions } from "./cell";
-import { defaultConfig, ISimulationConfig, urlConfig } from "../config";
+import { getDefaultConfig, ISimulationConfig, getUrlConfig } from "../config";
 import { Vector2 } from "three";
 import { getElevationData, getRiverData, getUnburntIslandsData, getZoneIndex } from "./utils/data-loaders";
 import { Zone } from "./zone";
@@ -106,7 +106,7 @@ export class SimulationModel {
     this.restart();
     // Configuration are joined together. Default values can be replaced by preset, and preset values can be replaced
     // by URL parameters.
-    this.config = Object.assign({}, defaultConfig, presetConfig, urlConfig);
+    this.config = Object.assign(getDefaultConfig(), presetConfig, getUrlConfig());
     this.setInputParamsFromConfig();
     this.populateCellsData();
   }

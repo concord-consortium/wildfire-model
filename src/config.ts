@@ -72,7 +72,7 @@ export interface IUrlConfig extends ISimulationConfig {
   preset: string;
 }
 
-export const defaultConfig: IUrlConfig = {
+export const getDefaultConfig: () => IUrlConfig = () => ({
   preset: "defaultTwoZone",
   // Most of the presets will use heightmap images that work the best with 120000x80000ft dimensions.
   modelWidth: 120000,
@@ -129,9 +129,7 @@ export const defaultConfig: IUrlConfig = {
   droughtIndexLocked: false,
   severeDroughtAvailable: false,
   riverColor: [0.067, 0.529, 0.882, 1]
-};
-
-export const urlConfig: any = {};
+});
 
 const getURLParam = (name: string) => {
   const url = (self || window).location.href;
@@ -159,29 +157,33 @@ const isJSON = (value: any) => {
   }
 };
 
-// Populate `urlConfig` with values read from URL.
-Object.keys(defaultConfig).forEach((key) => {
-  const urlValue: any = getURLParam(key);
-  if (urlValue === true || urlValue === "true") {
-    urlConfig[key] = true;
-  } else if (urlValue === "false") {
-    urlConfig[key] = false;
-  } else if (isJSON(urlValue)) {
-    urlConfig[key] = JSON.parse(urlValue);
-  } else if (isArray(urlValue)) {
-    // Array can be provided in URL using following format:
-    // &parameter=[value1,value2,value3]
-    if (urlValue === "[]") {
-      urlConfig[key] = [];
-    } else {
-      urlConfig[key] = urlValue!.substring(1, urlValue!.length - 1).split(",");
+export const getUrlConfig: () => IUrlConfig = () => {
+  const urlConfig: any = {};
+  // Populate `urlConfig` with values read from URL.
+  Object.keys(getDefaultConfig()).forEach((key) => {
+    const urlValue: any = getURLParam(key);
+    if (urlValue === true || urlValue === "true") {
+      urlConfig[key] = true;
+    } else if (urlValue === "false") {
+      urlConfig[key] = false;
+    } else if (isJSON(urlValue)) {
+      urlConfig[key] = JSON.parse(urlValue);
+    } else if (isArray(urlValue)) {
+      // Array can be provided in URL using following format:
+      // &parameter=[value1,value2,value3]
+      if (urlValue === "[]") {
+        urlConfig[key] = [];
+      } else {
+        urlConfig[key] = urlValue!.substring(1, urlValue!.length - 1).split(",");
+      }
+    } else if (urlValue !== null && !isNaN(urlValue)) {
+      // !isNaN(string) means isNumber(string).
+      urlConfig[key] = parseFloat(urlValue);
+    } else if (urlValue !== null) {
+      urlConfig[key] = urlValue;
     }
-  } else if (urlValue !== null && !isNaN(urlValue)) {
-    // !isNaN(string) means isNumber(string).
-    urlConfig[key] = parseFloat(urlValue);
-  } else if (urlValue !== null) {
-    urlConfig[key] = urlValue;
-  }
-});
+  });
+  return urlConfig as IUrlConfig;
+};
 
-export const urlConfigWithDefaultValues: IUrlConfig = Object.assign({}, defaultConfig, urlConfig);
+

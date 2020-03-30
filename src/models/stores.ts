@@ -1,7 +1,7 @@
 import { SimulationModel } from "./simulation";
 import { UIModel } from "./ui";
 import presets from "../presets";
-import { defaultConfig, urlConfig } from "../config";
+import { getDefaultConfig, getUrlConfig } from "../config";
 import { DroughtLevel, TerrainType, Vegetation } from "../types";
 import { ChartStore } from "./chart-store";
 
@@ -26,7 +26,7 @@ export const createStores = (): IStores => {
   //     [ 0, 1 ]
   //   ]
   // })
-  const simulation = new SimulationModel(presets[urlConfig.preset || defaultConfig.preset]);
+  const simulation = new SimulationModel(presets[getUrlConfig().preset || getDefaultConfig().preset]);
   (window as any).sim = simulation;
   (window as any).DroughtLevel = DroughtLevel;
   (window as any).Vegetation = Vegetation;
