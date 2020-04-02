@@ -6,8 +6,8 @@ import { Vector2 } from "three";
 import { getElevationData, getRiverData, getUnburntIslandsData, getZoneIndex } from "./utils/data-loaders";
 import { Zone } from "./zone";
 import { Town } from "../types";
-import { FireEngine } from "./engine/fire-engine";
 import { getGridIndexForLocation, forEachPointBetween, dist } from "./utils/grid-utils";
+import { FloodingEngine } from "./engine/flooding-engine";
 
 interface ICoords {
   x: number;
@@ -21,7 +21,7 @@ export class SimulationModel {
   public config: ISimulationConfig;
   public prevTickTime: number | null;
   public dataReadyPromise: Promise<void>;
-  public engine: FireEngine | null = null;
+  public engine: FloodingEngine | null = null;
   // Cells are not directly observable. Changes are broadcasted using cellsStateFlag and cellsElevationFlag.
   public cells: Cell[] = [];
   @observable public time = 0;
@@ -36,6 +36,9 @@ export class SimulationModel {
   @observable public lastFireLineTimestamp = -Infinity;
   @observable public totalCellCountByZone: {[key: number]: number} = {};
   @observable public burnedCellsInZone: {[key: number]: number} = {};
+  @observable public minRiverElevation: number = 0;
+  @observable public maxElevation: number = 0;
+  @observable public waterLevel: number = 0;
   // These flags can be used by view to trigger appropriate rendering. Theoretically, view could/should check
   // every single cell and re-render when it detects some changes. In practice, we perform these updates in very
   // specific moments and usually for all the cells, so this approach can be way more efficient.
@@ -44,10 +47,11 @@ export class SimulationModel {
 
   constructor(presetConfig: Partial<ISimulationConfig>) {
     this.load(presetConfig);
+    // this.dataReadyPromise.then(() => { this.start(); })
   }
 
   @computed public get ready() {
-    return this.dataReady && this.sparks.length > 0;
+    return this.dataReady;
   }
 
   @computed public get gridWidth() {
@@ -73,8 +77,7 @@ export class SimulationModel {
   }
 
   @computed public get canAddFireLineMarker() {
-    // Only one fire line can be added at given time.
-    return this.fireLineMarkers.length < 2 && this.time - this.lastFireLineTimestamp > this.config.fireLineDelay;
+    return true;
   }
 
   public getZoneBurnPercentage(zoneIdx: number) {
@@ -116,6 +119,8 @@ export class SimulationModel {
     const config = this.config;
     const zones = this.zones;
     this.totalCellCountByZone = {};
+    this.minRiverElevation = Infinity;
+    this.maxElevation = 0;
     this.dataReadyPromise = Promise.all([
       getZoneIndex(config), getElevationData(config, zones), getRiverData(config), getUnburntIslandsData(config, zones)
     ]).then(values => {
@@ -123,6 +128,7 @@ export class SimulationModel {
       const elevation = values[1];
       const river = values[2];
       const unburntIsland = values[3];
+      const verticalTilt = this.config.elevationVerticalTilt;
 
       this.cells.length = 0;
 
@@ -133,28 +139,41 @@ export class SimulationModel {
           const isRiver = river && river[index] > 0;
           // When fillTerrainEdge is set to true, edges are set to elevation 0.
           const isEdge = config.fillTerrainEdges &&
-            (x === 0 || x === this.gridWidth - 1 || y === 0 || y === this.gridHeight);
+            (x === 0 || x === this.gridWidth - 1 || y === 0 || y === this.gridHeight - 1);
           // Also, edges and their neighboring cells need to be marked as nonburnable to avoid fire spreading over
           // the terrain edge. Note that in this case two cells need to be marked as nonburnable due to way how
           // rendering code is calculating colors for mesh faces.
           const isNonBurnable = config.fillTerrainEdges &&
             x <= 1 || x >= this.gridWidth - 2 || y <= 1 || y >= this.gridHeight - 2;
+          let baseElevation = isEdge ? 0 : elevation && elevation[index];
+          if (verticalTilt && baseElevation !== undefined) {
+            const vertProgress = y / this.gridHeight;
+            baseElevation += Math.abs(verticalTilt) * (verticalTilt > 0 ? vertProgress : 1 - vertProgress);
+          }
           const cellOptions: CellOptions = {
             x, y,
             zone: zones[zi],
             zoneIdx: zi,
             isRiver,
+            isEdge,
             isUnburntIsland: unburntIsland && unburntIsland[index] > 0 || isNonBurnable,
-            baseElevation: isEdge ? 0 : elevation && elevation[index]
+            baseElevation,
           };
           if (!this.totalCellCountByZone[zi]) {
             this.totalCellCountByZone[zi] = 1;
           } else {
             this.totalCellCountByZone[zi]++;
           }
+          if (isRiver && !isEdge && baseElevation && baseElevation < this.minRiverElevation) {
+            this.minRiverElevation = baseElevation;
+          }
+          if (baseElevation && baseElevation > this.maxElevation) {
+            this.maxElevation = baseElevation;
+          }
           this.cells.push(new Cell(cellOptions));
         }
       }
+      this.waterLevel = this.minRiverElevation;
       this.updateCellsElevationFlag();
       this.updateCellsStateFlag();
       this.updateTownMarkers();
@@ -170,7 +189,7 @@ export class SimulationModel {
       this.simulationStarted = true;
     }
     if (!this.engine) {
-      this.engine = new FireEngine(this.cells, this.wind, this.sparks, this.config);
+      this.engine = new FloodingEngine(this.cells, this.wind, this.sparks, this.config);
     }
 
     this.applyFireLineMarkers();
@@ -239,13 +258,16 @@ export class SimulationModel {
 
     if (this.engine) {
       this.time += timeStep;
-      this.engine.updateFire(this.time);
-      if (this.engine.fireDidStop) {
+      this.engine.update(this.waterLevel);
+      if (this.engine.simulationDidStop) {
         this.simulationRunning = false;
       }
     }
 
     this.updateCellsStateFlag();
+    if (this.config.renderWaterLevel) {
+      this.updateCellsElevationFlag();
+    }
   }
 
   @action.bound public updateCellsElevationFlag() {

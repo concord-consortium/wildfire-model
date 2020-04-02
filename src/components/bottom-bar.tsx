@@ -5,17 +5,13 @@ import CCLogo from "../assets/cc-logo.svg";
 import CCLogoSmall from "../assets/cc-logo-small.svg";
 import screenfull from "screenfull";
 import Button from "@material-ui/core/Button";
-
-import SparkIcon from "../assets/bottom-bar/spark.svg";
-import SparkHighlight from "../assets/bottom-bar/spark_highlight.svg";
+import Slider from "@material-ui/core/Slider";
 import PauseIcon from "../assets/bottom-bar/pause.svg";
 import StartIcon from "../assets/bottom-bar/start.svg";
 import ReloadIcon from "../assets/bottom-bar/reload.svg";
 import RestartIcon from "../assets/bottom-bar/restart.svg";
 import FireLineIcon from "../assets/bottom-bar/fire-line.svg";
 import FireLineHighlightIcon from "../assets/bottom-bar/fire-line_highlight.svg";
-import HelitackIcon from "../assets/bottom-bar/helitack.svg";
-import HelitackHighlightIcon from "../assets/bottom-bar/helitack_highlight.svg";
 import TerrainIcon from "../assets/bottom-bar/terrain-setup.svg";
 import TerrainHighlightIcon from "../assets/bottom-bar/terrain-setup_highlight.svg";
 import TerrainThreeIcon from "../assets/bottom-bar/terrain-three.svg";
@@ -63,8 +59,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   get fireLineBtnDisabled() {
     const { simulation, ui } = this.stores;
-    return ui.interaction === Interaction.DrawFireLine || !simulation.canAddFireLineMarker ||
-      !simulation.simulationStarted;
+    return ui.interaction === Interaction.DrawFireLine || !simulation.canAddFireLineMarker;
   }
 
   public componentDidMount() {
@@ -97,11 +92,6 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               disabled={uiDisabled} buttonText="Terrain Setup" dataTest="terrain-button" onClick={this.handleTerrain}
             />
           </div>
-          <div className={`${css.widgetGroup} ${css.placeSpark}`}>
-            <IconButton icon={<SparkIcon />} highlightIcon={<SparkHighlight />}
-              disabled={this.sparkBtnDisabled} buttonText="Spark" dataTest="spark-button" onClick={this.placeSpark}
-            />
-          </div>
           <div className={`${css.widgetGroup} ${css.reloadRestart}`}>
             <Button
               className={css.playbackButton}
@@ -131,17 +121,22 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               { simulation.simulationRunning ? <span><PauseIcon/> Stop</span> : <span><StartIcon /> Start</span> }
             </Button>
           </div>
-
           <div className={`${css.widgetGroup}`}>
             <IconButton icon={<FireLineIcon />} highlightIcon={<FireLineHighlightIcon />}
-              disabled={this.fireLineBtnDisabled} buttonText="Fire Line" dataTest="fireline-button"
-              onClick={this.handleFireLine}
+                        disabled={this.fireLineBtnDisabled} buttonText="Levee" dataTest="fireline-button"
+                        onClick={this.handleFireLine}
             />
           </div>
-          <div className={`${css.widgetGroup} ${css.helitack}`}>
-            <IconButton icon={<HelitackIcon />} highlightIcon={<HelitackHighlightIcon />}
-              disabled={true} buttonText="Helitack" dataTest="helitack-button" onClick={this.handleHelitack}
-            />
+          <div className={`${css.widgetGroup}`}>
+            <div className={css.water}>
+              Water level
+              <Slider
+                value={simulation.waterLevel}
+                min={simulation.minRiverElevation - 1}
+                max={simulation.maxElevation}
+                onChange={this.handleWaterLevelChange}
+              />
+            </div>
           </div>
         </div>
         {/* This empty container is necessary so the spacing works correctly */}
@@ -186,18 +181,13 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     ui.interaction = Interaction.DrawFireLine;
   }
 
-  public handleHelitack = () => {
-    // TODO: handle Helitack
+  public handleWaterLevelChange = (event: React.ChangeEvent, newValue: number) => {
+    const { simulation } = this.stores;
+    simulation.waterLevel = newValue;
   }
 
   public handleTerrain = () => {
     const { ui } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
-  }
-
-  public placeSpark = () => {
-    const { ui } = this.stores;
-    ui.showTerrainUI = false;
-    ui.interaction = Interaction.PlaceSpark;
   }
 }

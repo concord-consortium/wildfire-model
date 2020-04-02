@@ -1,5 +1,6 @@
 import { Zone } from "./zone";
 import { Vegetation } from "../types";
+import { computed } from "mobx";
 
 export enum FireState {
   Unburnt = 0,
@@ -24,11 +25,12 @@ export interface CellOptions {
   fireState?: FireState;
   isUnburntIsland?: boolean;
   isRiver?: boolean;
+  isEdge?: boolean;
   isFireLine?: boolean;
   isFireLineUnderConstruction?: boolean;
 }
 
-const FIRE_LINE_DEPTH = 2000;
+const FIRE_LINE_DEPTH = 300;
 const MAX_BURN_TIME = 500;
 
 export class Cell {
@@ -43,6 +45,9 @@ export class Cell {
   public fireState: FireState = FireState.Unburnt;
   public isUnburntIsland: boolean = false;
   public isRiver: boolean = false;
+  public isFlooded: boolean = false;
+  public isEdge: boolean = false;
+  public isWaterEdge: boolean = false;
   public isFireLine: boolean = false;
   public isFireLineUnderConstruction: boolean = false;
 
@@ -56,9 +61,13 @@ export class Cell {
 
   public get elevation() {
     if (this.isFireLine) {
-      return this.baseElevation - FIRE_LINE_DEPTH;
+      return this.baseElevation + FIRE_LINE_DEPTH;
     }
     return this.baseElevation;
+  }
+
+  public get isWater() {
+    return this.isRiver || this.isFlooded;
   }
 
   public get isNonburnable() {

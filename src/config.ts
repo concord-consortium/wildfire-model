@@ -66,6 +66,10 @@ export interface ISimulationConfig {
   // River color, RGBA values (range: [0, 1]). Suggested colors:
   // [0.663,0.855,1,1], [0.337,0.69,0.957,1] or [0.067,0.529,0.882,1]
   riverColor: [number, number, number, number];
+  renderWaterLevel: boolean;
+  // Post processing of elevation data. Tilts elevation data in one axis. Useful for flooding experiment,
+  // to compensate the fact that upstream river part is usually placed higher than downstream part.
+  elevationVerticalTilt: number;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -77,8 +81,7 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   // Most of the presets will use heightmap images that work the best with 120000x80000ft dimensions.
   modelWidth: 120000,
   modelHeight: 80000,
-  // 240 works well with presets based on heightmap images.
-  gridWidth: 240,
+  gridWidth: 400,
   get cellSize() { return this.modelWidth / this.gridWidth },
   get gridHeight() { return Math.ceil(this.modelHeight / this.cellSize) },
   elevation: undefined, // will be derived from zone properties
@@ -122,13 +125,15 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   // Scale wind values down for now, so changes are less dramatic.
   showModelDimensions: false,
   fireLineDelay: 1440, // a day
-  maxFireLineLength: 15000, // ft
+  maxFireLineLength: 150000, // ft
   showBurnIndex: false,
   showCoordsOnClick: false,
   unburntIslandProbability: 0.5, // [0, 1]
   droughtIndexLocked: false,
   severeDroughtAvailable: false,
-  riverColor: [0.067, 0.529, 0.882, 1]
+  riverColor: [0.067, 0.529, 0.882, 1],
+  renderWaterLevel: false,
+  elevationVerticalTilt: 0
 });
 
 const getURLParam = (name: string) => {

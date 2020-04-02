@@ -2,6 +2,39 @@ import { ISimulationConfig } from "./config";
 import { DroughtLevel, TerrainType, Vegetation } from "./types";
 
 const presets: {[key: string]: Partial<ISimulationConfig>} = {
+  iowa: {
+    elevation: "data/iowa-city-heightmap.png",
+    riverData: "data/iowa-city-river.png",
+    heightmapMaxElevation: 147, // lowest point around 195m, highest around 235, 45m diff = 147 ft
+    elevationVerticalTilt: 0,
+    modelHeight: 42650, // around 13km, measured on google maps
+    modelWidth: 66308,
+    zoneIndex: [
+      [ 0 ]
+    ]
+  },
+  iowaTilt: {
+    elevation: "data/iowa-city-heightmap.png",
+    riverData: "data/iowa-city-river.png",
+    heightmapMaxElevation: 147, // lowest point around 195m, highest around 235, 45m diff = 147 ft
+    elevationVerticalTilt: -10,
+    modelHeight: 42650, // around 13km, measured on google maps
+    modelWidth: 66308,
+    zoneIndex: [
+      [ 0 ]
+    ]
+  },
+  iowaAmplified: {
+    elevation: "data/iowa-city-heightmap.png",
+    riverData: "data/iowa-city-river.png",
+    heightmapMaxElevation: 1470, // lowest point around 195m, highest around 235, 45m diff = 147 ft
+    elevationVerticalTilt: -100,
+    modelHeight: 42650, // around 13km, measured on google maps
+    modelWidth: 66308,
+    zoneIndex: [
+      [ 0 ]
+    ]
+  },
   basic: {
     modelWidth: 100000,
     modelHeight: 100000,

@@ -28,8 +28,8 @@ const getTerrainColor = (droughtLevel: number) => {
       return [0.784, 0.631, 0.271, 1];
   }
 };
-const BURNING_COLOR = [1, 0, 0, 1];
-const BURNT_COLOR = [0.2, 0.2, 0.2, 1];
+const TRANSPARENT = [1, 1, 1, 0];
+const BLACK_COLOR = [0.2, 0.2, 0.2, 1];
 const FIRE_LINE_UNDER_CONSTRUCTION_COLOR = [0.5, 0.5, 0, 1];
 
 const BURN_INDEX_LOW = [1, 0.7, 0, 1];
@@ -51,14 +51,8 @@ const setVertexColor = (
 ) => {
   const idx = vertexIdx(cell, gridWidth, gridHeight) * 4;
   let color;
-  if (cell.fireState === FireState.Burning) {
-    color = config.showBurnIndex ? burnIndexColor(cell.burnIndex) : BURNING_COLOR;
-  } else if (cell.fireState === FireState.Burnt) {
-    color = BURNT_COLOR;
-  } else if (cell.isRiver) {
+  if (cell.isWater) {
     color = config.riverColor;
-  } else if (cell.isFireLineUnderConstruction) {
-    color = FIRE_LINE_UNDER_CONSTRUCTION_COLOR;
   } else {
     color = getTerrainColor(cell.droughtLevel);
   }
@@ -82,7 +76,7 @@ const setupElevation = (geometry: THREE.PlaneBufferGeometry, simulation: Simulat
   // Apply height map to vertices of plane.
   simulation.cells.forEach(cell => {
     const zAttrIdx = vertexIdx(cell, simulation.gridWidth, simulation.gridHeight) * 3 + 2;
-    posArray[zAttrIdx] = cell.elevation * mult;
+    posArray[zAttrIdx] = (simulation.config.renderWaterLevel && cell.isWater ? simulation.waterLevel : cell.elevation) * mult;
   });
   geometry.computeVertexNormals();
   (geometry.attributes.position as BufferAttribute).needsUpdate = true;
@@ -130,7 +124,7 @@ export const Terrain = observer(forwardRef<THREE.Mesh>(function WrappedComponent
         center-x={0} center-y={0}
         args={[PLANE_WIDTH, height, simulation.gridWidth - 1, simulation.gridHeight - 1]}
       />
-      <meshPhongMaterial attach="material" vertexColors={true} />
+      <meshPhongMaterial attach="material" vertexColors={true} transparent={true} />
     </mesh>
   )
 }));

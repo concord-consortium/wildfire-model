@@ -42,9 +42,6 @@ export const AppComponent = observer(function WrappedComponent() {
         <View3d />
         <TerrainPanel />
       </div>
-      <div className={`${css.rightContent} ${ui.showChart && css.grow}`}>
-        <RightPanel />
-      </div>
       <BottomBar />
     </div>
   );

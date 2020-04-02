@@ -70,6 +70,11 @@ $overflowHeight: 11px;
     margin-right: $bottomBarWidgetGroupSpacing;
   }
 
+  .water {
+    width: 400px;
+    padding: 5px 20px;
+  }
+
   // Why global .hoverable?
   // It's being used by some child components to turn on initial hover effect.
   :global(.hoverable):hover {
