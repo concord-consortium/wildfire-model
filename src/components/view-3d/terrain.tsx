@@ -1,6 +1,6 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useMemo } from "react";
 import { DroughtLevel } from "../../types";
-import { BurnIndex, Cell, FireState } from "../../models/cell";
+import { BurnIndex, Cell } from "../../models/cell";
 import { ISimulationConfig } from "../../config";
 import * as THREE from "three";
 import { BufferAttribute } from "three";
@@ -8,11 +8,12 @@ import { SimulationModel } from "../../models/simulation";
 import { ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
 import { observer } from "mobx-react";
 import { useStores } from "../../use-stores";
-import { useUpdate } from "react-three-fiber";
+import { useUpdate, useLoader } from "react-three-fiber";
 import { getEventHandlers, InteractionHandler } from "./interaction-handler";
 import { usePlaceSparkInteraction } from "./use-place-spark-interaction";
 import { useDrawFireLineInteraction } from "./use-draw-fire-line-interaction";
 import { useShowCoordsInteraction } from "./use-show-coords-interaction";
+
 
 const vertexIdx = (cell: Cell, gridWidth: number, gridHeight: number) => (gridHeight - 1 - cell.y) * gridWidth + cell.x;
 
@@ -28,13 +29,13 @@ const getTerrainColor = (droughtLevel: number) => {
       return [0.784, 0.631, 0.271, 1];
   }
 };
-const TRANSPARENT = [1, 1, 1, 0];
-const BLACK_COLOR = [0.2, 0.2, 0.2, 1];
-const FIRE_LINE_UNDER_CONSTRUCTION_COLOR = [0.5, 0.5, 0, 1];
 
 const BURN_INDEX_LOW = [1, 0.7, 0, 1];
 const BURN_INDEX_MEDIUM = [1, 0.35, 0, 1];
 const BURN_INDEX_HIGH = [1, 0, 0, 1];
+const FIRE_LINE_UNDER_CONSTRUCTION_COLOR = [0.5, 0.5, 0, 1];
+
+const WHITE = [1, 1, 1, 1];
 
 const burnIndexColor = (burnIndex: BurnIndex) => {
   if (burnIndex === BurnIndex.Low) {
@@ -51,10 +52,12 @@ const setVertexColor = (
 ) => {
   const idx = vertexIdx(cell, gridWidth, gridHeight) * 4;
   let color;
-  if (cell.isWater) {
+  if (cell.isFireLineUnderConstruction) {
+    color = FIRE_LINE_UNDER_CONSTRUCTION_COLOR;
+  } else if (cell.isWater) {
     color = config.riverColor;
   } else {
-    color = getTerrainColor(cell.droughtLevel);
+    color = config.texture ? WHITE : getTerrainColor(cell.droughtLevel);
   }
   colArray[idx] = color[0];
   colArray[idx + 1] = color[1];
@@ -80,6 +83,24 @@ const setupElevation = (geometry: THREE.PlaneBufferGeometry, simulation: Simulat
   });
   geometry.computeVertexNormals();
   (geometry.attributes.position as BufferAttribute).needsUpdate = true;
+};
+
+const getTexture = (imgSrcOrCanvas: string | HTMLCanvasElement) => {
+  let source;
+  let Texture = THREE.Texture;
+  if (!imgSrcOrCanvas) {
+    return null;
+  }
+  if (typeof imgSrcOrCanvas === "string") {
+    source = document.createElement("img");
+    source.src = imgSrcOrCanvas;
+    source.onload = () => texture.needsUpdate = true;
+  } else {
+    source = imgSrcOrCanvas; // canvas
+    Texture = THREE.CanvasTexture;
+  }
+  const texture = new Texture(source);
+  return texture;
 };
 
 export const Terrain = observer(forwardRef<THREE.Mesh>(function WrappedComponent(props, ref) {
@@ -112,6 +133,9 @@ export const Terrain = observer(forwardRef<THREE.Mesh>(function WrappedComponent
   // eventHandlers will be an empty object and nothing will be attached to the terrain mesh.
   const eventHandlers = getEventHandlers(interactions);
 
+  const textureSrc = simulation.config.texture;
+  const texture = useMemo(() => getTexture(textureSrc), [textureSrc]);
+
   return (
     <mesh
       ref={ref}
@@ -124,7 +148,11 @@ export const Terrain = observer(forwardRef<THREE.Mesh>(function WrappedComponent
         center-x={0} center-y={0}
         args={[PLANE_WIDTH, height, simulation.gridWidth - 1, simulation.gridHeight - 1]}
       />
-      <meshPhongMaterial attach="material" vertexColors={true} transparent={true} />
+      {
+        texture ?
+          <meshLambertMaterial attach="material" map={texture} vertexColors={true} /> :
+          <meshLambertMaterial attach="material" vertexColors={true} />
+      }
     </mesh>
   )
 }));

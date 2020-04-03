@@ -70,6 +70,7 @@ export interface ISimulationConfig {
   // Post processing of elevation data. Tilts elevation data in one axis. Useful for flooding experiment,
   // to compensate the fact that upstream river part is usually placed higher than downstream part.
   elevationVerticalTilt: number;
+  texture: string;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -133,7 +134,8 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   severeDroughtAvailable: false,
   riverColor: [0.067, 0.529, 0.882, 1],
   renderWaterLevel: false,
-  elevationVerticalTilt: 0
+  elevationVerticalTilt: 0,
+  texture: ""
 });
 
 const getURLParam = (name: string) => {

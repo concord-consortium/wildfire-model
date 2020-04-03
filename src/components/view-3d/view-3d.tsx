@@ -39,8 +39,8 @@ export const View3d = () => {
           access to MobX stores anymore. */}
       <Provider stores={stores}>
         <CameraControls/>
-        <hemisphereLight args={[0xC6C2B6, 0x3A403B, 1.2]} up={DEFAULT_UP} intensity={0.9}/>
-        <pointLight position={[-1, 1, 2]} intensity={0.2}/>
+        <hemisphereLight args={[0xC6C2B6, 0x3A403B, 1.2]} up={DEFAULT_UP} intensity={1.0}/>
+        <pointLight position={[0.5, 0.5, 3]} intensity={0.3}/>
         <Terrain ref={terrainRef}/>
         <SparksContainer dragPlane={terrainRef}/>
         <FireLineMarkersContainer dragPlane={terrainRef}/>
