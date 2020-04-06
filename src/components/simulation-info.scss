@@ -2,9 +2,18 @@
 
 .simulationInfo{
   height: 0;
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: center;
   .zone{
-    position: absolute;
-    top: 34px;
+    display: flex;
+    margin: 10px;
+    margin-left: auto;
+    margin-right: auto;
     width: 124px;
     height: 34px;
     border-radius: 4px;
@@ -21,24 +30,6 @@
     &.zone3{
       background-color: $zone3Orange;
     }
-    &.twoZoneLeft{
-      left: 30%;
-    }
-    &.twoZoneRight{
-      right: 30%;
-    }
-    &.threeZoneLeft{
-      left: 20%;
-    }
-    &.threeZoneMid{
-      position: relative;
-      margin-left: auto;
-      margin-right: auto;
-    }
-    &.threeZoneRight{
-      right: 20%;
-    }
-
     .icon{
       width: 28px;
       height: 28px;

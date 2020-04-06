@@ -16,13 +16,10 @@ const cssClasses = [css.zone1, css.zone2, css.zone3];
 
 const zoneDetails = (zones: Zone[]) => {
   const detailView: any[] = [];
-  const zoneLayout = zones.length === 2 ?
-    [css.twoZoneLeft, css.twoZoneRight] :
-    [css.threeZoneLeft, css.threeZoneMid, css.threeZoneRight];
 
   zones.forEach((z, i) => {
     detailView.push(
-      <div className={`${css.zone} ${zoneLayout[i]} ${cssClasses[i]}`} key={i}>
+      <div className={`${css.zone} ${cssClasses[i]}`} key={i}>
         <div className={`${css.icon} ${css.vegetationIcon}`}>{vegetationIcons[z.vegetation]}</div>
         <div className={`${css.icon} ${css.droughtIcon}`}>{droughtIcons[z.droughtLevel]}</div>
         <div className={`${css.zoneText}`}>

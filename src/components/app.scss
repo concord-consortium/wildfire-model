@@ -25,6 +25,7 @@
 }
 
 .rightContent{
+  pointer-events: none;
   overflow-x: hidden;
   width: $rightPanelContainerWidth + $tabWidth;
   height: calc(100% - #{$bottomBarHeight + $bottomBarBorderWidth});
