@@ -34,6 +34,7 @@ export interface IChartAnnotation{
   yMax?: number;
   yMin?: number;
   fontFamily?: string;
+  fontSize?: number;
 }
 export class Annotation implements IChartAnnotation {
   public type: string;
@@ -55,6 +56,7 @@ export class Annotation implements IChartAnnotation {
   public yMin?: number;
   public showingExpandLabel?: boolean = false;
   public fontFamily?: string;
+  public fontSize?: number;
 
   constructor(props: IChartAnnotation) {
     Object.assign(this, props);
@@ -90,11 +92,15 @@ export class Annotation implements IChartAnnotation {
         label: {
           position: this.labelPosition ? this.labelPosition : "top",
           fontFamily: this.fontFamily ? this.fontFamily : undefined,
-          fontSize: 20,
+          fontSize: this.fontSize ? this.fontSize : 20,
           cornerRadius: 20,
           labelHeight: 16,
-          yPadding: 0,
-          xPadding: 2
+          yPadding: 2,
+          xPadding: 2,
+          content: this.value
+          // Future release of chartjs-plugin-annotation will support rotating labels
+          // - the code is in their master branch, not yet released.
+          // rotation: 90
         },
         ...formatted
       };

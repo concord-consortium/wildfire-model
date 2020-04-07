@@ -13,6 +13,7 @@ import { getEventHandlers, InteractionHandler } from "./interaction-handler";
 import { usePlaceSparkInteraction } from "./use-place-spark-interaction";
 import { useDrawFireLineInteraction } from "./use-draw-fire-line-interaction";
 import { useShowCoordsInteraction } from "./use-show-coords-interaction";
+import { useHelitackInteraction } from "./use-helitack-interaction";
 
 const vertexIdx = (cell: Cell, gridWidth: number, gridHeight: number) => (gridHeight - 1 - cell.y) * gridWidth + cell.x;
 
@@ -109,7 +110,8 @@ export const Terrain = observer(forwardRef<THREE.Mesh>(function WrappedComponent
   const interactions: InteractionHandler[] = [
     usePlaceSparkInteraction(),
     useDrawFireLineInteraction(),
-    useShowCoordsInteraction()
+    useShowCoordsInteraction(),
+    useHelitackInteraction()
   ];
 
   // Note that getEventHandlers won't return event handlers if it's not necessary. This is important,

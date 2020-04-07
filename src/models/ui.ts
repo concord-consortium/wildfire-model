@@ -3,7 +3,8 @@ import { observable } from "mobx";
 export enum Interaction {
   PlaceSpark = "PlaceSpark",
   DrawFireLine = "DrawFireLine",
-  HoverOverDraggable = "HoverOverDraggable"
+  HoverOverDraggable = "HoverOverDraggable",
+  Helitack = "Helitack"
 }
 
 export class UIModel {

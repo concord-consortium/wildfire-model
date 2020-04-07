@@ -67,6 +67,12 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       !simulation.simulationStarted;
   }
 
+  get helitackBtnDisabled() {
+    const { simulation, ui } = this.stores;
+    return ui.interaction === Interaction.Helitack || !simulation.canUseHelitack ||
+      !simulation.simulationStarted;
+  }
+
   public componentDidMount() {
     if (screenfull && screenfull.isEnabled) {
       document.addEventListener(screenfull.raw.fullscreenchange, this.fullscreenChange);
@@ -140,7 +146,8 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           </div>
           <div className={`${css.widgetGroup} ${css.helitack}`}>
             <IconButton icon={<HelitackIcon />} highlightIcon={<HelitackHighlightIcon />}
-              disabled={true} buttonText="Helitack" dataTest="helitack-button" onClick={this.handleHelitack}
+              disabled={this.helitackBtnDisabled} buttonText="Helitack" dataTest="helitack-button"
+              onClick={this.handleHelitack}
             />
           </div>
         </div>
@@ -187,7 +194,9 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   }
 
   public handleHelitack = () => {
-    // TODO: handle Helitack
+    const { ui, simulation } = this.stores;
+    ui.showTerrainUI = false;
+    ui.interaction = Interaction.Helitack;
   }
 
   public handleTerrain = () => {

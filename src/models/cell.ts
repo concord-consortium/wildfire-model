@@ -1,5 +1,5 @@
 import { Zone } from "./zone";
-import { Vegetation } from "../types";
+import { Vegetation, DroughtLevel } from "../types";
 
 export enum FireState {
   Unburnt = 0,
@@ -45,6 +45,7 @@ export class Cell {
   public isRiver: boolean = false;
   public isFireLine: boolean = false;
   public isFireLineUnderConstruction: boolean = false;
+  public isHelitackArea: boolean = false;
 
   constructor(props: CellOptions) {
     Object.assign(this, props);
@@ -73,7 +74,12 @@ export class Cell {
   }
 
   public get droughtLevel() {
-    return this.zone.droughtLevel;
+    if (!this.isHelitackArea) {
+      return this.zone.droughtLevel;
+    }
+    else if (this.zone.droughtLevel > DroughtLevel.NoDrought) {
+      return this.zone.droughtLevel - 1;
+    }
   }
 
   public get isBurningOrWillBurn() {
