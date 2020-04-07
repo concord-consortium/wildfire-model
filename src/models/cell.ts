@@ -74,12 +74,10 @@ export class Cell {
   }
 
   public get droughtLevel() {
-    if (!this.isHelitackArea) {
-      return this.zone.droughtLevel;
-    }
-    else if (this.zone.droughtLevel > DroughtLevel.NoDrought) {
+    if (this.isHelitackArea && this.zone.droughtLevel > DroughtLevel.NoDrought) {
       return this.zone.droughtLevel - 1;
     }
+    return this.zone.droughtLevel;
   }
 
   public get isBurningOrWillBurn() {
