@@ -368,10 +368,10 @@ export class SimulationModel {
     const startGridX = Math.floor(px / this.config.cellSize);
     const startGridY = Math.floor(py / this.config.cellSize);
     const cell = this.cells[getGridIndexForLocation(startGridX, startGridY, this.gridWidth)];
-    const r = 10;
-    for (let x = cell.x - r; x < cell.x + r; x++) {
-      for (let y = cell.y - r ; y <= cell.y + r; y++) {
-        if ((x - cell.x) * (x - cell.x) + (y - cell.y) * (y - cell.y) <= r * r) {
+    const radius = Math.round(this.config.helitackDropRadius / this.config.cellSize);
+    for (let x = cell.x - radius; x < cell.x + radius; x++) {
+      for (let y = cell.y - radius ; y <= cell.y + radius; y++) {
+        if ((x - cell.x) * (x - cell.x) + (y - cell.y) * (y - cell.y) <= radius * radius) {
           const nextCellX = cell.x - (x - cell.x);
           const nextCellY = cell.y - (y - cell.y);
           const targetCell = this.cells[getGridIndexForLocation(nextCellX, nextCellY, this.gridWidth)];

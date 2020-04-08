@@ -35,7 +35,9 @@ export const Graph = observer(function WrappedComponent() {
         labelBackgroundColor: "white",
         fontFamily: "'Roboto Condensed', Lato, arial, sans-serif",
         fontSize: 10,
-        labelColor: "#606060"
+        labelColor: "#606060",
+        thickness: 1,
+        dashArray: borderDash1
       }));
     }
     else if (ui.interaction === Interaction.Helitack) {
@@ -49,7 +51,9 @@ export const Graph = observer(function WrappedComponent() {
         labelBackgroundColor: "white",
         fontFamily: "'Roboto Condensed', Lato, arial, sans-serif",
         fontSize: 10,
-        labelColor: "#606060"
+        labelColor: "#606060",
+        thickness: 1,
+        dashArray: borderDash2
       }));
     }
   }, [ui.interaction]);
