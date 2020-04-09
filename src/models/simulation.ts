@@ -197,6 +197,7 @@ export class SimulationModel {
     this.cells.forEach(cell => cell.reset());
     this.fireLineMarkers.length = 0;
     this.lastFireLineTimestamp = -Infinity;
+    this.lastHelitackTimestamp = -Infinity;
     this.updateCellsStateFlag();
     this.updateCellsElevationFlag();
     this.time = 0;

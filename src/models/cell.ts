@@ -129,5 +129,6 @@ export class Cell {
     this.fireState = FireState.Unburnt;
     this.isFireLineUnderConstruction = false;
     this.isFireLine = false;
+    this.isHelitackArea = false;
   }
 }
