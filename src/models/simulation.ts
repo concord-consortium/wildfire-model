@@ -375,10 +375,12 @@ export class SimulationModel {
         if ((x - cell.x) * (x - cell.x) + (y - cell.y) * (y - cell.y) <= radius * radius) {
           const nextCellX = cell.x - (x - cell.x);
           const nextCellY = cell.y - (y - cell.y);
-          const targetCell = this.cells[getGridIndexForLocation(nextCellX, nextCellY, this.gridWidth)];
-          targetCell.isHelitackArea = true;
-          targetCell.ignitionTime = Infinity;
-          if (targetCell.fireState === FireState.Burning) targetCell.fireState = FireState.Unburnt;
+          if (nextCellX < this.gridWidth && nextCellY < this.gridHeight) {
+            const targetCell = this.cells[getGridIndexForLocation(nextCellX, nextCellY, this.gridWidth)];
+            targetCell.isHelitackArea = true;
+            targetCell.ignitionTime = Infinity;
+            if (targetCell.fireState === FireState.Burning) targetCell.fireState = FireState.Unburnt;
+          }
         }
       }
     }
