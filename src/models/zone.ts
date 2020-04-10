@@ -8,7 +8,7 @@ export interface ZoneOptions {
 }
 
 // values for each level of vegetation: Grass, Shrub, ForestSmallLitter, ForestLargeLitter
-const moistureLookups: {[key in DroughtLevel]: number[]} = {
+export const moistureLookups: {[key in DroughtLevel]: number[]} = {
   [DroughtLevel.NoDrought]: [0.1275, 0.255, 0.17, 0.2125],
   [DroughtLevel.MildDrought]: [0.09, 0.18, 0.12, 0.15],
   [DroughtLevel.MediumDrought]: [0.0525, 0.105, 0.07, 0.0875],
@@ -23,13 +23,5 @@ export class Zone {
 
   constructor(props: ZoneOptions) {
     Object.assign(this, props);
-  }
-
-  public get moistureContent() {
-    return moistureLookups[this.droughtLevel][this.vegetation];
-  }
-
-  public getCellMoistureContent = (cellDroughtLevel: DroughtLevel, cellVegetation: Vegetation) => {
-    return moistureLookups[cellDroughtLevel][cellVegetation];
   }
 }

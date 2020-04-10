@@ -1,4 +1,4 @@
-import { Zone } from "./zone";
+import { Zone, moistureLookups } from "./zone";
 import { Vegetation, DroughtLevel } from "../types";
 
 export enum FireState {
@@ -70,13 +70,13 @@ export class Cell {
     if (this.isNonburnable) {
       return Infinity;
     }
-    return this.zone.getCellMoistureContent(this.droughtLevel, this.vegetation);
+    return moistureLookups[this.droughtLevel][this.vegetation];
   }
 
   public get droughtLevel() {
     if (this.helitackDropCount > 0) {
       const newDroughtLevel = this.zone.droughtLevel - this.helitackDropCount;
-      return Math.max(newDroughtLevel, DroughtLevel.NoDrought);
+      return Math.max(newDroughtLevel, DroughtLevel.NoDrought) as DroughtLevel;
     }
     return this.zone.droughtLevel;
   }
