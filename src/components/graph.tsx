@@ -24,7 +24,8 @@ export const Graph = observer(function WrappedComponent() {
   const { simulation, chartStore, ui } = useStores();
 
   useEffect(() => {
-    if (ui.interaction === Interaction.DrawFireLine) {
+    // only add chart annotation after the simulation has been started
+    if (simulation.timeInHours > 0) {
       chartStore.chart.addAnnotation(new Annotation({
         type: "verticalLine",
         value: simulation.timeInHours,
@@ -40,7 +41,10 @@ export const Graph = observer(function WrappedComponent() {
         dashArray: borderDash1
       }));
     }
-    else if (ui.interaction === Interaction.Helitack) {
+  }, [simulation.lastFireLineTimestamp]);
+
+  useEffect(() => {
+    if (simulation.timeInHours > 0) {
       chartStore.chart.addAnnotation(new Annotation({
         type: "verticalLine",
         value: simulation.timeInHours,
@@ -56,7 +60,7 @@ export const Graph = observer(function WrappedComponent() {
         dashArray: borderDash2
       }));
     }
-  }, [ui.interaction]);
+  }, [simulation.lastHelitackTimestamp]);
 
   useEffect(() => {
     chartStore.clearData();
