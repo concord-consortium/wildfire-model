@@ -69,6 +69,9 @@ export interface ISimulationConfig {
   // River color, RGBA values (range: [0, 1]). Suggested colors:
   // [0.663,0.855,1,1], [0.337,0.69,0.957,1] or [0.067,0.529,0.882,1]
   riverColor: [number, number, number, number];
+  // Authors may want to disable the fireline and helitack features completely
+  fireLineAvailable: boolean;
+  helitackAvailable: boolean;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -133,7 +136,9 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   unburntIslandProbability: 0.5, // [0, 1]
   droughtIndexLocked: false,
   severeDroughtAvailable: false,
-  riverColor: [0.067, 0.529, 0.882, 1]
+  riverColor: [0.067, 0.529, 0.882, 1],
+  fireLineAvailable: true,
+  helitackAvailable: true
 });
 
 const getURLParam = (name: string) => {
