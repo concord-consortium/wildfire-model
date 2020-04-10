@@ -67,7 +67,7 @@ describe("chart annotations", () => {
         xAdjust: 0,
         xPadding: 2,
         yAdjust: 0,
-        yPadding: 0
+        yPadding: 2
       },
       borderColor: "#797979",
       borderDash: [10, 3],
@@ -147,13 +147,14 @@ describe("chart annotations", () => {
       scaleID: "x-axis-0",
       value: 20,
       label: {
+        content: 20,
         cornerRadius: 20,
         fontFamily: undefined,
         fontSize: 20,
         labelHeight: 16,
         position: "top",
         xPadding: 2,
-        yPadding: 0
+        yPadding: 2
       },
       borderColor: "#797979",
       borderDash: [5, 5],

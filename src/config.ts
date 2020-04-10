@@ -51,7 +51,10 @@ export interface ISimulationConfig {
   showModelDimensions: boolean;
   // Time that needs to pass before next fire line can be added.
   fireLineDelay: number;
+  // Helitack has a cooldown before it can be used again
+  helitackDelay: number;
   maxFireLineLength: number; // ft
+  helitackDropRadius: number; // ft
   // Renders burn index.
   showBurnIndex: boolean;
   // Displays alert with current coordinates on mouse click. Useful for authoring.
@@ -122,7 +125,9 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   // Scale wind values down for now, so changes are less dramatic.
   showModelDimensions: false,
   fireLineDelay: 1440, // a day
+  helitackDelay: 240, // four hours
   maxFireLineLength: 15000, // ft
+  helitackDropRadius: 2640, // ft (5280 ft = 1 mile)
   showBurnIndex: false,
   showCoordsOnClick: false,
   unburntIslandProbability: 0.5, // [0, 1]

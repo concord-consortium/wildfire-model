@@ -1,6 +1,6 @@
 import { action, computed, observable } from "mobx";
 import { DroughtLevel, IWindProps, TerrainType, Vegetation } from "../types";
-import {  Cell, CellOptions } from "./cell";
+import {  Cell, CellOptions, FireState } from "./cell";
 import { getDefaultConfig, ISimulationConfig, getUrlConfig } from "../config";
 import { Vector2 } from "three";
 import { getElevationData, getRiverData, getUnburntIslandsData, getZoneIndex } from "./utils/data-loaders";
@@ -34,6 +34,7 @@ export class SimulationModel {
   @observable public simulationStarted = false;
   @observable public simulationRunning = false;
   @observable public lastFireLineTimestamp = -Infinity;
+  @observable public lastHelitackTimestamp = -Infinity;
   @observable public totalCellCountByZone: {[key: number]: number} = {};
   @observable public burnedCellsInZone: {[key: number]: number} = {};
   // These flags can be used by view to trigger appropriate rendering. Theoretically, view could/should check
@@ -75,6 +76,11 @@ export class SimulationModel {
   @computed public get canAddFireLineMarker() {
     // Only one fire line can be added at given time.
     return this.fireLineMarkers.length < 2 && this.time - this.lastFireLineTimestamp > this.config.fireLineDelay;
+  }
+
+  @computed public get canUseHelitack() {
+    // Helitack has waiting period before it can be used subsequent times
+    return this.time - this.lastHelitackTimestamp > this.config.helitackDelay;
   }
 
   public getZoneBurnPercentage(zoneIdx: number) {
@@ -191,6 +197,7 @@ export class SimulationModel {
     this.cells.forEach(cell => cell.reset());
     this.fireLineMarkers.length = 0;
     this.lastFireLineTimestamp = -Infinity;
+    this.lastHelitackTimestamp = -Infinity;
     this.updateCellsStateFlag();
     this.updateCellsElevationFlag();
     this.time = 0;
@@ -356,6 +363,28 @@ export class SimulationModel {
       cell.ignitionTime = Infinity;
     });
     this.lastFireLineTimestamp = this.time;
+  }
+
+  @action.bound public setHelitackPoint(px: number, py: number) {
+    const startGridX = Math.floor(px / this.config.cellSize);
+    const startGridY = Math.floor(py / this.config.cellSize);
+    const cell = this.cells[getGridIndexForLocation(startGridX, startGridY, this.gridWidth)];
+    const radius = Math.round(this.config.helitackDropRadius / this.config.cellSize);
+    for (let x = cell.x - radius; x < cell.x + radius; x++) {
+      for (let y = cell.y - radius ; y <= cell.y + radius; y++) {
+        if ((x - cell.x) * (x - cell.x) + (y - cell.y) * (y - cell.y) <= radius * radius) {
+          const nextCellX = cell.x - (x - cell.x);
+          const nextCellY = cell.y - (y - cell.y);
+          if (nextCellX < this.gridWidth && nextCellY < this.gridHeight) {
+            const targetCell = this.cells[getGridIndexForLocation(nextCellX, nextCellY, this.gridWidth)];
+            targetCell.helitackDropCount++;
+            targetCell.ignitionTime = Infinity;
+            if (targetCell.fireState === FireState.Burning) targetCell.fireState = FireState.Unburnt;
+          }
+        }
+      }
+    }
+    this.lastHelitackTimestamp = this.time;
   }
 
   @action.bound public setWindDirection(direction: number) {

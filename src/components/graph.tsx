@@ -4,7 +4,6 @@ import { useStores } from "../use-stores";
 import { Interaction } from "../models/ui";
 import { Chart } from "../charts/components/chart";
 import * as css from "./graph.scss";
-import { ChartDataModel } from "../charts/models/chart-data";
 import { Annotation } from "../charts/models/chart-annotation";
 import { DataPoint, ChartDataSet } from "../charts/models/chart-data-set";
 
@@ -25,20 +24,43 @@ export const Graph = observer(function WrappedComponent() {
   const { simulation, chartStore, ui } = useStores();
 
   useEffect(() => {
-    if (ui.interaction === Interaction.DrawFireLine) {
+    // only add chart annotation after the simulation has been started
+    if (simulation.timeInHours > 0) {
       chartStore.chart.addAnnotation(new Annotation({
         type: "verticalLine",
         value: simulation.timeInHours,
-        label: "🪓",
+        label: "Fire Line",
         labelXOffset: 0,
         labelYOffset: 4,
         labelPosition: "top",
-        labelBackgroundColor: "rgba(255,255,255,0.3)",
-        // tslint:disable-next-line:max-line-length
-        fontFamily: "Noto Color Emoji, Apple Color Emoji, Segoe UI Emoji, Times, Symbola, Aegyptus, Code2000, Code2001, Code2002, Musica, serif, LastResort"
+        labelBackgroundColor: "white",
+        fontFamily: "'Roboto Condensed', Lato, arial, sans-serif",
+        fontSize: 10,
+        labelColor: "#606060",
+        thickness: 1,
+        dashArray: borderDash1
       }));
     }
-  }, [ui.interaction]);
+  }, [simulation.lastFireLineTimestamp]);
+
+  useEffect(() => {
+    if (simulation.timeInHours > 0) {
+      chartStore.chart.addAnnotation(new Annotation({
+        type: "verticalLine",
+        value: simulation.timeInHours,
+        label: "Helitack",
+        labelXOffset: 0,
+        labelYOffset: 4,
+        labelPosition: "top",
+        labelBackgroundColor: "white",
+        fontFamily: "'Roboto Condensed', Lato, arial, sans-serif",
+        fontSize: 10,
+        labelColor: "#606060",
+        thickness: 1,
+        dashArray: borderDash2
+      }));
+    }
+  }, [simulation.lastHelitackTimestamp]);
 
   useEffect(() => {
     chartStore.clearData();
