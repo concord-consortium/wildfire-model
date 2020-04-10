@@ -377,7 +377,7 @@ export class SimulationModel {
           const nextCellY = cell.y - (y - cell.y);
           if (nextCellX < this.gridWidth && nextCellY < this.gridHeight) {
             const targetCell = this.cells[getGridIndexForLocation(nextCellX, nextCellY, this.gridWidth)];
-            targetCell.isHelitackArea = true;
+            targetCell.helitackDropCount++;
             targetCell.ignitionTime = Infinity;
             if (targetCell.fireState === FireState.Burning) targetCell.fireState = FireState.Unburnt;
           }

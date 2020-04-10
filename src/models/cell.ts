@@ -45,7 +45,7 @@ export class Cell {
   public isRiver: boolean = false;
   public isFireLine: boolean = false;
   public isFireLineUnderConstruction: boolean = false;
-  public isHelitackArea: boolean = false;
+  public helitackDropCount: number = 0;
 
   constructor(props: CellOptions) {
     Object.assign(this, props);
@@ -70,12 +70,13 @@ export class Cell {
     if (this.isNonburnable) {
       return Infinity;
     }
-    return this.zone.moistureContent;
+    return this.zone.getCellMoistureContent(this.droughtLevel, this.vegetation);
   }
 
   public get droughtLevel() {
-    if (this.isHelitackArea && this.zone.droughtLevel > DroughtLevel.NoDrought) {
-      return this.zone.droughtLevel - 1;
+    if (this.helitackDropCount > 0) {
+      const newDroughtLevel = this.zone.droughtLevel - this.helitackDropCount;
+      return Math.max(newDroughtLevel, DroughtLevel.NoDrought);
     }
     return this.zone.droughtLevel;
   }
@@ -129,6 +130,6 @@ export class Cell {
     this.fireState = FireState.Unburnt;
     this.isFireLineUnderConstruction = false;
     this.isFireLine = false;
-    this.isHelitackArea = false;
+    this.helitackDropCount = 0;
   }
 }

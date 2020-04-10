@@ -28,4 +28,8 @@ export class Zone {
   public get moistureContent() {
     return moistureLookups[this.droughtLevel][this.vegetation];
   }
+
+  public getCellMoistureContent = (cellDroughtLevel: DroughtLevel, cellVegetation: Vegetation) => {
+    return moistureLookups[cellDroughtLevel][cellVegetation];
+  }
 }
