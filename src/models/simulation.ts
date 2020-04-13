@@ -75,12 +75,22 @@ export class SimulationModel {
 
   @computed public get canAddFireLineMarker() {
     // Only one fire line can be added at given time.
-    return this.fireLineMarkers.length < 2 && this.time - this.lastFireLineTimestamp > this.config.fireLineDelay;
+    if (!this.config.fireLineAvailable) {
+      return false;
+    }
+    else {
+      return this.fireLineMarkers.length < 2 && this.time - this.lastFireLineTimestamp > this.config.fireLineDelay;
+    }
   }
 
   @computed public get canUseHelitack() {
-    // Helitack has waiting period before it can be used subsequent times
-    return this.time - this.lastHelitackTimestamp > this.config.helitackDelay;
+    if (!this.config.helitackAvailable) {
+      return false;
+    }
+    else {
+      // Helitack has waiting period before it can be used subsequent times
+      return this.time - this.lastHelitackTimestamp > this.config.helitackDelay;
+    }
   }
 
   public getZoneBurnPercentage(zoneIdx: number) {
