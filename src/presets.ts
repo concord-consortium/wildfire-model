@@ -136,12 +136,17 @@ const presets: {[key: string]: Partial<ISimulationConfig>} = {
       [ 0, 1, 2 ]
     ]
   },
-  defaultThreeZone: {
+ defaultThreeZone: {
     zonesCount: 3,
     zones: [
-      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Grass, droughtLevel: 3 },
-      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: 2 },
-      { terrainType: TerrainType.Foothills, vegetation: Vegetation.ForestSmallLitter, droughtLevel: 0 },
+      { terrainType: TerrainType.Mountains, vegetation: Vegetation.ForestLargeLitter, droughtLevel: 0 },
+      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: 1 },
+      { terrainType: TerrainType.Plains, vegetation: Vegetation.Grass, droughtLevel: 2 },
+    ],
+    towns: [
+      { name: "Skyview", x: 0.12, y: 0.68, terrainType: TerrainType.Mountains },
+      { name: "Rolling Rock", x: 0.60, y: 0.25, terrainType: TerrainType.Foothills },
+      { name: "Evensville", x: 0.78, y: 0.55, terrainType: TerrainType.Plains },
     ],
     zoneIndex: [
       [ 0, 1, 2 ]
