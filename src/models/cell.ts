@@ -97,7 +97,7 @@ export class Cell {
       if (this.spreadRate < 10) {
         return BurnIndex.Low;
       }
-      if (this.spreadRate < 20) {
+      if (this.spreadRate < 50) {
         return BurnIndex.Medium;
       }
       return BurnIndex.High;
@@ -112,7 +112,7 @@ export class Cell {
     if (this.spreadRate < 12) {
       return BurnIndex.Low;
     }
-    if (this.spreadRate < 25) {
+    if (this.spreadRate < 40) {
       return BurnIndex.Medium;
     }
     return BurnIndex.High;

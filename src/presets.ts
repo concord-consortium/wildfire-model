@@ -136,7 +136,23 @@ const presets: {[key: string]: Partial<ISimulationConfig>} = {
       [ 0, 1, 2 ]
     ]
   },
- defaultThreeZone: {
+  dryTownsThreeZone: {
+    zonesCount: 3,
+    zones: [
+      { terrainType: TerrainType.Mountains, vegetation: Vegetation.ForestLargeLitter, droughtLevel: 1 },
+      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: 2 },
+      { terrainType: TerrainType.Plains, vegetation: Vegetation.Grass, droughtLevel: 2 },
+    ],
+    towns: [
+      { name: "Peaksburg", x: 0.2, y: 0.55, terrainType: TerrainType.Mountains },
+      { name: "Hillsboro", x: 0.4, y: 0.3, terrainType: TerrainType.Foothills },
+      { name: "Meadowland", x: 0.8, y: 0.65, terrainType: TerrainType.Plains },
+    ],
+    zoneIndex: [
+      [ 0, 1, 2 ]
+    ]
+  },
+  defaultThreeZone: {
     zonesCount: 3,
     zones: [
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.ForestLargeLitter, droughtLevel: 0 },
