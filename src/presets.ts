@@ -141,7 +141,7 @@ const presets: {[key: string]: Partial<ISimulationConfig>} = {
     zones: [
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.ForestLargeLitter, droughtLevel: 1 },
       { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: 2 },
-      { terrainType: TerrainType.Plains, vegetation: Vegetation.Grass, droughtLevel: 2 },
+      { terrainType: TerrainType.Plains, vegetation: Vegetation.Shrub, droughtLevel: 2 },
     ],
     towns: [
       { name: "Peaksburg", x: 0.2, y: 0.55, terrainType: TerrainType.Mountains },
