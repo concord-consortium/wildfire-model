@@ -21,7 +21,7 @@ const getIcons = (terrainType: TerrainType, forestWithSuppressionAvailable: bool
       // no grass, no forest with suppression
       return vegetationIcons.slice(1, 3);
     }
-  } 
+  }
   // no forest with suppression
   return vegetationIcons.slice(0, 3);
 }
@@ -35,7 +35,7 @@ const getMarks = (terrainType: TerrainType, forestWithSuppressionAvailable: bool
       // no grass, no forest with suppression
       return generateMarks(vegetationLabels.slice(1, 3));
     }
-  } 
+  }
   // no forest with suppression
   return generateMarks(vegetationLabels.slice(0, 3));
 }
@@ -48,12 +48,12 @@ export const VegetationSelector = ({ vegetation, terrainType, onChange, forestWi
       <div className={css.header}>Vegetation Type</div>
       <div className={css.sliderContainer}>
         <div className={css.sliderIcons}>
-          { 
-            icons.map((icon, idx) => 
+          {
+            icons.map((icon, idx) =>
               <div key={idx} className={`${css.sliderIcon} ${css.placeholder} ${idx === 0 ? css.bottom : (idx === icons.length - 1 ? css.top : css.mid)}`}>
                 { icon }
               </div>
-            ) 
+            )
           }
         </div>
         <Slider
