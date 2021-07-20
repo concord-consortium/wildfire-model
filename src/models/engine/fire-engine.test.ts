@@ -1,7 +1,8 @@
-import { BurnIndex, Cell } from "../cell";
+import { BurnIndex, Cell, FireState } from "../cell";
 import { FireEngine, getGridCellNeighbors, nonburnableCellBetween } from "./fire-engine";
 import { Vector2 } from "three";
 import { Zone } from "../zone";
+import { Vegetation } from "../../types";
 
 describe("nonburnableCellBetween", () => {
   it("returns true if there's any nonburnable cell between two points", () => {
@@ -52,12 +53,13 @@ describe("FireEngine", () => {
     gridWidth: 5,
     gridHeight: 5,
     minCellBurnTime: 200,
-    neighborsDist: 2.5
+    neighborsDist: 2.5,
+    fireSurvivalProbability: 1 // so there's no randomness in the test
   };
   const wind = { speed: 0, direction: 0 };
   const sparks = [new Vector2(50000, 50000)];
-  const zone = new Zone({});
-  const generateCells = () => {
+  const defaultZone = new Zone({});
+  const generateCells = (zone = defaultZone) => {
     const res = [];
     for (let x = 0; x < config.gridWidth; x += 1) {
       for (let y = 0; y < config.gridWidth; y += 1) {
@@ -90,7 +92,7 @@ describe("FireEngine", () => {
       const res = [];
       for (let x = 0; x < config.gridWidth; x += 1) {
         for (let y = 0; y < config.gridWidth; y += 1) {
-          res.push(new Cell({ x, y, zone, isUnburntIsland: true }))
+          res.push(new Cell({ x, y, zone: defaultZone, isUnburntIsland: true }))
         }
       }
       return res;
@@ -101,5 +103,34 @@ describe("FireEngine", () => {
     engine.cells.forEach(c => expect(c.isUnburntIsland).toEqual(false));
     engine.updateFire(1440);
     expect(engine.cells.filter(c => c.isBurningOrWillBurn).length).toBeGreaterThan(0);
+  });
+
+
+  describe("fire survivors", () => {
+    const testVegetationAndGetNumberOfFireSurvivors = (vegetation: Vegetation) => {
+      const zone = new Zone({ vegetation });
+      const engine = new FireEngine(generateCells(zone), wind, sparks, config);
+      expect(engine.cells.filter(c => c.isFireSurvivor).length).toEqual(0);
+      engine.updateFire(1440);
+      engine.updateFire(1440);
+      expect(engine.cells.filter(c => c.fireState === FireState.Burnt).length).toBeGreaterThan(0);
+      return engine.cells.filter(c => c.isFireSurvivor).length;
+    }
+
+    it("should not mark any grass cells as fire survivors", () => {
+      expect(testVegetationAndGetNumberOfFireSurvivors(Vegetation.Grass)).toEqual(0);
+    });
+
+    it("should not mark any shrub cells as fire survivors", () => {
+      expect(testVegetationAndGetNumberOfFireSurvivors(Vegetation.Shrub)).toEqual(0);
+    });
+
+    it("should mark some forest cells as fire survivors", () => {
+      expect(testVegetationAndGetNumberOfFireSurvivors(Vegetation.Forest)).toBeGreaterThan(0);
+    });
+
+    it("should not mark any forest with suppression cells as fire survivors", () => {
+      expect(testVegetationAndGetNumberOfFireSurvivors(Vegetation.ForestWithSuppression)).toEqual(0);
+    });
   });
 });

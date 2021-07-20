@@ -55,7 +55,7 @@ const setVertexColor = (
   if (cell.fireState === FireState.Burning) {
     color = config.showBurnIndex ? burnIndexColor(cell.burnIndex) : BURNING_COLOR;
   } else if (cell.fireState === FireState.Burnt) {
-    color = BURNT_COLOR;
+    color = cell.isFireSurvivor ? getTerrainColor(cell.droughtLevel) : BURNT_COLOR;
   } else if (cell.isRiver) {
     color = config.riverColor;
   } else if (cell.isFireLineUnderConstruction) {

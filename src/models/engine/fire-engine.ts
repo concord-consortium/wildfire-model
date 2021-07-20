@@ -76,6 +76,7 @@ export interface IFireEngineConfig {
   cellSize: number;
   minCellBurnTime: number;
   neighborsDist: number;
+  fireSurvivalProbability: number;
 }
 
 // Lightweight helper that is responsible only for math calculations. It's not bound to MobX or any UI state
@@ -89,6 +90,7 @@ export class FireEngine {
   public cellSize: number;
   public minCellBurnTime: number;
   public neighborsDist: number;
+  public fireSurvivalProbability: number;
   public endOfLowIntensityFire = false;
   public fireDidStop = false;
   public day: number = 0;
@@ -102,6 +104,7 @@ export class FireEngine {
     this.cellSize = config.cellSize;
     this.minCellBurnTime = config.minCellBurnTime;
     this.neighborsDist = config.neighborsDist;
+    this.fireSurvivalProbability = config.fireSurvivalProbability;
 
     // Use sparks to start the simulation.
     sparks.forEach(spark => {
@@ -166,6 +169,9 @@ export class FireEngine {
       const ignitionTime = cell.ignitionTime;
       if (cell.fireState === FireState.Burning && time - ignitionTime > cell.burnTime) {
         newFireStateData[i] = FireState.Burnt;
+        if (cell.canSurviveFire && Math.random() < this.fireSurvivalProbability) {
+          cell.isFireSurvivor = true;
+        }
       } else if (cell.fireState === FireState.Unburnt && time > ignitionTime ) {
         // Sets any unburnt cells to burning if we are passed their ignition time.
         // Although during a simulation all cells will have their state sent to BURNING through the process
