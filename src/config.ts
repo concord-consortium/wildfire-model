@@ -72,6 +72,7 @@ export interface ISimulationConfig {
   // Authors may want to disable the fireline and helitack features completely
   fireLineAvailable: boolean;
   helitackAvailable: boolean;
+  forestWithSuppressionAvailable: boolean;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -138,7 +139,8 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   severeDroughtAvailable: false,
   riverColor: [0.067, 0.529, 0.882, 1],
   fireLineAvailable: true,
-  helitackAvailable: true
+  helitackAvailable: true,
+  forestWithSuppressionAvailable: false
 });
 
 const getURLParam = (name: string) => {

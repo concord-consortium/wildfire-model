@@ -78,7 +78,9 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
                   <VegetationSelector
                     vegetation={displayVegetationType}
                     terrainType={zone.terrainType}
-                    onChange={this.handleVegetationChange} />
+                    onChange={this.handleVegetationChange} 
+                    forestWithSuppressionAvailable={config.forestWithSuppressionAvailable}
+                  />
                 </div>
                 <div className={css.selector}>
                   <DroughtSelector
