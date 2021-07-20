@@ -1,8 +1,8 @@
 import React from "react";
 import Grass from "../assets/terrain/vegetation-grass.svg";
 import Shrub from "../assets/terrain/vegetation-shrub.svg";
-import ForestSmallLitter from "../assets/terrain/vegetation-fsl.svg";
-import ForestLargeLitter from "../assets/terrain/vegetation-fll.svg";
+import Forest from "../assets/terrain/vegetation-fsl.svg";
+import ForestWithSuppression from "../assets/terrain/vegetation-fll.svg";
 
 import NoDrought from "../assets/terrain/drought-no.svg";
 import MildDrought from "../assets/terrain/drought-mild.svg";
@@ -12,8 +12,8 @@ import SevereDrought from "../assets/terrain/drought-severe.svg";
 export const vegetationLabels = [
   "Grass",
   "Shrub",
-  "Forest Small Litter",
-  "Forest Large Litter"
+  "Forest",
+  "Forest With Suppression"
 ];
 
 export const droughtLabels = [
@@ -34,8 +34,8 @@ export const generateMarks = (labelsToShow: string[]) => {
 export const vegetationIcons = [
   <Grass key={0} />,
   <Shrub key={1} />,
-  <ForestSmallLitter key={2} />,
-  <ForestLargeLitter key={3} />
+  <Forest key={2} />,
+  <ForestWithSuppression key={3} />
 ];
 
 export const droughtIcons = [

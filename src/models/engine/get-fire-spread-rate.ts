@@ -32,14 +32,14 @@ const FuelConstants: {[key in Vegetation]: Fuel} = {
   },
   // TODO: the following two land types have not yet been configured via specification,
   // only by approximation to get the code to compile
-  [Vegetation.ForestSmallLitter]: {
+  [Vegetation.Forest]: {
     sav: 1716,
     netFuelLoad: 0.0459,
     fuelBedDepth: 0.1,
     packingRatio: 0.04878,
     mx: 0.2
   },
-  [Vegetation.ForestLargeLitter]: {
+  [Vegetation.ForestWithSuppression]: {
     sav: 1500,
     netFuelLoad: 0.689,
     fuelBedDepth: 0.5,

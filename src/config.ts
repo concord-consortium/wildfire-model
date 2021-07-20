@@ -117,7 +117,7 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
     },
     {
       terrainType: TerrainType.Plains,
-      vegetation: Vegetation.ForestSmallLitter,
+      vegetation: Vegetation.Forest,
       droughtLevel: DroughtLevel.SevereDrought
     }
   ],
