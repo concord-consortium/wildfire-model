@@ -139,7 +139,7 @@ const presets: {[key: string]: Partial<ISimulationConfig>} = {
   dryTownsThreeZone: {
     zonesCount: 3,
     zones: [
-      { terrainType: TerrainType.Mountains, vegetation: Vegetation.ForestWithSuppression, droughtLevel: 1 },
+      { terrainType: TerrainType.Mountains, vegetation: Vegetation.Forest, droughtLevel: 1 },
       { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: 2 },
       { terrainType: TerrainType.Plains, vegetation: Vegetation.Shrub, droughtLevel: 2 },
     ],
@@ -155,7 +155,7 @@ const presets: {[key: string]: Partial<ISimulationConfig>} = {
   defaultThreeZone: {
     zonesCount: 3,
     zones: [
-      { terrainType: TerrainType.Mountains, vegetation: Vegetation.ForestWithSuppression, droughtLevel: 0 },
+      { terrainType: TerrainType.Mountains, vegetation: Vegetation.Forest, droughtLevel: 0 },
       { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: 1 },
       { terrainType: TerrainType.Plains, vegetation: Vegetation.Grass, droughtLevel: 2 },
     ],
@@ -217,7 +217,7 @@ const presets: {[key: string]: Partial<ISimulationConfig>} = {
     zones: [
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.Shrub, droughtLevel: 1 },
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.Forest, droughtLevel: 1 },
-      { terrainType: TerrainType.Mountains, vegetation: Vegetation.ForestWithSuppression, droughtLevel: 1 },
+      { terrainType: TerrainType.Mountains, vegetation: Vegetation.Forest, droughtLevel: 1 },
     ],
     zoneIndex: [
       [ 0, 1, 2 ]
@@ -239,7 +239,7 @@ const presets: {[key: string]: Partial<ISimulationConfig>} = {
     zones: [
       {
         terrainType: TerrainType.Mountains,
-        vegetation: Vegetation.ForestWithSuppression,
+        vegetation: Vegetation.Forest,
         droughtLevel: DroughtLevel.MediumDrought
       },
       {
