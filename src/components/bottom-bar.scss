@@ -76,14 +76,6 @@ $overflowHeight: 11px;
     background: $hoverColor;
   }
 
-  .precipitation{
-    width: 85px;
-
-    .precipitationSlider{
-      width: 40px;
-    }
-  }
-
   .placeSpark {
     margin-right: 0;
   }
@@ -99,10 +91,17 @@ $overflowHeight: 11px;
     margin-left: -$bottomBarWidgetGroupSpacing;
   }
 
+  .label {
+    font-size: 14px;
+    font-weight: bold;
+    padding: 4px 6px 3px 6px;
+  }
+
   .terrainButton{
     width: 100px;
     text-align: center;
   }
+
   .fullscreenIcon {
     margin-right: 5px;
     margin-top: 5px;

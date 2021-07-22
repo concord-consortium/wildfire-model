@@ -33,9 +33,9 @@ const BURNING_COLOR = [1, 0, 0, 1];
 const BURNT_COLOR = [0.2, 0.2, 0.2, 1];
 const FIRE_LINE_UNDER_CONSTRUCTION_COLOR = [0.5, 0.5, 0, 1];
 
-const BURN_INDEX_LOW = [1, 0.7, 0, 1];
-const BURN_INDEX_MEDIUM = [1, 0.5, 0, 1];
-const BURN_INDEX_HIGH = [1, 0, 0, 1];
+export const BURN_INDEX_LOW = [1, 0.7, 0, 1];
+export const BURN_INDEX_MEDIUM = [1, 0.5, 0, 1];
+export const BURN_INDEX_HIGH = [1, 0, 0, 1];
 
 const burnIndexColor = (burnIndex: BurnIndex) => {
   if (burnIndex === BurnIndex.Low) {

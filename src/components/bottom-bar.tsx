@@ -20,11 +20,11 @@ import TerrainIcon from "../assets/bottom-bar/terrain-setup.svg";
 import TerrainHighlightIcon from "../assets/bottom-bar/terrain-setup_highlight.svg";
 import TerrainThreeIcon from "../assets/bottom-bar/terrain-three.svg";
 import TerrainThreeHighlightIcon from "../assets/bottom-bar/terrain-three_highlight.svg";
-
+import { Interaction } from "../models/ui";
+import { FireIntensityScale } from "./fire-intensity-scale";
 import { IconButton } from "./icon-button";
 
 import css from "./bottom-bar.scss";
-import { Interaction } from "../models/ui";
 
 interface IProps extends IBaseProps {}
 interface IState {
@@ -150,6 +150,13 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               onClick={this.handleHelitack}
             />
           </div>
+          {
+            simulation.config.showBurnIndex &&
+            <div className={css.widgetGroup}>
+              <div className={css.label}>Fire Intensity Scale</div>
+              <FireIntensityScale />
+            </div>
+          }
         </div>
         {/* This empty container is necessary so the spacing works correctly */}
         <div className={css.rightContainer}>
