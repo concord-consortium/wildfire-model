@@ -62,6 +62,9 @@ export interface ISimulationConfig {
   // Number between 0 and 1 which decides how likely is for unburnt island to form (as it's random).
   // 1 means that all the unburnt islands will be visible, 0 means that none of them will be visible.
   unburntIslandProbability: number;
+  // Number between 0 and 1 which decides how likely is for a cells to survive fire. Note that there are other factors
+  // too. The only vegetation that can survive fire low and medium intensity fire is `Forest`.
+  fireSurvivalProbability: number;
   // Locks drought index slider in Terrain Setup dialog.
   droughtIndexLocked: boolean;
   // Makes severe drought option available in Terrain Setup dialog.
