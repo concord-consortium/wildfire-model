@@ -34,7 +34,7 @@ const BURNT_COLOR = [0.2, 0.2, 0.2, 1];
 const FIRE_LINE_UNDER_CONSTRUCTION_COLOR = [0.5, 0.5, 0, 1];
 
 const BURN_INDEX_LOW = [1, 0.7, 0, 1];
-const BURN_INDEX_MEDIUM = [1, 0.35, 0, 1];
+const BURN_INDEX_MEDIUM = [1, 0.5, 0, 1];
 const BURN_INDEX_HIGH = [1, 0, 0, 1];
 
 const burnIndexColor = (burnIndex: BurnIndex) => {
@@ -55,7 +55,7 @@ const setVertexColor = (
   if (cell.fireState === FireState.Burning) {
     color = config.showBurnIndex ? burnIndexColor(cell.burnIndex) : BURNING_COLOR;
   } else if (cell.fireState === FireState.Burnt) {
-    color = BURNT_COLOR;
+    color = cell.isFireSurvivor ? getTerrainColor(cell.droughtLevel) : BURNT_COLOR;
   } else if (cell.isRiver) {
     color = config.riverColor;
   } else if (cell.isFireLineUnderConstruction) {
