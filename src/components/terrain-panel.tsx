@@ -78,7 +78,9 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
                   <VegetationSelector
                     vegetation={displayVegetationType}
                     terrainType={zone.terrainType}
-                    onChange={this.handleVegetationChange} />
+                    onChange={this.handleVegetationChange}
+                    forestWithSuppressionAvailable={config.forestWithSuppressionAvailable}
+                  />
                 </div>
                 <div className={css.selector}>
                   <DroughtSelector
@@ -151,9 +153,9 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       // Switching to Mountain terrain changes land type / vegetation options
       // but keeping the min / max options the same for each range helps with slider rendering.
       // Accommodate this by manual adjustment of land types when switching to-from mountain
-      if (newTerrainType !== TerrainType.Mountains && currentZone.vegetation === Vegetation.ForestLargeLitter) {
+      if (newTerrainType !== TerrainType.Mountains && currentZone.vegetation === Vegetation.ForestWithSuppression) {
         // switching from Mountains with large forests to lower land type, reduce forest size
-        simulation.updateZoneVegetation(this.state.selectedZone, Vegetation.ForestSmallLitter);
+        simulation.updateZoneVegetation(this.state.selectedZone, Vegetation.Forest);
       } else if (newTerrainType === TerrainType.Mountains && currentZone.vegetation === Vegetation.Grass) {
         // no grass allowed on mountains, switch to shrubs
         simulation.updateZoneVegetation(this.state.selectedZone, Vegetation.Shrub);

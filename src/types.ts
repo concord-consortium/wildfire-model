@@ -16,8 +16,8 @@ export interface Town {
 export enum Vegetation {
   Grass = 0,
   Shrub = 1,
-  ForestSmallLitter = 2,
-  ForestLargeLitter = 3
+  Forest = 2,
+  ForestWithSuppression = 3
 }
 
 export enum TerrainType {

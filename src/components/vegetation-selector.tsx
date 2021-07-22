@@ -1,34 +1,60 @@
 import React from "react";
 import { Slider } from "@material-ui/core";
 import VerticalHandle from "../assets/slider-vertical.svg";
-import { TerrainType } from "../types";
+import { TerrainType, Vegetation } from "../types";
 import { vegetationLabels, generateMarks, vegetationIcons } from "./vertical-selectors";
 import * as css from "./vertical-selectors.scss";
 
 interface IProps {
-  vegetation: number;
-  terrainType: number;
+  vegetation: Vegetation;
+  terrainType: TerrainType;
   onChange?: any;
+  forestWithSuppressionAvailable: boolean;
 }
 
-const iconsMountains = [
-  <div className={`${css.sliderIcon} ${css.shrub} ${css.bottom} ${css.placeholder}`} key={0}>{vegetationIcons[1]}</div>,
-  <div className={`${css.sliderIcon} ${css.fsl} ${css.mid} ${css.placeholder}`} key={1} >{vegetationIcons[2]}</div>,
-  <div className={`${css.sliderIcon} ${css.fll} ${css.top} ${css.placeholder}`} key={2} >{vegetationIcons[3]}</div>
-];
-const icons = [
-  <div className={`${css.sliderIcon} ${css.grass} ${css.bottom} ${css.placeholder}`} key={0}>{vegetationIcons[0]}</div>,
-  <div className={`${css.sliderIcon} ${css.shrub} ${css.mid} ${css.placeholder}`} key={1} >{vegetationIcons[1]}</div>,
-  <div className={`${css.sliderIcon} ${css.fsl} ${css.top} ${css.placeholder}`} key={2}>{vegetationIcons[2]}</div>
-];
+const getIcons = (terrainType: TerrainType, forestWithSuppressionAvailable: boolean) => {
+  if (terrainType === TerrainType.Mountains) {
+    if (forestWithSuppressionAvailable) {
+      // no grass
+      return vegetationIcons.slice(1);
+    } else {
+      // no grass, no forest with suppression
+      return vegetationIcons.slice(1, 3);
+    }
+  }
+  // no forest with suppression
+  return vegetationIcons.slice(0, 3);
+}
 
-export const VegetationSelector = ({ vegetation: vegetationType, terrainType, onChange }: IProps) =>
-  (
+const getMarks = (terrainType: TerrainType, forestWithSuppressionAvailable: boolean) => {
+  if (terrainType === TerrainType.Mountains) {
+    if (forestWithSuppressionAvailable) {
+      // no grass
+      return generateMarks(vegetationLabels.slice(1));
+    } else {
+      // no grass, no forest with suppression
+      return generateMarks(vegetationLabels.slice(1, 3));
+    }
+  }
+  // no forest with suppression
+  return generateMarks(vegetationLabels.slice(0, 3));
+}
+
+export const VegetationSelector = ({ vegetation, terrainType, onChange, forestWithSuppressionAvailable }: IProps) => {
+  const marks = getMarks(terrainType, forestWithSuppressionAvailable);
+  const icons = getIcons(terrainType, forestWithSuppressionAvailable);
+  return (
     <div className={`${css.selector} ${css.vegetation}`}>
       <div className={css.header}>Vegetation Type</div>
       <div className={css.sliderContainer}>
         <div className={css.sliderIcons}>
-          { terrainType === TerrainType.Mountains ? iconsMountains : icons }
+          {
+            icons.map((icon, idx) =>
+              <div key={idx} className={`${css.sliderIcon} ${css.placeholder} ${idx === 0 ? css.bottom : (idx === icons.length - 1 ? css.top : css.mid)}`}>
+                { icon }
+              </div>
+            )
+          }
         </div>
         <Slider
           classes={{
@@ -40,12 +66,11 @@ export const VegetationSelector = ({ vegetation: vegetationType, terrainType, on
             disabled: css.disabled
           }}
           min={0}
-          max={2}
-          value={vegetationType}
+          max={marks.length - 1}
+          value={vegetation}
           step={1}
           track={false}
-          marks={terrainType === TerrainType.Mountains ?
-            generateMarks(vegetationLabels.slice(1)) : generateMarks(vegetationLabels.slice(0, 3))}
+          marks={marks}
           onChange={onChange}
           orientation="vertical"
           ThumbComponent={VerticalHandle}
@@ -55,3 +80,4 @@ export const VegetationSelector = ({ vegetation: vegetationType, terrainType, on
       </div>
     </div>
   );
+};

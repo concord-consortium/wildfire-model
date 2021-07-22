@@ -102,13 +102,13 @@ export class Cell {
       }
       return BurnIndex.High;
     }
-    if (this.vegetation === Vegetation.ForestSmallLitter) {
+    if (this.vegetation === Vegetation.Forest) {
       if (this.spreadRate < 25) {
         return BurnIndex.Low;
       }
       return BurnIndex.Medium;
     }
-    // this.vegetation === Vegetation.ForestLargeLitter
+    // this.vegetation === Vegetation.ForestWithSuppression
     if (this.spreadRate < 12) {
       return BurnIndex.Low;
     }

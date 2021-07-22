@@ -8,7 +8,7 @@ import { Vegetation, TerrainType } from "../types";
 
 const defaultTwoZones = [
   {
-    vegetation: Vegetation.ForestSmallLitter,
+    vegetation: Vegetation.Forest,
     moistureContent: 0.07,
     droughtLevel: 2,
     terrainType: TerrainType.Mountains
@@ -23,7 +23,7 @@ const defaultTwoZones = [
 
 const defaultThreeZones = [
   {
-    vegetation: Vegetation.ForestSmallLitter,
+    vegetation: Vegetation.Forest,
     moistureContent: 0.07,
     droughtLevel: 2,
     terrainType: TerrainType.Mountains
@@ -35,7 +35,7 @@ const defaultThreeZones = [
     terrainType: TerrainType.Plains
   },
   {
-    vegetation: Vegetation.ForestLargeLitter,
+    vegetation: Vegetation.ForestWithSuppression,
     moistureContent: 0.21,
     droughtLevel: 0,
     terrainType: TerrainType.Foothills
