@@ -79,7 +79,7 @@
     "babel-jest": "^25.2.3",
     "copy-webpack-plugin": "^5.1.1",
     "css-loader": "^3.4.2",
-    "cypress": "^8.0.0",
+    "cypress": "7.6.0",
     "enzyme": "^3.11.0",
     "enzyme-adapter-react-16": "^1.15.2",
     "file-loader": "^6.0.0",
