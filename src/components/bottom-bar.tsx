@@ -209,6 +209,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   public handleTerrain = () => {
     const { ui } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
+    ui.terrainUISelectedZone = 0;
   }
 
   public placeSpark = () => {

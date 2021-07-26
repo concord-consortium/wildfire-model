@@ -14,7 +14,6 @@ import css from "./terrain-panel.scss";
 
 interface IProps extends IBaseProps {}
 interface IState {
-  selectedZone: number;
   currentPanel: number;
 }
 const cssClasses = [css.zone1, css.zone2, css.zone3];
@@ -25,10 +24,18 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   constructor(props: IProps) {
     super(props);
     this.state = {
-      selectedZone: 0,
       currentPanel: 1
     };
   }
+
+  public get selectedZone() {
+    return this.stores.ui.terrainUISelectedZone;
+  }
+
+  public set selectedZone(value: number) {
+    this.stores.ui.terrainUISelectedZone = value;
+  }
+
   public componentDidUpdate() {
     const { ui } = this.stores;
     if (!ui.showTerrainUI && this.state.currentPanel === 2) {
@@ -38,7 +45,8 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
 
   public render() {
     const { ui, simulation, simulation: {config} } = this.stores;
-    const { selectedZone, currentPanel } = this.state;
+    const { currentPanel } = this.state;
+    const selectedZone = this.selectedZone;
     const zone = simulation.zones[selectedZone];
     const displayVegetationType =
       zone.terrainType === TerrainType.Mountains ? zone.vegetation - 1 : zone.vegetation;
@@ -132,8 +140,8 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   public handleZoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Radio buttons always return string values. We're using hidden radio buttons to change selected zone
     const newZone = parseInt(event.target.value, 10);
-    if (newZone !== this.state.selectedZone) {
-      this.setState({ selectedZone: newZone });
+    if (newZone !== this.selectedZone) {
+      this.selectedZone = newZone;
     }
   }
 
@@ -148,32 +156,32 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   public handleTerrainTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { simulation } = this.stores;
     const newTerrainType = parseInt(event.target.value, 10);
-    const currentZone = simulation.zones[this.state.selectedZone];
+    const currentZone = simulation.zones[this.selectedZone];
     if (currentZone.terrainType !== newTerrainType) {
       // Switching to Mountain terrain changes land type / vegetation options
       // but keeping the min / max options the same for each range helps with slider rendering.
       // Accommodate this by manual adjustment of land types when switching to-from mountain
       if (newTerrainType !== TerrainType.Mountains && currentZone.vegetation === Vegetation.ForestWithSuppression) {
         // switching from Mountains with large forests to lower land type, reduce forest size
-        simulation.updateZoneVegetation(this.state.selectedZone, Vegetation.Forest);
+        simulation.updateZoneVegetation(this.selectedZone, Vegetation.Forest);
       } else if (newTerrainType === TerrainType.Mountains && currentZone.vegetation === Vegetation.Grass) {
         // no grass allowed on mountains, switch to shrubs
-        simulation.updateZoneVegetation(this.state.selectedZone, Vegetation.Shrub);
+        simulation.updateZoneVegetation(this.selectedZone, Vegetation.Shrub);
       }
-      simulation.updateZoneTerrain(this.state.selectedZone, newTerrainType);
+      simulation.updateZoneTerrain(this.selectedZone, newTerrainType);
     }
   }
 
   public handleVegetationChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
     const { simulation } = this.stores;
-    const zone = simulation.zones[this.state.selectedZone];
+    const zone = simulation.zones[this.selectedZone];
     const newVegetationType = zone.terrainType === TerrainType.Mountains ? value + 1 : value;
-    simulation.updateZoneVegetation(this.state.selectedZone, newVegetationType);
+    simulation.updateZoneVegetation(this.selectedZone, newVegetationType);
   }
 
   public handleDroughtChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
     const { simulation } = this.stores;
-    simulation.updateZoneMoisture(this.state.selectedZone, value);
+    simulation.updateZoneMoisture(this.selectedZone, value);
   }
 
   private renderZoneTerrainTypeLabels = () => {
