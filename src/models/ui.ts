@@ -1,4 +1,4 @@
-import { observable, action } from "mobx";
+import { observable } from "mobx";
 
 export enum Interaction {
   PlaceSpark = "PlaceSpark",
