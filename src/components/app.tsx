@@ -7,6 +7,8 @@ import { RightPanel } from "./right-panel";
 import { BottomBar } from "./bottom-bar";
 import { useStores } from "../use-stores";
 import { TopBar } from "./top-bar/top-bar";
+import { AboutDialogContent } from "./top-bar/about-dialog-content";
+import { ShareDialogContent } from "./top-bar/share-dialog-content";
 import Shutterbug from "shutterbug";
 
 import css from "./app.scss";
@@ -31,7 +33,7 @@ export const AppComponent = observer(function WrappedComponent() {
   const showModelScale = config.showModelDimensions;
   return (
     <div className={css.app}>
-      <TopBar />
+      <TopBar projectName="Wildfire Explorer" aboutContent={<AboutDialogContent />} shareContent={<ShareDialogContent />} />
       { showModelScale &&
         <div className={css.modelInfo}>
           <div>Model Dimensions: { config.modelWidth } ft x { config.modelHeight } ft</div>

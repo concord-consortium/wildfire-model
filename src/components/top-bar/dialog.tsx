@@ -9,21 +9,16 @@ interface IProps {
   title?: string;
 }
 
-export class Dialog extends React.Component<IProps> {
-  public render() {
-    const { onClose, open, title, children } = this.props;
-    return (
-        <MuiDialog
-          onClose={onClose}
-          open={open}
-          maxWidth="lg"
-        >
-          <div className={css.dialogBody}>
-            <div className={css.title}>{ title }</div>
-            <CloseIcon className={css.closeButton} onClick={onClose} />
-            <div className={css.content}>{ children }</div>
-          </div>
-        </MuiDialog>
-    );
-  }
-}
+export const Dialog: React.FC<IProps> = ({ onClose, open, title, children }) => (
+  <MuiDialog
+    onClose={onClose}
+    open={open}
+    maxWidth="lg"
+  >
+    <div className={css.dialogBody}>
+      <div className={css.title}>{ title }</div>
+      <CloseIcon className={css.closeButton} onClick={onClose} />
+      <div className={css.content}>{ children }</div>
+    </div>
+  </MuiDialog>
+);

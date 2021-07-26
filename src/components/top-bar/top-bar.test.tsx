@@ -1,25 +1,18 @@
 import * as React from "react";
 import { shallow } from "enzyme";
-import { createStores } from "../../models/stores";
 import { TopBar } from "./top-bar";
 
 describe("TopBar component", () => {
-  let stores = createStores();
-  beforeEach(() => {
-    stores = createStores();
-  });
-
   describe("Reload button", () => {
     it("reloads the model using window.location.reload", () => {
       const wrapper = shallow(
-        <TopBar />
+        <TopBar projectName="Test" />
       );
-      const topBar = wrapper.instance() as TopBar;
       Object.defineProperty(window, 'location', {
         writable: true,
         value: { reload: jest.fn() },
       });
-      topBar.handleReload();
+      wrapper.find('[data-test="reload"]').simulate("click");
       expect(window.location.reload).toHaveBeenCalled();
     });
   });
@@ -27,7 +20,7 @@ describe("TopBar component", () => {
   describe("Share button", () => {
     it("opens share dialog", () => {
       const wrapper = shallow(
-        <TopBar />
+        <TopBar projectName="Test" />
       );
       expect(wrapper.find({open: true }).length).toEqual(0);
       wrapper.find("[data-test='share']").simulate("click");
@@ -38,7 +31,7 @@ describe("TopBar component", () => {
   describe("About button", () => {
     it("opens about dialog", () => {
       const wrapper = shallow(
-        <TopBar />
+        <TopBar projectName="Test" />
       );
       expect(wrapper.find({open: true }).length).toEqual(0);
       wrapper.find("[data-test='about']").simulate("click");
