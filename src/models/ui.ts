@@ -10,6 +10,7 @@ export enum Interaction {
 export class UIModel {
   @observable public showChart = false;
   @observable public showTerrainUI = false;
+  @observable public terrainUISelectedZone = 0;
   @observable public maxSparks: number;
 
   @observable public interaction: Interaction | null = null;

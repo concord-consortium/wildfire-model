@@ -1,6 +1,6 @@
 @import "common.scss";
 
-.simulationInfo{
+.simulationInfo {
   height: 0;
   width: 80%;
   margin-left: auto;
@@ -9,7 +9,8 @@
   flex-direction: row;
   flex-wrap: nowrap;
   justify-content: center;
-  .zone{
+
+  .zone {
     display: flex;
     margin: 10px;
     margin-left: auto;
@@ -17,48 +18,71 @@
     width: 124px;
     height: 34px;
     border-radius: 4px;
-    padding: 6px;
+    padding: 6px 10px 4px 6px;
     border: solid 1px $controlGray;
     background-color: $zone1Red;
     z-index: 2;
-    &.zone1{
+    position: relative;
+
+    .lockIcon {
+      position: absolute;
+      right: -12px;
+      top: 4px;
+      width: 24px;
+      height: 24px;
+    }
+
+    &.active:hover {
+      box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5);
+      cursor: pointer;
+    }
+
+    &.active:active {
+      box-shadow: 0 0 0 4px rgba(255, 255, 255, 1);
+    }
+
+    &.zone1 {
       background-color: $zone1Red;
     }
-    &.zone2{
+    &.zone2 {
       background-color: $zone2Blue;
     }
-    &.zone3{
+    &.zone3 {
       background-color: $zone3Orange;
     }
-    .icon{
+    .icon {
       width: 28px;
       height: 28px;
       padding-right: 8px;
       display: inline-block;
-      &.droughtIcon{
+      &.droughtIcon {
         width: 22px;
         height: 20px;
       }
     }
-    .zoneText{
+    .zoneText {
       display: inline-block;
       width: 58px;
       height: 30px;
       color: $controlText;
-      .zoneName{
+
+      .zoneName {
         font-family: Lato;
         font-weight: bold;
-
+        font-size: 14px;
+        text-align: center;
       }
-      .terrain{
+
+      .terrain {
         font-family: 'Roboto Condensed';
         font-size: 14px;
         font-weight: normal;
+        text-align: center;
       }
     }
   }
 
-  .windContainer{
+  .windContainer {
     width: 90px;
     height: 118px;
     position: fixed;
@@ -71,20 +95,20 @@
     color: $controlText;
     z-index: 2;
 
-    .windHeader{
+    .windHeader {
       font-family: Lato;
       font-size: 12px;
       font-weight: bold;
       padding: 4px;
     }
-    .windText{
+    .windText {
       font-family: 'Roboto Condensed';
       font-size: 11px;
       font-weight: normal;
       width: 60px;
       margin: auto;
     }
-    .windDial{
+    .windDial {
       transform: scale(0.7);
       transform-origin: left;
       filter: grayscale(1);
