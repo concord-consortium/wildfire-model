@@ -4,18 +4,17 @@
   width: 100%;
   background: linear-gradient(28deg, #F0F0F0 0%, #C5C3C3 100%);
   display: flex;
-  justify-content: center;
-  align-items: center;
   height: 100%;
   flex-direction: column;
   background-color: #c8c8c8;
 }
+
 .mainContent{
   overflow: hidden;
   width: 100%;
   height: calc(100% - #{$bottomBarHeight + $bottomBarBorderWidth});
   position: fixed;
-  top: 0;
+  top: $topBarHeight;
   left: 0;
   transition: 1s;
   &.shrink{
@@ -28,10 +27,10 @@
   pointer-events: none;
   overflow-x: hidden;
   width: $rightPanelContainerWidth + $tabWidth;
-  height: calc(100% - #{$bottomBarHeight + $bottomBarBorderWidth});
+  height: calc(100% - #{$bottomBarHeight + $bottomBarBorderWidth + $topBarHeight});
   min-height: 551px;
   position: fixed;
-  top: 0;
+  top: $topBarHeight;
   right: 0;
   transition: 1s;
   &.grow{
@@ -53,7 +52,7 @@
   width: 82px;
   height: 20px;
   position: fixed;
-  top: 10px;
+  top: $topBarHeight + 10px;
   left: 10px;
   background: white;
   border-radius: 4px;
