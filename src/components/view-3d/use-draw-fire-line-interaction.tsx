@@ -40,7 +40,7 @@ export const useDrawFireLineInteraction: () => InteractionHandler = () => {
         ui.interaction = null;
         const firelineEndPoint = simulation.fireLineMarkers[lastIdx];
         const firelineStartPoint = simulation.fireLineMarkers[lastIdx - 1];
-        log("fireline added", {
+        log("FireLineAdded", {
           x1: firelineStartPoint.x / simulation.config.modelWidth,
           y1: firelineStartPoint.y / simulation.config.modelHeight,
           x2: firelineEndPoint.x / simulation.config.modelWidth,

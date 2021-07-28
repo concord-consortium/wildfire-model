@@ -14,7 +14,7 @@ export const useHelitackInteraction = () => {
       const y = e.point.y / ratio;
       simulation.setHelitackPoint(x, y);
       ui.interaction = null;
-      log("helitack", { x: x / simulation.config.modelWidth, y: y / simulation.config.modelHeight });
+      log("Helitack", { x: x / simulation.config.modelWidth, y: y / simulation.config.modelHeight });
     }
   };
 };

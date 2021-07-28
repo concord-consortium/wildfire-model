@@ -130,14 +130,14 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   public handleClose = () => {
     const { ui } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
-    log("terrain panel closed");
+    log("TerrainPanelClosed");
   }
 
   public applyAndClose = () => {
     const { ui, simulation } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
     simulation.populateCellsData();
-    log("terrain panel settings saved");
+    log("TerrainPanelSettingsSaved");
   }
 
   public handleZoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,17 +146,17 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     if (newZone !== this.selectedZone) {
       this.selectedZone = newZone;
     }
-    log("terrain panel zone changed", { zone: newZone });
+    log("TerrainPanelZoneChanged", { zone: newZone });
   }
 
   public showNextPanel = () => {
     this.setState({ currentPanel: 2 });
-    log("terrain panel next button clicked");
+    log("TerrainPanelNextButtonClicked");
   }
 
   public showPreviousPanel = () => {
     this.setState({ currentPanel: 1 });
-    log("terrain panel previous button clicked");
+    log("TerrainPanelPreviousButtonClicked");
   }
 
   public handleTerrainTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -179,7 +179,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       }
       simulation.updateZoneTerrain(this.selectedZone, newTerrainType);
       logData.terrain = terrainLabels[newTerrainType];
-      log("zone updated", logData);
+      log("ZoneUpdated", logData);
     }
   }
 
@@ -188,13 +188,13 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const zone = simulation.zones[this.selectedZone];
     const newVegetationType = zone.terrainType === TerrainType.Mountains ? value + 1 : value;
     simulation.updateZoneVegetation(this.selectedZone, newVegetationType);
-    log("zone updated", { zone: this.selectedZone, vegetation: vegetationLabels[newVegetationType as Vegetation] });
+    log("ZoneUpdated", { zone: this.selectedZone, vegetation: vegetationLabels[newVegetationType as Vegetation] });
   }
 
   public handleDroughtChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
     const { simulation } = this.stores;
     simulation.updateZoneMoisture(this.selectedZone, value);
-    log("zone updated", { zone: this.selectedZone, moisture: droughtLabels[value as DroughtLevel] });
+    log("ZoneUpdated", { zone: this.selectedZone, moisture: droughtLabels[value as DroughtLevel] });
   }
 
   private renderZoneTerrainTypeLabels = () => {

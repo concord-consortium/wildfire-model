@@ -5,7 +5,7 @@ import { droughtIcons, vegetationIcons } from "./vertical-selectors";
 import { Zone } from "../models/zone";
 import { windDial, degToCompass } from "./wind-dial";
 import LockIcon from "../assets/lock.svg";
-
+import { log } from "@concord-consortium/lara-interactive-api";
 import * as css from "./simulation-info.scss";
 
 const zoneTypeText = {
@@ -40,6 +40,7 @@ export const SimulationInfo = observer(function WrappedComponent() {
     } else {
       ui.showTerrainUI = false;
     }
+    log("ZoneButtonClicked", { zone: zoneIdx + 1 });
   };
 
   return (

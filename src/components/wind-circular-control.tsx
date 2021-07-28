@@ -35,13 +35,13 @@ export const WindCircularControl = observer(function WrappedComponent() {
 
   const setDirectionAngle = (circularInputVal: number) => {
     simulation.setWindDirection(circularInputVal);
-    log("wind updated", { direction: circularInputVal });
+    log("WindUpdated", { direction: circularInputVal });
   };
 
   const handleWindSpeedChange = (event: any, value: number | number[]) => {
     const speed = (value as number) * windScaleFactor;
     simulation.setWindSpeed(speed);
-    log("wind updated", { speed });
+    log("WindUpdated", { speed });
   };
   const scaledWind = simulation.wind.speed / windScaleFactor;
 

@@ -15,18 +15,18 @@ export const TopBar: React.FC<IProps> = ({ projectName, aboutContent, shareConte
   const [aboutOpen, setAboutOpen] = React.useState<boolean>(false);
 
   const handleReload = () => {
-    log("top bar reload button clicked");
+    log("TopBarReloadButtonClicked");
     // Give some time for the log message to be delivered. Note it goes only to the parent window using postMessage,
     // so we don't have to wait for network request.
     setTimeout(() => window.location.reload(), 100);
   }
   const handleShareOpen = () => {
     setShareOpen(true);
-    log("share dialog opened");
+    log("ShareDialogOpened");
   }
   const handleAboutOpen = () => {
     setAboutOpen(true);
-    log("about dialog opened");
+    log("AboutDialogOpened");
   }
   const handleShareClose = () => setShareOpen(false);
   const handleAboutClose = () => setAboutOpen(false);

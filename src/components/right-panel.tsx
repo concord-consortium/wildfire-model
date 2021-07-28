@@ -25,9 +25,9 @@ export const RightPanel = observer(function WrappedComponent() {
 
     }
     if (ui.showChart) {
-      log("chart tab shown");
+      log("ChartTabShown");
     } else {
-      log("chart tab hidden");
+      log("ChartTabHidden");
     }
   };
 

@@ -14,7 +14,7 @@ export const usePlaceSparkInteraction = () => {
       const y = e.point.y / ratio;
       simulation.addSpark(x, y);
       ui.interaction = null;
-      log("spark placed", { x: x / simulation.config.modelWidth, y: y / simulation.config.modelHeight });
+      log("SparkPlaced", { x: x / simulation.config.modelWidth, y: y / simulation.config.modelHeight });
     }
   };
 };

@@ -20,7 +20,7 @@ export const FireLineMarkersContainer: React.FC<IProps> = observer(function Wrap
         const onDragEnd = () => {
           const firelineStartPoint = idx % 2 === 0 ? simulation.fireLineMarkers[idx] : simulation.fireLineMarkers[idx - 1];
           const firelineEndPoint = idx % 2 === 0 ? simulation.fireLineMarkers[idx + 1] : simulation.fireLineMarkers[idx];
-          log("fireline updated", {
+          log("FireLineUpdated", {
             x1: firelineStartPoint.x / simulation.config.modelWidth,
             y1: firelineStartPoint.y / simulation.config.modelHeight,
             x2: firelineEndPoint.x / simulation.config.modelWidth,

@@ -37,10 +37,10 @@ const toggleFullscreen = () => {
   }
   if (!screenfull.isFullscreen) {
     screenfull.request();
-    log("fullscreen enabled");
+    log("FullscreenEnabled");
   } else {
     screenfull.exit();
-    log("fullscreen disabled");
+    log("FullscreenDisabled");
   }
 };
 
@@ -179,24 +179,24 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     const { ui, simulation } = this.stores;
     if (simulation.simulationRunning) {
       simulation.stop();
-      log("simulation stopped");
+      log("SimulationStopped");
     } else {
       ui.showTerrainUI = false;
       simulation.start();
-      log("simulation started");
+      log("SimulationStarted");
     }
   }
 
   public handleRestart = () => {
     this.stores.chartStore.reset();
     this.stores.simulation.restart();
-    log("simulation restarted");
+    log("SimulationRestarted");
   }
 
   public handleReload = () => {
     this.stores.chartStore.reset();
     this.stores.simulation.reload();
-    log("simulation reloaded");
+    log("SimulationReloaded");
   }
 
   public handleFireLine = () => {
@@ -204,27 +204,27 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     ui.showTerrainUI = false;
     simulation.stop();
     ui.interaction = Interaction.DrawFireLine;
-    log("fire line button clicked");
+    log("FireLineButtonClicked");
   }
 
   public handleHelitack = () => {
     const { ui, simulation } = this.stores;
     ui.showTerrainUI = false;
     ui.interaction = Interaction.Helitack;
-    log("helitack button clicked");
+    log("HelitackButtonClicked");
   }
 
   public handleTerrain = () => {
     const { ui } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
     ui.terrainUISelectedZone = 0;
-    log("terrain panel button clicked");
+    log("TerrainPanelButtonClicked");
   }
 
   public placeSpark = () => {
     const { ui } = this.stores;
     ui.showTerrainUI = false;
     ui.interaction = Interaction.PlaceSpark;
-    log("spark button clicked");
+    log("SparkButtonClicked");
   }
 }
