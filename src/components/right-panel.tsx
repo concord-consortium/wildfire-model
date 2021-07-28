@@ -2,8 +2,9 @@ import { observer } from "mobx-react";
 import React, { useState } from "react";
 import { RightPanelTab } from "./right-panel-tab";
 import { useStores } from "../use-stores";
-import * as css from "./right-panel.scss";
 import { Graph } from "./graph";
+import { log } from "@concord-consortium/lara-interactive-api";
+import * as css from "./right-panel.scss";
 
 export type TabType = "graph";
 
@@ -21,6 +22,12 @@ export const RightPanel = observer(function WrappedComponent() {
       const isOpen = !open;
       setOpen(isOpen);
       ui.showChart = isOpen;
+
+    }
+    if (ui.showChart) {
+      log("chart tab shown");
+    } else {
+      log("chart tab hidden");
     }
   };
 

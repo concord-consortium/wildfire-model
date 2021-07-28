@@ -6,6 +6,7 @@ import { Interaction } from "../../models/ui";
 import { useDragging } from "./use-dragging";
 import * as THREE from "three";
 import { InteractionHandler } from "./interaction-handler";
+import { log } from "@concord-consortium/lara-interactive-api";
 
 const MIN_DIST = 1500; // feet
 
@@ -37,6 +38,14 @@ export const useDrawFireLineInteraction: () => InteractionHandler = () => {
       } else {
         // Markers are fine, finish interaction.
         ui.interaction = null;
+        const firelineEndPoint = simulation.fireLineMarkers[lastIdx];
+        const firelineStartPoint = simulation.fireLineMarkers[lastIdx - 1];
+        log("fireline added", {
+          x1: firelineStartPoint.x / simulation.config.modelWidth,
+          y1: firelineStartPoint.y / simulation.config.modelHeight,
+          x2: firelineEndPoint.x / simulation.config.modelWidth,
+          y2: firelineEndPoint.y / simulation.config.modelHeight
+        });
       }
     }
   });

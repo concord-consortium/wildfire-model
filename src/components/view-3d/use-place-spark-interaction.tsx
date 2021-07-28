@@ -2,6 +2,7 @@ import { ftToViewUnit } from "./helpers";
 import { Interaction } from "../../models/ui";
 import { useStores } from "../../use-stores";
 import { PointerEvent } from "react-three-fiber/canvas";
+import { log } from "@concord-consortium/lara-interactive-api";
 
 export const usePlaceSparkInteraction = () => {
   const { simulation, ui } = useStores();
@@ -13,6 +14,7 @@ export const usePlaceSparkInteraction = () => {
       const y = e.point.y / ratio;
       simulation.addSpark(x, y);
       ui.interaction = null;
+      log("spark placed", { x: x / simulation.config.modelWidth, y: y / simulation.config.modelHeight });
     }
   };
 };

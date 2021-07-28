@@ -1,8 +1,8 @@
 import React from "react";
 import { Slider } from "@material-ui/core";
 import VerticalHandle from "../assets/slider-vertical.svg";
-import { generateMarks, droughtIcons, droughtLabels } from "./vertical-selectors";
-import { DroughtLevel } from "../types";
+import { generateMarks, droughtIcons } from "./vertical-selectors";
+import { DroughtLevel, droughtLabels } from "../types";
 import * as css from "./vertical-selectors.scss";
 
 interface IProps {
@@ -13,7 +13,8 @@ interface IProps {
 }
 
 export const DroughtSelector = ({ droughtLevel, onChange, disabled, severeDroughtAvailable }: IProps) => {
-  const labels = severeDroughtAvailable ? droughtLabels : droughtLabels.slice(0, 3);
+  const labelsArray = Object.values(droughtLabels);
+  const labels = severeDroughtAvailable ? labelsArray : labelsArray.slice(0, 3);
   const maxLabelIdx = labels.length - 1;
   return <div className={`${css.selector} ${css.drought} ${disabled ? css.disabled : ""}`}>
     <div className={css.header}>Drought Index</div>

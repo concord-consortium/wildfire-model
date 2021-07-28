@@ -3,11 +3,12 @@ import { useStores } from "../use-stores";
 import { Slider } from "@material-ui/core";
 import { observer } from "mobx-react";
 import { windDial, degToCompass } from "./wind-dial";
-
+import { log } from "@concord-consortium/lara-interactive-api";
 import WindSymbol from "../assets/wind-symbol.svg";
 import HorizontalHandle from "../assets/slider-horizontal.svg";
 
 import css from "./wind-circular-control.scss";
+
 
 const windSpeedMarks = [
   {
@@ -34,10 +35,13 @@ export const WindCircularControl = observer(function WrappedComponent() {
 
   const setDirectionAngle = (circularInputVal: number) => {
     simulation.setWindDirection(circularInputVal);
+    log("wind updated", { direction: circularInputVal });
   };
 
   const handleWindSpeedChange = (event: any, value: number | number[]) => {
-    simulation.setWindSpeed(value as number * windScaleFactor);
+    const speed = (value as number) * windScaleFactor;
+    simulation.setWindSpeed(speed);
+    log("wind updated", { speed });
   };
   const scaledWind = simulation.wind.speed / windScaleFactor;
 

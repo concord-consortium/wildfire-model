@@ -9,6 +9,7 @@ import { Interaction } from "../../models/ui";
 export const useDraggingOverPlaneInteraction = (
   enabled: boolean,
   onDrag?: (x: number, y: number) => void,
+  onDragEnd?: () => void,
   dragPlane?: RefObject<THREE.Mesh>
 ) => {
   const { simulation, ui } = useStores();
@@ -24,6 +25,7 @@ export const useDraggingOverPlaneInteraction = (
     },
     onDragEnd: () => {
       setHover(false);
+      onDragEnd?.();
     }
   });
   // This interaction should be active only when all the others are inactive.
