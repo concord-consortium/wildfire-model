@@ -1,69 +1,45 @@
 import * as React from "react";
-import { BaseComponent, IBaseProps } from "../base";
 import RefreshIcon from "@material-ui/icons/Refresh";
 import { Dialog } from "./dialog";
-import { AboutDialogContent } from "./about-dialog-content";
-import { ShareDialogContent } from "./share-dialog-content";
 import * as css from "./top-bar.scss";
 
-interface IProps extends IBaseProps {}
-interface IState {
-  shareOpen: boolean;
-  aboutOpen: boolean;
+interface IProps {
+  projectName: string;
+  aboutContent?: JSX.Element;
+  shareContent?: JSX.Element;
 }
 
-export class TopBar extends BaseComponent<IProps, IState> {
-  constructor(props: IProps) {
-    super(props);
-    this.state = {
-      shareOpen: false,
-      aboutOpen: false
-    };
-  }
+export const TopBar: React.FC<IProps> = ({ projectName, aboutContent, shareContent }: IProps) => {
+  const [shareOpen, setShareOpen] = React.useState<boolean>(false);
+  const [aboutOpen, setAboutOpen] = React.useState<boolean>(false);
 
-  public render() {
-    return (
-      <div className={css.topBar}>
-        <span className={css.textButton} onClick={this.handleReload}><RefreshIcon /></span>
-        <span>
-          <span data-test="share" className={css.textButton} onClick={this.handleShareOpen}>Share</span>
-          <span data-test="about" className={css.textButton} onClick={this.handleAboutOpen}>About</span>
-        </span>
-        <Dialog
-          onClose={this.handleAboutClose}
-          open={this.state.aboutOpen}
-          title="About: Wildfire Explorer"
-        >
-          <AboutDialogContent />
-        </Dialog>
-        <Dialog
-          onClose={this.handleShareClose}
-          open={this.state.shareOpen}
-          title="Share: Wildfire Explorer"
-        >
-          <ShareDialogContent />
-        </Dialog>
-      </div>
-    );
-  }
+  const handleReload = () => window.location.reload();
+  const handleShareOpen = () => setShareOpen(true);
+  const handleAboutOpen = () => setAboutOpen(true);
+  const handleShareClose = () => setShareOpen(false);
+  const handleAboutClose = () => setAboutOpen(false);
 
-  public handleReload = () => {
-    window.location.reload();
-  }
-
-  public handleShareOpen = () => {
-    this.setState({ shareOpen: true });
-  }
-
-  public handleAboutOpen = () => {
-    this.setState({ aboutOpen: true });
-  }
-
-  public handleShareClose = () => {
-    this.setState({ shareOpen: false });
-  }
-
-  public handleAboutClose = () => {
-    this.setState({ aboutOpen: false });
-  }
-}
+  return (
+    <div className={css.topBar}>
+      <span className={css.textButton} data-test="reload" onClick={handleReload}><RefreshIcon /></span>
+      <span>
+        <span data-test="share" className={css.textButton} onClick={handleShareOpen}>Share</span>
+        <span data-test="about" className={css.textButton} onClick={handleAboutOpen}>About</span>
+      </span>
+      <Dialog
+        onClose={handleAboutClose}
+        open={aboutOpen}
+        title={`About: ${projectName}`}
+      >
+        { aboutContent }
+      </Dialog>
+      <Dialog
+        onClose={handleShareClose}
+        open={shareOpen}
+        title={`Share: ${projectName}`}
+      >
+        { shareContent }
+      </Dialog>
+    </div>
+  );
+};
