@@ -5,7 +5,7 @@ export const Copyright = () => (
     <b>Copyright © {(new Date()).getFullYear()}</b> <a href="http://concord.org" target="_blank" rel="noreferrer">The Concord
     Consortium</a>.
     All rights reserved. The software is licensed under
-    the <a href="https://github.com/concord-consortium/tectonic-explorer/blob/master/LICENSE"
+    the <a href="https://github.com/concord-consortium/wildfire-model/blob/master/LICENSE"
             target="_blank" rel="noreferrer">MIT</a> license.
     The content is licensed under a <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">
     Creative Commons Attribution 4.0 International License</a>.

@@ -4,23 +4,23 @@ import {Copyright} from "./copyright";
 export const AboutDialogContent = () => (
   <div>
     <p>
-      Scientists use models to explore the speed of spread and the intensity of wildfires. Use this model to explore
-      factors that affect the speed and intensity of wildfires such as the terrain, vegetation type, drought level,
-      and wind conditions. This model also includes a graph that can be used to visualize the number of acres burned
-      in the model over time.
+      Scientists use models to explore the rate of spread of wildfires under different conditions. Use this model to
+      investigate factors that affect the spread rate and intensity of wildfires such as the terrain, vegetation type,
+      drought level, and wind conditions. The model also includes a graph showing the number of acres burned in the
+      model over time.
     </p>
     <p>
-      Use the Terrain Setup window to set the environmental conditions of the simulation including the vegetation
-      type, drought index, wind speed, and wind direction.
+      Use the Terrain Setup window to set the environmental conditions of the simulation including the vegetation type,
+      drought level, wind speed, and wind direction.
     </p>
-    <p>Set the location of sparks, where the fire will start.</p>
+    <p>Add sparks to the model, click the play button, and watch the wildfire spread.</p>
     <p>
-      Click the play button to see the fire spread over the landscape. How is the speed fire spread influenced by
-      different environmental conditions in each zone?
+      Click the play button to see the fire spread over the landscape. How is the rate of fire spread influenced by the
+      environmental conditions in each zone?
     </p>
     <p>
-      Use Helitaks and Firelines to try to slow the fire down, divert the spread, and save towns from being burned.
-      Which environmental conditions make it hardest to put out or slow the fire?
+      Use firelines and helitacks to help contain the fire before it reaches the towns. Which environmental conditions
+      make it hardest to put out or slow the fire?
     </p>
     <p>
       Wildfire Explorer was created
