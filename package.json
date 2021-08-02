@@ -124,7 +124,7 @@
     "rc-slider": "^8.7.1",
     "react": "^16.13.1",
     "react-chartjs-2": "^2.9.0",
-    "react-circular-input": "^0.1.7",
+    "react-circular-input": "^0.2.3",
     "react-dom": "^16.13.1",
     "react-three-fiber": "^4.0.23",
     "screenfull": "^5.0.2",

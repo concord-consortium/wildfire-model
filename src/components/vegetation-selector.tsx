@@ -8,8 +8,9 @@ import * as css from "./vertical-selectors.scss";
 interface IProps {
   vegetation: Vegetation;
   terrainType: TerrainType;
-  onChange?: any;
   forestWithSuppressionAvailable: boolean;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: number) => void;
+  onChangeCommitted?: (event: React.ChangeEvent<HTMLInputElement>, value: number) => void;
 }
 
 const getIcons = (terrainType: TerrainType, forestWithSuppressionAvailable: boolean) => {
@@ -41,7 +42,7 @@ const getMarks = (terrainType: TerrainType, forestWithSuppressionAvailable: bool
   return generateMarks(labelsArray.slice(0, 3));
 }
 
-export const VegetationSelector = ({ vegetation, terrainType, onChange, forestWithSuppressionAvailable }: IProps) => {
+export const VegetationSelector = ({ vegetation, terrainType, onChange, onChangeCommitted, forestWithSuppressionAvailable }: IProps) => {
   const marks = getMarks(terrainType, forestWithSuppressionAvailable);
   const icons = getIcons(terrainType, forestWithSuppressionAvailable);
   return (
@@ -73,6 +74,7 @@ export const VegetationSelector = ({ vegetation, terrainType, onChange, forestWi
           track={false}
           marks={marks}
           onChange={onChange}
+          onChangeCommitted={onChangeCommitted}
           orientation="vertical"
           ThumbComponent={VerticalHandle}
           className={css.vegetationSlider}

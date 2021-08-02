@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useStores } from "../use-stores";
 import { Slider } from "@material-ui/core";
 import { observer } from "mobx-react";
-import { windDial, degToCompass } from "./wind-dial";
+import { WindDial, degToCompass } from "./wind-dial";
 import { log } from "@concord-consortium/lara-interactive-api";
 import WindSymbol from "../assets/wind-symbol.svg";
 import HorizontalHandle from "../assets/slider-horizontal.svg";
@@ -35,14 +35,24 @@ export const WindCircularControl = observer(function WrappedComponent() {
 
   const setDirectionAngle = (circularInputVal: number) => {
     simulation.setWindDirection(circularInputVal);
-    log("WindUpdated", { direction: circularInputVal });
+  };
+
+  const handleDirectionAngleEnd = (angle: number) => {
+    log("WindUpdated", { angle, direction: degToCompass(angle) });
   };
 
   const handleWindSpeedChange = (event: any, value: number | number[]) => {
     const speed = (value as number) * windScaleFactor;
     simulation.setWindSpeed(speed);
-    log("WindUpdated", { speed });
   };
+
+  const handleWindSpeedChangeCommitted = (event: any, value: number | number[]) => {
+    const speed = (value as number) * windScaleFactor;
+    simulation.setWindSpeed(speed);
+    log("WindUpdated", { speed: value }); // us raw value before conversion, so logs match the UI value
+  };
+
+
   const scaledWind = simulation.wind.speed / windScaleFactor;
 
   return (
@@ -51,7 +61,11 @@ export const WindCircularControl = observer(function WrappedComponent() {
         <div className={css.windSymbolContainer} style={{transform: `rotate(${simulation.wind.direction + 180}deg)`}}>
           <WindSymbol className={css.windSymbol} />
         </div>
-        {windDial(simulation.wind.direction, setDirectionAngle)}
+        <WindDial
+          windDirection={simulation.wind.direction}
+          onChange={setDirectionAngle}
+          onChangeEnd={handleDirectionAngleEnd}
+        />
       </div>
 
       <div className={css.key}>Wind Direction and Speed</div>
@@ -67,6 +81,7 @@ export const WindCircularControl = observer(function WrappedComponent() {
             step={1}
             marks={windSpeedMarks}
             onChange={handleWindSpeedChange}
+            onChangeCommitted={handleWindSpeedChangeCommitted}
             ThumbComponent={HorizontalHandle}
           />
         </div>
