@@ -6,9 +6,10 @@ import { renderZones } from "./zone-selector";
 import { TerrainTypeSelector } from "./terrain-type-selector";
 import { VegetationSelector } from "./vegetation-selector";
 import { DroughtSelector } from "./drought-selector";
-import { TerrainType, Vegetation } from "../types";
+import { droughtLabels, DroughtLevel, terrainLabels, TerrainType, Vegetation, vegetationLabels } from "../types";
 import { WindCircularControl } from "./wind-circular-control";
 import { TerrainSummary } from "./terrain-summary";
+import { log } from "@concord-consortium/lara-interactive-api";
 
 import css from "./terrain-panel.scss";
 
@@ -129,12 +130,14 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   public handleClose = () => {
     const { ui } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
+    log("TerrainPanelClosed");
   }
 
   public applyAndClose = () => {
     const { ui, simulation } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
     simulation.populateCellsData();
+    log("TerrainPanelSettingsSaved");
   }
 
   public handleZoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -143,20 +146,24 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     if (newZone !== this.selectedZone) {
       this.selectedZone = newZone;
     }
+    log("TerrainPanelZoneChanged", { zone: newZone });
   }
 
   public showNextPanel = () => {
     this.setState({ currentPanel: 2 });
+    log("TerrainPanelNextButtonClicked");
   }
 
   public showPreviousPanel = () => {
     this.setState({ currentPanel: 1 });
+    log("TerrainPanelPreviousButtonClicked");
   }
 
   public handleTerrainTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { simulation } = this.stores;
-    const newTerrainType = parseInt(event.target.value, 10);
+    const newTerrainType = parseInt(event.target.value, 10) as TerrainType;
     const currentZone = simulation.zones[this.selectedZone];
+    const logData: any = { zone: this.selectedZone };
     if (currentZone.terrainType !== newTerrainType) {
       // Switching to Mountain terrain changes land type / vegetation options
       // but keeping the min / max options the same for each range helps with slider rendering.
@@ -164,11 +171,15 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       if (newTerrainType !== TerrainType.Mountains && currentZone.vegetation === Vegetation.ForestWithSuppression) {
         // switching from Mountains with large forests to lower land type, reduce forest size
         simulation.updateZoneVegetation(this.selectedZone, Vegetation.Forest);
+        logData.vegetation = vegetationLabels[Vegetation.Forest];
       } else if (newTerrainType === TerrainType.Mountains && currentZone.vegetation === Vegetation.Grass) {
         // no grass allowed on mountains, switch to shrubs
         simulation.updateZoneVegetation(this.selectedZone, Vegetation.Shrub);
+        logData.vegetation = vegetationLabels[Vegetation.Shrub];
       }
       simulation.updateZoneTerrain(this.selectedZone, newTerrainType);
+      logData.terrain = terrainLabels[newTerrainType];
+      log("ZoneUpdated", logData);
     }
   }
 
@@ -177,24 +188,21 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const zone = simulation.zones[this.selectedZone];
     const newVegetationType = zone.terrainType === TerrainType.Mountains ? value + 1 : value;
     simulation.updateZoneVegetation(this.selectedZone, newVegetationType);
+    log("ZoneUpdated", { zone: this.selectedZone, vegetation: vegetationLabels[newVegetationType as Vegetation] });
   }
 
   public handleDroughtChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
     const { simulation } = this.stores;
     simulation.updateZoneMoisture(this.selectedZone, value);
+    log("ZoneUpdated", { zone: this.selectedZone, moisture: droughtLabels[value as DroughtLevel] });
   }
 
   private renderZoneTerrainTypeLabels = () => {
     const { simulation, simulation: { config } } = this.stores;
     const labels: any[] = [];
-    const labelText = {
-      0: "Plains",
-      1: "Foothills",
-      2: "Mountains"
-    };
     simulation.zones.forEach((z, i) => {
       if (i < config.zonesCount) {
-        labels.push(<div className={css.terrainTypeLabel} key={i}>{labelText[z.terrainType]}</div>);
+        labels.push(<div className={css.terrainTypeLabel} key={i}>{ terrainLabels[z.terrainType] }</div>);
       }
     });
     return labels;

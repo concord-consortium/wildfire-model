@@ -4,7 +4,7 @@ import { TopBar } from "./top-bar";
 
 describe("TopBar component", () => {
   describe("Reload button", () => {
-    it("reloads the model using window.location.reload", () => {
+    it("reloads the model using window.location.reload", (done) => {
       const wrapper = shallow(
         <TopBar projectName="Test" />
       );
@@ -13,7 +13,11 @@ describe("TopBar component", () => {
         value: { reload: jest.fn() },
       });
       wrapper.find('[data-test="reload"]').simulate("click");
-      expect(window.location.reload).toHaveBeenCalled();
+
+      setTimeout(() => {
+        expect(window.location.reload).toHaveBeenCalled();
+        done();
+      }, 150);
     });
   });
 

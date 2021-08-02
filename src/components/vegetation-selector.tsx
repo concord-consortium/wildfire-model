@@ -1,8 +1,8 @@
 import React from "react";
 import { Slider } from "@material-ui/core";
 import VerticalHandle from "../assets/slider-vertical.svg";
-import { TerrainType, Vegetation } from "../types";
-import { vegetationLabels, generateMarks, vegetationIcons } from "./vertical-selectors";
+import { TerrainType, Vegetation, vegetationLabels } from "../types";
+import { generateMarks, vegetationIcons } from "./vertical-selectors";
 import * as css from "./vertical-selectors.scss";
 
 interface IProps {
@@ -27,17 +27,18 @@ const getIcons = (terrainType: TerrainType, forestWithSuppressionAvailable: bool
 }
 
 const getMarks = (terrainType: TerrainType, forestWithSuppressionAvailable: boolean) => {
+  const labelsArray = Object.values(vegetationLabels);
   if (terrainType === TerrainType.Mountains) {
     if (forestWithSuppressionAvailable) {
       // no grass
-      return generateMarks(vegetationLabels.slice(1));
+      return generateMarks(labelsArray.slice(1));
     } else {
       // no grass, no forest with suppression
-      return generateMarks(vegetationLabels.slice(1, 3));
+      return generateMarks(labelsArray.slice(1, 3));
     }
   }
   // no forest with suppression
-  return generateMarks(vegetationLabels.slice(0, 3));
+  return generateMarks(labelsArray.slice(0, 3));
 }
 
 export const VegetationSelector = ({ vegetation, terrainType, onChange, forestWithSuppressionAvailable }: IProps) => {

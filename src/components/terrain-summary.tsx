@@ -1,11 +1,11 @@
 import React from "react";
-
-import { vegetationLabels, droughtLabels, vegetationIcons, droughtIcons } from "./vertical-selectors";
+import { vegetationIcons, droughtIcons } from "./vertical-selectors";
+import { vegetationLabels, droughtLabels, Vegetation, DroughtLevel } from "../types";
 import * as css from "./terrain-summary.scss";
 
 interface IProps {
-  vegetationType: number;
-  droughtLevel: number;
+  vegetationType: Vegetation;
+  droughtLevel: DroughtLevel;
   onChange?: any;
 }
 

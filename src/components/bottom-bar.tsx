@@ -5,7 +5,6 @@ import CCLogo from "../assets/cc-logo.svg";
 import CCLogoSmall from "../assets/cc-logo-small.svg";
 import screenfull from "screenfull";
 import Button from "@material-ui/core/Button";
-
 import SparkIcon from "../assets/bottom-bar/spark.svg";
 import SparkHighlight from "../assets/bottom-bar/spark_highlight.svg";
 import PauseIcon from "../assets/bottom-bar/pause.svg";
@@ -23,6 +22,7 @@ import TerrainThreeHighlightIcon from "../assets/bottom-bar/terrain-three_highli
 import { Interaction } from "../models/ui";
 import { FireIntensityScale } from "./fire-intensity-scale";
 import { IconButton } from "./icon-button";
+import { log } from "@concord-consortium/lara-interactive-api";
 
 import css from "./bottom-bar.scss";
 
@@ -37,8 +37,10 @@ const toggleFullscreen = () => {
   }
   if (!screenfull.isFullscreen) {
     screenfull.request();
+    log("FullscreenEnabled");
   } else {
     screenfull.exit();
+    log("FullscreenDisabled");
   }
 };
 
@@ -177,20 +179,24 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     const { ui, simulation } = this.stores;
     if (simulation.simulationRunning) {
       simulation.stop();
+      log("SimulationStopped");
     } else {
       ui.showTerrainUI = false;
       simulation.start();
+      log("SimulationStarted");
     }
   }
 
   public handleRestart = () => {
     this.stores.chartStore.reset();
     this.stores.simulation.restart();
+    log("SimulationRestarted");
   }
 
   public handleReload = () => {
     this.stores.chartStore.reset();
     this.stores.simulation.reload();
+    log("SimulationReloaded");
   }
 
   public handleFireLine = () => {
@@ -198,23 +204,27 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     ui.showTerrainUI = false;
     simulation.stop();
     ui.interaction = Interaction.DrawFireLine;
+    log("FireLineButtonClicked");
   }
 
   public handleHelitack = () => {
     const { ui, simulation } = this.stores;
     ui.showTerrainUI = false;
     ui.interaction = Interaction.Helitack;
+    log("HelitackButtonClicked");
   }
 
   public handleTerrain = () => {
     const { ui } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
     ui.terrainUISelectedZone = 0;
+    log("TerrainPanelButtonClicked");
   }
 
   public placeSpark = () => {
     const { ui } = this.stores;
     ui.showTerrainUI = false;
     ui.interaction = Interaction.PlaceSpark;
+    log("SparkButtonClicked");
   }
 }

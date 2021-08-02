@@ -110,6 +110,7 @@
     "webpack-dev-server": "^3.10.3"
   },
   "dependencies": {
+    "@concord-consortium/lara-interactive-api": "^1.1.0",
     "@material-ui/core": "^4.12.2",
     "@material-ui/icons": "^4.11.2",
     "chart.js": "^2.9.3",

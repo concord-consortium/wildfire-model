@@ -2,6 +2,7 @@ import { ftToViewUnit } from "./helpers";
 import { Interaction } from "../../models/ui";
 import { useStores } from "../../use-stores";
 import { PointerEvent } from "react-three-fiber/canvas";
+import { log } from "@concord-consortium/lara-interactive-api";
 
 export const useHelitackInteraction = () => {
   const { simulation, ui } = useStores();
@@ -13,6 +14,7 @@ export const useHelitackInteraction = () => {
       const y = e.point.y / ratio;
       simulation.setHelitackPoint(x, y);
       ui.interaction = null;
+      log("Helitack", { x: x / simulation.config.modelWidth, y: y / simulation.config.modelHeight });
     }
   };
 };

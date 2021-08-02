@@ -2,6 +2,7 @@ import * as React from "react";
 import RefreshIcon from "@material-ui/icons/Refresh";
 import { Dialog } from "./dialog";
 import * as css from "./top-bar.scss";
+import { log } from "@concord-consortium/lara-interactive-api";
 
 interface IProps {
   projectName: string;
@@ -13,9 +14,20 @@ export const TopBar: React.FC<IProps> = ({ projectName, aboutContent, shareConte
   const [shareOpen, setShareOpen] = React.useState<boolean>(false);
   const [aboutOpen, setAboutOpen] = React.useState<boolean>(false);
 
-  const handleReload = () => window.location.reload();
-  const handleShareOpen = () => setShareOpen(true);
-  const handleAboutOpen = () => setAboutOpen(true);
+  const handleReload = () => {
+    log("TopBarReloadButtonClicked");
+    // Give some time for the log message to be delivered. Note it goes only to the parent window using postMessage,
+    // so we don't have to wait for network request.
+    setTimeout(() => window.location.reload(), 100);
+  }
+  const handleShareOpen = () => {
+    setShareOpen(true);
+    log("ShareDialogOpened");
+  }
+  const handleAboutOpen = () => {
+    setAboutOpen(true);
+    log("AboutDialogOpened");
+  }
   const handleShareClose = () => setShareOpen(false);
   const handleAboutClose = () => setAboutOpen(false);
 

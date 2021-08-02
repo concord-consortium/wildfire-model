@@ -33,6 +33,7 @@ interface IProps {
   anchorY?: number;
   // onDrag and dragPlane enable dragging.
   onDrag?: (x: number, y: number) => void;
+  onDragEnd?: () => void;
   dragPlane?: RefObject<THREE.Mesh>;
   // Optional highlight image that we'll be activated on hover.
   markerHighlightImg?: string | HTMLCanvasElement;
@@ -40,7 +41,7 @@ interface IProps {
 }
 
 export const Marker: React.FC<IProps> = observer(function WrappedComponent({
- markerImg, markerHighlightImg, position, onDrag, dragPlane,
+ markerImg, markerHighlightImg, position, onDrag, onDragEnd, dragPlane,
  width = 0.06, height = 0.06, anchorX = 0.5, anchorY = 0, lockOnSimStart = false
 }) {
   const { simulation } = useStores();
@@ -49,7 +50,7 @@ export const Marker: React.FC<IProps> = observer(function WrappedComponent({
   const lockedOnSimStart = lockOnSimStart && simulation.simulationStarted;
   // Dragging is disabled when onDrag and dragPlane are missing, or when marker is locked on sim start.
   const draggingEnabled = !!onDrag && !!dragPlane && !lockedOnSimStart;
-  const draggingInteraction = useDraggingOverPlaneInteraction(draggingEnabled, onDrag, dragPlane);
+  const draggingInteraction = useDraggingOverPlaneInteraction(draggingEnabled, onDrag, onDragEnd, dragPlane);
 
   if (!simulation.dataReady) {
     // Don't render markers when simulation data isn't downloaded yet.

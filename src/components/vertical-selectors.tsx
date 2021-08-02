@@ -9,20 +9,6 @@ import MildDrought from "../assets/terrain/drought-mild.svg";
 import MedDrought from "../assets/terrain/drought-med.svg";
 import SevereDrought from "../assets/terrain/drought-severe.svg";
 
-export const vegetationLabels = [
-  "Grass",
-  "Shrub",
-  "Forest",
-  "Forest With Suppression"
-];
-
-export const droughtLabels = [
-  "No Drought",
-  "Mild Drought",
-  "Medium Drought",
-  "Severe Drought",
-];
-
 export const generateMarks = (labelsToShow: string[]) => {
   const sliderMarks: any[] = [];
   labelsToShow.forEach((l, i) => {
