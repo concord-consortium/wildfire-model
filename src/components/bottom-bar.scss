@@ -196,3 +196,18 @@ $overflowHeight: 11px;
     font-size: 9px;
   }
 }
+
+.sparksCount {
+  position: absolute;
+  top: 4px;
+  right: 5px;
+  width: 14px;
+  height: 14px;
+  font-size: 12px;
+  line-height: 14px;
+  background: #dfdfdf;
+  border-radius: 7px;
+  text-align: center;
+  z-index: 1;
+  pointer-events: none;
+}
