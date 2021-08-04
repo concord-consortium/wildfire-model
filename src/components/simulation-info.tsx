@@ -40,7 +40,7 @@ export const SimulationInfo = observer(function WrappedComponent() {
     } else {
       ui.showTerrainUI = false;
     }
-    log("ZoneButtonClicked", { zone: zoneIdx + 1 });
+    log("ZoneButtonClicked", { zone: zoneIdx });
   };
 
   return (
