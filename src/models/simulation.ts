@@ -14,6 +14,10 @@ interface ICoords {
   y: number;
 }
 
+// When config.changeWindOnDay is defined, but config.newWindSpeed is not, the model will use random value limited
+// by this constant.
+const NEW_WIND_MAX_SPEED = 20; // mph
+
 // This class is responsible for data loading, adding sparks and fire lines and so on. It's more focused
 // on management and interactions handling. Core calculations are delegated to FireEngine.
 // Also, all the observable properties should be here, so the view code can observe them.
@@ -24,6 +28,11 @@ export class SimulationModel {
   public engine: FireEngine | null = null;
   // Cells are not directly observable. Changes are broadcasted using cellsStateFlag and cellsElevationFlag.
   public cells: Cell[] = [];
+
+  public userDefinedWind: IWindProps | undefined = undefined;
+  // This property is also used by the UI to highlight wind info box.
+  @observable public windDidChange = false;
+
   @observable public time = 0;
   @observable public dataReady = false;
   @observable public wind: IWindProps;
@@ -66,6 +75,10 @@ export class SimulationModel {
 
   @computed public get timeInHours() {
     return Math.floor(this.time / 60);
+  }
+
+  @computed public get timeInDays() {
+    return this.time / 1440;
   }
 
   @computed public get canAddSpark() {
@@ -216,6 +229,19 @@ export class SimulationModel {
     this.updateCellsElevationFlag();
     this.time = 0;
     this.engine = null;
+    this.windDidChange = false;
+    if (this.userDefinedWind) {
+      this.wind.speed = this.userDefinedWind.speed;
+      this.wind.direction = this.userDefinedWind.direction;
+      // Clear the saved wind settings. Otherwise, the following scenario might fail:
+      // - simulation is started, userDefinedWind is saved when the wind settings are updated during the simulation
+      // - user restarts simulation, userDefinedWind props are restored (as expected)
+      // - user manually updates wind properties to new values
+      // - simulation started and then restarted again BEFORE the new wind settings are applied
+      // If userDefinedWind value isn't cleared, the user would see wrong wind setting after the second model restart.
+      // This use case is coved by one of the tests in the simulation.test.ts
+      this.userDefinedWind = undefined;
+    }
   }
 
   @action.bound public reload() {
@@ -258,6 +284,10 @@ export class SimulationModel {
       timeStep = 1;
     }
 
+    this.tick(timeStep);
+  }
+
+  @action.bound public tick(timeStep: number) {
     if (this.engine) {
       this.time += timeStep;
       this.engine.updateFire(this.time);
@@ -267,6 +297,30 @@ export class SimulationModel {
     }
 
     this.updateCellsStateFlag();
+
+    this.changeWindIfNecessary();
+  }
+
+  @action.bound public changeWindIfNecessary() {
+    if (this.config.changeWindOnDay !== undefined && this.timeInDays >= this.config.changeWindOnDay && this.windDidChange === false) {
+      const newDirection = this.config.newWindDirection !== undefined ? this.config.newWindDirection : Math.random() * 360;
+      const newSpeed = (this.config.newWindSpeed !== undefined ? this.config.newWindSpeed : Math.random() * NEW_WIND_MAX_SPEED) * this.config.windScaleFactor;
+      // Save user defined values that will be restored when model is reset or reloaded.
+      this.userDefinedWind = {
+        speed: this.wind.speed,
+        direction: this.wind.direction
+      };
+      // Update UI.
+      this.wind.direction = newDirection;
+      this.wind.speed = newSpeed;
+      // Update engine.
+      if (this.engine) {
+        this.engine.wind.direction = newDirection;
+        this.engine.wind.speed = newSpeed;
+      }
+      // Mark that the change just happened.
+      this.windDidChange = true;
+    }
   }
 
   @action.bound public updateCellsElevationFlag() {
