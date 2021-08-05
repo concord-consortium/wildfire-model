@@ -82,18 +82,34 @@
     }
   }
 
+@keyframes highlight {
+  0% {
+    background: #fff;
+  }
+  15% {
+    background: rgb(255, 158, 158);
+  }
+  100% {
+    background: #fff;
+  }
+}
+
   .windContainer {
     width: 90px;
     height: 118px;
     position: fixed;
     top: 70px + $topBarHeight;
     left: 10px;
-    background: white;
+    background: #fff;
     border-radius: 4px;
     border: solid 1px $controlGray;
     text-align: center;
     color: $controlText;
     z-index: 2;
+
+    &.windDidChange {
+      animation: highlight 2s ease-in-out;
+    }
 
     .windHeader {
       font-family: Lato;

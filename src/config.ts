@@ -76,6 +76,12 @@ export interface ISimulationConfig {
   fireLineAvailable: boolean;
   helitackAvailable: boolean;
   forestWithSuppressionAvailable: boolean;
+  // If set to a number, the wind direction and strength will change during the model run.
+  changeWindOnDay: number | undefined;
+  // Works together with `changeWindOnDay`. Sets the new wind direction (0 to 360). If undefined, it'll be random.
+  newWindDirection: number | undefined;
+  // Works together with `changeWindOnDay`. Sets the new wind speed (mph). If undefined, it'll be random.
+  newWindSpeed: number | undefined;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -145,6 +151,9 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   fireLineAvailable: true,
   helitackAvailable: true,
   forestWithSuppressionAvailable: true,
+  changeWindOnDay: undefined,
+  newWindDirection: undefined,
+  newWindSpeed: undefined
 });
 
 const getURLParam = (name: string) => {
