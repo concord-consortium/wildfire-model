@@ -88,6 +88,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
                     vegetation={displayVegetationType}
                     terrainType={zone.terrainType}
                     onChange={this.handleVegetationChange}
+                    onChangeCommitted={this.handleVegetationChangeCommitted}
                     forestWithSuppressionAvailable={config.forestWithSuppressionAvailable}
                   />
                 </div>
@@ -95,6 +96,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
                   <DroughtSelector
                     droughtLevel={zone.droughtLevel}
                     onChange={this.handleDroughtChange}
+                    onChangeCommitted={this.handleDroughtChangeCommitted}
                     severeDroughtAvailable={simulation.config.severeDroughtAvailable}
                     disabled={simulation.config.droughtIndexLocked}
                   />
@@ -186,14 +188,26 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   public handleVegetationChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
     const { simulation } = this.stores;
     const zone = simulation.zones[this.selectedZone];
-    const newVegetationType = zone.terrainType === TerrainType.Mountains ? value + 1 : value;
-    simulation.updateZoneVegetation(this.selectedZone, newVegetationType);
-    log("ZoneUpdated", { zone: this.selectedZone, vegetation: vegetationLabels[newVegetationType as Vegetation] });
+    if (zone.vegetation !== value) {
+      simulation.updateZoneVegetation(this.selectedZone, value);
+    }
+  }
+
+  public handleVegetationChangeCommitted = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
+    const { simulation } = this.stores;
+    const zone = simulation.zones[this.selectedZone];
+    log("ZoneUpdated", { zone: this.selectedZone, vegetation: vegetationLabels[value as Vegetation] });
   }
 
   public handleDroughtChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
     const { simulation } = this.stores;
-    simulation.updateZoneMoisture(this.selectedZone, value);
+    const zone = simulation.zones[this.selectedZone];
+    if (zone.droughtLevel !== value) {
+      simulation.updateZoneMoisture(this.selectedZone, value);
+    }
+  }
+
+  public handleDroughtChangeCommitted = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
     log("ZoneUpdated", { zone: this.selectedZone, moisture: droughtLabels[value as DroughtLevel] });
   }
 

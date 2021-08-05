@@ -4,12 +4,14 @@ import VerticalHandle from "../assets/slider-vertical.svg";
 import { TerrainType, Vegetation, vegetationLabels } from "../types";
 import { generateMarks, vegetationIcons } from "./vertical-selectors";
 import * as css from "./vertical-selectors.scss";
+import { Terrain } from "./view-3d/terrain";
 
 interface IProps {
   vegetation: Vegetation;
   terrainType: TerrainType;
-  onChange?: any;
   forestWithSuppressionAvailable: boolean;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: number) => void;
+  onChangeCommitted?: (event: React.ChangeEvent<HTMLInputElement>, value: number) => void;
 }
 
 const getIcons = (terrainType: TerrainType, forestWithSuppressionAvailable: boolean) => {
@@ -41,9 +43,14 @@ const getMarks = (terrainType: TerrainType, forestWithSuppressionAvailable: bool
   return generateMarks(labelsArray.slice(0, 3));
 }
 
-export const VegetationSelector = ({ vegetation, terrainType, onChange, forestWithSuppressionAvailable }: IProps) => {
+export const VegetationSelector = ({ vegetation, terrainType, onChange, onChangeCommitted, forestWithSuppressionAvailable }: IProps) => {
   const marks = getMarks(terrainType, forestWithSuppressionAvailable);
   const icons = getIcons(terrainType, forestWithSuppressionAvailable);
+
+  const adjustSliderValue = (value: number) => terrainType === TerrainType.Mountains ? value + 1 : value;
+  const handleOnChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => onChange?.(event, adjustSliderValue(value));
+  const handleOnChangeCommitted = (event: React.ChangeEvent<HTMLInputElement>, value: number) => onChangeCommitted?.(event, adjustSliderValue(value));
+
   return (
     <div className={`${css.selector} ${css.vegetation}`}>
       <div className={css.header}>Vegetation Type</div>
@@ -72,7 +79,8 @@ export const VegetationSelector = ({ vegetation, terrainType, onChange, forestWi
           step={1}
           track={false}
           marks={marks}
-          onChange={onChange}
+          onChange={handleOnChange}
+          onChangeCommitted={handleOnChangeCommitted}
           orientation="vertical"
           ThumbComponent={VerticalHandle}
           className={css.vegetationSlider}

@@ -7,12 +7,13 @@ import * as css from "./vertical-selectors.scss";
 
 interface IProps {
   droughtLevel: number;
-  onChange?: any;
   disabled?: boolean;
   severeDroughtAvailable?: boolean;
+  onChange?: (event: React.ChangeEvent<HTMLInputElement>, value: number) => void;
+  onChangeCommitted?: (event: React.ChangeEvent<HTMLInputElement>, value: number) => void;
 }
 
-export const DroughtSelector = ({ droughtLevel, onChange, disabled, severeDroughtAvailable }: IProps) => {
+export const DroughtSelector = ({ droughtLevel, onChange, onChangeCommitted, disabled, severeDroughtAvailable }: IProps) => {
   const labelsArray = Object.values(droughtLabels);
   const labels = severeDroughtAvailable ? labelsArray : labelsArray.slice(0, 3);
   const maxLabelIdx = labels.length - 1;
@@ -47,6 +48,7 @@ export const DroughtSelector = ({ droughtLevel, onChange, disabled, severeDrough
         track={false}
         marks={generateMarks(labels)}
         onChange={onChange}
+        onChangeCommitted={onChangeCommitted}
         orientation="vertical"
         ThumbComponent={VerticalHandle}
         className={css.droughtSlider}
