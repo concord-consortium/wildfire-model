@@ -69,8 +69,12 @@ export class SimulationModel {
   }
 
   @computed public get canAddSpark() {
+    return this.remainingSparks > 0;
+  }
+
+  @computed public get remainingSparks() {
     // There's an assumption that number of sparks should be smaller than number of zones.
-    return this.sparks.length < this.config.zonesCount;
+    return this.config.zonesCount - this.sparks.length;
   }
 
   @computed public get canAddFireLineMarker() {

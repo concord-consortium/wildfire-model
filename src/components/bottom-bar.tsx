@@ -106,6 +106,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
             />
           </div>
           <div className={`${css.widgetGroup} ${css.placeSpark}`}>
+            <div className={css.sparksCount}>{ simulation.remainingSparks }</div>
             <IconButton icon={<SparkIcon />} highlightIcon={<SparkHighlight />}
               disabled={this.sparkBtnDisabled} buttonText="Spark" dataTest="spark-button" onClick={this.placeSpark}
             />
