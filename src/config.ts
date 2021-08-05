@@ -141,7 +141,7 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   helitackDelay: 240, // four hours
   maxFireLineLength: 15000, // ft
   helitackDropRadius: 2640, // ft (5280 ft = 1 mile)
-  showBurnIndex: false,
+  showBurnIndex: true,
   showCoordsOnClick: false,
   unburntIslandProbability: 0.5, // [0, 1]
   fireSurvivalProbability: 0.1, // [0, 1]
@@ -150,7 +150,7 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   riverColor: [0.067, 0.529, 0.882, 1],
   fireLineAvailable: true,
   helitackAvailable: true,
-  forestWithSuppressionAvailable: false,
+  forestWithSuppressionAvailable: true,
   changeWindOnDay: undefined,
   newWindDirection: undefined,
   newWindSpeed: undefined
