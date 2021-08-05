@@ -146,7 +146,7 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   unburntIslandProbability: 0.5, // [0, 1]
   fireSurvivalProbability: 0.1, // [0, 1]
   droughtIndexLocked: false,
-  severeDroughtAvailable: false,
+  severeDroughtAvailable: true,
   riverColor: [0.067, 0.529, 0.882, 1],
   fireLineAvailable: true,
   helitackAvailable: true,
