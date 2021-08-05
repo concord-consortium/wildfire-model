@@ -188,17 +188,15 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
   public handleVegetationChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
     const { simulation } = this.stores;
     const zone = simulation.zones[this.selectedZone];
-    const newVegetationType = zone.terrainType === TerrainType.Mountains ? value + 1 : value;
-    if (zone.vegetation !== newVegetationType) {
-      simulation.updateZoneVegetation(this.selectedZone, newVegetationType);
+    if (zone.vegetation !== value) {
+      simulation.updateZoneVegetation(this.selectedZone, value);
     }
   }
 
   public handleVegetationChangeCommitted = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
     const { simulation } = this.stores;
     const zone = simulation.zones[this.selectedZone];
-    const newVegetationType = zone.terrainType === TerrainType.Mountains ? value + 1 : value;
-    log("ZoneUpdated", { zone: this.selectedZone, vegetation: vegetationLabels[newVegetationType as Vegetation] });
+    log("ZoneUpdated", { zone: this.selectedZone, vegetation: vegetationLabels[value as Vegetation] });
   }
 
   public handleDroughtChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
