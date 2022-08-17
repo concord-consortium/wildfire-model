@@ -12,7 +12,9 @@
   margin: auto;
   background-color: transparent;
   padding: 4px;
+  opacity: 50%;
   &.selected{
+    opacity: 100%;
     .terrainPreview{
       border: solid 4px #ffffff;
     }
