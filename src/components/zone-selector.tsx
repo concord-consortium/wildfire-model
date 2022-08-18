@@ -63,12 +63,12 @@ export const renderZones = (
               onChange={onChange}
               data-test="zone-option"
             />
+            <span className={`${css.zoneLabelBorder}`}>
+                <span className={`${css.zoneLabel} ${cssClasses[i]}`}>{`Zone ${i + 1}`}</span>
+            </span>
             <div className={`${css.terrainImage} ${getColorFilter(z.droughtLevel)}`}
               style={{ backgroundImage: `url(${zoneTerrainImagePath})` }}>
               <div className={`${css.riverOverlay}`} style={{backgroundImage: `url(${zoneRiverImagePath})`}} />
-              <span className={`${css.zoneLabelBorder}`}>
-                <span className={`${css.zoneLabel} ${cssClasses[i]}`}>{`Zone ${i + 1}`}</span>
-              </span>
               {!readonly &&
                 <span className={`${css.vegetationPreview} ${i > 0 ? vegPreviewPosition : ""}`}>
                   {vegetationIcons[z.vegetation]}</span>
