@@ -107,13 +107,17 @@
   }
   .terrainSelector{
     height: 35px;
+    padding-left: 18px;
+    padding-right: 18px;
   }
   .terrainTypeLabels{
     width: 100%;
     display: flex;
     .terrainTypeLabel{
-      justify-content: space-around;
+      width: 100%;
       flex-grow: 1;
+      padding-left: 4px;
+      padding-right: 4px;
       text-align: center;
       font-size: 10px;
     }
