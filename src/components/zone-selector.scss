@@ -86,9 +86,9 @@
 
     .zoneLabelBorder{
       position: absolute;
-      left: 6px;
+      left: calc(50% - 32px);
       z-index: 1;
-      width: 63px;
+      width: 64px;
       height: 30px;
       display: inline-block;
       color: $controlText;
