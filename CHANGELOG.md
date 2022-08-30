@@ -1,9 +1,7 @@
-# Changelog
+Version MAJOR.MINOR.PATCH - released MONTHNAME DAY, YEAR
 
-### Asset Sizes
+### Features/Improvements
+- Story name [_id_](https://www.pivotaltracker.com/story/show/_id_)
 
-| File | Size | % Increase from Previous Release |
-|---|---|---|
-| index.css | x bytes | n/a |
-| index.js | y bytes | n/a |
-
+### Bug Fixes
+- Story name [_id_](https://www.pivotaltracker.com/story/show/_id_)
