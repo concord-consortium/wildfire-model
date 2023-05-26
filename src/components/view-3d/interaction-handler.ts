@@ -14,7 +14,7 @@ export enum InteractionAction {
   onPointerEnter = "onPointerEnter",
   onPointerLeave = "onPointerLeave",
   onPointerMove = "onPointerMove",
-  onWheel = "onWheel"
+  // onWheel = "onWheel" - causes type errors after updating TypeScript, and not used anyway
 }
 
 type EventHandler = (e: PointerEvent) => void;

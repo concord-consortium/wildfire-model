@@ -69,7 +69,7 @@ const setVertexColor = (
   colArray[idx + 3] = color[3];
 };
 
-const updateColors = (geometry: THREE.PlaneBufferGeometry, simulation: SimulationModel) => {
+const updateColors = (geometry: THREE.PlaneGeometry, simulation: SimulationModel) => {
   const colArray = geometry.attributes.color.array as number[];
   simulation.cells.forEach(cell => {
     setVertexColor(colArray, cell, simulation.gridWidth, simulation.gridHeight, simulation.config);
@@ -77,7 +77,7 @@ const updateColors = (geometry: THREE.PlaneBufferGeometry, simulation: Simulatio
   (geometry.attributes.color as BufferAttribute).needsUpdate = true;
 };
 
-const setupElevation = (geometry: THREE.PlaneBufferGeometry, simulation: SimulationModel) => {
+const setupElevation = (geometry: THREE.PlaneGeometry, simulation: SimulationModel) => {
   const posArray = geometry.attributes.position.array as number[];
   const mult = ftToViewUnit(simulation);
   // Apply height map to vertices of plane.
@@ -93,17 +93,17 @@ export const Terrain = observer(forwardRef<THREE.Mesh>(function WrappedComponent
   const { simulation } = useStores();
   const height = planeHeight(simulation);
 
-  const geometryRef = useUpdate<THREE.PlaneBufferGeometry>(geometry => {
+  const geometryRef = useUpdate<THREE.PlaneGeometry>(geometry => {
     geometry.setAttribute("color",
       new THREE.Float32BufferAttribute(new Array((simulation.gridWidth) * (simulation.gridHeight) * 4), 4)
     );
-  }, [simulation.gridWidth, simulation.gridHeight]);
+  }, [simulation.gridWidth, simulation.gridHeight]) as React.MutableRefObject<THREE.PlaneGeometry>;
 
-  useUpdate<THREE.PlaneBufferGeometry>(geometry => {
+  useUpdate<THREE.PlaneGeometry>(geometry => {
     setupElevation(geometry, simulation);
   }, [simulation.cellsElevationFlag], geometryRef);
 
-  useUpdate<THREE.PlaneBufferGeometry>(geometry => {
+  useUpdate<THREE.PlaneGeometry>(geometry => {
     updateColors(geometry, simulation);
   }, [simulation.cellsStateFlag], geometryRef);
 

@@ -12,7 +12,6 @@ describe("getEventHandlers", () => {
       onPointerOut: jest.fn(),
       onPointerEnter: jest.fn(),
       onPointerLeave: jest.fn(),
-      onWheel: jest.fn()
     };
     const handlers = getEventHandlers([interaction]);
     expect(handlers.onPointerDown).toBeDefined();
@@ -22,7 +21,6 @@ describe("getEventHandlers", () => {
     expect(handlers.onPointerOut).toBeDefined();
     expect(handlers.onPointerEnter).toBeDefined();
     expect(handlers.onPointerLeave).toBeDefined();
-    expect(handlers.onWheel).toBeDefined();
   });
 
   it("should return object with event handlers of active interactions only", () => {
