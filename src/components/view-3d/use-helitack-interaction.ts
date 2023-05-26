@@ -13,8 +13,9 @@ export const useHelitackInteraction = () => {
       const x = e.point.x / ratio;
       const y = e.point.y / ratio;
       simulation.setHelitackPoint(x, y);
+      const cell = simulation.cellAt(x, y);
       ui.interaction = null;
-      log("Helitack", { x: x / simulation.config.modelWidth, y: y / simulation.config.modelHeight });
+      log("Helitack", { x: x / simulation.config.modelWidth, y: y / simulation.config.modelHeight, elevation: cell.elevation });
     }
   };
 };
