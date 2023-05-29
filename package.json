@@ -126,13 +126,13 @@
     "rc-slider": "^10.1.1",
     "react": "^16.13.1",
     "react-chartjs-2": "^2.9.0",
-    "react-circular-input": "^0.2.3",
+    "react-circular-input": "^0.2.4",
     "react-dom": "^16.13.1",
     "react-three-fiber": "^4.0.23",
     "sass": "^1.62.1",
     "screenfull": "^6.0.2",
-    "shutterbug": "^1.2.0",
-    "three": "^0.152.2",
+    "shutterbug": "^1.5.0",
+    "three": "0.152.2",
     "wait-on": "^7.0.1"
   }
 }
