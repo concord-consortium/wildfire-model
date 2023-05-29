@@ -1,6 +1,6 @@
 import { ChartDataSet, ChartColors } from "./chart-data-set";
 import { Annotation } from "./chart-annotation";
-import { observable, computed } from "mobx";
+import { observable, computed, makeObservable } from "mobx";
 
 export interface IChartDataModel{
   name: string;
@@ -26,6 +26,7 @@ export class ChartDataModel implements IChartDataModel {
   public defaultMaxA2: number = 100;
 
   constructor(props: IChartDataModel) {
+    makeObservable(this);
     Object.assign(this, props);
   }
 

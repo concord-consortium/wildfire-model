@@ -1,4 +1,4 @@
-import { observable } from "mobx";
+import { observable, makeObservable } from "mobx";
 
 export enum Interaction {
   PlaceSpark = "PlaceSpark",
@@ -15,4 +15,8 @@ export class UIModel {
 
   @observable public interaction: Interaction | null = null;
   @observable public dragging: boolean = false;
+
+  constructor() {
+    makeObservable(this);
+  }
 }

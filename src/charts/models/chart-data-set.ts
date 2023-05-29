@@ -1,5 +1,5 @@
 import { downsample } from "../downsample-data";
-import { observable, computed } from "mobx";
+import { observable, computed, makeObservable } from "mobx";
 import css from "../chart-colors.scss";
 
 const MAX_TOTAL_POINTS = 120;
@@ -149,6 +149,7 @@ export class ChartDataSet implements IChartDataSet {
   public axisRoundValueA2?: number;
 
   constructor(props: IChartDataSet) {
+    makeObservable(this);
     Object.assign(this, props);
   }
 

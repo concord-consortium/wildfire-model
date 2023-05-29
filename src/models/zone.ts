@@ -1,5 +1,5 @@
 import { Vegetation, TerrainType, DroughtLevel } from "../types";
-import { observable } from "mobx";
+import { observable, makeObservable } from "mobx";
 
 export interface ZoneOptions {
   vegetation?: Vegetation;
@@ -22,6 +22,7 @@ export class Zone {
   @observable public droughtLevel: DroughtLevel = DroughtLevel.MildDrought;
 
   constructor(props: ZoneOptions) {
+    makeObservable(this);
     Object.assign(this, props);
   }
 }

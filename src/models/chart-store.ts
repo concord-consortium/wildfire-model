@@ -1,6 +1,5 @@
-import { observable, action } from "mobx";
+import { observable, action, makeObservable } from "mobx";
 import { ChartDataModel } from "../charts/models/chart-data";
-import { DataPoint } from "../charts/models/chart-data-set";
 
 export class ChartStore {
 
@@ -10,6 +9,7 @@ export class ChartStore {
   @observable public chartVersion = 1;
 
   constructor() {
+    makeObservable(this);
     this.createNewChart();
   }
 

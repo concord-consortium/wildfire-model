@@ -1,4 +1,4 @@
-import { action, computed, observable } from "mobx";
+import { action, computed, observable, makeObservable } from "mobx";
 import { DroughtLevel, IWindProps, TerrainType, Vegetation } from "../types";
 import {  Cell, CellOptions, FireState } from "./cell";
 import { getDefaultConfig, ISimulationConfig, getUrlConfig } from "../config";
@@ -53,6 +53,7 @@ export class SimulationModel {
   @observable public cellsElevationFlag = 0;
 
   constructor(presetConfig: Partial<ISimulationConfig>) {
+    makeObservable(this);
     this.load(presetConfig);
   }
 
