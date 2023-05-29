@@ -1,5 +1,6 @@
 'use strict';
 
+const autoprefixer = require('autoprefixer');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
@@ -42,7 +43,7 @@ module.exports = (env, argv) => {
           }
         },
         {
-          test: /\.(sa|sc)ss$/i,
+          test: /\.(sa|sc|le)ss$/i,
           use: [
             devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
             {
@@ -55,7 +56,14 @@ module.exports = (env, argv) => {
                 importLoaders: 1
               }
             },
-            'postcss-loader',
+            {
+              loader: 'postcss-loader',
+              options: {
+                postcssOptions: {
+                  plugins: [autoprefixer()]
+                }
+              }
+            },
             'sass-loader'
           ]
         },

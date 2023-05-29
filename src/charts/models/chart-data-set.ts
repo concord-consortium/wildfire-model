@@ -1,5 +1,5 @@
 import { downsample } from "../downsample-data";
-import { observable, action, computed } from "mobx";
+import { observable, computed } from "mobx";
 import css from "../chart-colors.scss";
 
 const MAX_TOTAL_POINTS = 120;

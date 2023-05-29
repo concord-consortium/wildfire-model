@@ -1,6 +1,6 @@
 import React from "react";
 import { Zone } from "../models/zone";
-import * as css from "./zone-selector.scss";
+import css from "./zone-selector.scss";
 import { TerrainType, DroughtLevel } from "../types";
 import { vegetationIcons } from "./vertical-selectors";
 import { ISimulationConfig } from "../config";

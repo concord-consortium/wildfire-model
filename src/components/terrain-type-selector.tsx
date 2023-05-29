@@ -2,7 +2,7 @@ import React from "react";
 import { Radio, RadioGroup, FormControlLabel } from "@material-ui/core";
 import { TerrainType } from "../types";
 
-import * as css from "./terrain-type-selector.scss";
+import css from "./terrain-type-selector.scss";
 
 interface IProps {
   terrainType: number;

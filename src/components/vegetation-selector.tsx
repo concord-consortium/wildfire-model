@@ -3,7 +3,7 @@ import { Slider } from "@material-ui/core";
 import VerticalHandle from "../assets/slider-vertical.svg";
 import { TerrainType, Vegetation, vegetationLabels } from "../types";
 import { generateMarks, vegetationIcons } from "./vertical-selectors";
-import * as css from "./vertical-selectors.scss";
+import css from "./vertical-selectors.scss";
 import { Terrain } from "./view-3d/terrain";
 
 interface IProps {

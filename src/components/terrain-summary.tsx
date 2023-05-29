@@ -1,7 +1,7 @@
 import React from "react";
 import { vegetationIcons, droughtIcons } from "./vertical-selectors";
 import { vegetationLabels, droughtLabels, Vegetation, DroughtLevel } from "../types";
-import * as css from "./terrain-summary.scss";
+import css from "./terrain-summary.scss";
 
 interface IProps {
   vegetationType: Vegetation;

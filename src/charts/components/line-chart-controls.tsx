@@ -5,7 +5,7 @@ import { baseColors } from "../models/chart-data-set";
 import Slider from "rc-slider";
 import { BaseComponent } from "../../components/base";
 
-import * as css from "./line-chart-controls.sass";
+import css from "./line-chart-controls.sass";
 import "rc-slider/assets/index.css";
 
 interface IChartControlProps {
