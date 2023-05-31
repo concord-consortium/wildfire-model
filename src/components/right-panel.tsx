@@ -4,7 +4,7 @@ import { RightPanelTab } from "./right-panel-tab";
 import { useStores } from "../use-stores";
 import { Graph } from "./graph";
 import { log } from "@concord-consortium/lara-interactive-api";
-import * as css from "./right-panel.scss";
+import css from "./right-panel.scss";
 
 export type TabType = "graph";
 

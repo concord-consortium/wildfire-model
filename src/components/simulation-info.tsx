@@ -6,7 +6,7 @@ import { Zone } from "../models/zone";
 import { WindDial, degToCompass } from "./wind-dial";
 import LockIcon from "../assets/lock.svg";
 import { log } from "@concord-consortium/lara-interactive-api";
-import * as css from "./simulation-info.scss";
+import css from "./simulation-info.scss";
 
 const zoneTypeText = {
   0: "Plains",

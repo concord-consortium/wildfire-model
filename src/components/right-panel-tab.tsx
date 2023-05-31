@@ -1,7 +1,7 @@
 import * as React from "react";
 import { BaseComponent, IBaseProps } from "./base";
 import { TabType } from "./right-panel";
-import * as css from "./right-panel-tab.scss";
+import css from "./right-panel-tab.scss";
 
 interface IProps extends IBaseProps {
   tabType: TabType;

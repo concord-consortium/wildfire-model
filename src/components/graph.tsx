@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import { useStores } from "../use-stores";
 import { Interaction } from "../models/ui";
 import { Chart } from "../charts/components/chart";
-import * as css from "./graph.scss";
+import css from "./graph.scss";
 import { Annotation } from "../charts/models/chart-annotation";
 import { DataPoint, ChartDataSet } from "../charts/models/chart-data-set";
 

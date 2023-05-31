@@ -1,9 +1,15 @@
 'use strict';
 
-const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
+const autoprefixer = require('autoprefixer');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+
+// DEPLOY_PATH is set by the s3-deploy-action its value will be:
+// `branch/[branch-name]/` or `version/[tag-name]/`
+// See the following documentation for more detail:
+//   https://github.com/concord-consortium/s3-deploy-action/blob/main/README.md#top-branch-example
+const DEPLOY_PATH = process.env.DEPLOY_PATH;
 
 module.exports = (env, argv) => {
   const devMode = argv.mode !== 'production';
@@ -37,7 +43,7 @@ module.exports = (env, argv) => {
           }
         },
         {
-          test: /\.(sa|sc)ss$/i,
+          test: /\.(sa|sc|le)ss$/i,
           use: [
             devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
             {
@@ -50,7 +56,14 @@ module.exports = (env, argv) => {
                 importLoaders: 1
               }
             },
-            'postcss-loader',
+            {
+              loader: 'postcss-loader',
+              options: {
+                postcssOptions: {
+                  plugins: [autoprefixer()]
+                }
+              }
+            },
             'sass-loader'
           ]
         },
@@ -92,17 +105,25 @@ module.exports = (env, argv) => {
       warningsFilter: /export .* was not found in/
     },
     plugins: [
-      new ForkTsCheckerWebpackPlugin(),
       new MiniCssExtractPlugin({
         filename: devMode ? "assets/index.css" : "assets/index.[hash].css"
       }),
       new HtmlWebpackPlugin({
         filename: 'index.html',
-        template: 'src/index.html'
+        template: 'src/index.html',
+        favicon: 'src/public/favicon.ico'
       }),
-      new CopyWebpackPlugin([
-        {from: 'src/public'}
-      ])
+      ...(DEPLOY_PATH ? [new HtmlWebpackPlugin({
+        filename: 'index-top.html',
+        template: 'src/index.html',
+        favicon: 'src/public/favicon.ico',
+        publicPath: DEPLOY_PATH
+      })] : []),
+      new CopyWebpackPlugin({
+        patterns: [
+          { from: 'src/public' }
+        ],
+      }),
     ]
   };
 };

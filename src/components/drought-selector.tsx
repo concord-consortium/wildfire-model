@@ -3,7 +3,7 @@ import { Slider } from "@material-ui/core";
 import VerticalHandle from "../assets/slider-vertical.svg";
 import { generateMarks, droughtIcons } from "./vertical-selectors";
 import { DroughtLevel, droughtLabels } from "../types";
-import * as css from "./vertical-selectors.scss";
+import css from "./vertical-selectors.scss";
 
 interface IProps {
   droughtLevel: number;
