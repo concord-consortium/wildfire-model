@@ -3,7 +3,7 @@ import * as THREE from "three";
 import { useStores } from "../../use-stores";
 import { useDragging } from "./use-dragging";
 import { ftToViewUnit } from "./helpers";
-import { PointerEvent } from "react-three-fiber/canvas";
+import { Event } from "three";
 import { Interaction } from "../../models/ui";
 
 export const useDraggingOverPlaneInteraction = (
@@ -35,7 +35,7 @@ export const useDraggingOverPlaneInteraction = (
     active,
     hovered,
     dragged,
-    onPointerOver: (e: PointerEvent) => {
+    onPointerOver: (e: Event) => {
       // Ignore this event while object is being dragged around. We don't want to trigger some state changes
       // when cursor randomly enters or leaves object area.
       if (!dragged) {
@@ -44,7 +44,7 @@ export const useDraggingOverPlaneInteraction = (
         ui.interaction = Interaction.HoverOverDraggable;
       }
     },
-    onPointerOut: (e: PointerEvent) => {
+    onPointerOut: (e: Event) => {
       // Ignore this event while object is being dragged around. We don't want to trigger some state changes
       // when cursor randomly enters or leaves object area.
       if (!dragged) {
@@ -53,7 +53,7 @@ export const useDraggingOverPlaneInteraction = (
         ui.interaction = null;
       }
     },
-    onPointerDown: (e: PointerEvent) => {
+    onPointerDown: (e: Event) => {
       e.stopPropagation();
       startDragging(e);
     }

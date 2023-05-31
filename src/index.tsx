@@ -1,7 +1,7 @@
 import { Provider } from "mobx-react";
 import { configure } from "mobx";
 import React from "react";
-import ReactDOM from "react-dom";
+import { createRoot } from "react-dom/client";
 import { AppComponent } from "./components/app";
 import { MuiThemeProvider } from "@material-ui/core/styles";
 import { createStores } from "./models/stores";
@@ -12,11 +12,15 @@ configure({ enforceActions: "never" });
 
 const stores = createStores();
 
-ReactDOM.render(
-  <Provider stores={stores}>
-    <MuiThemeProvider theme={hurricanesTheme}>
-      <AppComponent />
-    </MuiThemeProvider>
-  </Provider>,
-  document.getElementById("app")
-);
+const container = document.getElementById("app");
+
+if (container) {
+  const root = createRoot(container);
+  root.render(
+    <Provider stores={stores}>
+      <MuiThemeProvider theme={hurricanesTheme}>
+        <AppComponent />
+      </MuiThemeProvider>
+    </Provider>
+  );
+}

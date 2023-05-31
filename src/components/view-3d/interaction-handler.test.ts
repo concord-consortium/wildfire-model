@@ -1,5 +1,5 @@
 import { getEventHandlers, InteractionHandler } from "./interaction-handler";
-import { PointerEvent } from "react-three-fiber/canvas";
+import { Event } from "three";
 
 describe("getEventHandlers", () => {
   it("should handle all available event types", () => {
@@ -42,7 +42,7 @@ describe("getEventHandlers", () => {
     // event handlers that cause significant performance drop (raycasting).
     expect(handlers.onPointerUp).toBeUndefined();
     expect(handlers.onPointerDown).toBeDefined();
-    const event = {} as PointerEvent;
+    const event = {} as Event;
     handlers.onPointerDown!(event);
     expect(interaction2.onPointerDown).toHaveBeenCalledWith(event);
     expect(interaction3.onPointerDown).toHaveBeenCalledWith(event);

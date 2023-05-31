@@ -1,4 +1,4 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useLayoutEffect, useRef } from "react";
 import { DroughtLevel } from "../../types";
 import { BurnIndex, Cell, FireState } from "../../models/cell";
 import { ISimulationConfig } from "../../config";
@@ -8,7 +8,6 @@ import { SimulationModel } from "../../models/simulation";
 import { ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
 import { observer } from "mobx-react";
 import { useStores } from "../../use-stores";
-import { useUpdate } from "react-three-fiber";
 import { getEventHandlers, InteractionHandler } from "./interaction-handler";
 import { usePlaceSparkInteraction } from "./use-place-spark-interaction";
 import { useDrawFireLineInteraction } from "./use-draw-fire-line-interaction";
@@ -92,20 +91,26 @@ const setupElevation = (geometry: THREE.PlaneGeometry, simulation: SimulationMod
 export const Terrain = observer(forwardRef<THREE.Mesh>(function WrappedComponent(props, ref) {
   const { simulation } = useStores();
   const height = planeHeight(simulation);
+  const geometryRef = useRef<THREE.PlaneGeometry>(null);
 
-  const geometryRef = useUpdate<THREE.PlaneGeometry>(geometry => {
-    geometry.setAttribute("color",
+  useLayoutEffect(() => {
+    geometryRef.current?.setAttribute("color",
       new THREE.Float32BufferAttribute(new Array((simulation.gridWidth) * (simulation.gridHeight) * 4), 4)
     );
-  }, [simulation.gridWidth, simulation.gridHeight]) as React.MutableRefObject<THREE.PlaneGeometry>;
+  }, [simulation.gridWidth, simulation.gridHeight]);
 
-  useUpdate<THREE.PlaneGeometry>(geometry => {
-    setupElevation(geometry, simulation);
-  }, [simulation.cellsElevationFlag], geometryRef);
 
-  useUpdate<THREE.PlaneGeometry>(geometry => {
-    updateColors(geometry, simulation);
-  }, [simulation.cellsStateFlag], geometryRef);
+  useLayoutEffect(() => {
+    if (geometryRef.current) {
+      setupElevation(geometryRef.current, simulation);
+    }
+  }, [simulation.cellsElevationFlag]);
+
+  useLayoutEffect(() => {
+    if (geometryRef.current) {
+      updateColors(geometryRef.current, simulation);
+    }
+  }, [simulation.cellsStateFlag]);
 
   const interactions: InteractionHandler[] = [
     usePlaceSparkInteraction(),
@@ -115,7 +120,7 @@ export const Terrain = observer(forwardRef<THREE.Mesh>(function WrappedComponent
   ];
 
   // Note that getEventHandlers won't return event handlers if it's not necessary. This is important,
-  // as adding even an empty event handler enables raycasting machinery in react-three-fiber and it has big
+  // as adding even an empty event handler enables raycasting machinery in @react-three/fiber and it has big
   // performance cost in case of fairly complex terrain mesh. That's why when all the interactions are disabled,
   // eventHandlers will be an empty object and nothing will be attached to the terrain mesh.
   const eventHandlers = getEventHandlers(interactions);
@@ -126,7 +131,7 @@ export const Terrain = observer(forwardRef<THREE.Mesh>(function WrappedComponent
       position={[PLANE_WIDTH * 0.5, height * 0.5, 0]}
       {...eventHandlers}
     >
-      <planeBufferGeometry
+      <planeGeometry
         attach="geometry"
         ref={geometryRef}
         center-x={0} center-y={0}

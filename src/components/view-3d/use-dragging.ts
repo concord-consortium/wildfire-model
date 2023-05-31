@@ -1,8 +1,7 @@
 import { RefObject, useRef, useState } from "react";
 import * as THREE from "three";
-import { useThree } from "react-three-fiber";
+import { useThree } from "@react-three/fiber";
 import { useStores } from "../../use-stores";
-import { PointerEvent } from "react-three-fiber/canvas";
 
 interface UseDraggingInput {
   // If true, this will prevent object from initial jumping between its previous
@@ -46,7 +45,7 @@ export const useDragging = ({ useOffset, dragPlane, onDrag, onDragEnd }: UseDrag
 
   return {
     dragged,
-    startDragging: (e: PointerEvent) => {
+    startDragging: (e: THREE.Event) => {
       if (useOffset) {
         // Calculate difference between actual object position and mouse position. Quite often user won't
         // grab object exactly at its anchor point. This will prevent object from initial jumping between its previous
