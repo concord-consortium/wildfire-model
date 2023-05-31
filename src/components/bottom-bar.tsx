@@ -1,6 +1,7 @@
 import { inject, observer } from "mobx-react";
 import React from "react";
 import { BaseComponent, IBaseProps } from "./base";
+import { droughtLabels, terrainLabels, vegetationLabels } from "../types";
 import CCLogo from "../assets/cc-logo.svg";
 import CCLogoSmall from "../assets/cc-logo-small.svg";
 import screenfull from "screenfull";
@@ -184,7 +185,18 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     } else {
       ui.showTerrainUI = false;
       simulation.start();
-      log("SimulationStarted");
+      log("SimulationStarted", {
+        sparks: simulation.sparks.map (s => ({
+          x: s.x / simulation.config.modelWidth,
+          y: s.y / simulation.config.modelHeight,
+          elevation: simulation.cellAt(s.x, s.y).elevation
+        })),
+        zones: simulation.zones.map(z => ({
+          vegetation: vegetationLabels[z.vegetation],
+          terrainType: terrainLabels[z.terrainType],
+          droughtLevel: droughtLabels[z.droughtLevel]
+        }))
+      });
     }
   }
 
