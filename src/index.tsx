@@ -3,7 +3,7 @@ import { configure } from "mobx";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { AppComponent } from "./components/app";
-import { MuiThemeProvider } from "@material-ui/core/styles";
+import { MuiThemeProvider } from "@mui/core/styles";
 import { createStores } from "./models/stores";
 import hurricanesTheme from "./material-ui-theme";
 

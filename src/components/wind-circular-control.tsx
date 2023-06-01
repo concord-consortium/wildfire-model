@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useStores } from "../use-stores";
-import { Slider } from "@material-ui/core";
+import { Slider } from "@mui/core";
 import { observer } from "mobx-react";
 import { WindDial, degToCompass } from "./wind-dial";
 import { log } from "@concord-consortium/lara-interactive-api";

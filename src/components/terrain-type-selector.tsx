@@ -1,5 +1,5 @@
 import React from "react";
-import { Radio, RadioGroup, FormControlLabel } from "@material-ui/core";
+import { Radio, RadioGroup, FormControlLabel } from "@mui/core";
 import { TerrainType } from "../types";
 
 import css from "./terrain-type-selector.scss";

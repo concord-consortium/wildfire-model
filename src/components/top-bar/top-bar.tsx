@@ -1,5 +1,5 @@
 import * as React from "react";
-import RefreshIcon from "@material-ui/icons/Refresh";
+import RefreshIcon from "@mui/icons/Refresh";
 import { Dialog } from "./dialog";
 import css from "./top-bar.scss";
 import { log } from "@concord-consortium/lara-interactive-api";

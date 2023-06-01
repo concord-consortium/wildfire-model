@@ -5,7 +5,7 @@ import { droughtLabels, terrainLabels, vegetationLabels } from "../types";
 import CCLogo from "../assets/cc-logo.svg";
 import CCLogoSmall from "../assets/cc-logo-small.svg";
 import screenfull from "screenfull";
-import Button from "@material-ui/core/Button";
+import Button from "@mui/core/Button";
 import SparkIcon from "../assets/bottom-bar/spark.svg";
 import SparkHighlight from "../assets/bottom-bar/spark_highlight.svg";
 import PauseIcon from "../assets/bottom-bar/pause.svg";

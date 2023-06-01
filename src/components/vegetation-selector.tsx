@@ -1,5 +1,5 @@
 import React from "react";
-import { Slider } from "@material-ui/core";
+import { Slider } from "@mui/core";
 import VerticalHandle from "../assets/slider-vertical.svg";
 import { TerrainType, Vegetation, vegetationLabels } from "../types";
 import { generateMarks, vegetationIcons } from "./vertical-selectors";

@@ -1,5 +1,5 @@
 import React from "react";
-import { Slider } from "@material-ui/core";
+import { Slider } from "@mui/core";
 import VerticalHandle from "../assets/slider-vertical.svg";
 import { generateMarks, droughtIcons } from "./vertical-selectors";
 import { DroughtLevel, droughtLabels } from "../types";
