@@ -1,4 +1,4 @@
-class TerrainSetup {
+export class TerrainSetup {
   // Get UI Component
   getTerrainSetupComponent() {
     return cy.get('.terrain-panel--terrain--__wildfire-v1__');
@@ -108,5 +108,3 @@ class TerrainSetup {
     return cy.get('.terrain-panel--closeButton--__wildfire-v1__').click();
   }
 }
-
-export default TerrainSetup;

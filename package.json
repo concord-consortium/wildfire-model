@@ -67,6 +67,7 @@
   },
   "homepage": "https://github.com/concord-consortium/wildfire-model#readme",
   "devDependencies": {
+    "@cypress/code-coverage": "^3.10.7",
     "@cypress/webpack-preprocessor": "^5.17.1",
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^14.0.0",
@@ -81,7 +82,7 @@
     "autoprefixer": "^10.4.14",
     "babel-jest": "^29.5.0",
     "css-loader": "^6.8.1",
-    "cypress": "8.2.0",
+    "cypress": "12.13.0",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.5.1",
     "identity-obj-proxy": "^3.0.0",

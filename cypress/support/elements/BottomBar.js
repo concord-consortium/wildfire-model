@@ -1,4 +1,4 @@
-class BottomBar {
+export class BottomBar {
 
   getTerrainSetupButton() {
     return cy.get('[data-testid="terrain-button"]');
@@ -23,4 +23,3 @@ class BottomBar {
   }
 }
 
-export default BottomBar;
