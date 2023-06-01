@@ -16,7 +16,7 @@ export const TerrainTypeSelector = ({ terrainType, onChange }: IProps) => (
       aria-label="terrain type"
       onChange={onChange}
       className={css.terrainSelector}
-      data-test="terrain-type-selector"
+      data-testid="terrain-type-selector"
       value={terrainType}
     >
       <FormControlLabel

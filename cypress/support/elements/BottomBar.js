@@ -1,25 +1,25 @@
 class BottomBar {
 
   getTerrainSetupButton() {
-    return cy.get('[data-test="terrain-button"]');
+    return cy.get('[data-testid="terrain-button"]');
   }
   getSparkButton() {
-    return cy.get('[data-test="spark-button"]');
+    return cy.get('[data-testid="spark-button"]');
   }
   getReloadButton() {
-    return cy.get('[data-test="reload-button"]');
+    return cy.get('[data-testid="reload-button"]');
   }
   getRestartButton() {
-    return cy.get('[data-test="restart-button"]');
+    return cy.get('[data-testid="restart-button"]');
   }
   getStartButton() {
-    return cy.get('[data-test="start-button"]');
+    return cy.get('[data-testid="start-button"]');
   }
   getFireLineButton() {
-    return cy.get('[data-test="fireline-button"]');
+    return cy.get('[data-testid="fireline-button"]');
   }
   getHelitackButton() {
-    return cy.get('[data-test="helitack-button"]');
+    return cy.get('[data-testid="helitack-button"]');
   }
 }
 

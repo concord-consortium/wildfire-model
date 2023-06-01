@@ -61,7 +61,7 @@ export const renderZones = (
               value={i}
               checked={selectedZone === i}
               onChange={onChange}
-              data-test="zone-option"
+              data-testid="zone-option"
             />
             <span className={`${css.zoneLabelBorder}`}>
                 <span className={`${css.zoneLabel} ${cssClasses[i]}`}>{`Zone ${i + 1}`}</span>

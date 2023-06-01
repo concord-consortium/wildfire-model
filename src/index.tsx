@@ -8,7 +8,7 @@ import { createStores } from "./models/stores";
 import hurricanesTheme from "./material-ui-theme";
 
 // Disable mobx strict mode. Make v6 compatible with v4/v5 that was not enforcing strict mode by default.
-configure({ enforceActions: "never" });
+configure({ enforceActions: "never", safeDescriptors: false });
 
 const stores = createStores();
 

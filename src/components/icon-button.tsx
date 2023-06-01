@@ -16,7 +16,7 @@ export const IconButton = ({ icon, highlightIcon, onClick, disabled, buttonText,
     onClick={onClick}
     className={`${css.iconButton} ${disabled ? css.disabled : ""}`}
     disableRipple={true}
-    data-test={dataTest ? dataTest : "icon-button"}
+    data-testid={dataTest ? dataTest : "icon-button"}
     disableTouchRipple={true}
     disabled={disabled}
   >

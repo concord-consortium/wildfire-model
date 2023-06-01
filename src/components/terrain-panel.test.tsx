@@ -1,9 +1,8 @@
 import React from "react";
-import { mount } from "enzyme";
+import { act, render, screen, within } from "@testing-library/react";
 import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
 import { TerrainPanel } from "./terrain-panel";
-import { Slider } from "@material-ui/core";
 import { Vegetation, TerrainType } from "../types";
 
 const defaultTwoZones = [
@@ -48,34 +47,22 @@ describe("Terrain Panel component", () => {
     stores = createStores();
   });
 
-  it("mounts at start up", () => {
-    stores.ui.showTerrainUI = false;
-    const wrapper = mount(
-      <Provider stores={stores}>
-        <TerrainPanel />
-      </Provider>
-    );
-    expect(wrapper.find(TerrainPanel).length).toBe(1);
-  });
-
   it("is not displayed until the UI store value is set", () => {
     stores.ui.showTerrainUI = false;
-    let wrapper = mount(
+    render(
       <Provider stores={stores}>
         <TerrainPanel />
       </Provider>
     );
-    expect(wrapper.find('[data-test="terrain-header"]').length).toBe(0);
+    expect(screen.queryByTestId("terrain-header")).not.toBeInTheDocument();
 
+    act(() => {
     stores.ui.showTerrainUI = true;
-    wrapper = mount(
-      <Provider stores={stores}>
-        <TerrainPanel />
-      </Provider>
-    );
-    expect(wrapper.find('[data-test="terrain-header"]').length).toBe(1);
+    });
+    expect(screen.getByTestId("terrain-header")).toBeInTheDocument();
   });
 });
+
 describe("zone UI", () => {
   let stores = createStores();
   beforeEach(() => {
@@ -83,24 +70,26 @@ describe("zone UI", () => {
     stores.ui.showTerrainUI = true;
   });
 
-  it("displays all configured zones", () => {
+  it("displays all configured zones -> 2", () => {
     stores.simulation.zones = defaultTwoZones;
 
-    let wrapper = mount(
+    render(
       <Provider stores={stores}>
         <TerrainPanel />
       </Provider>
     );
-    expect(wrapper.find('[data-test="zone-option"]')).toHaveLength(2);
+    expect(screen.getAllByTestId("zone-option")).toHaveLength(2);
+  });
 
+  it("displays all configured zones -> 3", () => {
     stores.simulation.zones = defaultThreeZones;
 
-    wrapper = mount(
+    render(
       <Provider stores={stores}>
         <TerrainPanel />
       </Provider>
     );
-    expect(wrapper.find('[data-test="zone-option"]')).toHaveLength(3);
+    expect(screen.getAllByTestId("zone-option")).toHaveLength(3);
   });
 });
 
@@ -113,41 +102,31 @@ describe("vegetation selector", () => {
   });
 
   it("displays the vegetation and drought level sliders", () => {
-    const wrapper = mount(
+    render(
       <Provider stores={stores}>
         <TerrainPanel />
       </Provider>
     );
-    expect(wrapper.find(Slider)).toHaveLength(2);
+    expect(screen.getAllByRole("slider")).toHaveLength(2);
   });
 
   it("displays the correct vegetation level", () => {
-    const wrapper = mount(
+    render(
       <Provider stores={stores}>
         <TerrainPanel />
       </Provider>
     );
-    const veg = wrapper.find('[data-test="vegetation-slider"]').first();
-    expect(veg.prop("value")).toBe(1);
-
-    // const panel = (wrapper.find(TerrainPanel).instance() as any).wrappedInstance as TerrainPanel;
-    // const panel = wrapper.find(TerrainPanel).instance();
-    // expect(panel.state("selectedZone")).toBe(0);
-
-    // panel.setState({ selectedZone: 1 });
-
-    // veg = wrapper.find('[data-test="vegetation-slider"]').first();
-    // expect(veg.prop("value")).toBe(1);
+    const veg = screen.getByTestId("vegetation-slider").querySelector("input");
+    expect(veg).toHaveValue("1");
   });
 
   it("displays the correct drought level", () => {
-    const wrapper = mount(
+    render(
       <Provider stores={stores}>
         <TerrainPanel />
       </Provider>
     );
-
-    const drought = wrapper.find('[data-test="drought-slider"]').first();
-    expect(drought.prop("value")).toBe(2);
+    const drought = screen.getByTestId("drought-slider").querySelector("input");
+    expect(drought).toHaveValue("2");
   });
 });

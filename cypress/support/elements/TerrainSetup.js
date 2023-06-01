@@ -4,7 +4,7 @@ class TerrainSetup {
     return cy.get('.terrain-panel--terrain--__wildfire-v1__');
   }
   getTerrainHeader() {
-    return cy.get('[data-test = "terrain-header"]');
+    return cy.get('[data-testid = "terrain-header"]');
   }
   getInstructions() {
     return cy.get('.terrain-panel--instructions--__wildfire-v1__');
@@ -34,7 +34,7 @@ class TerrainSetup {
 
   //Vegetation
   getVegetationSlider() {
-    return cy.get('[data-test="vegetation-slider"]');
+    return cy.get('[data-testid="vegetation-slider"]');
   }
   setVegetationTypeOption(vegType) {
     this.getVegetationSlider().contains(vegType).should('be.visible').click();
@@ -42,7 +42,7 @@ class TerrainSetup {
 
   //Drought
   getDroughtSlider() {
-    return cy.get('[data-test="drought-slider"]');
+    return cy.get('[data-testid="drought-slider"]');
   }
   setDroughtIndexOption(droughtIndex) {
     this.getDroughtSlider().contains(droughtIndex).should('be.visible').click();

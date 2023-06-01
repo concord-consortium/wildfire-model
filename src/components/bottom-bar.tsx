@@ -115,7 +115,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           <div className={`${css.widgetGroup} ${css.reloadRestart}`}>
             <Button
               className={css.playbackButton}
-              data-test="reload-button"
+              data-testid="reload-button"
               onClick={this.handleReload}
               disableRipple={true}
             >
@@ -123,7 +123,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
             </Button>
             <Button
               className={css.playbackButton}
-              data-test="restart-button"
+              data-testid="restart-button"
               onClick={this.handleRestart}
               disableRipple={true}
             >
@@ -135,7 +135,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               onClick={this.handleStart}
               disabled={!simulation.ready}
               className={css.playbackButton}
-              data-test="start-button"
+              data-testid="start-button"
               disableRipple={true}
             >
               { simulation.simulationRunning ? <span><PauseIcon/> Stop</span> : <span><StartIcon /> Start</span> }

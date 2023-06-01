@@ -164,7 +164,7 @@ export class BarChart extends BaseComponent<IBarProps, IBarState> {
           height={h}
           width={w}
           redraw={false}
-          data-test="bar"
+          data-testid="bar"
         />
       );
     } else {
@@ -175,7 +175,7 @@ export class BarChart extends BaseComponent<IBarProps, IBarState> {
           height={h}
           width={w}
           redraw={false}
-          data-test="horizontal-bar"
+          data-testid="horizontal-bar"
         />
       );
     }

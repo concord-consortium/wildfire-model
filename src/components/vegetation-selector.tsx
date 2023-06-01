@@ -84,7 +84,7 @@ export const VegetationSelector = ({ vegetation, terrainType, onChange, onChange
           orientation="vertical"
           ThumbComponent={VerticalHandle}
           className={css.vegetationSlider}
-          data-test="vegetation-slider"
+          data-testid="vegetation-slider"
         />
       </div>
     </div>

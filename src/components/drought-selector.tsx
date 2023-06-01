@@ -52,7 +52,7 @@ export const DroughtSelector = ({ droughtLevel, onChange, onChangeCommitted, dis
         orientation="vertical"
         ThumbComponent={VerticalHandle}
         className={css.droughtSlider}
-        data-test="drought-slider"
+        data-testid="drought-slider"
       />
     </div>
   </div>;

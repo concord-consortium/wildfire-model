@@ -227,7 +227,7 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
       />;
     return (
       <div className="line-chart-container">
-        <div className="line-chart-container" data-test="line-chart">
+        <div className="line-chart-container" data-testid="line-chart">
           {graph}
         </div>
         <LineChartControls chartData={chart} isPlaying={isPlaying} />

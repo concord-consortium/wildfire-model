@@ -7,6 +7,7 @@ interface IProps {
   onClose: () => void;
   open: boolean;
   title?: string;
+  children?: JSX.Element | JSX.Element[];
 }
 
 export const Dialog: React.FC<IProps> = ({ onClose, open, title, children }) => (

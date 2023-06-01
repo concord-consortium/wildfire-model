@@ -9,7 +9,7 @@
       "url": "https://wildfire-model.unexisting.url.com"
     },
     "setupFilesAfterEnv": [
-      "<rootDir>src/setupTests.js"
+      "<rootDir>src/setupTests.ts"
     ],
     "transform": {
       "^.+\\.tsx?$": "ts-jest"
@@ -68,10 +68,11 @@
   "homepage": "https://github.com/concord-consortium/wildfire-model#readme",
   "devDependencies": {
     "@cypress/webpack-preprocessor": "^5.17.1",
+    "@testing-library/jest-dom": "^5.16.5",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.4.3",
     "@types/chart.js": "^2.9.37",
-    "@types/enzyme": "^3.10.13",
-    "@types/enzyme-adapter-react-16": "^1.0.6",
-    "@types/jest": "^29.5.1",
+    "@types/jest": "^29.5.2",
     "@types/rc-slider": "^9.3.1",
     "@types/react": "^18.2.7",
     "@types/react-dom": "^18.2.4",
@@ -81,8 +82,6 @@
     "babel-jest": "^29.5.0",
     "css-loader": "^6.8.1",
     "cypress": "8.2.0",
-    "enzyme": "^3.11.0",
-    "enzyme-adapter-react-16": "^1.15.7",
     "file-loader": "^6.2.0",
     "html-webpack-plugin": "^5.5.1",
     "identity-obj-proxy": "^3.0.0",
@@ -133,7 +132,7 @@
     "sass": "^1.62.1",
     "screenfull": "^6.0.2",
     "shutterbug": "^1.5.0",
-    "three": "0.152.2",
+    "three": "0.153.0",
     "wait-on": "^7.0.1"
   }
 }

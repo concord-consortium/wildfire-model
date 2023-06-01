@@ -1,5 +1,5 @@
 import * as React from "react";
-import { mount } from "enzyme";
+import { render, screen } from "@testing-library/react";
 import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
 import { RightPanelTab } from "./right-panel-tab";
@@ -11,11 +11,11 @@ describe("RightPanelTab component", () => {
   });
 
   it("renders basic components", () => {
-    const wrapper = mount(
+    render(
       <Provider stores={stores}>
         <RightPanelTab tabType="graph" active={true} />
       </Provider>
     );
-    expect(wrapper.find('[data-test="right-panel-tab"]').length).toEqual(1);
+    expect(screen.getByTestId("right-panel-tab")).toBeInTheDocument();
   });
 });

@@ -32,7 +32,7 @@ export const RightPanel = observer(function WrappedComponent() {
   };
 
   return (
-    <div className={`${css.rightPanel} ${open ? css.open : ""}`} data-test="right-panel">
+    <div className={`${css.rightPanel} ${open ? css.open : ""}`} data-testid="right-panel">
       <div className={css.rightPanelContent}>
         <Graph />
       </div>

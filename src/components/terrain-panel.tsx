@@ -58,7 +58,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
         { ui.showTerrainUI  &&
           <div className={`${css.background} ${cssClasses[selectedZone]} ${panelClass}`}>
             <div className={css.closeButton} onClick={this.handleClose}>X</div>
-          <div className={css.header} data-test="terrain-header">Terrain Setup</div>
+          <div className={css.header} data-testid="terrain-header">Terrain Setup</div>
             <div className={css.instructions}>
               <span className={css.setupStepIcon}>{currentPanel}</span>{panelInstructions}
             </div>
