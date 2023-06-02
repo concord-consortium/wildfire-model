@@ -12,7 +12,7 @@ describe("TopBar component", () => {
         value: { reload: reloadMock },
       });
       render(<TopBar projectName="Test" />);
-      userEvent.click(screen.getByTestId("reload"));
+      await userEvent.click(screen.getByTestId("reload"));
       await new Promise((resolve) => setTimeout(resolve, 150));
       expect(reloadMock).toHaveBeenCalled();
     });

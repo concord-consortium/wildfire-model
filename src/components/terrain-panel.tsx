@@ -188,7 +188,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     }
   };
 
-  public handleVegetationChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
+  public handleVegetationChange = (event: Event, value: number) => {
     const { simulation } = this.stores;
     const zone = simulation.zones[this.selectedZone];
     if (zone.vegetation !== value) {
