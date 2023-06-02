@@ -50,13 +50,13 @@ export class TerrainSetup {
 
   // Next/Prev Buttons
   getNextButton() {
-    return cy.get(".MuiButton-label").contains("Next");
+    return cy.get(".MuiButton-text").contains("Next");
   }
   getPrevButton() {
-    return cy.get(".MuiButton-label").contains("Previous");
+    return cy.get(".MuiButton-text").contains("Previous");
   }
   getCreateButton() {
-    return cy.get(".MuiButton-label").contains("Create");
+    return cy.get(".MuiButton-text").contains("Create");
   }
 
   ////////////////////////

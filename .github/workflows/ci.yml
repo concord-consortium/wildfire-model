@@ -33,9 +33,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
-      - uses: cypress-io/github-action@v4
+      - uses: cypress-io/github-action@v5
         with:
-          build: npm ci --legacy-peer-deps
+          install-command: npm ci --legacy-peer-deps
           start: npm start
           wait-on: 'http://localhost:8080'
           # only record the results to dashboard.cypress.io if CYPRESS_RECORD_KEY is set
