@@ -5,7 +5,7 @@ import { droughtLabels, terrainLabels, vegetationLabels } from "../types";
 import CCLogo from "../assets/cc-logo.svg";
 import CCLogoSmall from "../assets/cc-logo-small.svg";
 import screenfull from "screenfull";
-import Button from "@mui/core/Button";
+import Button from "@mui/material/Button";
 import SparkIcon from "../assets/bottom-bar/spark.svg";
 import SparkHighlight from "../assets/bottom-bar/spark_highlight.svg";
 import PauseIcon from "../assets/bottom-bar/pause.svg";
@@ -103,13 +103,21 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               icon={ simulation.config.zonesCount < 3 ? <TerrainIcon /> : <TerrainThreeIcon /> }
               highlightIcon={
                 simulation.config.zonesCount < 3 ? <TerrainHighlightIcon /> : <TerrainThreeHighlightIcon />}
-              disabled={uiDisabled} buttonText="Terrain Setup" dataTest="terrain-button" onClick={this.handleTerrain}
+              disabled={uiDisabled}
+              buttonText="Terrain Setup"
+              dataTest="terrain-button"
+              onClick={this.handleTerrain}
             />
           </div>
           <div className={`${css.widgetGroup} ${css.placeSpark}`}>
             <div className={css.sparksCount}>{ simulation.remainingSparks }</div>
-            <IconButton icon={<SparkIcon />} highlightIcon={<SparkHighlight />}
-              disabled={this.sparkBtnDisabled} buttonText="Spark" dataTest="spark-button" onClick={this.placeSpark}
+            <IconButton
+              icon={<SparkIcon />}
+              highlightIcon={<SparkHighlight />}
+              disabled={this.sparkBtnDisabled}
+              buttonText="Spark"
+              dataTest="spark-button"
+              onClick={this.placeSpark}
             />
           </div>
           <div className={`${css.widgetGroup} ${css.reloadRestart}`}>
@@ -143,14 +151,22 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           </div>
 
           <div className={`${css.widgetGroup}`}>
-            <IconButton icon={<FireLineIcon />} highlightIcon={<FireLineHighlightIcon />}
-              disabled={this.fireLineBtnDisabled} buttonText="Fire Line" dataTest="fireline-button"
+            <IconButton
+              icon={<FireLineIcon />}
+              highlightIcon={<FireLineHighlightIcon />}
+              disabled={this.fireLineBtnDisabled}
+              buttonText="Fire Line"
+              dataTest="fireline-button"
               onClick={this.handleFireLine}
             />
           </div>
           <div className={`${css.widgetGroup} ${css.helitack}`}>
-            <IconButton icon={<HelitackIcon />} highlightIcon={<HelitackHighlightIcon />}
-              disabled={this.helitackBtnDisabled} buttonText="Helitack" dataTest="helitack-button"
+            <IconButton
+              icon={<HelitackIcon />}
+              highlightIcon={<HelitackHighlightIcon />}
+              disabled={this.helitackBtnDisabled}
+              buttonText="Helitack"
+              dataTest="helitack-button"
               onClick={this.handleHelitack}
             />
           </div>

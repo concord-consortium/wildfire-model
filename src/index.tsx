@@ -3,7 +3,7 @@ import { configure } from "mobx";
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { AppComponent } from "./components/app";
-import { MuiThemeProvider } from "@mui/core/styles";
+import { ThemeProvider } from "@mui/material/styles";
 import { createStores } from "./models/stores";
 import hurricanesTheme from "./material-ui-theme";
 
@@ -18,9 +18,9 @@ if (container) {
   const root = createRoot(container);
   root.render(
     <Provider stores={stores}>
-      <MuiThemeProvider theme={hurricanesTheme}>
+      <ThemeProvider theme={hurricanesTheme}>
         <AppComponent />
-      </MuiThemeProvider>
+      </ThemeProvider>
     </Provider>
   );
 }

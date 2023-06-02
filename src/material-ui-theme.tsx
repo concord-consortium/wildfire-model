@@ -1,6 +1,6 @@
-import { createTheme } from "@mui/core/styles";
+import { createTheme, ThemeOptions } from '@mui/material/styles';
 
-export default createTheme({
+const options: ThemeOptions = {
   palette: {
     primary: {
       main: "#aaa"
@@ -20,88 +20,31 @@ export default createTheme({
       fontWeight: "bold"
     }
   },
-  overrides: {
+  components: {
+    MuiButtonBase: {
+      defaultProps: {
+        disableRipple: true,
+        disableTouchRipple: true,
+        focusRipple: false
+      }
+    },
     MuiButton: {
-      root: {
-        "&:hover": {
-          backgroundColor: "#dfdfdf",
+      styleOverrides: {
+        root: {
+          "&:hover": {
+            backgroundColor: "#dfdfdf",
+          },
+          "&:disabled": {
+            color: "inherit",
+            opacity: 0.25
+          }
         },
-        "&$disabled": {
-          color: "inherit",
-          opacity: 0.25
+        text: {
+          color: "#434343",
+          padding: 0,
         }
       },
-      text: {
-        color: "#434343",
-        padding: 0,
-      }
-    },
-    MuiSwitch: {
-      root: {
-        padding: 14
-      },
-      thumb: {
-        "width": 18,
-        "height": 18,
-        "boxShadow": "0 1px 5px 0 rgba(0, 0, 0, 0.35)",
-        "border": "1px solid #797979",
-        "$switchBase:hover &": {
-          boxShadow: "0 0 0 3px rgba(255, 255, 255, 0.5)",
-        },
-        "$switchBase:active &": {
-          boxShadow: "0 0 0 3px rgba(255, 255, 255, 1)",
-        }
-      },
-      switchBase: {
-        backgroundColor: "transparent !important" // disable default hover state
-      },
-      track: {
-        "backgroundColor": "#797979",
-        "opacity": 1,
-        "$switchBase$checked + &": {
-          opacity: 1
-        }
-      }
-    },
-    MuiSlider: {
-      thumb: {
-        "width": 20,
-        "height": 20,
-        "margin-left": -8.5,
-        "margin-top": -8.5,
-        "$disabled &": {
-          opacity: 0.5,
-          width: 20,
-          height: 20,
-          marginLeft: -8.5,
-          marginTop: -8.5
-        },
-        "$vertical &": {
-          width: 18,
-          height: 18,
-          marginLeft: -8,
-        }
-      },
-      mark: {
-        "$vertical &": {
-          width: 4,
-          height: 4,
-          borderRadius: 3,
-          marginLeft: -3,
-          marginTop: 4,
-          backgroundColor: "#d8d8d8",
-          border: "1px solid #797979"
-        }
-      },
-      markLabel: {
-        "font-size": 10,
-        "$vertical &": {
-          width: 32,
-          minHeight: 20,
-          whiteSpace: "normal",
-          lineHeight: "normal"
-        }
-      }
     }
   }
-});
+}
+export default createTheme(options);

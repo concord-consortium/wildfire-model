@@ -32,7 +32,7 @@ describe("BottomBar component", () => {
         <BottomBar />
       </Provider>
     );
-    let start = screen.getByTestId("start-button");
+    const start = screen.getByTestId("start-button");
     expect(start).toBeDisabled();
 
     act(() => {
@@ -48,7 +48,7 @@ describe("BottomBar component", () => {
   describe("restart button", () => {
     it("restarts simulation", async () => {
       jest.spyOn(stores.simulation, "restart");
-      const { container } = render(
+      render(
         <Provider stores={stores}>
           <BottomBar />
         </Provider>

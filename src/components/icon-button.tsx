@@ -1,5 +1,5 @@
 import * as React from "react";
-import Button from "@mui/core/Button";
+import Button from "@mui/material/Button";
 import css from "./icon-button.scss";
 
 interface IProps {

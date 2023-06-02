@@ -1,6 +1,6 @@
 import * as React from "react";
-import MuiDialog from "@mui/core/Dialog";
-import CloseIcon from "@mui/icons/Close";
+import MuiDialog from "@mui/material/Dialog";
+import CloseIcon from "@mui/icons-material/Close";
 import css from "./dialog.scss";
 
 interface IProps {

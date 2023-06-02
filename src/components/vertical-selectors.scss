@@ -64,50 +64,52 @@
     }
   }
 
-  .rail {
-    height: 94px !important;
-    width: 1px;
-    opacity: 1;
-    background-color: $controlGray;
-  }
-
-  .mark {
-    width: 4px;
-    height: 4px;
-    border: solid 1px $controlGray;
-    background-color: #d8d8d8;
-  }
-
-  .markLabel {
-    font-family: 'Roboto Condensed';
-  }
-
   .slider {
-    margin: 10px auto;
-    text-align: center;
-    font-size: 12px;
-    width: 1px;
+    height: 103px;
+    margin-left: 35px;
 
-    .disabled {
-      opacity: 0.25;
+    .rail {
+      width: 1px;
+      opacity: 1;
+      background-color: $controlGray;
+    }
 
-      .thumb {
-        width: 20px;
-        height: 20px;
-        margin-left: -8px;
-        margin-top: -8.5px;
-      }
+    .mark {
+      width: 4px;
+      height: 4px;
+      border-radius: 4px;
+      border: solid 1px $controlGray;
+      background-color: #d8d8d8;
+    }
+
+    .markLabel {
+      font-size: 10px;
+      width: 32px;
+      font-family: 'Roboto Condensed';
+      min-height: 20px;
+      white-space: normal;
+      line-height: normal;
     }
 
     .thumb {
       width: 20px;
       height: 20px;
-      margin-left: -9.5px !important;
-      margin-top: -8.5px;
+      background-image: url("../assets/slider-vertical.svg");
+      box-shadow: none;
 
-      &:hover, &:active {
-        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5)
+      &:hover {
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
       }
+
+      &:active,
+      &:global(.Mui-active),
+      &:global(.Mui-focusVisible) {
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 1);
+      }
+    }
+
+    .disabled {
+      opacity: 0.25;
     }
   }
 }
