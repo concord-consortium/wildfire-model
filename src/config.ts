@@ -95,8 +95,8 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   modelHeight: 80000,
   // 240 works well with presets based on heightmap images.
   gridWidth: 240,
-  get cellSize() { return this.modelWidth / this.gridWidth },
-  get gridHeight() { return Math.ceil(this.modelHeight / this.cellSize) },
+  get cellSize() { return this.modelWidth / this.gridWidth; },
+  get gridHeight() { return Math.ceil(this.modelHeight / this.cellSize); },
   elevation: undefined, // will be derived from zone properties
   unburntIslands: undefined, // will be derived from zone properties
   zoneIndex: [[0, 1]],
@@ -199,7 +199,7 @@ export const getUrlConfig: () => IUrlConfig = () => {
       if (urlValue === "[]") {
         urlConfig[key] = [];
       } else {
-        urlConfig[key] = urlValue!.substring(1, urlValue!.length - 1).split(",");
+        urlConfig[key] = urlValue.substring(1, urlValue.length - 1).split(",");
       }
     } else if (urlValue !== null && !isNaN(urlValue)) {
       // !isNaN(string) means isNumber(string).

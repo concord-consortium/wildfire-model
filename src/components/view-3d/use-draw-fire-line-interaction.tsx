@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { useStores } from "../../use-stores";
 import { ftToViewUnit } from "./helpers";
 import { Event } from "three";

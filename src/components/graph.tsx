@@ -1,7 +1,6 @@
 import { observer } from "mobx-react";
 import React, { useEffect } from "react";
 import { useStores } from "../use-stores";
-import { Interaction } from "../models/ui";
 import { Chart } from "../charts/components/chart";
 import css from "./graph.scss";
 import { Annotation } from "../charts/models/chart-annotation";
@@ -69,7 +68,7 @@ export const Graph = observer(function WrappedComponent() {
       chartStore.chart.defaultAxisLabelA1 = "Time (hours)";
       chartStore.chart.defaultAxisLabelA2 =  "Acres Burned (thousands)";
     }
-    if (chartStore.chart && chartStore.chart.dataSets) {
+    if (chartStore.chart?.dataSets) {
       if (chartStore.chart.dataSets.length < simulation.zones.length) {
         for (let i = 0; i < simulation.zones.length; i++) {
           updateChartData(i);
@@ -160,7 +159,7 @@ export const Graph = observer(function WrappedComponent() {
 
   return (
     <div className={css.chartContainer}>
-      {chartStore.chart && chartStore.chart.dataSets && chartStore.chart.dataSets.length > 0 &&
+      {chartStore.chart?.dataSets && chartStore.chart.dataSets.length > 0 &&
         <Chart
         title="Acres Burned vs. Time"
         chartType="line"

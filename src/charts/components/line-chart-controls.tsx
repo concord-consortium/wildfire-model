@@ -36,7 +36,7 @@ export class LineChartControls extends BaseComponent<IChartControlProps, IChartC
       }
     }
     return nextState;
-  }
+  };
 
   public state: IChartControlState = {
     scrubberPosition: 0,
@@ -95,7 +95,7 @@ export class LineChartControls extends BaseComponent<IChartControlProps, IChartC
               disabled={false}
             />
           }
-          </div>
+        </div>
         <div className={css.toggleDataSubset} onClick={toggleShowAllOrRecent}>{toggleButtonText()}</div>
       </div>
     );
@@ -117,5 +117,5 @@ export class LineChartControls extends BaseComponent<IChartControlProps, IChartC
         scrubberMax: chartData.pointCount
       });
     }
-  }
+  };
 }

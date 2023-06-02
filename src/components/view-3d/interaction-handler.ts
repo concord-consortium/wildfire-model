@@ -23,7 +23,7 @@ export type InteractionHandler = {
   [action in InteractionAction]?: EventHandler;
 } & {
   active: boolean
-}
+};
 
 // Takes list of interactions and returns object with event handlers necessary for **active** interactions.
 // Note that it's very important to avoid defining event handlers when no interaction is active.
@@ -42,7 +42,7 @@ export const getEventHandlers = (interactions: InteractionHandler[]) => {
           if (!handlers[eventName]) {
             handlers[eventName] = [];
           }
-          handlers[eventName]!.push(eventHandler);
+          handlers[eventName]?.push(eventHandler);
         }
       });
     }

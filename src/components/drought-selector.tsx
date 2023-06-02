@@ -25,14 +25,18 @@ export const DroughtSelector = ({ droughtLevel, onChange, onChangeCommitted, dis
         {
           severeDroughtAvailable &&
           <div className={css.sliderIcon} style={{ bottom: "100%" }}>
-            {droughtIcons[DroughtLevel.SevereDrought]}</div>
+            {droughtIcons[DroughtLevel.SevereDrought]}
+          </div>
         }
         <div className={css.sliderIcon} style={{ bottom: severeDroughtAvailable ? "66%" : "100%" }}>
-          {droughtIcons[DroughtLevel.MediumDrought]}</div>
+          {droughtIcons[DroughtLevel.MediumDrought]}
+        </div>
         <div className={css.sliderIcon} style={{ bottom: severeDroughtAvailable ? "33%" : "50%" }}>
-          {droughtIcons[DroughtLevel.MildDrought]}</div>
+          {droughtIcons[DroughtLevel.MildDrought]}
+        </div>
         <div className={css.sliderIcon} style={{ bottom: 0 }}>
-          {droughtIcons[DroughtLevel.NoDrought]}</div>
+          {droughtIcons[DroughtLevel.NoDrought]}
+        </div>
       </div>
       <Slider
         className={css.slider}
@@ -55,5 +59,5 @@ export const DroughtSelector = ({ droughtLevel, onChange, onChangeCommitted, dis
         data-testid="drought-slider"
       />
     </div>
-  </div>;
+         </div>;
 };

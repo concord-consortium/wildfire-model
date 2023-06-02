@@ -24,7 +24,7 @@ export const forEachPointBetween = (
   const sy = (y0 < y1) ? 1 : -1;
   let err = dx - dy;
   let idx = 0;
-  while (true) {
+  for (;;) {
     callback(x0, y0, idx);
     idx += 1;
     if ((x0 === x1) && (y0 === y1)) break;

@@ -1,5 +1,5 @@
 import React from "react";
-import { act, render, screen, within } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
 import { TerrainPanel } from "./terrain-panel";
@@ -116,6 +116,7 @@ describe("vegetation selector", () => {
         <TerrainPanel />
       </Provider>
     );
+    // eslint-disable-next-line testing-library/no-node-access
     const veg = screen.getByTestId("vegetation-slider").querySelector("input");
     expect(veg).toHaveValue("1");
   });
@@ -126,6 +127,7 @@ describe("vegetation selector", () => {
         <TerrainPanel />
       </Provider>
     );
+    // eslint-disable-next-line testing-library/no-node-access
     const drought = screen.getByTestId("drought-slider").querySelector("input");
     expect(drought).toHaveValue("2");
   });

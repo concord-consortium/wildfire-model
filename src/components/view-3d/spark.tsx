@@ -27,5 +27,5 @@ export const SparksContainer: React.FC<IProps> = observer(function WrappedCompon
         />;
       })
     }
-  </>;
+         </>;
 });

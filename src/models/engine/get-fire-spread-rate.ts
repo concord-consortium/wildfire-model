@@ -1,6 +1,5 @@
-import { Fuel } from "../../types";
+import { Fuel , Vegetation, IWindProps } from "../../types";
 import { Vector2 } from "three";
-import { Vegetation, IWindProps } from "../../types";
 
 interface ICellProps {
   x: number;

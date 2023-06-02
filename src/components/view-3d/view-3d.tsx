@@ -1,10 +1,9 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
-import { OrbitControls } from '@react-three/drei'
+import { OrbitControls , PerspectiveCamera } from "@react-three/drei";
 import { Provider } from "mobx-react";
 import { useStores } from "../../use-stores";
 import { DEFAULT_UP, PLANE_WIDTH, planeHeight } from "./helpers";
-import { PerspectiveCamera } from "@react-three/drei";
 import { Terrain } from "./terrain";
 import { SparksContainer } from "./spark";
 import * as THREE from "three";
@@ -20,7 +19,8 @@ const ShutterbugSupport = () => {
   });
   useEffect(() => {
     Shutterbug.on("saycheese", renderRef.current);
-    return () => Shutterbug.off("saycheese", renderRef.current);
+    const render = renderRef.current;
+    return () => Shutterbug.off("saycheese", render);
   }, []);
   return null;
 };
@@ -32,10 +32,9 @@ export const View3d = () => {
   const cameraPos: [number, number, number] = [PLANE_WIDTH * 0.5, planeHeight(simulation) * -1.5, PLANE_WIDTH * 1.5];
   const terrainRef = useRef<THREE.Mesh>(null);
 
-  // If pixelRatio is 2 or more, use a bit reduced value. It seems to be a good compromise between
-  // rendering quality and performance (PJ: on my 2017 MacBook Pro 15", pixelRatio = 2 was causing visible FPS drop).
-  const pixelRatio = window.devicePixelRatio > 1 ? Math.max(1, window.devicePixelRatio * 0.75) : 1;
   return (
+    /* eslint-disable react/no-unknown-property */
+    // See: https://github.com/jsx-eslint/eslint-plugin-react/issues/3423
     <Canvas camera={{manual: true}}>
       {/* Why do we need to setup provider again? No idea. It seems that components inside Canvas don't have
           access to MobX stores anymore. */}
@@ -62,5 +61,6 @@ export const View3d = () => {
         <ShutterbugSupport/>
       </Provider>
     </Canvas>
+    /* eslint-enable react/no-unknown-property */
   );
 };

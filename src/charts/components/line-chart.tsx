@@ -93,10 +93,8 @@ const lineData = (chartData: ChartDataModel) => {
   const lineDatasets = [];
   if (chartData.visibleDataSets) {
     for (const d of chartData.visibleDataSets) {
-      const dset = Object.assign({}, lineDatasetDefaults, {
-        label: d.name,
-        data: d.timeSeriesXY
-      });
+      const dset = { ...lineDatasetDefaults, label: d.name,
+        data: d.timeSeriesXY};
       if (d.color) {
         // backgroundColor is the color under the line, if we decide to fill that area
         dset.backgroundColor = hexToRGBValue(d.color, 0.4);
@@ -159,8 +157,7 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
       key } = this.props;
     const chartDisplay = lineData(chart);
     const minMaxValues = chart.minMaxAll;
-    const options: ChartOptions = Object.assign({}, defaultOptions, {
-      title: {
+    const options: ChartOptions = { ...defaultOptions, title: {
         display: (chart.name && chart.name.length > 0),
         text: chart.name,
         fontFamily: chartFont,
@@ -211,8 +208,7 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
         drawTime: "afterDraw",
         events: ["click", "mouseenter", "mouseleave"],
         annotations: chart.formattedAnnotations
-      }
-    });
+      }};
     const w = width ? width : 400;
     const h = height ? height : 400;
     const graph: JSX.Element =

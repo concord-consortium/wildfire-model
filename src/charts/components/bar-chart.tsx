@@ -84,10 +84,8 @@ const barDatasetDefaults: ChartData<any> = {
 const barData = (chartData: ChartDataModel) => {
   const barDatasets = [];
   for (const d of chartData.dataSets) {
-    const dset = Object.assign({}, barDatasetDefaults, {
-      label: d.name,
-      data: d.dataA1,
-    });
+    const dset = { ...barDatasetDefaults, label: d.name,
+      data: d.dataA1,};
     const seriesOpacity = d.backgroundOpacity ? d.backgroundOpacity : 0.4;
     if (d.color) {
       // One color for all bars
@@ -133,8 +131,7 @@ export class BarChart extends BaseComponent<IBarProps, IBarState> {
     const { chartStore } = this.stores;
     const { chartFont, width, height, barChartType } = this.props;
     const chartDisplay = barData(chartStore.chart);
-    const options: ChartOptions = Object.assign({}, defaultOptions, {
-      title: {
+    const options: ChartOptions = { ...defaultOptions, title: {
         fontFamily: chartFont ? chartFont : undefined
       },
       scales: {
@@ -152,8 +149,7 @@ export class BarChart extends BaseComponent<IBarProps, IBarState> {
           },
           stacked: true
         }]
-      }
-    });
+      }};
     const w = width ? width : 400;
     const h = height ? height : 400;
     if (barChartType === "bar") {

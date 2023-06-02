@@ -37,7 +37,7 @@ export const terrainLabels: Record<TerrainType, string> = {
   [TerrainType.Plains]: "Plains",
   [TerrainType.Foothills]: "Foothills",
   [TerrainType.Mountains]: "Mountains",
-}
+};
 
 export enum DroughtLevel {
   NoDrought = 0,

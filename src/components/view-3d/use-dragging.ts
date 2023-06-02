@@ -20,7 +20,7 @@ export const useDragging = ({ useOffset, dragPlane, onDrag, onDragEnd }: UseDrag
   const offset = useRef<THREE.Vector2 | null>(null);
 
   const pointerMoveHandler = useRef(() => {
-    if (!dragPlane || !dragPlane.current || !onDrag) {
+    if (!dragPlane?.current || !onDrag) {
       return;
     }
     if (offset.current) {
@@ -28,7 +28,7 @@ export const useDragging = ({ useOffset, dragPlane, onDrag, onDragEnd }: UseDrag
       raycaster.setFromCamera(mouseWithOffset, camera);
     }
     const result = raycaster.intersectObject(dragPlane.current);
-    if (result && result[0]) {
+    if (result?.[0]) {
       onDrag(result[0].point);
     }
   });
@@ -54,7 +54,7 @@ export const useDragging = ({ useOffset, dragPlane, onDrag, onDragEnd }: UseDrag
         offset.current = new THREE.Vector2(projectedPosition.x - mouse.x, projectedPosition.y - mouse.y);
       }
       e.stopPropagation();
-      if (!dragPlane || !dragPlane.current) {
+      if (!dragPlane?.current) {
         return;
       }
       window.addEventListener("pointermove", pointerMoveHandler.current);

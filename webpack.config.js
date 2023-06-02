@@ -29,16 +29,6 @@ module.exports = (env, argv) => {
       rules: [
         {
           test: /\.tsx?$/,
-          enforce: 'pre',
-          use: [
-            {
-              loader: 'tslint-loader',
-              options: {}
-            }
-          ]
-        },
-        {
-          test: /\.tsx?$/,
           loader: 'ts-loader',
           options: {
             transpileOnly: true // IMPORTANT! use transpileOnly mode to speed-up compilation

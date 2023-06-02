@@ -104,13 +104,13 @@ export const Terrain = observer(forwardRef<THREE.Mesh>(function WrappedComponent
     if (geometryRef.current) {
       setupElevation(geometryRef.current, simulation);
     }
-  }, [simulation.cellsElevationFlag]);
+  }, [simulation, simulation.cellsElevationFlag]);
 
   useLayoutEffect(() => {
     if (geometryRef.current) {
       updateColors(geometryRef.current, simulation);
     }
-  }, [simulation.cellsStateFlag]);
+  }, [simulation, simulation.cellsStateFlag]);
 
   const interactions: InteractionHandler[] = [
     usePlaceSparkInteraction(),
@@ -126,6 +126,8 @@ export const Terrain = observer(forwardRef<THREE.Mesh>(function WrappedComponent
   const eventHandlers = getEventHandlers(interactions);
 
   return (
+    /* eslint-disable react/no-unknown-property */
+    // See: https://github.com/jsx-eslint/eslint-plugin-react/issues/3423
     <mesh
       ref={ref}
       position={[PLANE_WIDTH * 0.5, height * 0.5, 0]}
@@ -139,6 +141,7 @@ export const Terrain = observer(forwardRef<THREE.Mesh>(function WrappedComponent
       />
       <meshPhongMaterial attach="material" vertexColors={true} />
     </mesh>
-  )
+    /* eslint-enable react/no-unknown-property */
+  );
 }));
 

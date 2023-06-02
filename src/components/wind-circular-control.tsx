@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useStores } from "../use-stores";
 import { Slider } from "@mui/material";
 import { observer } from "mobx-react";

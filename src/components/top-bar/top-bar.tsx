@@ -19,15 +19,15 @@ export const TopBar: React.FC<IProps> = ({ projectName, aboutContent, shareConte
     // Give some time for the log message to be delivered. Note it goes only to the parent window using postMessage,
     // so we don't have to wait for network request.
     setTimeout(() => window.location.reload(), 100);
-  }
+  };
   const handleShareOpen = () => {
     setShareOpen(true);
     log("ShareDialogOpened");
-  }
+  };
   const handleAboutOpen = () => {
     setAboutOpen(true);
     log("AboutDialogOpened");
-  }
+  };
   const handleShareClose = () => setShareOpen(false);
   const handleAboutClose = () => setAboutOpen(false);
 

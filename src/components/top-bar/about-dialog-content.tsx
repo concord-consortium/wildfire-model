@@ -24,10 +24,12 @@ export const AboutDialogContent = () => (
     </p>
     <p>
       Wildfire Explorer was created
-      by <a href="https://github.com/pjanik" target="_blank">Piotr Janik</a> from <a href="https://concord.org"
-      target="_blank">the Concord Consortium.</a> This <a
-      href="https://concord.org/our-work/research-projects/geohazard/" target="_blank">GeoHazard</a> interactive
-      was developed under <a href="https://nsf.gov/" target="_blank">National Science Foundation</a> grant
+      by <a href="https://github.com/pjanik" target="_blank" rel="noreferrer">Piotr Janik</a> from <a href="https://concord.org"
+      target="_blank" rel="noreferrer">the Concord Consortium.
+                                                                                                   </a> This <a
+      href="https://concord.org/our-work/research-projects/geohazard/" target="_blank" rel="noreferrer">GeoHazard
+                                                                                                             </a> interactive
+      was developed under <a href="https://nsf.gov/" target="_blank" rel="noreferrer">National Science Foundation</a> grant
       DRL-1812362.
     </p>
     <Copyright />

@@ -191,7 +191,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   public fullscreenChange = () => {
     this.setState({ fullscreen: screenfull.isEnabled && screenfull.isFullscreen });
-  }
+  };
 
   public handleStart = () => {
     const { ui, simulation } = this.stores;
@@ -214,19 +214,19 @@ export class BottomBar extends BaseComponent<IProps, IState> {
         }))
       });
     }
-  }
+  };
 
   public handleRestart = () => {
     this.stores.chartStore.reset();
     this.stores.simulation.restart();
     log("SimulationRestarted");
-  }
+  };
 
   public handleReload = () => {
     this.stores.chartStore.reset();
     this.stores.simulation.reload();
     log("SimulationReloaded");
-  }
+  };
 
   public handleFireLine = () => {
     const { ui, simulation } = this.stores;
@@ -234,26 +234,26 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     simulation.stop();
     ui.interaction = Interaction.DrawFireLine;
     log("FireLineButtonClicked");
-  }
+  };
 
   public handleHelitack = () => {
     const { ui, simulation } = this.stores;
     ui.showTerrainUI = false;
     ui.interaction = Interaction.Helitack;
     log("HelitackButtonClicked");
-  }
+  };
 
   public handleTerrain = () => {
     const { ui } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
     ui.terrainUISelectedZone = 0;
     log("TerrainPanelButtonClicked");
-  }
+  };
 
   public placeSpark = () => {
     const { ui } = this.stores;
     ui.showTerrainUI = false;
     ui.interaction = Interaction.PlaceSpark;
     log("SparkButtonClicked");
-  }
+  };
 }

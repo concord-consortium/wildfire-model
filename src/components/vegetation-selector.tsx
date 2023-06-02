@@ -25,7 +25,7 @@ const getIcons = (terrainType: TerrainType, forestWithSuppressionAvailable: bool
   }
   // no forest with suppression
   return vegetationIcons.slice(0, 3);
-}
+};
 
 const getMarks = (terrainType: TerrainType, forestWithSuppressionAvailable: boolean) => {
   const labelsArray = Object.values(vegetationLabels);
@@ -40,7 +40,7 @@ const getMarks = (terrainType: TerrainType, forestWithSuppressionAvailable: bool
   }
   // no forest with suppression
   return generateMarks(labelsArray.slice(0, 3));
-}
+};
 
 export const VegetationSelector = ({ vegetation, terrainType, onChange, onChangeCommitted, forestWithSuppressionAvailable }: IProps) => {
   const marks = getMarks(terrainType, forestWithSuppressionAvailable);

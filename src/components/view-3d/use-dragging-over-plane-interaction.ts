@@ -57,5 +57,5 @@ export const useDraggingOverPlaneInteraction = (
       e.stopPropagation();
       startDragging(e);
     }
-  }
+  };
 };

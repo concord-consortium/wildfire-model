@@ -7,7 +7,7 @@ describe("TopBar component", () => {
   describe("Reload button", () => {
     it("reloads the model using window.location.reload", async () => {
       const reloadMock = jest.fn();
-      Object.defineProperty(window, 'location', {
+      Object.defineProperty(window, "location", {
         writable: true,
         value: { reload: reloadMock },
       });

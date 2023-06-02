@@ -63,7 +63,7 @@ describe("FireEngine", () => {
     const res = [];
     for (let x = 0; x < config.gridWidth; x += 1) {
       for (let y = 0; y < config.gridWidth; y += 1) {
-        res.push(new Cell({ x, y, zone }))
+        res.push(new Cell({ x, y, zone }));
       }
     }
     return res;
@@ -92,7 +92,7 @@ describe("FireEngine", () => {
       const res = [];
       for (let x = 0; x < config.gridWidth; x += 1) {
         for (let y = 0; y < config.gridWidth; y += 1) {
-          res.push(new Cell({ x, y, zone: defaultZone, isUnburntIsland: true }))
+          res.push(new Cell({ x, y, zone: defaultZone, isUnburntIsland: true }));
         }
       }
       return res;
@@ -115,7 +115,7 @@ describe("FireEngine", () => {
       engine.updateFire(1440);
       expect(engine.cells.filter(c => c.fireState === FireState.Burnt).length).toBeGreaterThan(0);
       return engine.cells.filter(c => c.isFireSurvivor).length;
-    }
+    };
 
     it("should not mark any grass cells as fire survivors", () => {
       expect(testVegetationAndGetNumberOfFireSurvivors(Vegetation.Grass)).toEqual(0);

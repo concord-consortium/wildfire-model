@@ -71,7 +71,8 @@ export const renderZones = (
               <div className={`${css.riverOverlay}`} style={{backgroundImage: `url(${zoneRiverImagePath})`}} />
               {!readonly &&
                 <span className={`${css.vegetationPreview} ${i > 0 ? vegPreviewPosition : ""}`}>
-                  {vegetationIcons[z.vegetation]}</span>
+                  {vegetationIcons[z.vegetation]}
+                </span>
               }
             </div>
           </label>

@@ -1,6 +1,6 @@
 import React from "react";
 import { render, screen } from "@testing-library/react";
-import userEvent from '@testing-library/user-event'
+import userEvent from "@testing-library/user-event";
 import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
 import { BottomBar } from "./bottom-bar";
@@ -94,7 +94,7 @@ describe("BottomBar component", () => {
           <BottomBar />
         </Provider>
       );
-      screen.getByTestId("fireline-button");
+      expect(screen.getByTestId("fireline-button")).toBeInTheDocument();
     });
   });
 
@@ -105,7 +105,7 @@ describe("BottomBar component", () => {
           <BottomBar />
         </Provider>
       );
-      screen.getByTestId("helitack-button");
+      expect(screen.getByTestId("helitack-button")).toBeInTheDocument();
     });
   });
 

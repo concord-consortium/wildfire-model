@@ -1,12 +1,10 @@
 import { observer } from "mobx-react";
 import React, { useState } from "react";
-import { RightPanelTab } from "./right-panel-tab";
+import { RightPanelTab, TabType } from "./right-panel-tab";
 import { useStores } from "../use-stores";
 import { Graph } from "./graph";
 import { log } from "@concord-consortium/lara-interactive-api";
 import css from "./right-panel.scss";
-
-export type TabType = "graph";
 
 export const RightPanel = observer(function WrappedComponent() {
   const { ui } = useStores();

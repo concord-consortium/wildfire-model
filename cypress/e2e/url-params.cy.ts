@@ -10,5 +10,5 @@ context("Test URL params", () => {
       cy.visit("/?showBurnIndex=false");
       cy.get(".fire-intensity-scale--fireIntensityScale--__wildfire-v1__").should("not.exist");
     });
-  })
+  });
 });

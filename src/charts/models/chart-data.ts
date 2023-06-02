@@ -22,8 +22,8 @@ export class ChartDataModel implements IChartDataModel {
   public defaultAxisLabelA1?: string;
   public defaultAxisLabelA2?: string;
   public defaultMaxPoints?: number = 100;
-  public defaultMaxA1: number = 100;
-  public defaultMaxA2: number = 100;
+  public defaultMaxA1 = 100;
+  public defaultMaxA2 = 100;
 
   constructor(props: IChartDataModel) {
     makeObservable(this);
@@ -39,19 +39,19 @@ export class ChartDataModel implements IChartDataModel {
   public get chartLabels() {
     if (this.labels && this.labels.length > 0) {
       return this.labels;
-    } else return [];
+    } else {return [];}
   }
 
   // labels for a data point - essential for a bar graph, optional for a line
   public get dataLabels() {
     if (this.visibleDataSets && this.visibleDataSets.length > 0) {
       return this.visibleDataSets[0].dataLabels;
-    } else return [];
+    } else {return [];}
   }
   public get dataLabelRotation() {
     if (this.visibleDataSets && this.visibleDataSets.length > 0) {
       return this.visibleDataSets[0].fixedLabelRotation;
-    } else return;
+    }
   }
   @computed public get minMaxAll() {
     const maxA1Values: number[] = [];
@@ -110,7 +110,7 @@ export class ChartDataModel implements IChartDataModel {
   }
 
   public get axisLabelA1() {
-    if (this.defaultAxisLabelA1) return this.defaultAxisLabelA1;
+    if (this.defaultAxisLabelA1) {return this.defaultAxisLabelA1;}
     else if (this.visibleDataSets && this.visibleDataSets.length > 0) {
       return this.visibleDataSets[0].axisLabelA1;
     } else {
@@ -119,7 +119,7 @@ export class ChartDataModel implements IChartDataModel {
   }
 
   public get axisLabelA2() {
-    if (this.defaultAxisLabelA2) return this.defaultAxisLabelA2;
+    if (this.defaultAxisLabelA2) {return this.defaultAxisLabelA2;}
     else if (this.visibleDataSets && this.visibleDataSets.length > 0) {
       return this.visibleDataSets[0].axisLabelA2;
     } else {
@@ -129,7 +129,7 @@ export class ChartDataModel implements IChartDataModel {
 
   public get formattedAnnotations() {
     if (this.annotations && this.annotations.length > 0) {
-      return this.annotations!.map(a => a.formatted);
+      return this.annotations.map(a => a.formatted);
     } else {
       this.annotations = [];
       return this.annotations;
@@ -140,7 +140,7 @@ export class ChartDataModel implements IChartDataModel {
     if (this.defaultAxisLabelA1) dataSet.axisLabelA1 = this.defaultAxisLabelA1;
     if (this.defaultAxisLabelA2) dataSet.axisLabelA2 = this.defaultAxisLabelA2;
     this.dataSets.push(dataSet);
-  }
+  };
   // If we want to scrub back and forth along a timeline of data points, but still need
   // to limit our data point quantity for performance, pass a start index and
   // the number of required points to filter the data
@@ -151,7 +151,7 @@ export class ChartDataModel implements IChartDataModel {
         d.setMaxDataPoints(maxPoints);
       }
     });
-  }
+  };
   // To fetch all data from all datasets, remove any subset index points and set the max number of points to -1
   // to ensure all data is returned unfiltered
   public allData = () => {
@@ -159,22 +159,22 @@ export class ChartDataModel implements IChartDataModel {
       d.subsetPoints(-1);
       d.setMaxDataPoints(-1);
     });
-  }
+  };
 
   public addAnnotation = (annotation: Annotation) => {
     if (!this.annotations) {
       this.annotations = [];
     }
     this.annotations.push(annotation);
-  }
+  };
 
   public removeAnnotation = (annotation: Annotation) => {
     if (this.annotations) {
       this.annotations.splice(this.annotations.indexOf(annotation));
     }
-  }
+  };
 
   public clearAnnotations = () => {
     this.annotations = [];
-  }
+  };
 }

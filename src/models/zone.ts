@@ -21,7 +21,7 @@ export class Zone {
   @observable public terrainType: TerrainType = TerrainType.Foothills;
   @observable public droughtLevel: DroughtLevel = DroughtLevel.MildDrought;
 
-  constructor(props: ZoneOptions) {
+  constructor(props?: ZoneOptions) {
     makeObservable(this);
     Object.assign(this, props);
   }

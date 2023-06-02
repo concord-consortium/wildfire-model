@@ -2,9 +2,6 @@ import { downsample } from "../downsample-data";
 import { observable, computed, makeObservable } from "mobx";
 import css from "../chart-colors.scss";
 
-const MAX_TOTAL_POINTS = 120;
-const GROW_WINDOW = 40;
-
 export interface Color {
   name: string;
   hex: string;
@@ -128,7 +125,7 @@ export class ChartDataSet implements IChartDataSet {
   public pointColors?: string[];
   public backgroundOpacity?: number;
   public graphPattern?: GraphPatternType;
-  @observable public maxPoints: number = -1;
+  @observable public maxPoints = -1;
   @observable public fixedMinA1?: number;
   @observable public fixedMaxA1?: number;
   @observable public fixedMinA2?: number;
@@ -141,7 +138,7 @@ export class ChartDataSet implements IChartDataSet {
   public axisLabelA1?: string = "";
   public axisLabelA2?: string = "";
   @observable public allowExpandA2?: boolean = true;
-  @observable public display: boolean = true;
+  @observable public display = true;
   public dashStyle?: number[];
   public downsample?: boolean;
   public downsampleMaxLength?: number;
@@ -288,11 +285,11 @@ export class ChartDataSet implements IChartDataSet {
   // starting from a specified index. Set to -1 to remove the filter.
   public subsetPoints = (idx: number) => {
     this.dataStartIdx = idx;
-  }
+  };
 
   public addDataPoint = (a1: number, a2: number, label: string) => {
     this.dataPoints.push({ a1, a2, label });
-  }
+  };
 
   public updateDataPoint = (pointIdx: number, newValA1: number, newValA2: number, newLabel?: string) => {
     if (this.dataPoints[pointIdx]) {
@@ -300,7 +297,7 @@ export class ChartDataSet implements IChartDataSet {
       this.dataPoints[pointIdx].a2 = newValA2;
       if (newLabel) this.dataPoints[pointIdx].label = newLabel;
     }
-  }
+  };
   public addOrUpdateDataPoint = (newValA1: number, newValA2: number, label?: string) => {
     const pointIdx = this.dataPoints.findIndex(p => p.a1 === newValA1);
     if (pointIdx > -1 && this.dataPoints[pointIdx]) {
@@ -308,24 +305,24 @@ export class ChartDataSet implements IChartDataSet {
     } else {
       this.addDataPoint(newValA1, newValA2, label ? label : "");
     }
-  }
+  };
 
   public deleteDataPoint = (pointIdx: number) => {
     if (this.dataPoints.length > pointIdx) {
       this.dataPoints.splice(pointIdx, 1);
     }
-  }
+  };
 
   public changeColor = (newColor: string) => {
     this.color = newColor;
-  }
+  };
 
   public clearDataPoints = () => {
     this.dataPoints = [];
-  }
+  };
 
   // used to filter data to a fixed number of points, or returns all points if set to -1
   public setMaxDataPoints = (maxPoints: number) => {
     this.maxPoints = maxPoints;
-  }
+  };
 }
