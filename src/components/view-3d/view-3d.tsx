@@ -53,7 +53,7 @@ export const View3d = () => {
           minAzimuthAngle={-Math.PI * 0.25}
           maxAzimuthAngle={Math.PI * 0.25}
         />
-        <hemisphereLight args={[0xC6C2B6, 0x3A403B, 1.2]} up={DEFAULT_UP}/>
+        <hemisphereLight args={[0xC6C2B6, 0x3A403B, 1]} up={DEFAULT_UP}/>
         <Terrain ref={terrainRef}/>
         <SparksContainer dragPlane={terrainRef}/>
         <FireLineMarkersContainer dragPlane={terrainRef}/>
