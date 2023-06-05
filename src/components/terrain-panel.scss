@@ -1,45 +1,51 @@
 @import "common.scss";
 
-.terrain{
+.terrain {
+  $width: 288px;
+  $padding: 5px;
   position: absolute;
-  top: 10%;
-  width: 288px;
+  top: 5px;
+  left: 50%;
+  margin-left: calc(-1 * ($width + 2 * $padding) / 2);
+  width: $width;
   height: 476px;
-  left: 39%;
-  margin-left: auto;
-  margin-right: auto;
   border-radius: 10px;
   border: 1px solid silver;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.5);
 
   background: rgba(255, 255, 255, 1);
-  padding: 5px;
+  padding: $padding;
   text-align: center;
   z-index: 2;
 
-  &.disabled{
+  &.disabled {
     display: none;
   }
 
-  .background{
+  .background {
     border-top-left-radius: 6px;
     border-top-right-radius: 6px;
     background-color: $zone1Red;
     height: 100%;
-    &.zone1{
+
+    &.zone1 {
       background-color: $zone1Red;
     }
-    &.zone2{
+
+    &.zone2 {
       background-color: $zone2Blue;
     }
-    &.zone3{
+
+    &.zone3 {
       background-color: $zone3Orange;
     }
-    &.panel2{
+
+    &.panel2 {
       background-color: $zoneGreen;
     }
   }
-  .closeButton{
+
+  .closeButton {
     position: absolute;
     top: 5px;
     right: 5px;
@@ -50,12 +56,13 @@
     line-height: 1.2em;
     color: $controlGray;
     font-weight: 800;
-    &:hover{
+
+    &:hover {
       background-color: $controlGrayLight1
     }
   }
 
-  .header{
+  .header {
     height: 27px;
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
@@ -64,6 +71,7 @@
     font-family: Lato;
     background: white;
   }
+
   .instructions {
     margin-top: 10px;
     margin-bottom: 10px;
@@ -72,7 +80,8 @@
     font-style: italic;
     color: $controlText;
     font-size: 13px;
-    .setupStepIcon{
+
+    .setupStepIcon {
       display: inline-block;
       border-radius: 9px;
       width: 18px;
@@ -87,15 +96,15 @@
       color: #ffffff;
       background-color: $controlGray;
       margin-left: 9px;
-      margin-right:7px;
+      margin-right: 7px;
     }
   }
 
-  .widgetGroup{
+  .widgetGroup {
     margin-top: 20px;
   }
 
-  .zones{
+  .zones {
     padding-left: 18px;
     padding-right: 18px;
     font-size: 0.7em;
@@ -105,15 +114,18 @@
     justify-content: center;
 
   }
-  .terrainSelector{
+
+  .terrainSelector {
     height: 35px;
     padding-left: 18px;
     padding-right: 18px;
   }
-  .terrainTypeLabels{
+
+  .terrainTypeLabels {
     width: 100%;
     display: flex;
-    .terrainTypeLabel{
+
+    .terrainTypeLabel {
       width: 100%;
       flex-grow: 1;
       padding-left: 4px;
@@ -122,32 +134,36 @@
       font-size: 10px;
     }
   }
-  .terrainProperties{
+
+  .terrainProperties {
     width: 100%;
     display: flex;
     color: $controlText;
     height: 70px;
   }
 
-  .selectors{
+  .selectors {
     margin-top: 10px;
     height: 169px;
     display: flex;
     flex-direction: row;
     flex-wrap: nowrap;
     justify-content: center;
-    .selector{
+
+    .selector {
       flex-grow: 1;
       height: 100px;
     }
   }
-  .buttonContainer{
+
+  .buttonContainer {
     position: absolute;
     width: 100%;
     margin-left: auto;
     margin-right: aut0;
     bottom: 13px;
-    .continueButton{
+
+    .continueButton {
       border: 1px solid $controlGray;
       border-radius: 5px;
       background-color: #ffffff;
@@ -155,11 +171,13 @@
       height: 27px;
       font-size: 14px;
     }
-    .continueButton + .continueButton{
+
+    .continueButton+.continueButton {
       margin-left: 20px;
     }
   }
-  .wind{
+
+  .wind {
     width: 100%;
     height: 144px;
   }
