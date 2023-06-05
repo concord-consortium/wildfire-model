@@ -5,7 +5,7 @@ import { droughtLabels, terrainLabels, vegetationLabels } from "../types";
 import CCLogo from "../assets/cc-logo.svg";
 import CCLogoSmall from "../assets/cc-logo-small.svg";
 import screenfull from "screenfull";
-import Button from "@material-ui/core/Button";
+import Button from "@mui/material/Button";
 import SparkIcon from "../assets/bottom-bar/spark.svg";
 import SparkHighlight from "../assets/bottom-bar/spark_highlight.svg";
 import PauseIcon from "../assets/bottom-bar/pause.svg";
@@ -103,19 +103,27 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               icon={ simulation.config.zonesCount < 3 ? <TerrainIcon /> : <TerrainThreeIcon /> }
               highlightIcon={
                 simulation.config.zonesCount < 3 ? <TerrainHighlightIcon /> : <TerrainThreeHighlightIcon />}
-              disabled={uiDisabled} buttonText="Terrain Setup" dataTest="terrain-button" onClick={this.handleTerrain}
+              disabled={uiDisabled}
+              buttonText="Terrain Setup"
+              dataTest="terrain-button"
+              onClick={this.handleTerrain}
             />
           </div>
           <div className={`${css.widgetGroup} ${css.placeSpark}`}>
             <div className={css.sparksCount}>{ simulation.remainingSparks }</div>
-            <IconButton icon={<SparkIcon />} highlightIcon={<SparkHighlight />}
-              disabled={this.sparkBtnDisabled} buttonText="Spark" dataTest="spark-button" onClick={this.placeSpark}
+            <IconButton
+              icon={<SparkIcon />}
+              highlightIcon={<SparkHighlight />}
+              disabled={this.sparkBtnDisabled}
+              buttonText="Spark"
+              dataTest="spark-button"
+              onClick={this.placeSpark}
             />
           </div>
           <div className={`${css.widgetGroup} ${css.reloadRestart}`}>
             <Button
               className={css.playbackButton}
-              data-test="reload-button"
+              data-testid="reload-button"
               onClick={this.handleReload}
               disableRipple={true}
             >
@@ -123,7 +131,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
             </Button>
             <Button
               className={css.playbackButton}
-              data-test="restart-button"
+              data-testid="restart-button"
               onClick={this.handleRestart}
               disableRipple={true}
             >
@@ -135,7 +143,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               onClick={this.handleStart}
               disabled={!simulation.ready}
               className={css.playbackButton}
-              data-test="start-button"
+              data-testid="start-button"
               disableRipple={true}
             >
               { simulation.simulationRunning ? <span><PauseIcon/> Stop</span> : <span><StartIcon /> Start</span> }
@@ -143,14 +151,22 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           </div>
 
           <div className={`${css.widgetGroup}`}>
-            <IconButton icon={<FireLineIcon />} highlightIcon={<FireLineHighlightIcon />}
-              disabled={this.fireLineBtnDisabled} buttonText="Fire Line" dataTest="fireline-button"
+            <IconButton
+              icon={<FireLineIcon />}
+              highlightIcon={<FireLineHighlightIcon />}
+              disabled={this.fireLineBtnDisabled}
+              buttonText="Fire Line"
+              dataTest="fireline-button"
               onClick={this.handleFireLine}
             />
           </div>
           <div className={`${css.widgetGroup} ${css.helitack}`}>
-            <IconButton icon={<HelitackIcon />} highlightIcon={<HelitackHighlightIcon />}
-              disabled={this.helitackBtnDisabled} buttonText="Helitack" dataTest="helitack-button"
+            <IconButton
+              icon={<HelitackIcon />}
+              highlightIcon={<HelitackHighlightIcon />}
+              disabled={this.helitackBtnDisabled}
+              buttonText="Helitack"
+              dataTest="helitack-button"
               onClick={this.handleHelitack}
             />
           </div>
@@ -175,7 +191,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   public fullscreenChange = () => {
     this.setState({ fullscreen: screenfull.isEnabled && screenfull.isFullscreen });
-  }
+  };
 
   public handleStart = () => {
     const { ui, simulation } = this.stores;
@@ -198,19 +214,19 @@ export class BottomBar extends BaseComponent<IProps, IState> {
         }))
       });
     }
-  }
+  };
 
   public handleRestart = () => {
     this.stores.chartStore.reset();
     this.stores.simulation.restart();
     log("SimulationRestarted");
-  }
+  };
 
   public handleReload = () => {
     this.stores.chartStore.reset();
     this.stores.simulation.reload();
     log("SimulationReloaded");
-  }
+  };
 
   public handleFireLine = () => {
     const { ui, simulation } = this.stores;
@@ -218,26 +234,26 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     simulation.stop();
     ui.interaction = Interaction.DrawFireLine;
     log("FireLineButtonClicked");
-  }
+  };
 
   public handleHelitack = () => {
     const { ui, simulation } = this.stores;
     ui.showTerrainUI = false;
     ui.interaction = Interaction.Helitack;
     log("HelitackButtonClicked");
-  }
+  };
 
   public handleTerrain = () => {
     const { ui } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
     ui.terrainUISelectedZone = 0;
     log("TerrainPanelButtonClicked");
-  }
+  };
 
   public placeSpark = () => {
     const { ui } = this.stores;
     ui.showTerrainUI = false;
     ui.interaction = Interaction.PlaceSpark;
     log("SparkButtonClicked");
-  }
+  };
 }

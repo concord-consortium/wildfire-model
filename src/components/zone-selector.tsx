@@ -61,7 +61,7 @@ export const renderZones = (
               value={i}
               checked={selectedZone === i}
               onChange={onChange}
-              data-test="zone-option"
+              data-testid="zone-option"
             />
             <span className={`${css.zoneLabelBorder}`}>
                 <span className={`${css.zoneLabel} ${cssClasses[i]}`}>{`Zone ${i + 1}`}</span>
@@ -71,7 +71,8 @@ export const renderZones = (
               <div className={`${css.riverOverlay}`} style={{backgroundImage: `url(${zoneRiverImagePath})`}} />
               {!readonly &&
                 <span className={`${css.vegetationPreview} ${i > 0 ? vegPreviewPosition : ""}`}>
-                  {vegetationIcons[z.vegetation]}</span>
+                  {vegetationIcons[z.vegetation]}
+                </span>
               }
             </div>
           </label>

@@ -21,7 +21,7 @@ export const useCustomCursor = () => {
       return;
     }
     if (ui.interaction && interactionCursors[ui.interaction]) {
-      document.body.style.cursor = interactionCursors[ui.interaction]!;
+      document.body.style.cursor = interactionCursors[ui.interaction] as string;
       return;
     }
     document.body.style.cursor = "default";

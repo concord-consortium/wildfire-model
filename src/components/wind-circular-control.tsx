@@ -1,14 +1,12 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { useStores } from "../use-stores";
-import { Slider } from "@material-ui/core";
+import { Slider } from "@mui/material";
 import { observer } from "mobx-react";
 import { WindDial, degToCompass } from "./wind-dial";
 import { log } from "@concord-consortium/lara-interactive-api";
 import WindSymbol from "../assets/wind-symbol.svg";
-import HorizontalHandle from "../assets/slider-horizontal.svg";
 
 import css from "./wind-circular-control.scss";
-
 
 const windSpeedMarks = [
   {
@@ -73,16 +71,21 @@ export const WindCircularControl = observer(function WrappedComponent() {
         {`${Math.round(scaledWind)} MPH from the ${degToCompass(simulation.wind.direction)}`}
         <div className={css.windSliderControls}>
           <Slider
-            classes={{ thumb: css.thumb, markLabel: css.markLabel }}
+            classes={{
+              rail: css.rail,
+              mark: css.mark,
+              thumb: css.thumb,
+              markLabel: css.markLabel
+            }}
             min={0}
             max={30}
             disabled={simulation.simulationStarted}
             value={scaledWind}
             step={1}
+            track={false}
             marks={windSpeedMarks}
             onChange={handleWindSpeedChange}
             onChangeCommitted={handleWindSpeedChangeCommitted}
-            ThumbComponent={HorizontalHandle}
           />
         </div>
       </div>

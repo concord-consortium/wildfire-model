@@ -48,7 +48,7 @@ export const getGridCellNeighbors = (
   queue.push(i);
   processed[i] = true;
   while (queue.length > 0) {
-    const j = queue.shift()!;
+    const j = queue.shift() as number;
     const x1 = j % width;
     const y1 = Math.floor(j / width);
     directNeighbours.forEach(diff => {
@@ -93,7 +93,7 @@ export class FireEngine {
   public fireSurvivalProbability: number;
   public endOfLowIntensityFire = false;
   public fireDidStop = false;
-  public day: number = 0;
+  public day = 0;
   public burnedCellsInZone: {[key: number]: number} = {};
 
   constructor(cells: Cell[], wind: IWindProps, sparks: Vector2[], config: IFireEngineConfig) {
@@ -128,7 +128,7 @@ export class FireEngine {
     startingCell.isUnburntIsland = false;
     queue.push(startingCell);
     while (queue.length > 0) {
-      const c = queue.shift()!;
+      const c = queue.shift() as Cell;
       directNeighbours.forEach(diff => {
         const x1 = c.x + diff.x;
         const y1 = c.y + diff.y;

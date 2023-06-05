@@ -1,4 +1,4 @@
-import { observable } from "mobx";
+import { observable, makeObservable } from "mobx";
 
 /**
  * This model tries to reduce the number of options that need to be specified when defining an
@@ -59,6 +59,7 @@ export class Annotation implements IChartAnnotation {
   public fontSize?: number;
 
   constructor(props: IChartAnnotation) {
+    makeObservable(this);
     Object.assign(this, props);
   }
 

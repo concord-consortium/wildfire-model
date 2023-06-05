@@ -1,9 +1,9 @@
 import React, { useEffect, useRef } from "react";
-import { Canvas, useThree } from "react-three-fiber";
+import { Canvas, useThree } from "@react-three/fiber";
+import { OrbitControls , PerspectiveCamera } from "@react-three/drei";
 import { Provider } from "mobx-react";
 import { useStores } from "../../use-stores";
 import { DEFAULT_UP, PLANE_WIDTH, planeHeight } from "./helpers";
-import { CameraControls } from "./camera-controls";
 import { Terrain } from "./terrain";
 import { SparksContainer } from "./spark";
 import * as THREE from "three";
@@ -19,7 +19,8 @@ const ShutterbugSupport = () => {
   });
   useEffect(() => {
     Shutterbug.on("saycheese", renderRef.current);
-    return () => Shutterbug.off("saycheese", renderRef.current);
+    const render = renderRef.current;
+    return () => Shutterbug.off("saycheese", render);
   }, []);
   return null;
 };
@@ -27,18 +28,31 @@ const ShutterbugSupport = () => {
 export const View3d = () => {
   const stores = useStores();
   const simulation = stores.simulation;
+  const ui = stores.ui;
   const cameraPos: [number, number, number] = [PLANE_WIDTH * 0.5, planeHeight(simulation) * -1.5, PLANE_WIDTH * 1.5];
   const terrainRef = useRef<THREE.Mesh>(null);
 
-  // If pixelRatio is 2 or more, use a bit reduced value. It seems to be a good compromise between
-  // rendering quality and performance (PJ: on my 2017 MacBook Pro 15", pixelRatio = 2 was causing visible FPS drop).
-  const pixelRatio = window.devicePixelRatio > 1 ? Math.max(1, window.devicePixelRatio * 0.75) : 1;
   return (
-    <Canvas camera={{ fov: 33, up: DEFAULT_UP, position: cameraPos }} pixelRatio={pixelRatio}>
+    /* eslint-disable react/no-unknown-property */
+    // See: https://github.com/jsx-eslint/eslint-plugin-react/issues/3423
+    <Canvas camera={{manual: true}}>
       {/* Why do we need to setup provider again? No idea. It seems that components inside Canvas don't have
           access to MobX stores anymore. */}
       <Provider stores={stores}>
-        <CameraControls/>
+        <PerspectiveCamera makeDefault={true} fov={33} position={cameraPos} up={DEFAULT_UP}/>
+        <OrbitControls
+          target={[PLANE_WIDTH * 0.5, planeHeight(simulation) * 0.5, 0.2]}
+          enableDamping={true}
+          enableRotate={!ui.dragging} // disable rotation when something is being dragged
+          enablePan={false}
+          rotateSpeed={0.5}
+          zoomSpeed={0.5}
+          minDistance={0.8}
+          maxDistance={5}
+          maxPolarAngle={Math.PI * 0.4}
+          minAzimuthAngle={-Math.PI * 0.25}
+          maxAzimuthAngle={Math.PI * 0.25}
+        />
         <hemisphereLight args={[0xC6C2B6, 0x3A403B, 1.2]} up={DEFAULT_UP}/>
         <Terrain ref={terrainRef}/>
         <SparksContainer dragPlane={terrainRef}/>
@@ -47,5 +61,6 @@ export const View3d = () => {
         <ShutterbugSupport/>
       </Provider>
     </Canvas>
+    /* eslint-enable react/no-unknown-property */
   );
 };

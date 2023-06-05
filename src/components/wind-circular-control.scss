@@ -1,31 +1,33 @@
 @import "common.scss";
 
-.windContainer{
+.windContainer {
   width: 100%;
   height: 100%;
   position: relative;
+  margin-top: 10px;
 
-  .controlContainer{
+  .controlContainer {
     margin-left: auto;
     margin-right: auto;
     width: 144px;
     height: 144px;
 
-    .windSymbolContainer{
+    .windSymbolContainer {
       width: 142px;
       height: 142px;
       position: absolute;
       border: 0;
       border-radius: 72px;
 
-      .windSymbol{
+      .windSymbol {
         width: 30px;
         position: absolute;
         left: 58px;
         bottom: 0px;
       }
     }
-    .dialContainer{
+
+    .dialContainer {
       width: 72px;
       height: 72px;
       top: 25%;
@@ -34,20 +36,21 @@
       background-position: center;
       position: relative;
 
-      .dial{
-        position: absolute;
-        left: 0px;
-        width: 100%;
-        height: 100%;
-      }
-      .arrow{
+      .dial {
         position: absolute;
         left: 0px;
         width: 100%;
         height: 100%;
       }
 
-      .windCircularControl{
+      .arrow {
+        position: absolute;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+      }
+
+      .windCircularControl {
         position: absolute;
         left: 0px;
         width: 100%;
@@ -56,10 +59,10 @@
     }
   }
 
-  .key{
+  .key {
     position: absolute;
     top: 50px;
-    left: 4px;
+    left: 30px;
     width: 56px;
     height: 45px;
     font-family: Lato;
@@ -72,10 +75,11 @@
     text-align: center;
     color: $controlText;
   }
-  .windText{
+
+  .windText {
     position: absolute;
-    top: 50px;
-    right: 16px;
+    top: 40px;
+    right: 30px;
     width: 41px;
     height: 42px;
     font-family: 'Roboto Condensed';
@@ -88,19 +92,45 @@
     text-align: center;
     color: $controlText;
   }
-  .windSliderControls{
-    margin-top: 10px;
+
+  .windSliderControls {
     margin-left: auto;
     margin-right: auto;
     font-size: 0.8em;
     width: 90%;
-    .thumb{
+
+    .markLabel {
+      font-family: 'Roboto Condensed';
+      font-size: 10px;
+    }
+
+    .rail {
+      height: 1px;
+      opacity: 1;
+      background-color: $controlGray;
+    }
+
+    .mark {
+      width: 2px;
+      height: 2px;
+      border-radius: 2px;
+      border: solid 1px $controlGray;
+      background-color: #d8d8d8;
+    }
+
+    .thumb {
       width: 14px;
       height: 14px;
-      margin-top: -6.5px;
-    }
-    .markLabel{
-      font-family: 'Roboto Condensed';
+      background-image: url("../assets/slider-horizontal.svg");
+      box-shadow: none;
+
+      &:hover {
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
+      }
+
+      &:active, &:global(.Mui-active), &:global(.Mui-focusVisible) {
+        box-shadow: 0 0 0 3px rgba(255, 255, 255, 1);
+      }
     }
   }
 }

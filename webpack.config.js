@@ -1,5 +1,6 @@
 'use strict';
 
+const path = require('path');
 const autoprefixer = require('autoprefixer');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const HtmlWebpackPlugin = require('html-webpack-plugin');
@@ -16,25 +17,16 @@ module.exports = (env, argv) => {
 
   return {
     context: __dirname, // to automatically find tsconfig.json
-    devtool: 'source-map',
+    devtool: devMode ? 'eval-cheap-module-source-map' : 'source-map',
     entry: './src/index.tsx',
     mode: 'development',
     output: {
-      filename: 'assets/index.[hash].js'
+      path: path.resolve(__dirname, 'dist'),
+      filename: 'assets/index.[contenthash].js',
     },
     performance: { hints: false },
     module: {
       rules: [
-        {
-          test: /\.tsx?$/,
-          enforce: 'pre',
-          use: [
-            {
-              loader: 'tslint-loader',
-              options: {}
-            }
-          ]
-        },
         {
           test: /\.tsx?$/,
           loader: 'ts-loader',
@@ -76,22 +68,45 @@ module.exports = (env, argv) => {
         },
         {
           test: /\.(png|woff|woff2|eot|ttf)$/,
-          loader: 'url-loader',
-          options: {
-            limit: 8192
-          }
+          type: 'asset',
         },
         {
-          test: /\.svg$/,
+          test: /\.svg$/i,
+          exclude: /\.nosvgo\.svg$/i,
           oneOf: [
             {
-              // Do not apply SVGR import in (S)CSS files.
-              issuer: /\.scss$/,
-              use: 'url-loader'
+              // Do not apply SVGR import in CSS files.
+              issuer: /\.(css|scss|less)$/,
+              type: 'asset',
             },
             {
               issuer: /\.tsx?$/,
-              loader: '@svgr/webpack'
+              loader: '@svgr/webpack',
+              options: {
+                svgoConfig: {
+                  plugins: [
+                    {
+                      // cf. https://github.com/svg/svgo/releases/tag/v2.4.0
+                      name: 'preset-default',
+                      params: {
+                        overrides: {
+                          // don't minify "id"s (i.e. turn randomly-generated unique ids into "a", "b", ...)
+                          // https://github.com/svg/svgo/blob/master/plugins/cleanupIds.js
+                          cleanupIds: { minify: false },
+                          // leave <line>s, <rect>s and <circle>s alone
+                          // https://github.com/svg/svgo/blob/master/plugins/convertShapeToPath.js
+                          convertShapeToPath: false,
+                          // leave "stroke"s and "fill"s alone
+                          // https://github.com/svg/svgo/blob/master/plugins/removeUnknownsAndDefaults.js
+                          removeUnknownsAndDefaults: { defaultAttrs: false },
+                          // leave viewBox alone
+                          removeViewBox: false
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
             }
           ]
         }
@@ -106,7 +121,7 @@ module.exports = (env, argv) => {
     },
     plugins: [
       new MiniCssExtractPlugin({
-        filename: devMode ? "assets/index.css" : "assets/index.[hash].css"
+        filename: devMode ? 'assets/[name].css' : 'assets/[name].[contenthash].css',
       }),
       new HtmlWebpackPlugin({
         filename: 'index.html',

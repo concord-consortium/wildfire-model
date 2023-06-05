@@ -8,6 +8,7 @@
     "target": "es5",
     "allowJs": true,
     "allowSyntheticDefaultImports": true,
+    "useDefineForClassFields": true,
     "resolveJsonModule": true,
     "experimentalDecorators": true,
     "strictNullChecks": true,
@@ -16,10 +17,11 @@
     "lib": [
       "dom",
       "es5",
-      "es2015"
+      "es2017"
     ]
   },
   "include": [
-    "./src/**/*"
+    "./src/**/*",
+    "./setupTests.ts"
   ]
 }

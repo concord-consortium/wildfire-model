@@ -1,7 +1,7 @@
 import { inject, observer } from "mobx-react";
 import React from "react";
 import { BaseComponent, IBaseProps } from "./base";
-import { Button } from "@material-ui/core";
+import { Button } from "@mui/material";
 import { renderZones } from "./zone-selector";
 import { TerrainTypeSelector } from "./terrain-type-selector";
 import { VegetationSelector } from "./vegetation-selector";
@@ -58,7 +58,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
         { ui.showTerrainUI  &&
           <div className={`${css.background} ${cssClasses[selectedZone]} ${panelClass}`}>
             <div className={css.closeButton} onClick={this.handleClose}>X</div>
-          <div className={css.header} data-test="terrain-header">Terrain Setup</div>
+          <div className={css.header} data-testid="terrain-header">Terrain Setup</div>
             <div className={css.instructions}>
               <span className={css.setupStepIcon}>{currentPanel}</span>{panelInstructions}
             </div>
@@ -104,7 +104,8 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
               </div>
               <div className={css.buttonContainer}>
                 <Button className={css.continueButton} onClick={this.showNextPanel}>
-                  Next</Button>
+                  Next
+                </Button>
               </div>
             </div>
             }
@@ -117,9 +118,11 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
                 </div>
                 <div className={css.buttonContainer}>
                   <Button className={css.continueButton} onClick={this.showPreviousPanel}>
-                    Previous</Button>
+                    Previous
+                  </Button>
                   <Button className={css.continueButton} onClick={this.applyAndClose}>
-                    Create</Button>
+                    Create
+                  </Button>
                 </div>
               </div>
             }
@@ -133,14 +136,14 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
     const { ui } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
     log("TerrainPanelClosed");
-  }
+  };
 
   public applyAndClose = () => {
     const { ui, simulation } = this.stores;
     ui.showTerrainUI = !ui.showTerrainUI;
     simulation.populateCellsData();
     log("TerrainPanelSettingsSaved");
-  }
+  };
 
   public handleZoneChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     // Radio buttons always return string values. We're using hidden radio buttons to change selected zone
@@ -149,17 +152,17 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       this.selectedZone = newZone;
     }
     log("TerrainPanelZoneChanged", { zone: newZone });
-  }
+  };
 
   public showNextPanel = () => {
     this.setState({ currentPanel: 2 });
     log("TerrainPanelNextButtonClicked");
-  }
+  };
 
   public showPreviousPanel = () => {
     this.setState({ currentPanel: 1 });
     log("TerrainPanelPreviousButtonClicked");
-  }
+  };
 
   public handleTerrainTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const { simulation } = this.stores;
@@ -183,33 +186,31 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       logData.terrain = terrainLabels[newTerrainType];
       log("ZoneUpdated", logData);
     }
-  }
+  };
 
-  public handleVegetationChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
+  public handleVegetationChange = (event: Event, value: number) => {
     const { simulation } = this.stores;
     const zone = simulation.zones[this.selectedZone];
     if (zone.vegetation !== value) {
       simulation.updateZoneVegetation(this.selectedZone, value);
     }
-  }
+  };
 
-  public handleVegetationChangeCommitted = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
-    const { simulation } = this.stores;
-    const zone = simulation.zones[this.selectedZone];
+  public handleVegetationChangeCommitted = (event: Event, value: number) => {
     log("ZoneUpdated", { zone: this.selectedZone, vegetation: vegetationLabels[value as Vegetation] });
-  }
+  };
 
-  public handleDroughtChange = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
+  public handleDroughtChange = (event: Event, value: number) => {
     const { simulation } = this.stores;
     const zone = simulation.zones[this.selectedZone];
     if (zone.droughtLevel !== value) {
       simulation.updateZoneMoisture(this.selectedZone, value);
     }
-  }
+  };
 
-  public handleDroughtChangeCommitted = (event: React.ChangeEvent<HTMLInputElement>, value: number) => {
+  public handleDroughtChangeCommitted = (event: Event, value: number) => {
     log("ZoneUpdated", { zone: this.selectedZone, moisture: droughtLabels[value as DroughtLevel] });
-  }
+  };
 
   private renderZoneTerrainTypeLabels = () => {
     const { simulation, simulation: { config } } = this.stores;
@@ -220,7 +221,7 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       }
     });
     return labels;
-  }
+  };
 
   private renderTerrainProperties = () => {
     const { simulation, simulation: { config }  } = this.stores;
@@ -234,5 +235,5 @@ export class TerrainPanel extends BaseComponent<IProps, IState> {
       }
     });
     return labels;
-  }
+  };
 }

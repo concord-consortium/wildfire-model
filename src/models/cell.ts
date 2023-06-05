@@ -36,17 +36,17 @@ export class Cell {
   public y: number; // grid Y coord
   public zone: Zone;
   public zoneIdx: number;
-  public baseElevation: number = 0;
-  public ignitionTime: number = Infinity;
-  public spreadRate: number = 0;
+  public baseElevation = 0;
+  public ignitionTime = Infinity;
+  public spreadRate = 0;
   public burnTime: number = MAX_BURN_TIME;
   public fireState: FireState = FireState.Unburnt;
-  public isUnburntIsland: boolean = false;
-  public isFireSurvivor: boolean = false;
-  public isRiver: boolean = false;
-  public isFireLine: boolean = false;
-  public isFireLineUnderConstruction: boolean = false;
-  public helitackDropCount: number = 0;
+  public isUnburntIsland = false;
+  public isFireSurvivor = false;
+  public isRiver = false;
+  public isFireLine = false;
+  public isFireLineUnderConstruction = false;
+  public helitackDropCount = 0;
 
   constructor(props: CellOptions) {
     Object.assign(this, props);

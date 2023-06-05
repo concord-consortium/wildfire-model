@@ -1,45 +1,38 @@
 import * as React from "react";
-import { shallow } from "enzyme";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { TopBar } from "./top-bar";
 
 describe("TopBar component", () => {
   describe("Reload button", () => {
-    it("reloads the model using window.location.reload", (done) => {
-      const wrapper = shallow(
-        <TopBar projectName="Test" />
-      );
-      Object.defineProperty(window, 'location', {
+    it("reloads the model using window.location.reload", async () => {
+      const reloadMock = jest.fn();
+      Object.defineProperty(window, "location", {
         writable: true,
-        value: { reload: jest.fn() },
+        value: { reload: reloadMock },
       });
-      wrapper.find('[data-test="reload"]').simulate("click");
-
-      setTimeout(() => {
-        expect(window.location.reload).toHaveBeenCalled();
-        done();
-      }, 150);
+      render(<TopBar projectName="Test" />);
+      await userEvent.click(screen.getByTestId("reload"));
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      expect(reloadMock).toHaveBeenCalled();
     });
   });
 
   describe("Share button", () => {
-    it("opens share dialog", () => {
-      const wrapper = shallow(
-        <TopBar projectName="Test" />
-      );
-      expect(wrapper.find({open: true }).length).toEqual(0);
-      wrapper.find("[data-test='share']").simulate("click");
-      expect(wrapper.find({open: true }).length).toEqual(1);
+    it("opens share dialog", async () => {
+      render(<TopBar projectName="Test" />);
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      await userEvent.click(screen.getByTestId("share"));
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
     });
   });
 
   describe("About button", () => {
-    it("opens about dialog", () => {
-      const wrapper = shallow(
-        <TopBar projectName="Test" />
-      );
-      expect(wrapper.find({open: true }).length).toEqual(0);
-      wrapper.find("[data-test='about']").simulate("click");
-      expect(wrapper.find({open: true }).length).toEqual(1);
+    it("opens about dialog", async () => {
+      render(<TopBar projectName="Test" />);
+      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      await userEvent.click(screen.getByTestId("about"));
+      expect(screen.getByRole("dialog")).toBeInTheDocument();
     });
   });
 });

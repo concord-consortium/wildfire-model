@@ -15,7 +15,7 @@ describe("SimulationModel", () => {
     });
     await sim.dataReadyPromise;
     expect(sim.canAddFireLineMarker).toEqual(true);
-    expect(sim.buildFireLine({x: 0, y: 50000}, {x: 50000, y: 50000}));
+    sim.buildFireLine({x: 0, y: 50000}, {x: 50000, y: 50000});
     expect(sim.canAddFireLineMarker).toEqual(false);
     sim.restart();
     expect(sim.canAddFireLineMarker).toEqual(true);

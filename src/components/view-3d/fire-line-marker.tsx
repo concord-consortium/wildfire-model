@@ -25,8 +25,8 @@ export const FireLineMarkersContainer: React.FC<IProps> = observer(function Wrap
             y1: firelineStartPoint.y / simulation.config.modelHeight,
             x2: firelineEndPoint.x / simulation.config.modelWidth,
             y2: firelineEndPoint.y / simulation.config.modelHeight
-          })
-        }
+          });
+        };
         return <Marker
           key={idx}
           markerImg={fireLineImg}
@@ -38,5 +38,5 @@ export const FireLineMarkersContainer: React.FC<IProps> = observer(function Wrap
         />;
       })
     }
-  </>;
+         </>;
 });

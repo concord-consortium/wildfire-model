@@ -1,5 +1,5 @@
 import * as React from "react";
-import Button from "@material-ui/core/Button";
+import Button from "@mui/material/Button";
 import css from "./icon-button.scss";
 
 interface IProps {
@@ -16,7 +16,7 @@ export const IconButton = ({ icon, highlightIcon, onClick, disabled, buttonText,
     onClick={onClick}
     className={`${css.iconButton} ${disabled ? css.disabled : ""}`}
     disableRipple={true}
-    data-test={dataTest ? dataTest : "icon-button"}
+    data-testid={dataTest ? dataTest : "icon-button"}
     disableTouchRipple={true}
     disabled={disabled}
   >

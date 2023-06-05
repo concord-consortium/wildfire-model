@@ -1,8 +1,9 @@
 import React from "react";
-import { mount, shallow } from "enzyme";
+import { act, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
-import { SimulationInfo, ZoneInfo } from "./simulation-info";
+import { SimulationInfo } from "./simulation-info";
 
 describe("Simulation Info component", () => {
   let stores = createStores();
@@ -10,26 +11,17 @@ describe("Simulation Info component", () => {
     stores = createStores();
   });
 
-  it("mounts at start up", () => {
-    const wrapper = mount(
-      <Provider stores={stores}>
-        <SimulationInfo />
-      </Provider>
-    );
-    expect(wrapper.find(SimulationInfo).length).toBe(1);
-  });
-
   it("renders zone info buttons", () => {
-    const wrapper = mount(
+    render(
       <Provider stores={stores}>
         <SimulationInfo />
       </Provider>
     );
-    expect(wrapper.find(ZoneInfo).length).toBe(stores.simulation.zones.length);
+    expect(screen.getAllByTestId("zone-info")).toHaveLength(stores.simulation.zones.length);
   });
 
-  it("opens terrain panel UI when one of the zone buttons is clicked", () => {
-    const wrapper = mount(
+  it("opens terrain panel UI when one of the zone buttons is clicked", async () => {
+    render(
       <Provider stores={stores}>
         <SimulationInfo />
       </Provider>
@@ -37,36 +29,38 @@ describe("Simulation Info component", () => {
     expect(stores.ui.showTerrainUI).toEqual(false);
 
     // Open terrain panel
-    wrapper.find(ZoneInfo).at(0).simulate("click");
+    await userEvent.click(screen.getAllByTestId("zone-info")[0]);
     expect(stores.ui.showTerrainUI).toEqual(true);
     expect(stores.ui.terrainUISelectedZone).toEqual(0);
 
     // Change zone
-    wrapper.find(ZoneInfo).at(1).simulate("click");
+    await userEvent.click(screen.getAllByTestId("zone-info")[1]);
     expect(stores.ui.showTerrainUI).toEqual(true);
     expect(stores.ui.terrainUISelectedZone).toEqual(1);
 
     // Change zone
-    wrapper.find(ZoneInfo).at(2).simulate("click");
+    await userEvent.click(screen.getAllByTestId("zone-info")[2]);
     expect(stores.ui.showTerrainUI).toEqual(true);
     expect(stores.ui.terrainUISelectedZone).toEqual(2);
 
     // Close terrain panel
-    wrapper.find(ZoneInfo).at(2).simulate("click");
+    await userEvent.click(screen.getAllByTestId("zone-info")[2]);
     expect(stores.ui.showTerrainUI).toEqual(false);
   });
 
   it("locks zone buttons when simulation is started", () => {
-    const wrapper = mount(
+    render(
       <Provider stores={stores}>
         <SimulationInfo />
       </Provider>
     );
-    expect(wrapper.find(ZoneInfo).at(0).props().locked).toEqual(false);
 
-    stores.simulation.simulationStarted = true;
-    wrapper.update();
+    expect(screen.queryByTestId("lock-icon")).not.toBeInTheDocument();
 
-    expect(wrapper.find(ZoneInfo).at(0).props().locked).toEqual(true);
+    act(() => {
+      stores.simulation.simulationStarted = true;
+    });
+
+    expect(screen.getAllByTestId("lock-icon").length).toEqual(stores.simulation.zones.length);
   });
 });

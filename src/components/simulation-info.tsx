@@ -17,14 +17,18 @@ const zoneTypeText = {
 const zoneCssClasses = [css.zone1, css.zone2, css.zone3];
 
 export const ZoneInfo = ({zone, idx, locked, onClick}: {zone: Zone; idx: number; locked: boolean; onClick: () => void}) => (
-  <div className={`${css.zone} ${zoneCssClasses[idx]} ${locked ? "" : css.active}`} onClick={locked ? undefined : onClick}>
+  <div
+    data-testid="zone-info"
+    className={`${css.zone} ${zoneCssClasses[idx]} ${locked ? "" : css.active}`}
+    onClick={locked ? undefined : onClick}
+  >
     <div className={`${css.icon} ${css.vegetationIcon}`}>{vegetationIcons[zone.vegetation]}</div>
     <div className={`${css.icon} ${css.droughtIcon}`}>{droughtIcons[zone.droughtLevel]}</div>
     <div className={`${css.zoneText}`}>
       <div className={css.zoneName}>Zone {idx + 1}</div>
       <div className={css.terrain}>{zoneTypeText[zone.terrainType]}</div>
     </div>
-    { locked && <div className={css.lockIcon}><LockIcon /></div> }
+    { locked && <div className={css.lockIcon} data-testid="lock-icon"><LockIcon/></div> }
   </div>
 );
 
@@ -50,7 +54,7 @@ export const SimulationInfo = observer(function WrappedComponent() {
           <ZoneInfo key={idx} idx={idx} zone={zone} locked={uiDisabled} onClick={showTerrainPanel.bind(null, idx)} />
         )
       }
-      <div className={`${css.windContainer} ${simulation.windDidChange ? css.windDidChange : ''}`}>
+      <div className={`${css.windContainer} ${simulation.windDidChange ? css.windDidChange : ""}`}>
         <div className={css.windHeader}>Wind Meter</div>
         <div className={css.windText}>
             {`${Math.round(scaledWind)} MPH from the ${degToCompass(simulation.wind.direction)}`}

@@ -1,11 +1,10 @@
-import { action, computed, observable } from "mobx";
-import { DroughtLevel, IWindProps, TerrainType, Vegetation } from "../types";
+import { action, computed, observable, makeObservable } from "mobx";
+import { DroughtLevel, IWindProps, TerrainType, Vegetation , Town } from "../types";
 import {  Cell, CellOptions, FireState } from "./cell";
 import { getDefaultConfig, ISimulationConfig, getUrlConfig } from "../config";
 import { Vector2 } from "three";
 import { getElevationData, getRiverData, getUnburntIslandsData, getZoneIndex } from "./utils/data-loaders";
 import { Zone } from "./zone";
-import { Town } from "../types";
 import { FireEngine } from "./engine/fire-engine";
 import { getGridIndexForLocation, forEachPointBetween, dist } from "./utils/grid-utils";
 
@@ -53,6 +52,7 @@ export class SimulationModel {
   @observable public cellsElevationFlag = 0;
 
   constructor(presetConfig: Partial<ISimulationConfig>) {
+    makeObservable(this);
     this.load(presetConfig);
   }
 
@@ -123,7 +123,7 @@ export class SimulationModel {
 
   @action.bound public setInputParamsFromConfig() {
     const config = this.config;
-    this.zones = config.zones.map(options => new Zone(options!));
+    this.zones = config.zones.map(options => new Zone(options));
     this.zones.length = config.zonesCount;
     this.wind = {
       speed: config.windSpeed,
@@ -178,7 +178,7 @@ export class SimulationModel {
             zoneIdx: zi,
             isRiver,
             isUnburntIsland: unburntIsland && unburntIsland[index] > 0 || isNonBurnable,
-            baseElevation: isEdge ? 0 : elevation && elevation[index]
+            baseElevation: isEdge ? 0 : elevation?.[index]
           };
           if (!this.totalCellCountByZone[zi]) {
             this.totalCellCountByZone[zi] = 1;

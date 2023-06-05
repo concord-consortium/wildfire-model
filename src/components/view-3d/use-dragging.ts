@@ -1,8 +1,7 @@
 import { RefObject, useRef, useState } from "react";
 import * as THREE from "three";
-import { useThree } from "react-three-fiber";
+import { useThree } from "@react-three/fiber";
 import { useStores } from "../../use-stores";
-import { PointerEvent } from "react-three-fiber/canvas";
 
 interface UseDraggingInput {
   // If true, this will prevent object from initial jumping between its previous
@@ -21,7 +20,7 @@ export const useDragging = ({ useOffset, dragPlane, onDrag, onDragEnd }: UseDrag
   const offset = useRef<THREE.Vector2 | null>(null);
 
   const pointerMoveHandler = useRef(() => {
-    if (!dragPlane || !dragPlane.current || !onDrag) {
+    if (!dragPlane?.current || !onDrag) {
       return;
     }
     if (offset.current) {
@@ -29,7 +28,7 @@ export const useDragging = ({ useOffset, dragPlane, onDrag, onDragEnd }: UseDrag
       raycaster.setFromCamera(mouseWithOffset, camera);
     }
     const result = raycaster.intersectObject(dragPlane.current);
-    if (result && result[0]) {
+    if (result?.[0]) {
       onDrag(result[0].point);
     }
   });
@@ -46,7 +45,7 @@ export const useDragging = ({ useOffset, dragPlane, onDrag, onDragEnd }: UseDrag
 
   return {
     dragged,
-    startDragging: (e: PointerEvent) => {
+    startDragging: (e: THREE.Event) => {
       if (useOffset) {
         // Calculate difference between actual object position and mouse position. Quite often user won't
         // grab object exactly at its anchor point. This will prevent object from initial jumping between its previous
@@ -55,7 +54,7 @@ export const useDragging = ({ useOffset, dragPlane, onDrag, onDragEnd }: UseDrag
         offset.current = new THREE.Vector2(projectedPosition.x - mouse.x, projectedPosition.y - mouse.y);
       }
       e.stopPropagation();
-      if (!dragPlane || !dragPlane.current) {
+      if (!dragPlane?.current) {
         return;
       }
       window.addEventListener("pointermove", pointerMoveHandler.current);

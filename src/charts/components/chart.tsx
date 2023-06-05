@@ -31,7 +31,7 @@ export class Chart extends BaseComponent<IChartProps, IChartState> {
         width={this.props.width}
         height={this.props.height}
         isPlaying={isPlaying}
-        data-test="line-chart"
+        data-testid="line-chart"
         axisLabelA1Function={axisLabelA1Function}
         axisLabelA2Function={axisLabelA2Function}
         key={chartStore.chartVersion}
@@ -42,7 +42,7 @@ export class Chart extends BaseComponent<IChartProps, IChartState> {
         width={width}
         height={height}
         barChartType={chartType}
-        data-test="bar-chart"
+        data-testid="bar-chart"
         key={chartStore.chartVersion}
       />;
     return (

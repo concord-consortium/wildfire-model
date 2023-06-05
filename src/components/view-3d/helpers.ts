@@ -1,7 +1,6 @@
 import { SimulationModel } from "../../models/simulation";
-import * as THREE from "three";
 
-export const DEFAULT_UP = new THREE.Vector3(0, 0, 1);
+export const DEFAULT_UP: [number, number, number] = [0, 0, 1];
 
 export const PLANE_WIDTH = 1;
 

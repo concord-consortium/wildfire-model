@@ -48,5 +48,5 @@ export const TownMarkersContainer: React.FC = observer(function WrappedComponent
         />;
       })
     }
-  </>;
+         </>;
 });

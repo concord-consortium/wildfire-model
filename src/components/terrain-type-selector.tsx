@@ -1,5 +1,5 @@
 import React from "react";
-import { Radio, RadioGroup, FormControlLabel } from "@material-ui/core";
+import { Radio, RadioGroup, FormControlLabel } from "@mui/material";
 import { TerrainType } from "../types";
 
 import css from "./terrain-type-selector.scss";
@@ -16,7 +16,7 @@ export const TerrainTypeSelector = ({ terrainType, onChange }: IProps) => (
       aria-label="terrain type"
       onChange={onChange}
       className={css.terrainSelector}
-      data-test="terrain-type-selector"
+      data-testid="terrain-type-selector"
       value={terrainType}
     >
       <FormControlLabel

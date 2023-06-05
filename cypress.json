@@ -1,9 +1,0 @@
-{
-  "baseUrl": "http://localhost:8080",
-  "video": false,
-  "fixturesFolder": false,
-  "viewportWidth": 1400,
-  "viewportHeight": 1000,
-  "chromeWebSecurity": false,
-  "defaultCommandTimeout": 8000
-}

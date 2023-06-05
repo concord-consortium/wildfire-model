@@ -1,7 +1,7 @@
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { useStores } from "../../use-stores";
 import { ftToViewUnit } from "./helpers";
-import { PointerEvent } from "react-three-fiber/canvas";
+import { Event } from "three";
 import { Interaction } from "../../models/ui";
 import { useDragging } from "./use-dragging";
 import * as THREE from "three";
@@ -56,7 +56,7 @@ export const useDrawFireLineInteraction: () => InteractionHandler = () => {
 
   return {
     active: ui.interaction === Interaction.DrawFireLine,
-    onPointerDown: (e: PointerEvent) => {
+    onPointerDown: (e: Event) => {
       const ratio = ftToViewUnit(simulation);
       const x = e.point.x;
       const y = e.point.y;
