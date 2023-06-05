@@ -18,6 +18,7 @@ const getTexture = (imgSrcOrCanvas: string | HTMLCanvasElement) => {
     Texture = THREE.CanvasTexture;
   }
   const texture = new Texture(source);
+  texture.colorSpace = THREE.SRGBColorSpace;
   return texture;
 };
 

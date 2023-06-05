@@ -19,22 +19,22 @@ const vertexIdx = (cell: Cell, gridWidth: number, gridHeight: number) => (gridHe
 const getTerrainColor = (droughtLevel: number) => {
   switch (droughtLevel) {
     case DroughtLevel.NoDrought:
-      return [0.008, 0.831, 0.039, 1];
+      return [0.008, 0.831, 0.039];
     case DroughtLevel.MildDrought:
-      return [0.573, 0.839, 0.216, 1];
+      return [0.573, 0.839, 0.216];
     case DroughtLevel.MediumDrought:
-      return [0.757, 0.886, 0.271, 1];
+      return [0.757, 0.886, 0.271];
     default:
-      return [0.784, 0.631, 0.271, 1];
+      return [0.784, 0.631, 0.271];
   }
 };
-const BURNING_COLOR = [1, 0, 0, 1];
-const BURNT_COLOR = [0.2, 0.2, 0.2, 1];
-const FIRE_LINE_UNDER_CONSTRUCTION_COLOR = [0.5, 0.5, 0, 1];
+const BURNING_COLOR = [1, 0, 0];
+const BURNT_COLOR = [0.2, 0.2, 0.2];
+const FIRE_LINE_UNDER_CONSTRUCTION_COLOR = [0.5, 0.5, 0];
 
-export const BURN_INDEX_LOW = [1, 0.7, 0, 1];
-export const BURN_INDEX_MEDIUM = [1, 0.5, 0, 1];
-export const BURN_INDEX_HIGH = [1, 0, 0, 1];
+export const BURN_INDEX_LOW = [1, 0.7, 0];
+export const BURN_INDEX_MEDIUM = [1, 0.5, 0];
+export const BURN_INDEX_HIGH = [1, 0, 0];
 
 const burnIndexColor = (burnIndex: BurnIndex) => {
   if (burnIndex === BurnIndex.Low) {
@@ -62,10 +62,17 @@ const setVertexColor = (
   } else {
     color = getTerrainColor(cell.droughtLevel);
   }
-  colArray[idx] = color[0];
-  colArray[idx + 1] = color[1];
-  colArray[idx + 2] = color[2];
-  colArray[idx + 3] = color[3];
+  // Note that we're using sRGB colorspace here (default while working with web). THREE.js needs to operate in linear
+  // color space, so we need to convert it first. See:
+  // https://discourse.threejs.org/t/updates-to-color-management-in-three-js-r152/50791
+  // https://threejs.org/docs/#manual/en/introduction/Color-management
+  const threeJsColor = new THREE.Color();
+  threeJsColor.setRGB(color[0], color[1], color[2], THREE.SRGBColorSpace);
+
+  colArray[idx] = threeJsColor.r;
+  colArray[idx + 1] = threeJsColor.g;
+  colArray[idx + 2] = threeJsColor.b;
+  colArray[idx + 3] = 1; // alpha
 };
 
 const updateColors = (geometry: THREE.PlaneGeometry, simulation: SimulationModel) => {
