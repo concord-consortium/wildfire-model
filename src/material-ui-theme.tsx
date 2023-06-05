@@ -28,6 +28,11 @@ const options: ThemeOptions = {
         focusRipple: false
       }
     },
+    MuiRadio: {
+      defaultProps: {
+        disableRipple: true,
+      }
+    },
     MuiButton: {
       styleOverrides: {
         root: {
