@@ -15,6 +15,7 @@ import { ZonesCountSelector } from "./zones-count-selector";
 
 import css from "./terrain-panel.scss";
 import { Zone } from "../models/zone";
+import { set } from "mobx";
 
 const cssClasses = [css.zone1, css.zone2, css.zone3];
 
@@ -75,8 +76,8 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
     const newZone = parseInt(event.target.value, 10);
     if (newZone !== selectedZone) {
       setSelectedZone(newZone);
+      log("TerrainPanelZoneChanged", { zone: newZone });
     }
-    log("TerrainPanelZoneChanged", { zone: newZone });
   };
 
   const showNextPanel = () => {
@@ -95,22 +96,23 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
 
   const handleTerrainTypeChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const newTerrainType = parseInt(event.target.value, 10) as TerrainType;
-    const currentZone = zones[selectedZone];
-    const logData: any = { zone: selectedZone };
-    if (currentZone.terrainType !== newTerrainType) {
+    if (zone.terrainType !== newTerrainType) {
+      const newZones = zones.map(z => z.clone());
+      const logData: any = { zone: selectedZone };
       // Switching to Mountain terrain changes land type / vegetation options
       // but keeping the min / max options the same for each range helps with slider rendering.
       // Accommodate this by manual adjustment of land types when switching to-from mountain
-      if (newTerrainType !== TerrainType.Mountains && currentZone.vegetation === Vegetation.ForestWithSuppression) {
+      if (newTerrainType !== TerrainType.Mountains && zone.vegetation === Vegetation.ForestWithSuppression) {
         // switching from Mountains with large forests to lower land type, reduce forest size
-        currentZone.vegetation = Vegetation.Forest;
+        newZones[selectedZone].vegetation = Vegetation.Forest;
         logData.vegetation = vegetationLabels[Vegetation.Forest];
-      } else if (newTerrainType === TerrainType.Mountains && currentZone.vegetation === Vegetation.Grass) {
+      } else if (newTerrainType === TerrainType.Mountains && zone.vegetation === Vegetation.Grass) {
         // no grass allowed on mountains, switch to shrubs
-        currentZone.vegetation = Vegetation.Shrub;
+        newZones[selectedZone].vegetation = Vegetation.Shrub;
         logData.vegetation = vegetationLabels[Vegetation.Shrub];
       }
-      currentZone.terrainType = newTerrainType;
+      newZones[selectedZone].terrainType = newTerrainType;
+      setZones(newZones);
       logData.terrain = terrainLabels[newTerrainType];
       log("ZoneUpdated", logData);
     }
@@ -118,7 +120,9 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
 
   const handleVegetationChange = (event: Event, value: number) => {
     if (zone.vegetation !== value) {
-      zone.vegetation = value;
+      const newZones = zones.map(z => z.clone());
+      newZones[selectedZone].vegetation = value;
+      setZones(newZones);
     }
   };
 
@@ -128,7 +132,9 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
 
   const handleDroughtChange = (event: Event, value: number) => {
     if (zone.droughtLevel !== value) {
-      zone.droughtLevel = value;
+      const newZones = zones.map(z => z.clone());
+      newZones[selectedZone].droughtLevel = value;
+      setZones(newZones);
     }
   };
 
