@@ -3,7 +3,6 @@ import { Zone } from "../models/zone";
 import css from "./zone-selector.scss";
 import { TerrainType, DroughtLevel } from "../types";
 import { vegetationIcons } from "./vertical-selectors";
-import { ISimulationConfig } from "../config";
 
 const cssClasses = [css.zone1, css.zone2, css.zone3];
 
@@ -38,19 +37,19 @@ const getColorFilter = (droughtLevel: DroughtLevel) => {
 };
 
 export const renderZones = (
-  zones: Zone[], selectedZone: number, readonly: boolean, config: ISimulationConfig, onChange: any) => {
+  zones: Zone[], selectedZone: number, readonly: boolean, zonesCount: number, onChange: any) => {
   const zoneUI: any[] = [];
   // handle two, three (or more) zones
   zones.forEach((z, i) => {
     // can limit the number of zones via a url parameter
-    if (i < config.zonesCount) {
+    if (i < zonesCount) {
       // Individual zones can only be edited on the first page of the wizard
-      const zoneTerrainImagePath = getBackgroundImage(config.zonesCount, z.terrainType, i);
-      const zoneRiverImagePath = getRiverOverlay(config.zonesCount, i);
+      const zoneTerrainImagePath = getBackgroundImage(zonesCount, z.terrainType, i);
+      const zoneRiverImagePath = getRiverOverlay(zonesCount, i);
       const zoneStyle = readonly ? css.fixed : selectedZone === i ? css.selected : "";
       // Only apply a position change for > 0 zone index (in span rendering)
       let vegPreviewPosition = css.right;
-      if (i === 1 && config.zonesCount > 2) {
+      if (i === 1 && zonesCount > 2) {
         vegPreviewPosition = css.mid;
       }
       zoneUI.push(

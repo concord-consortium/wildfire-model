@@ -9,7 +9,8 @@ context("Wildfire Smoke Test", () => {
   const modelInfo = new ModelInfo();
 
   beforeEach(() => {
-    cy.visit("/");
+    // zonesCount=3 will disable the first panel of terrain setup dialog that is not handled by this test
+    cy.visit("/?zonesCount=3");
   });
 
   describe("Terrain setup - Adjusting Variables", () => {

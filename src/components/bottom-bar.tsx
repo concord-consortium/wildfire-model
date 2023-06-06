@@ -33,7 +33,7 @@ interface IState {
 }
 
 const toggleFullscreen = () => {
-  if (!screenfull || !screenfull.isEnabled) {
+  if (!screenfull?.isEnabled) {
     return;
   }
   if (!screenfull.isFullscreen) {
@@ -77,13 +77,13 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   }
 
   public componentDidMount() {
-    if (screenfull && screenfull.isEnabled) {
+    if (screenfull?.isEnabled) {
       document.addEventListener(screenfull.raw.fullscreenchange, this.fullscreenChange);
     }
   }
 
   public componentWillUnmount() {
-    if (screenfull && screenfull.isEnabled) {
+    if (screenfull?.isEnabled) {
       document.removeEventListener(screenfull.raw.fullscreenchange, this.fullscreenChange);
     }
   }
@@ -100,9 +100,8 @@ export class BottomBar extends BaseComponent<IProps, IState> {
         <div className={css.mainContainer}>
           <div className={`${css.widgetGroup} ${css.terrainButton}`}>
             <IconButton
-              icon={ simulation.config.zonesCount < 3 ? <TerrainIcon /> : <TerrainThreeIcon /> }
-              highlightIcon={
-                simulation.config.zonesCount < 3 ? <TerrainHighlightIcon /> : <TerrainThreeHighlightIcon />}
+              icon={simulation.zonesCount < 3 ? <TerrainIcon /> : <TerrainThreeIcon />}
+              highlightIcon={simulation.zonesCount < 3 ? <TerrainHighlightIcon /> : <TerrainThreeHighlightIcon />}
               disabled={uiDisabled}
               buttonText="Terrain Setup"
               dataTest="terrain-button"
@@ -181,7 +180,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
         {/* This empty container is necessary so the spacing works correctly */}
         <div className={css.rightContainer}>
           {
-            screenfull && screenfull.isEnabled &&
+            screenfull?.isEnabled &&
             <div className={this.fullscreenIconStyle} onClick={toggleFullscreen} title="Toggle Fullscreen" />
           }
         </div>
@@ -237,7 +236,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   };
 
   public handleHelitack = () => {
-    const { ui, simulation } = this.stores;
+    const { ui } = this.stores;
     ui.showTerrainUI = false;
     ui.interaction = Interaction.Helitack;
     log("HelitackButtonClicked");

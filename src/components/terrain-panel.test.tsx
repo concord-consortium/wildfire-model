@@ -4,6 +4,7 @@ import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
 import { TerrainPanel } from "./terrain-panel";
 import { Vegetation, TerrainType } from "../types";
+import { Zone } from "../models/zone";
 
 const defaultTwoZones = [
   {
@@ -71,7 +72,8 @@ describe("zone UI", () => {
   });
 
   it("displays all configured zones -> 2", () => {
-    stores.simulation.zones = defaultTwoZones;
+    stores.simulation.zones = defaultTwoZones.map(opt => new Zone(opt));
+    stores.simulation.config.zonesCount = 2;
 
     render(
       <Provider stores={stores}>
@@ -82,7 +84,8 @@ describe("zone UI", () => {
   });
 
   it("displays all configured zones -> 3", () => {
-    stores.simulation.zones = defaultThreeZones;
+    stores.simulation.zones = defaultThreeZones.map(opt => new Zone(opt));
+    stores.simulation.config.zonesCount = 3;
 
     render(
       <Provider stores={stores}>
@@ -97,7 +100,8 @@ describe("vegetation selector", () => {
   let stores = createStores();
   beforeEach(() => {
     stores = createStores();
-    stores.simulation.zones = defaultThreeZones;
+    stores.simulation.zones = defaultThreeZones.map(opt => new Zone(opt));
+    stores.simulation.config.zonesCount = 3;
     stores.ui.showTerrainUI = true;
   });
 

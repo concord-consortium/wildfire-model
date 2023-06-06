@@ -15,8 +15,8 @@ const zonesToImageDataFile = (zones: Zone[]) => {
   return "data/" + zoneTypes.join("-");
 };
 
-export const getZoneIndex = (config: ISimulationConfig): Promise<number[] | undefined> => {
-  return getInputData(config.zoneIndex, config.gridWidth, config.gridHeight, false,
+export const getZoneIndex = (config: ISimulationConfig, zoneIndex: number[][] | string): Promise<number[] | undefined> => {
+  return getInputData(zoneIndex, config.gridWidth, config.gridHeight, false,
     (rgba: [number, number, number, number]) => {
       // Red is zone 1, green is zone 2, and blue is zone 3.
       if (rgba[0] >= rgba[1] && rgba[0] >= rgba[2]) {

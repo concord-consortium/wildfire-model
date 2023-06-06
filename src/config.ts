@@ -25,7 +25,7 @@ export interface ISimulationConfig {
   unburntIslands?: number[][] | string;
   // `zoneIndex` data can provided using image url or 2D array. If it's an array, it should include two or three
   // numbers, depending if model is using two or three zones (0 and 1, or 0, 1, and 2).
-  zoneIndex: number[][] | string;
+  zoneIndex?: number[][] | string;
   // Spark positions, in ft.
   sparks: number[][];
   maxTimeStep: number; // minutes
@@ -41,7 +41,7 @@ export interface ISimulationConfig {
   // Max elevation of 100% white points in heightmap (image used for elevation data).
   heightmapMaxElevation: number; // ft
   // Number of zones that the model is using. Zones are used to keep properties of some area of the model.
-  zonesCount: 2 | 3;
+  zonesCount?: 2 | 3;
   zones: [ZoneOptions, ZoneOptions, ZoneOptions?];
   towns: TownOptions[];
   // Visually fills edges of the terrain by setting elevation to 0.
@@ -89,7 +89,7 @@ export interface IUrlConfig extends ISimulationConfig {
 }
 
 export const getDefaultConfig: () => IUrlConfig = () => ({
-  preset: "defaultThreeZone",
+  preset: "default",
   // Most of the presets will use heightmap images that work the best with 120000x80000ft dimensions.
   modelWidth: 120000,
   modelHeight: 80000,
@@ -99,7 +99,7 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   get gridHeight() { return Math.ceil(this.modelHeight / this.cellSize); },
   elevation: undefined, // will be derived from zone properties
   unburntIslands: undefined, // will be derived from zone properties
-  zoneIndex: [[0, 1]],
+  zoneIndex: undefined,
   sparks: [],
   maxTimeStep: 180, // minutes
   modelDayInSeconds: 8, // one day in model should last X seconds in real world
@@ -113,7 +113,8 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   minCellBurnTime: 200, // minutes
   // This value works well with existing heightmap images.
   heightmapMaxElevation: 20000,
-  zonesCount: 2,
+  // undefined zones count will make them configurable in Terrain Setup dialog.
+  zonesCount: undefined,
   zones: [
     {
       terrainType: TerrainType.Plains,
