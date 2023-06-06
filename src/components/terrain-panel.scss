@@ -4,7 +4,10 @@
   $width: 288px;
   $padding: 5px;
   position: absolute;
-  top: 5px;
+  top: 65px;
+  @media (max-height: 660px) {
+    top: 5px;
+  }
   left: 50%;
   margin-left: calc(-1 * ($width + 2 * $padding) / 2);
   width: $width;
@@ -38,6 +41,10 @@
 
     &.zone3 {
       background-color: $zone3Orange;
+    }
+
+    &.panel0 {
+      background-color: $controlGrayLight1;
     }
 
     &.panel2 {

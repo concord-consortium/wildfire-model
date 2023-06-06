@@ -17,6 +17,15 @@ interface ICoords {
 // by this constant.
 const NEW_WIND_MAX_SPEED = 20; // mph
 
+const DEFAULT_ZONE_DIVISION = {
+  2: [
+    [0, 1]
+  ],
+  3: [
+    [0, 1, 2],
+  ]
+};
+
 // This class is responsible for data loading, adding sparks and fire lines and so on. It's more focused
 // on management and interactions handling. Core calculations are delegated to FireEngine.
 // Also, all the observable properties should be here, so the view code can observe them.
@@ -25,6 +34,7 @@ export class SimulationModel {
   public prevTickTime: number | null;
   public dataReadyPromise: Promise<void>;
   public engine: FireEngine | null = null;
+  public zoneIndex: number[][] | string = [];
   // Cells are not directly observable. Changes are broadcasted using cellsStateFlag and cellsElevationFlag.
   public cells: Cell[] = [];
 
@@ -85,9 +95,13 @@ export class SimulationModel {
     return this.remainingSparks > 0;
   }
 
+  @computed public get zonesCount(): 2 | 3 {
+    return this.zones.length as 2 | 3;
+  }
+
   @computed public get remainingSparks() {
     // There's an assumption that number of sparks should be smaller than number of zones.
-    return this.config.zonesCount - this.sparks.length;
+    return this.zonesCount - this.sparks.length;
   }
 
   @computed public get canAddFireLineMarker() {
@@ -124,7 +138,11 @@ export class SimulationModel {
   @action.bound public setInputParamsFromConfig() {
     const config = this.config;
     this.zones = config.zones.map(options => new Zone(options));
-    this.zones.length = config.zonesCount;
+    if (config.zonesCount) {
+      this.zones.length = config.zonesCount;
+    }
+    this.zoneIndex = config.zoneIndex || DEFAULT_ZONE_DIVISION[this.zones.length as (2 | 3)];
+
     this.wind = {
       speed: config.windSpeed,
       direction: config.windDirection
@@ -150,7 +168,7 @@ export class SimulationModel {
     const zones = this.zones;
     this.totalCellCountByZone = {};
     this.dataReadyPromise = Promise.all([
-      getZoneIndex(config), getElevationData(config, zones), getRiverData(config), getUnburntIslandsData(config, zones)
+      getZoneIndex(config, this.zoneIndex), getElevationData(config, zones), getRiverData(config), getUnburntIslandsData(config, zones)
     ]).then(values => {
       const zoneIndex = values[0];
       const elevation = values[1];
@@ -463,15 +481,9 @@ export class SimulationModel {
     this.wind.speed = speed;
   }
 
-  @action.bound public updateZoneTerrain(zoneIdx: number, updatedTerrainType: TerrainType) {
-    this.zones[zoneIdx].terrainType = updatedTerrainType;
-  }
-
-  @action.bound public updateZoneMoisture(zoneIdx: number, droughtLevel: DroughtLevel) {
-    this.zones[zoneIdx].droughtLevel = droughtLevel;
-  }
-
-  @action.bound public updateZoneVegetation(zoneIdx: number, vegetation: Vegetation) {
-    this.zones[zoneIdx].vegetation = vegetation;
+  @action.bound public updateZones(zones: Zone[]) {
+    this.zones = zones.map(z => z.clone());
+    this.zoneIndex = DEFAULT_ZONE_DIVISION[this.zones.length as (2 | 3)];
+    this.populateCellsData();
   }
 }

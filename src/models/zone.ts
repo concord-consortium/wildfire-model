@@ -25,4 +25,12 @@ export class Zone {
     makeObservable(this);
     Object.assign(this, props);
   }
+
+  clone() {
+    return new Zone({
+      vegetation: this.vegetation,
+      terrainType: this.terrainType,
+      droughtLevel: this.droughtLevel,
+    });
+  }
 }

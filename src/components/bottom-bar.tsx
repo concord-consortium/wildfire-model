@@ -100,9 +100,8 @@ export class BottomBar extends BaseComponent<IProps, IState> {
         <div className={css.mainContainer}>
           <div className={`${css.widgetGroup} ${css.terrainButton}`}>
             <IconButton
-              icon={ simulation.config.zonesCount < 3 ? <TerrainIcon /> : <TerrainThreeIcon /> }
-              highlightIcon={
-                simulation.config.zonesCount < 3 ? <TerrainHighlightIcon /> : <TerrainThreeHighlightIcon />}
+              icon={simulation.zonesCount < 3 ? <TerrainIcon /> : <TerrainThreeIcon />}
+              highlightIcon={simulation.zonesCount < 3 ? <TerrainHighlightIcon /> : <TerrainThreeHighlightIcon />}
               disabled={uiDisabled}
               buttonText="Terrain Setup"
               dataTest="terrain-button"

@@ -1,0 +1,49 @@
+@import "common.scss";
+
+.zonesCount {
+  .radio svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .labelContainer {
+    margin: 10px auto;
+
+    .label {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-family: 'Roboto Condensed';
+      color: $controlText;
+    }
+
+    .image {
+      margin-left: 10px;
+
+      // Existing asset has padding, so a bit of relative positioning to hide it.
+      width: 54px;
+      height: 36px;
+      border-radius: 2px;
+      svg {
+        width: 62px;
+        height: 44px;
+        position: relative;
+        top: -4px;
+        left: -4px;
+      }
+    }
+
+    &:hover {
+      .image {
+        box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5);
+      }
+    }
+    &:active {
+      .image {
+        box-shadow: 0 0 0 4px #fff;
+      }
+    }
+  }
+}

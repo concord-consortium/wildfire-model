@@ -1,14 +1,12 @@
 import React from "react";
-import { useStores } from "../use-stores";
 import { Slider } from "@mui/material";
-import { observer } from "mobx-react";
 import { WindDial, degToCompass } from "./wind-dial";
 import { log } from "@concord-consortium/lara-interactive-api";
 import WindSymbol from "../assets/wind-symbol.svg";
 
 import css from "./wind-circular-control.scss";
 
-const windSpeedMarks = [
+const speedMarks = [
   {
     value: 0,
     label: "0"
@@ -27,40 +25,45 @@ const windSpeedMarks = [
   }
 ];
 
-export const WindCircularControl = observer(function WrappedComponent() {
-  const { simulation } = useStores();
-  const windScaleFactor = simulation.config.windScaleFactor;
+interface IProps {
+  speed: number;
+  direction: number;
+  onSpeedChange: (speed: number) => void;
+  onDirectionChange: (direction: number) => void;
+  windScaleFactor: number;
+}
+
+export const WindCircularControl: React.FC<IProps> = ({ speed, direction, onSpeedChange, onDirectionChange, windScaleFactor }) => {
 
   const setDirectionAngle = (circularInputVal: number) => {
-    simulation.setWindDirection(circularInputVal);
+    onDirectionChange(circularInputVal);
   };
 
   const handleDirectionAngleEnd = (angle: number) => {
     log("WindUpdated", { angle, direction: degToCompass(angle) });
   };
 
-  const handleWindSpeedChange = (event: any, value: number | number[]) => {
-    const speed = (value as number) * windScaleFactor;
-    simulation.setWindSpeed(speed);
+  const handleSpeedChange = (event: any, value: number | number[]) => {
+    const newSpeed = (value as number) * windScaleFactor;
+    onSpeedChange(newSpeed);
   };
 
-  const handleWindSpeedChangeCommitted = (event: any, value: number | number[]) => {
-    const speed = (value as number) * windScaleFactor;
-    simulation.setWindSpeed(speed);
+  const handleSpeedChangeCommitted = (event: any, value: number | number[]) => {
+    const newSpeed = (value as number) * windScaleFactor;
+    onSpeedChange(newSpeed);
     log("WindUpdated", { speed: value }); // us raw value before conversion, so logs match the UI value
   };
 
-
-  const scaledWind = simulation.wind.speed / windScaleFactor;
+  const scaledWind = speed / windScaleFactor;
 
   return (
     <div className={css.windContainer}>
       <div className={css.controlContainer}>
-        <div className={css.windSymbolContainer} style={{transform: `rotate(${simulation.wind.direction + 180}deg)`}}>
+        <div className={css.windSymbolContainer} style={{transform: `rotate(${direction + 180}deg)`}}>
           <WindSymbol className={css.windSymbol} />
         </div>
         <WindDial
-          windDirection={simulation.wind.direction}
+          windDirection={direction}
           onChange={setDirectionAngle}
           onChangeEnd={handleDirectionAngleEnd}
         />
@@ -68,7 +71,7 @@ export const WindCircularControl = observer(function WrappedComponent() {
 
       <div className={css.key}>Wind Direction and Speed</div>
       <div className={css.windText}>
-        {`${Math.round(scaledWind)} MPH from the ${degToCompass(simulation.wind.direction)}`}
+        {`${Math.round(scaledWind)} MPH from the ${degToCompass(direction)}`}
         <div className={css.windSliderControls}>
           <Slider
             classes={{
@@ -79,16 +82,15 @@ export const WindCircularControl = observer(function WrappedComponent() {
             }}
             min={0}
             max={30}
-            disabled={simulation.simulationStarted}
             value={scaledWind}
             step={1}
             track={false}
-            marks={windSpeedMarks}
-            onChange={handleWindSpeedChange}
-            onChangeCommitted={handleWindSpeedChangeCommitted}
+            marks={speedMarks}
+            onChange={handleSpeedChange}
+            onChangeCommitted={handleSpeedChangeCommitted}
           />
         </div>
       </div>
     </div>
   );
-});
+};
