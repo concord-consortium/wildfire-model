@@ -3,7 +3,6 @@ import { Zone } from "../models/zone";
 import css from "./zone-selector.scss";
 import { TerrainType, DroughtLevel } from "../types";
 import { vegetationIcons } from "./vertical-selectors";
-import { ISimulationConfig } from "../config";
 
 const cssClasses = [css.zone1, css.zone2, css.zone3];
 

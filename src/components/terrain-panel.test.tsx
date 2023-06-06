@@ -72,7 +72,7 @@ describe("zone UI", () => {
   });
 
   it("displays all configured zones -> 2", () => {
-    stores.simulation.zones = defaultTwoZones.map(opt => new Zone(opt));;
+    stores.simulation.zones = defaultTwoZones.map(opt => new Zone(opt));
     stores.simulation.config.zonesCount = 2;
 
     render(
@@ -84,7 +84,7 @@ describe("zone UI", () => {
   });
 
   it("displays all configured zones -> 3", () => {
-    stores.simulation.zones = defaultThreeZones.map(opt => new Zone(opt));;
+    stores.simulation.zones = defaultThreeZones.map(opt => new Zone(opt));
     stores.simulation.config.zonesCount = 3;
 
     render(

@@ -6,7 +6,7 @@ import { renderZones } from "./zone-selector";
 import { TerrainTypeSelector } from "./terrain-type-selector";
 import { VegetationSelector } from "./vegetation-selector";
 import { DroughtSelector } from "./drought-selector";
-import { droughtLabels, DroughtLevel, IWindProps, terrainLabels, TerrainType, Vegetation, vegetationLabels } from "../types";
+import { droughtLabels, DroughtLevel, terrainLabels, TerrainType, Vegetation, vegetationLabels } from "../types";
 import { WindCircularControl } from "./wind-circular-control";
 import { TerrainSummary } from "./terrain-summary";
 import { log } from "@concord-consortium/lara-interactive-api";

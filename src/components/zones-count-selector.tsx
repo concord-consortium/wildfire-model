@@ -1,9 +1,7 @@
 import React from "react";
 import { Radio, RadioGroup, FormControlLabel } from "@mui/material";
 import TwoZones from "../assets/bottom-bar/terrain-setup.svg";
-import TwoZonesHighlight from "../assets/bottom-bar/terrain-setup_highlight.svg";
 import ThreeZones from "../assets/bottom-bar/terrain-three.svg";
-import ThreeZonesHighlight from "../assets/bottom-bar/terrain-three_highlight.svg";
 
 import css from "./zones-count-selector.scss";
 

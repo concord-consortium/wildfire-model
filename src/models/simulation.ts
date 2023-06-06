@@ -1,5 +1,5 @@
 import { action, computed, observable, makeObservable } from "mobx";
-import { DroughtLevel, IWindProps, TerrainType, Vegetation , Town } from "../types";
+import { IWindProps, Town } from "../types";
 import {  Cell, CellOptions, FireState } from "./cell";
 import { getDefaultConfig, ISimulationConfig, getUrlConfig } from "../config";
 import { Vector2 } from "three";
