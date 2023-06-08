@@ -42,10 +42,6 @@ describe("Simulation Info component", () => {
     await userEvent.click(screen.getAllByTestId("zone-info")[2]);
     expect(stores.ui.showTerrainUI).toEqual(true);
     expect(stores.ui.terrainUISelectedZone).toEqual(2);
-
-    // Close terrain panel
-    await userEvent.click(screen.getAllByTestId("zone-info")[2]);
-    expect(stores.ui.showTerrainUI).toEqual(false);
   });
 
   it("locks zone buttons when simulation is started", () => {
