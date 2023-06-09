@@ -87,6 +87,11 @@ export const Graph = observer(function WrappedComponent() {
     }
   }, [simulation.timeInHours]);
 
+  useEffect(() => {
+    // Reset datasets when the number of zones changes.
+    chartStore.chart.dataSets = [];
+  }, [chartStore.chart, simulation.zonesCount]);
+
   const updateChartData = (zoneIdx: number) => {
     // Burn acres is in thousands to simplify the y-axis
     const burnAcres = Math.ceil(simulation.simulationAreaAcres * simulation.getZoneBurnPercentage(zoneIdx) / 1000);
