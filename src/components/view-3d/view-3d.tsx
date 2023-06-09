@@ -35,7 +35,9 @@ export const View3d = () => {
   return (
     /* eslint-disable react/no-unknown-property */
     // See: https://github.com/jsx-eslint/eslint-plugin-react/issues/3423
-    <Canvas camera={{manual: true}}>
+    // flat=true disables tone mapping that is not a default in threejs, but is enabled by default in react-three-fiber.
+    // It makes textures match colors in the original image.
+    <Canvas camera={{manual: true}} flat={true}>
       {/* Why do we need to setup provider again? No idea. It seems that components inside Canvas don't have
           access to MobX stores anymore. */}
       <Provider stores={stores}>
@@ -53,7 +55,7 @@ export const View3d = () => {
           minAzimuthAngle={-Math.PI * 0.25}
           maxAzimuthAngle={Math.PI * 0.25}
         />
-        <hemisphereLight args={[0xC6C2B6, 0x3A403B, 1]} up={DEFAULT_UP}/>
+        <hemisphereLight args={[0xC6C2B6, 0x3A403B, 1.2]} up={DEFAULT_UP}/>
         <Terrain ref={terrainRef}/>
         <SparksContainer dragPlane={terrainRef}/>
         <FireLineMarkersContainer dragPlane={terrainRef}/>

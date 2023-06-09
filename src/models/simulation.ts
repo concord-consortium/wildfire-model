@@ -484,6 +484,9 @@ export class SimulationModel {
   @action.bound public updateZones(zones: Zone[]) {
     this.zones = zones.map(z => z.clone());
     this.zoneIndex = DEFAULT_ZONE_DIVISION[this.zones.length as (2 | 3)];
+    if (this.sparks.length > this.zones.length) {
+      this.sparks.length = this.zones.length;
+    }
     this.populateCellsData();
   }
 }

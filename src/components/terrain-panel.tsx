@@ -1,5 +1,5 @@
 import { observer } from "mobx-react";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { IBaseProps } from "./base";
 import { Button } from "@mui/material";
 import { renderZones } from "./zone-selector";
@@ -37,11 +37,23 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
   const [zones, setZones] = useState<Zone[]>(simulation.zones.map(z => z.clone()));
   const [windSpeed, setWindSpeed] = useState<number>(simulation.wind.speed);
   const [windDirection, setWindDirection] = useState<number>(simulation.wind.direction);
+  const [selectedZone, setSelectedZone] = useState<number>(ui.terrainUISelectedZone || 0);
 
-  const selectedZone = ui.terrainUISelectedZone;
   const zone = zones[selectedZone];
   const displayVegetationType =
     zone.terrainType === TerrainType.Mountains ? zone.vegetation - 1 : zone.vegetation;
+
+  useEffect(() => {
+    // ui.terrainUISelectedZone is set by external Zone Info buttons. We need to update internal state accordingly
+    // when it's possible.
+    if (ui.terrainUISelectedZone !== undefined) {
+      if (ui.terrainUISelectedZone < zones.length) {
+        setSelectedZone(ui.terrainUISelectedZone);
+        setCurrentPanel(1); // Show zone panel
+      }
+      ui.terrainUISelectedZone = undefined;
+    }
+  }, [ui, ui.terrainUISelectedZone, zones.length]);
 
   useEffect(() => {
     // Reset internal state when terrain UI is closed
@@ -51,12 +63,9 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
       setZones(simulation.zones.map(z => z.clone()));
       setWindSpeed(simulation.wind.speed);
       setWindDirection(simulation.wind.direction);
+      setSelectedZone(0);
     }
-  }, [firstPanel, simulation.wind, simulation.zones, simulation.zones.length, simulation.zonesCount, ui.showTerrainUI]);
-
-  const setSelectedZone = (value: number) => {
-    ui.terrainUISelectedZone = value;
-  };
+  }, [firstPanel, setSelectedZone, simulation.wind, simulation.zones, simulation.zones.length, simulation.zonesCount, ui.showTerrainUI]);
 
   const handleClose = () => {
     ui.showTerrainUI = !ui.showTerrainUI;
@@ -154,6 +163,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
       const newZones = config.zones.map(options => new Zone(options));
       newZones.length = zonesCount;
       setZones(newZones);
+      setSelectedZone(0);
       log("ZonesCountChanged", { count: zonesCount });
     }
   };
