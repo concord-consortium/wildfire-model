@@ -41,8 +41,6 @@ export const SimulationInfo = observer(function WrappedComponent() {
     if (ui.showTerrainUI === false || ui.terrainUISelectedZone !== zoneIdx) {
       ui.showTerrainUI = true;
       ui.terrainUISelectedZone = zoneIdx;
-    } else {
-      ui.showTerrainUI = false;
     }
     log("ZoneButtonClicked", { zone: zoneIdx });
   };
