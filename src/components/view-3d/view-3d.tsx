@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { Canvas, useThree } from "@react-three/fiber";
 import { OrbitControls , PerspectiveCamera } from "@react-three/drei";
 import { Provider } from "mobx-react";
@@ -14,14 +14,13 @@ import Shutterbug from "shutterbug";
 // This needs to be a separate component, as useThree depends on context provided by <Canvas> component.
 const ShutterbugSupport = () => {
   const { gl, scene, camera } = useThree();
-  const renderRef = useRef(() => {
-    gl.render(scene, camera);
-  });
   useEffect(() => {
-    Shutterbug.on("saycheese", renderRef.current);
-    const render = renderRef.current;
+    const render = () => {
+      gl.render(scene, camera);
+    };
+    Shutterbug.on("saycheese", render);
     return () => Shutterbug.off("saycheese", render);
-  }, []);
+  }, [gl, scene, camera]);
   return null;
 };
 
