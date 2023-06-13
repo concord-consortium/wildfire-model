@@ -5,9 +5,9 @@
   "author": "Concord Consortium",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/concord-consortium/wildfire-model/issues"
+    "url": "https://github.com/concord-consortium/forestfire/issues"
   },
-  "homepage": "https://github.com/concord-consortium/wildfire-model#readme",
+  "homepage": "https://github.com/concord-consortium/forestfire#readme",
   "devDependencies": {
     "@types/chart.js": "^2.9.15",
     "@types/rc-slider": "^8.6.5"

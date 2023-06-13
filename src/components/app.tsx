@@ -34,7 +34,7 @@ export const AppComponent = observer(function WrappedComponent() {
   const showModelScale = config.showModelDimensions;
   return (
     <div className={css.app}>
-      <TopBar projectName="Wildfire Explorer" aboutContent={<AboutDialogContent />} shareContent={<ShareDialogContent />} />
+      <TopBar projectName="Forest Fire Explorer" aboutContent={<AboutDialogContent />} shareContent={<ShareDialogContent />} />
       { showModelScale &&
         <div className={css.modelInfo}>
           <div>Model Dimensions: { config.modelWidth } ft x { config.modelHeight } ft</div>

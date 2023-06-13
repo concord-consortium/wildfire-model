@@ -1,26 +1,26 @@
-# Wildfire Model
+# Forest Fire Model
 
 Latest **stable** version:
 
-https://wildfire.concord.org
+https://forestfire.concord.org
 
 A particular model can be loaded using `preset` URL parameter, e.g.:
 
-https://wildfire.concord.org/index.html?preset=defaultThreeZone
+https://forestfire.concord.org/index.html?preset=defaultThreeZone
 
 Latest **development** version:
 
-https://wildfire.concord.org/branch/master/index.html
+https://forestfire.concord.org/branch/master/index.html
 
 ## Configuration
 
 Available presets:
 
-https://github.com/concord-consortium/wildfire-model/blob/production/src/presets.ts
+https://github.com/concord-consortium/forestfire/blob/production/src/presets.ts
 
 All the available options can be seen here (including default values):
 
-https://github.com/concord-consortium/wildfire-model/blob/production/src/config.ts
+https://github.com/concord-consortium/forestfire/blob/production/src/config.ts
 
 Note that these URLs point to production branch. If you're working with `master` or other branch, you might
 want to replace `production` with your branch name.
@@ -30,7 +30,7 @@ URL parameters have higher priority than preset options (so it's possible to cus
 
 ## Testing a preset
 
-It's possible to dynamically load a new preset in the browser. Open browser console (e.g. in Chrome: Ctrl Shift J on 
+It's possible to dynamically load a new preset in the browser. Open browser console (e.g. in Chrome: Ctrl Shift J on
 Windows or Ctrl Option J on Mac) and type:
 
 ```
@@ -68,11 +68,11 @@ You *do not* need to build to deploy the code, that is automatic.  See more info
 Production releases to S3 are based on the contents of the /dist folder and are built automatically by Travis
 for each branch pushed to GitHub and each merge into production.
 
-Merges into production are deployed to https://wildfire.concord.org.
+Merges into production are deployed to https://forestfire.concord.org.
 
-Other branches are deployed to https://wildfire.concord.org/branch/<name>.
+Other branches are deployed to https://forestfire.concord.org/branch/<name>.
 
-You can view the status of all the branch deploys [here](https://travis-ci.org/concord-consortium/wildfire-model/branches).
+You can view the status of all the branch deploys [here](https://travis-ci.org/concord-consortium/forestfire/branches).
 
 To deploy a production release:
 
@@ -86,7 +86,7 @@ To deploy a production release:
 8. Checkout production
 9. Run `git merge master --no-ff`
 10. Push production to GitHub
-11. Use https://github.com/concord-consortium/wildfire-model/releases to create a new release tag
+11. Use https://github.com/concord-consortium/forestfire/releases to create a new release tag
 
 ### Testing
 

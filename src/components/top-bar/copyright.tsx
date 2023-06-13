@@ -6,7 +6,7 @@ export const Copyright = () => (
     Consortium
                                                     </a>.
     All rights reserved. The software is licensed under
-    the <a href="https://github.com/concord-consortium/wildfire-model/blob/master/LICENSE"
+    the <a href="https://github.com/concord-consortium/forestfire/blob/master/LICENSE"
             target="_blank" rel="noreferrer">MIT
         </a> license.
     The content is licensed under a <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" rel="noreferrer">

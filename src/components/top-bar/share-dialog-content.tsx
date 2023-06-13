@@ -21,7 +21,7 @@ export const ShareDialogContent = () => (
       <textarea id="iframe-string" style={{ width: "100%" }} value={getIframeString()} readOnly={true} />
     </p>
     <p>
-      Suggested citation: Wildfire Explorer [Computer software]. (2020). Concord, MA: The Concord Consortium.
+      Suggested citation: Forest Fire Explorer [Computer software]. (2020). Concord, MA: The Concord Consortium.
     </p>
     <Copyright/>
   </div>

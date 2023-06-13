@@ -1,12 +1,12 @@
 {
-  "name": "wildfire-model",
-  "version": "1.2.1",
-  "description": "Concord Consortium starter projects",
+  "name": "forestfire",
+  "version": "0.0.1",
+  "description": "Concord Consortium Forest Fire Model",
   "main": "index.js",
   "jest": {
     "testEnvironment": "jsdom",
     "testEnvironmentOptions": {
-      "url": "https://wildfire-model.unexisting.url.com"
+      "url": "https://forestfire.unexisting.url.com"
     },
     "setupFilesAfterEnv": [
       "<rootDir>src/setupTests.ts"
@@ -59,14 +59,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/concord-consortium/wildfire-model.git"
+    "url": "git+https://github.com/concord-consortium/forestfire.git"
   },
   "author": "Concord Consortium",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/concord-consortium/wildfire-model/issues"
+    "url": "https://github.com/concord-consortium/forestfire/issues"
   },
-  "homepage": "https://github.com/concord-consortium/wildfire-model#readme",
+  "homepage": "https://github.com/concord-consortium/forestfire#readme",
   "devDependencies": {
     "@cypress/code-coverage": "^3.10.7",
     "@cypress/webpack-preprocessor": "^5.17.1",
