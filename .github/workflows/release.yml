@@ -9,7 +9,7 @@ env:
   BUCKET: models-resources
   PREFIX: wildfire-model
   SRC_FILE: index-top.html
-  DEST_FILE: index-demo.html
+  DEST_FILE: index.html
 jobs:
   release:
     runs-on: ubuntu-latest
