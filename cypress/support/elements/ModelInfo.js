@@ -6,6 +6,6 @@ export class ModelInfo {
     return cy.get("[data-testid=zone-info]");
   }
   getZoneName(index) {
-    return this.getZoneInfo().eq(index).find('.simulation-info--zoneName--__wildfire-v1__');
+    return this.getZoneInfo().eq(index).find(".simulation-info--zoneName--__wildfire-v1__");
   }
 }

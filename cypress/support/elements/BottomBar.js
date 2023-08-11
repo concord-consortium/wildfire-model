@@ -22,7 +22,7 @@ export class BottomBar {
     return cy.get('[data-testid="helitack-button"]');
   }
   getSparkCount() {
-    return cy.get('.bottom-bar--sparksCount--__wildfire-v1__');
+    return cy.get(".bottom-bar--sparksCount--__wildfire-v1__");
   }
 }
 

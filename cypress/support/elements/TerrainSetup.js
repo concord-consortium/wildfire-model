@@ -116,7 +116,7 @@ export class TerrainSetup {
     return cy.get("[data-testid=zones-count-selector]");
   }
   getZoneCountLabel(index) {
-    return this.getZoneCountSelector().find('.zones-count-selector--label--__wildfire-v1__').eq(index);
+    return this.getZoneCountSelector().find(".zones-count-selector--label--__wildfire-v1__").eq(index);
   }
   getThreeZoneSetup() {
     return this.getZoneCountSelector().find('.zones-count-selector--image--__wildfire-v1__ [data-name="3-zone Terrain Setup"]');
@@ -125,7 +125,7 @@ export class TerrainSetup {
     return this.getZoneCountSelector().find('.zones-count-selector--image--__wildfire-v1__ [data-name="Terrain Setup"]');
   }
   getRadioButton(index) {
-    return this.getZoneCountSelector().find('.PrivateSwitchBase-input').eq(index);
+    return this.getZoneCountSelector().find(".PrivateSwitchBase-input").eq(index);
   }
   verifyRadioButtonChecked(index) {
     return this.getRadioButton(index).parent().invoke("attr", "class").should("contain", "checked");
