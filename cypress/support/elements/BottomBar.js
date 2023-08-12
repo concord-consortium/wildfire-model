@@ -21,5 +21,8 @@ export class BottomBar {
   getHelitackButton() {
     return cy.get('[data-testid="helitack-button"]');
   }
+  getSparkCount() {
+    return cy.get(".bottom-bar--sparksCount--__wildfire-v1__");
+  }
 }
 

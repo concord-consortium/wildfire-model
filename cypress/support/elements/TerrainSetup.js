@@ -9,6 +9,9 @@ export class TerrainSetup {
   getInstructions() {
     return cy.get(".terrain-panel--instructions--__wildfire-v1__");
   }
+  getStepIcon() {
+    return cy.get(".terrain-panel--setupStepIcon--__wildfire-v1__");
+  }
 
   //Zones
   getAllZones() {
@@ -107,4 +110,28 @@ export class TerrainSetup {
   closeTerrainSetupComponent() {
     return cy.get(".terrain-panel--closeButton--__wildfire-v1__").click();
   }
+  
+  //Zones Count Selector
+  getZoneCountSelector() {
+    return cy.get("[data-testid=zones-count-selector]");
+  }
+  getZoneCountLabel(index) {
+    return this.getZoneCountSelector().find(".zones-count-selector--label--__wildfire-v1__").eq(index);
+  }
+  getThreeZoneSetup() {
+    return this.getZoneCountSelector().find('.zones-count-selector--image--__wildfire-v1__ [data-name="3-zone Terrain Setup"]');
+  }
+  getTwoZoneSetup() {
+    return this.getZoneCountSelector().find('.zones-count-selector--image--__wildfire-v1__ [data-name="Terrain Setup"]');
+  }
+  getRadioButton(index) {
+    return this.getZoneCountSelector().find(".PrivateSwitchBase-input").eq(index);
+  }
+  verifyRadioButtonChecked(index) {
+    return this.getRadioButton(index).parent().invoke("attr", "class").should("contain", "checked");
+  }
+  verifyRadioButtonUnchecked(index) {
+    return this.getRadioButton(index).parent().invoke("attr", "class").should("not.contain", "checked");
+  }
+
 }
