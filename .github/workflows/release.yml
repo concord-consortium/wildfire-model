@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: The git tag for the version to use for index-demo.html
+        description: The git tag for the version to use for index.html
         required: true
 env:
   BUCKET: models-resources
