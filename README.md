@@ -52,6 +52,10 @@ sim.load({
 This will load set of provided options. You can use examples from preset.ts file (see section above). It can be useful
 to test new presets before modifying `preset.ts` file.
 
+## Logged Events
+
+See [LOGGED-EVENTS.md](LOGGED-EVENTS.md) for a complete reference of all logged events, their parameters, and trigger conditions.
+
 ### Development
 
 1. Clone this repo and `cd` into it

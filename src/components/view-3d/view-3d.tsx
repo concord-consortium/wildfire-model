@@ -9,6 +9,7 @@ import { SparksContainer } from "./spark";
 import * as THREE from "three";
 import { FireLineMarkersContainer } from "./fire-line-marker";
 import { TownMarkersContainer } from "./town-marker";
+import { log } from "../../log";
 import Shutterbug from "shutterbug";
 
 // This needs to be a separate component, as useThree depends on context provided by <Canvas> component.
@@ -36,7 +37,17 @@ export const View3d = () => {
     // See: https://github.com/jsx-eslint/eslint-plugin-react/issues/3423
     // flat=true disables tone mapping that is not a default in threejs, but is enabled by default in react-three-fiber.
     // It makes textures match colors in the original image.
-    <Canvas camera={{manual: true}} flat={true}>
+    <Canvas camera={{manual: true}} flat={true} onPointerMissed={(e) => {
+      const canvas = e.target as HTMLElement | null;
+      const rect = canvas?.getBoundingClientRect();
+      log("SimulationClicked", {
+        hit3d: false,
+        clientX: e.clientX,
+        clientY: e.clientY,
+        percentX: rect ? Math.round(((e.clientX - rect.left) / rect.width) * 100) : undefined,
+        percentY: rect ? Math.round(((e.clientY - rect.top) / rect.height) * 100) : undefined
+      });
+    }}>
       {/* Why do we need to setup provider again? No idea. It seems that components inside Canvas don't have
           access to MobX stores anymore. */}
       <Provider stores={stores}>

@@ -1,12 +1,20 @@
 import { observable, action, makeObservable } from "mobx";
 import { ChartDataModel } from "../charts/models/chart-data";
 
+export interface IRawBurnDataPoint {
+  time: number;       // simulated hours
+  acres: number;      // thousands of acres, unrounded
+}
+
 export class ChartStore {
 
   public defaultMaxPoints = 20;
   public defaultMaxA1 = 20;
   @observable public chart: ChartDataModel;
   @observable public chartVersion = 1;
+  // Raw (unrounded) burn data per zone, for precise burn rate computation.
+  // The chart's dataPoints use Math.ceil which destroys precision.
+  public rawBurnData: IRawBurnDataPoint[][] = [];
 
   constructor() {
     makeObservable(this);
@@ -15,6 +23,7 @@ export class ChartStore {
 
   @action.bound public reset = () => {
     this.chartVersion++;
+    this.rawBurnData = [];
     this.clearDataAndAnnotations();
   };
   @action.bound public clearData = () => {

@@ -1,4 +1,5 @@
 import { SimulationModel } from "./simulation";
+import { ChartStore } from "./chart-store";
 
 describe("SimulationModel", () => {
   it("should let user add fire line after model reset", async () => {
@@ -38,6 +39,131 @@ describe("SimulationModel", () => {
     sim.reload();
     await sim.dataReadyPromise;
     expect(sim.totalCellCountByZone[0]).toEqual(25);
+  });
+
+  describe("getOutcomeData", () => {
+    const createSimAndChartStore = () => {
+      const sim = new SimulationModel({
+        modelWidth: 100000,
+        modelHeight: 100000,
+        gridWidth: 5,
+        sparks: [[50000, 50000]],
+        zoneIndex: [[0]],
+        elevation: [[0]],
+        unburntIslands: [[1]],
+        unburntIslandProbability: 1,
+        riverData: null,
+      });
+      const chartStore = new ChartStore();
+      return { sim, chartStore };
+    };
+
+    it("returns correct structure with no simulation data", async () => {
+      const { sim, chartStore } = createSimAndChartStore();
+      await sim.dataReadyPromise;
+      const outcome = sim.getOutcomeData(chartStore);
+      expect(outcome.durationMinutes).toBe(0);
+      expect(outcome.durationHours).toBe(0);
+      expect(outcome.zones).toHaveLength(sim.zones.length);
+      outcome.zones.forEach(z => {
+        expect(z.burnPercentage).toBe(0);
+        expect(z.burnedAcres).toBe(0);
+        expect(z.burnRates).toEqual([]);
+        expect(z.maxBurnRate).toBe(0);
+        expect(z.timeOfMaxBurnRate).toBe(0);
+      });
+      expect(outcome.towns).toEqual([]);
+    });
+
+    it("returns correct structure when cells are not loaded", () => {
+      const { sim, chartStore } = createSimAndChartStore();
+      // Don't await dataReadyPromise — cells not loaded
+      const outcome = sim.getOutcomeData(chartStore);
+      expect(outcome.durationMinutes).toBe(0);
+      expect(outcome.zones).toBeDefined();
+      expect(outcome.towns).toEqual([]);
+    });
+
+    it("burnRates array is empty when fewer than 2 data points", async () => {
+      const { sim, chartStore } = createSimAndChartStore();
+      await sim.dataReadyPromise;
+
+      chartStore.rawBurnData[0] = [{ time: 1, acres: 10 }];
+
+      const outcome = sim.getOutcomeData(chartStore);
+      expect(outcome.zones[0].burnRates).toEqual([]);
+    });
+
+    it("computes piecewise burn rates from raw burn data using simulated time", async () => {
+      const { sim, chartStore } = createSimAndChartStore();
+      await sim.dataReadyPromise;
+
+      chartStore.rawBurnData[0] = [
+        { time: 1, acres: 10.5 },
+        { time: 2, acres: 30.7 },
+        { time: 3, acres: 35.2 }
+      ];
+
+      const outcome = sim.getOutcomeData(chartStore);
+      const zone = outcome.zones[0];
+      expect(zone.burnRates).toHaveLength(2);
+      // burnRate1 = (30.7-10.5)/(2-1) = 20.2, rounded to 4 decimal places
+      expect(zone.burnRates[0]).toEqual({ time: 2, burnRate: 20.2 });
+      // burnRate2 = (35.2-30.7)/(3-2) = 4.5
+      expect(zone.burnRates[1]).toEqual({ time: 3, burnRate: 4.5 });
+      expect(zone.maxBurnRate).toBe(20.2);
+      expect(zone.timeOfMaxBurnRate).toBe(2);
+    });
+
+    it("reports town outcomes as not burned when cells not loaded", () => {
+      const sim = new SimulationModel({
+        modelWidth: 100000,
+        modelHeight: 100000,
+        gridWidth: 5,
+        sparks: [[50000, 50000]],
+        zoneIndex: [[0]],
+        elevation: [[0]],
+        unburntIslands: [[1]],
+        unburntIslandProbability: 1,
+        riverData: null,
+        towns: [{ name: "TestTown", x: 0.5, y: 0.5 }],
+      });
+      const chartStore = new ChartStore();
+      // Don't await — cells not loaded
+      const outcome = sim.getOutcomeData(chartStore);
+      expect(outcome.towns).toHaveLength(1);
+      expect(outcome.towns[0]).toEqual({ name: "TestTown", burned: false });
+    });
+
+    it("returns valid burnPercentage when totalCellCountByZone is zero", async () => {
+      const { sim, chartStore } = createSimAndChartStore();
+      await sim.dataReadyPromise;
+      // Force totalCellCountByZone to be empty
+      sim.totalCellCountByZone = {};
+      const outcome = sim.getOutcomeData(chartStore);
+      outcome.zones.forEach(z => {
+        expect(z.burnPercentage).toBe(0);
+        expect(isNaN(z.burnPercentage)).toBe(false);
+      });
+    });
+  });
+
+  it("resets simulationEndedLogged flag in start()", async () => {
+    const sim = new SimulationModel({
+      modelWidth: 100000,
+      modelHeight: 100000,
+      gridWidth: 5,
+      sparks: [[50000, 50000]],
+      zoneIndex: [[0]],
+      elevation: [[0]],
+      unburntIslands: [[1]],
+      unburntIslandProbability: 1,
+      riverData: null,
+    });
+    await sim.dataReadyPromise;
+    sim.simulationEndedLogged = true;
+    sim.start();
+    expect(sim.simulationEndedLogged).toBe(false);
   });
 
   it("changes the wind if changeWindOnDay config is defined and then restore wind properties after reset", async () => {

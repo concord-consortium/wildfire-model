@@ -94,7 +94,20 @@ export const Graph = observer(function WrappedComponent() {
 
   const updateChartData = (zoneIdx: number) => {
     // Burn acres is in thousands to simplify the y-axis
-    const burnAcres = Math.ceil(simulation.simulationAreaAcres * simulation.getZoneBurnPercentage(zoneIdx) / 1000);
+    const rawBurnAcres = simulation.simulationAreaAcres * simulation.getZoneBurnPercentage(zoneIdx) / 1000;
+    const burnAcres = Math.ceil(rawBurnAcres);
+
+    // Store unrounded values for precise burn rate computation in getOutcomeData()
+    if (!chartStore.rawBurnData[zoneIdx]) {
+      chartStore.rawBurnData[zoneIdx] = [];
+    }
+    const rawData = chartStore.rawBurnData[zoneIdx];
+    const time = simulation.timeInHours;
+    if (rawData.length === 0 || rawData[rawData.length - 1].time !== time) {
+      rawData.push({ time, acres: rawBurnAcres });
+    } else {
+      rawData[rawData.length - 1].acres = rawBurnAcres;
+    }
 
     if (zoneIdx <= chartStore.chart.dataSets.length - 1) {
       // we have a chart with existing datasets that contains this zone
