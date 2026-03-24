@@ -3,23 +3,11 @@ import { log } from "../../log";
 import { Event } from "three";
 import { ftToViewUnit } from "./helpers";
 
-// Flag set by specific interaction handlers to suppress the generic SimulationClicked event.
-// Reset at the start of each pointer event cycle.
-let specificInteractionHandled = false;
-
-export const markSpecificInteractionHandled = () => {
-  specificInteractionHandled = true;
-};
-
 export const useSimulationClickedInteraction = () => {
-  const { simulation } = useStores();
+  const { simulation, ui } = useStores();
   return {
-    active: true,
+    active: !ui.interaction,
     onPointerDown: (e: Event) => {
-      if (specificInteractionHandled) {
-        specificInteractionHandled = false;
-        return;
-      }
       const ratio = ftToViewUnit(simulation);
       const x = e.point.x / ratio;
       const y = e.point.y / ratio;

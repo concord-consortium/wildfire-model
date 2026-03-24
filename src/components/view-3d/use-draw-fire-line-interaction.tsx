@@ -7,7 +7,6 @@ import { useDragging } from "./use-dragging";
 import * as THREE from "three";
 import { InteractionHandler } from "./interaction-handler";
 import { log } from "../../log";
-import { markSpecificInteractionHandled } from "./use-simulation-clicked-interaction";
 
 const MIN_DIST = 1500; // feet
 
@@ -58,7 +57,6 @@ export const useDrawFireLineInteraction: () => InteractionHandler = () => {
   return {
     active: ui.interaction === Interaction.DrawFireLine,
     onPointerDown: (e: Event) => {
-      markSpecificInteractionHandled();
       const ratio = ftToViewUnit(simulation);
       const x = e.point.x;
       const y = e.point.y;
