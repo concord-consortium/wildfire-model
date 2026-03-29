@@ -121,7 +121,7 @@
   },
   "dependencies": {
     "@concord-consortium/lara-interactive-api": "^1.13.0",
-    "@concord-consortium/log-monitor": "^1.0.0-pre.0",
+    "@concord-consortium/log-monitor": "^1.0.0",
     "@emotion/react": "^11.11.0",
     "@emotion/styled": "^11.11.0",
     "@mui/icons-material": "^5.11.16",
