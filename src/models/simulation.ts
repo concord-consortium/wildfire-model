@@ -366,11 +366,11 @@ export class SimulationModel {
 
   public getOutcomeData(chartStore: ChartStore) {
     const durationMinutes = Math.round(this.time * 10000) / 10000;
-    const durationHours = this.timeInHours;
+    const durationHours = Math.round((this.time / 60) * 10000) / 10000;
 
     const zoneOutcomes = this.zones.map((zone, zoneIdx) => {
       const rawPercentage = this.totalCellCountByZone[zoneIdx] ? this.getZoneBurnPercentage(zoneIdx) : 0;
-      const burnPercentage = Math.round(rawPercentage * 10000) / 100;
+      const burnPercentage = Math.round(rawPercentage * 1000000) / 10000;
       const burnedCellCount = this.engine?.burnedCellsInZone[zoneIdx] || 0;
       const cellAreaAcres = (this.config.cellSize * this.config.cellSize) / 43560;
       const burnedAcres = Math.round(burnedCellCount * cellAreaAcres * 10000) / 10000;

@@ -22,7 +22,7 @@ All model coordinates are in feet. Normalized coordinates (x, y) are relative to
 |-------|-----------|------|
 | `SimulationMouseEnter` | `{ clientX, clientY, percentX, percentY }` | Mouse enters the simulation container |
 | `SimulationMouseLeave` | `{ clientX, clientY, percentX, percentY }` | Mouse leaves the simulation container |
-| `SimulationClicked` | `{ hit3d, clientX, clientY, percentX, percentY, modelX?, modelY?, elevation? }` | Click anywhere in the simulation container. `hit3d: true` includes model coordinates when the terrain mesh is hit; `hit3d: false` for UI overlays or missed raycasts |
+| `SimulationClicked` | `{ hit3d, clientX, clientY, percentX, percentY, modelX?, modelY?, elevation? }` | Click within the 3D canvas. `hit3d: true` includes model coordinates when the terrain mesh is hit; `hit3d: false` for canvas clicks that miss the terrain (missed raycasts) |
 
 ## Fire Tools
 
