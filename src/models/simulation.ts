@@ -377,7 +377,7 @@ export class SimulationModel {
 
       // Compute piecewise burn rates from raw (unrounded) burn data (thousands of acres/hour)
       const rawData = chartStore.rawBurnData[zoneIdx];
-      const burnRates: Array<{ time: number; burnRate: number }> = [];
+      const burnRates: number[] = [];
       let maxBurnRate = 0;
       let timeOfMaxBurnRate = 0;
 
@@ -386,7 +386,7 @@ export class SimulationModel {
           const dt = rawData[i].time - rawData[i - 1].time;
           if (dt > 0) {
             const burnRate = Math.round(((rawData[i].acres - rawData[i - 1].acres) / dt) * 10000) / 10000;
-            burnRates.push({ time: rawData[i].time, burnRate });
+            burnRates.push(burnRate);
             if (burnRate > maxBurnRate) {
               maxBurnRate = burnRate;
               timeOfMaxBurnRate = rawData[i].time;

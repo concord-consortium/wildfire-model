@@ -108,9 +108,9 @@ describe("SimulationModel", () => {
       const zone = outcome.zones[0];
       expect(zone.burnRates).toHaveLength(2);
       // burnRate1 = (30.7-10.5)/(2-1) = 20.2, rounded to 4 decimal places
-      expect(zone.burnRates[0]).toEqual({ time: 2, burnRate: 20.2 });
+      expect(zone.burnRates[0]).toBe(20.2);
       // burnRate2 = (35.2-30.7)/(3-2) = 4.5
-      expect(zone.burnRates[1]).toEqual({ time: 3, burnRate: 4.5 });
+      expect(zone.burnRates[1]).toBe(4.5);
       expect(zone.maxBurnRate).toBe(20.2);
       expect(zone.timeOfMaxBurnRate).toBe(2);
     });

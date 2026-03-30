@@ -276,7 +276,13 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   public handleFireLine = () => {
     const { ui, simulation } = this.stores;
     ui.showTerrainUI = false;
+    const wasRunning = simulation.simulationRunning;
     simulation.stop();
+    if (wasRunning) {
+      log("SimulationStopped", {
+        outcome: simulation.getOutcomeData(this.stores.chartStore)
+      });
+    }
     ui.interaction = Interaction.DrawFireLine;
     log("FireLineButtonClicked");
   };
