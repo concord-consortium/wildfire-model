@@ -5,7 +5,7 @@ import { droughtIcons, vegetationIcons } from "./vertical-selectors";
 import { Zone } from "../models/zone";
 import { WindDial, degToCompass } from "./wind-dial";
 import LockIcon from "../assets/lock.svg";
-import { log } from "@concord-consortium/lara-interactive-api";
+import { log } from "../log";
 import css from "./simulation-info.scss";
 
 const zoneTypeText = {

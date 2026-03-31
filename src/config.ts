@@ -82,6 +82,8 @@ export interface ISimulationConfig {
   newWindDirection: number | undefined;
   // Works together with `changeWindOnDay`. Sets the new wind speed (mph). If undefined, it'll be random.
   newWindSpeed: number | undefined;
+  // Developer/researcher tool: when true, renders a LogMonitor sidebar for real-time event inspection.
+  logMonitor: boolean;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -154,7 +156,8 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   forestWithSuppressionAvailable: true,
   changeWindOnDay: undefined,
   newWindDirection: undefined,
-  newWindSpeed: undefined
+  newWindSpeed: undefined,
+  logMonitor: false
 });
 
 const getURLParam = (name: string) => {

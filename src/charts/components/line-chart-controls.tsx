@@ -4,6 +4,7 @@ import { ChartDataModel} from "../models/chart-data";
 import { baseColors } from "../models/chart-data-set";
 import Slider from "rc-slider";
 import { BaseComponent } from "../../components/base";
+import { log } from "../../log";
 
 import css from "./line-chart-controls.sass";
 import "rc-slider/assets/index.css";
@@ -62,10 +63,12 @@ export class LineChartControls extends BaseComponent<IChartControlProps, IChartC
           chartData.dataSets.forEach((dataSet: any) => {
             dataSet.setMaxDataPoints(-1);
           });
+          log("GraphDataRangeToggled", { showAll: true });
         } else {
           chartData.dataSets.forEach((dataSet: any) => {
             dataSet.setMaxDataPoints(20);
           });
+          log("GraphDataRangeToggled", { showAll: false });
         }
       }
     };

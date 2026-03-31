@@ -2,7 +2,8 @@ import * as React from "react";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { Dialog } from "./dialog";
 import css from "./top-bar.scss";
-import { log } from "@concord-consortium/lara-interactive-api";
+import { log } from "../../log";
+import { useStores } from "../../use-stores";
 
 interface IProps {
   projectName: string;
@@ -11,10 +12,16 @@ interface IProps {
 }
 
 export const TopBar: React.FC<IProps> = ({ projectName, aboutContent, shareContent }: IProps) => {
+  const { simulation, chartStore } = useStores();
   const [shareOpen, setShareOpen] = React.useState<boolean>(false);
   const [aboutOpen, setAboutOpen] = React.useState<boolean>(false);
 
   const handleReload = () => {
+    simulation.simulationEndedLogged = true;
+    log("SimulationEnded", {
+      reason: "TopBarReloadButtonClicked",
+      outcome: simulation.getOutcomeData(chartStore)
+    });
     log("TopBarReloadButtonClicked");
     // Give some time for the log message to be delivered. Note it goes only to the parent window using postMessage,
     // so we don't have to wait for network request.

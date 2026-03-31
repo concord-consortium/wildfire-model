@@ -23,7 +23,7 @@ import TerrainThreeHighlightIcon from "../assets/bottom-bar/terrain-three_highli
 import { Interaction } from "../models/ui";
 import { FireIntensityScale } from "./fire-intensity-scale";
 import { IconButton } from "./icon-button";
-import { log } from "@concord-consortium/lara-interactive-api";
+import { log } from "../log";
 
 import css from "./bottom-bar.scss";
 
@@ -196,41 +196,99 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     const { ui, simulation } = this.stores;
     if (simulation.simulationRunning) {
       simulation.stop();
-      log("SimulationStopped");
+      log("SimulationStopped", {
+        outcome: simulation.getOutcomeData(this.stores.chartStore)
+      });
     } else {
       ui.showTerrainUI = false;
-      simulation.start();
-      log("SimulationStarted", {
-        sparks: simulation.sparks.map (s => ({
-          x: s.x / simulation.config.modelWidth,
-          y: s.y / simulation.config.modelHeight,
-          elevation: simulation.cellAt(s.x, s.y).elevation
-        })),
-        zones: simulation.zones.map(z => ({
-          vegetation: vegetationLabels[z.vegetation],
-          terrainType: terrainLabels[z.terrainType],
-          droughtLevel: droughtLabels[z.droughtLevel]
-        }))
+
+      // Build config snapshot, replacing large arrays with metadata
+      const config = simulation.config;
+      const configSnapshot: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(config)) {
+        if (Array.isArray(value) && value.length > 0 && Array.isArray(value[0])) {
+          configSnapshot[key] = `2D array [${value.length}x${(value[0] as unknown[]).length}]`;
+        } else {
+          configSnapshot[key] = value;
+        }
+      }
+      if (typeof config.elevation === "string") configSnapshot.elevation = config.elevation;
+      if (typeof config.unburntIslands === "string") configSnapshot.unburntIslands = config.unburntIslands;
+      if (typeof config.zoneIndex === "string") configSnapshot.zoneIndex = config.zoneIndex;
+
+      // Add runtime state not in config
+      configSnapshot.sparks = simulation.sparks.map(s => {
+        const cell = simulation.cells.length > 0 ? simulation.cellAt(s.x, s.y) : null;
+        return {
+          x: s.x / config.modelWidth,
+          y: s.y / config.modelHeight,
+          elevation: cell?.elevation,
+          zoneIdx: cell?.zoneIdx
+        };
       });
+      configSnapshot.fireLineMarkers = simulation.fireLineMarkers.map(fl => {
+        const cell = simulation.cells.length > 0 ? simulation.cellAt(fl.x, fl.y) : null;
+        return {
+          x: fl.x / config.modelWidth,
+          y: fl.y / config.modelHeight,
+          elevation: cell?.elevation
+        };
+      });
+      configSnapshot.zones = simulation.zones.map(z => ({
+        vegetation: vegetationLabels[z.vegetation],
+        terrainType: terrainLabels[z.terrainType],
+        droughtLevel: droughtLabels[z.droughtLevel]
+      }));
+      configSnapshot.wind = {
+        speed: simulation.wind.speed,
+        direction: simulation.wind.direction,
+        scaleFactor: config.windScaleFactor
+      };
+      configSnapshot.towns = config.towns;
+
+      log("SimulationStarted", configSnapshot);
+      simulation.start();
     }
   };
 
   public handleRestart = () => {
+    const { simulation } = this.stores;
+    if (simulation.simulationStarted) {
+      simulation.simulationEndedLogged = true;
+      log("SimulationEnded", {
+        reason: "SimulationRestarted",
+        outcome: simulation.getOutcomeData(this.stores.chartStore)
+      });
+    }
     this.stores.chartStore.reset();
-    this.stores.simulation.restart();
+    simulation.restart();
     log("SimulationRestarted");
   };
 
   public handleReload = () => {
+    const { simulation } = this.stores;
+    if (simulation.simulationStarted) {
+      simulation.simulationEndedLogged = true;
+      log("SimulationEnded", {
+        reason: "SimulationReloaded",
+        outcome: simulation.getOutcomeData(this.stores.chartStore)
+      });
+    }
     this.stores.chartStore.reset();
-    this.stores.simulation.reload();
+    simulation.reload();
     log("SimulationReloaded");
   };
 
   public handleFireLine = () => {
     const { ui, simulation } = this.stores;
     ui.showTerrainUI = false;
+    const wasRunning = simulation.simulationRunning;
     simulation.stop();
+    if (wasRunning) {
+      log("SimulationStopped", {
+        outcome: simulation.getOutcomeData(this.stores.chartStore)
+      });
+    }
     ui.interaction = Interaction.DrawFireLine;
     log("FireLineButtonClicked");
   };

@@ -1,7 +1,7 @@
 import { ftToViewUnit } from "./helpers";
 import { Interaction } from "../../models/ui";
 import { useStores } from "../../use-stores";
-import { log } from "@concord-consortium/lara-interactive-api";
+import { log } from "../../log";
 import { Event } from "three";
 
 export const usePlaceSparkInteraction = () => {

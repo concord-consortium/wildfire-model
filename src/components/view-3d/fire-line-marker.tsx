@@ -5,7 +5,7 @@ import fireLineImg from "../../assets/interactions/fire-line.png";
 import fireLineHighlightImg from "../../assets/interactions/fire-line-highlight.png";
 import { Marker } from "./marker";
 import * as THREE from "three";
-import { log } from "@concord-consortium/lara-interactive-api";
+import { log } from "../../log";
 
 interface IProps {
   dragPlane: RefObject<THREE.Mesh>
@@ -20,11 +20,15 @@ export const FireLineMarkersContainer: React.FC<IProps> = observer(function Wrap
         const onDragEnd = () => {
           const firelineStartPoint = idx % 2 === 0 ? simulation.fireLineMarkers[idx] : simulation.fireLineMarkers[idx - 1];
           const firelineEndPoint = idx % 2 === 0 ? simulation.fireLineMarkers[idx + 1] : simulation.fireLineMarkers[idx];
+          const cell1 = simulation.cellAt(firelineStartPoint.x, firelineStartPoint.y);
+          const cell2 = simulation.cellAt(firelineEndPoint.x, firelineEndPoint.y);
           log("FireLineUpdated", {
             x1: firelineStartPoint.x / simulation.config.modelWidth,
             y1: firelineStartPoint.y / simulation.config.modelHeight,
+            elevation1: cell1?.elevation,
             x2: firelineEndPoint.x / simulation.config.modelWidth,
-            y2: firelineEndPoint.y / simulation.config.modelHeight
+            y2: firelineEndPoint.y / simulation.config.modelHeight,
+            elevation2: cell2?.elevation
           });
         };
         return <Marker

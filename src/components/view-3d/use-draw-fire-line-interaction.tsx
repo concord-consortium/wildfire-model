@@ -6,7 +6,7 @@ import { Interaction } from "../../models/ui";
 import { useDragging } from "./use-dragging";
 import * as THREE from "three";
 import { InteractionHandler } from "./interaction-handler";
-import { log } from "@concord-consortium/lara-interactive-api";
+import { log } from "../../log";
 
 const MIN_DIST = 1500; // feet
 

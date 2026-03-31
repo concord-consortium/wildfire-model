@@ -9,7 +9,7 @@ import { DroughtSelector } from "./drought-selector";
 import { droughtLabels, DroughtLevel, terrainLabels, TerrainType, Vegetation, vegetationLabels } from "../types";
 import { WindCircularControl } from "./wind-circular-control";
 import { TerrainSummary } from "./terrain-summary";
-import { log } from "@concord-consortium/lara-interactive-api";
+import { log } from "../log";
 import { useStores } from "../use-stores";
 import { ZonesCountSelector } from "./zones-count-selector";
 

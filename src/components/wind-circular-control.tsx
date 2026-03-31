@@ -1,7 +1,7 @@
 import React from "react";
 import { Slider } from "@mui/material";
 import { WindDial, degToCompass } from "./wind-dial";
-import { log } from "@concord-consortium/lara-interactive-api";
+import { log } from "../log";
 import WindSymbol from "../assets/wind-symbol.svg";
 
 import css from "./wind-circular-control.scss";

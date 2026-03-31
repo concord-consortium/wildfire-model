@@ -1,6 +1,7 @@
 import { action, computed, observable, makeObservable } from "mobx";
 import { IWindProps, Town } from "../types";
-import {  Cell, CellOptions, FireState } from "./cell";
+import { Cell, CellOptions, FireState } from "./cell";
+import { ChartStore } from "./chart-store";
 import { getDefaultConfig, ISimulationConfig, getUrlConfig } from "../config";
 import { Vector2 } from "three";
 import { getElevationData, getRiverData, getUnburntIslandsData, getZoneIndex } from "./utils/data-loaders";
@@ -60,6 +61,7 @@ export class SimulationModel {
   // specific moments and usually for all the cells, so this approach can be way more efficient.
   @observable public cellsStateFlag = 0;
   @observable public cellsElevationFlag = 0;
+  @observable public simulationEndedLogged = false;
 
   constructor(presetConfig: Partial<ISimulationConfig>) {
     makeObservable(this);
@@ -217,6 +219,7 @@ export class SimulationModel {
     if (!this.ready) {
       return;
     }
+    this.simulationEndedLogged = false;
     if (!this.simulationStarted) {
       this.simulationStarted = true;
     }
@@ -359,6 +362,65 @@ export class SimulationModel {
         this.townMarkers.push({ name: town.name, position: new Vector2(x, y) });
       }
     });
+  }
+
+  public getOutcomeData(chartStore: ChartStore) {
+    const durationMinutes = Math.round(this.time * 10000) / 10000;
+    const durationHours = Math.round((this.time / 60) * 10000) / 10000;
+
+    const zoneOutcomes = this.zones.map((zone, zoneIdx) => {
+      const rawPercentage = this.totalCellCountByZone[zoneIdx] ? this.getZoneBurnPercentage(zoneIdx) : 0;
+      const burnPercentage = Math.round(rawPercentage * 1000000) / 10000;
+      const burnedCellCount = this.engine?.burnedCellsInZone[zoneIdx] || 0;
+      const cellAreaAcres = (this.config.cellSize * this.config.cellSize) / 43560;
+      const burnedAcres = Math.round(burnedCellCount * cellAreaAcres * 10000) / 10000;
+
+      // Compute piecewise burn rates from raw (unrounded) burn data (thousands of acres/hour)
+      const rawData = chartStore.rawBurnData[zoneIdx];
+      const burnRates: number[] = [];
+      let maxBurnRate = 0;
+      let timeOfMaxBurnRate = 0;
+
+      if (rawData && rawData.length >= 2) {
+        for (let i = 1; i < rawData.length; i++) {
+          const dt = rawData[i].time - rawData[i - 1].time;
+          if (dt > 0) {
+            const burnRate = Math.round(((rawData[i].acres - rawData[i - 1].acres) / dt) * 10000) / 10000;
+            burnRates.push(burnRate);
+            if (burnRate > maxBurnRate) {
+              maxBurnRate = burnRate;
+              timeOfMaxBurnRate = rawData[i].time;
+            }
+          }
+        }
+      }
+
+      return {
+        zoneIndex: zoneIdx,
+        burnPercentage,
+        burnedAcres,
+        burnRates,
+        maxBurnRate,
+        timeOfMaxBurnRate
+      };
+    });
+
+    const townOutcomes = this.config.towns.map(town => {
+      const x = town.x * this.config.modelWidth;
+      const y = town.y * this.config.modelHeight;
+      const cell = this.cells.length > 0 ? this.cellAt(x, y) : null;
+      return {
+        name: town.name,
+        burned: cell ? (cell.fireState === FireState.Burnt || cell.fireState === FireState.Burning) : false
+      };
+    });
+
+    return {
+      durationMinutes,
+      durationHours,
+      zones: zoneOutcomes,
+      towns: townOutcomes
+    };
   }
 
   @action.bound public addSpark(x: number, y: number) {
