@@ -252,24 +252,30 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   };
 
   public handleRestart = () => {
-    this.stores.simulation.simulationEndedLogged = true;
-    log("SimulationEnded", {
-      reason: "SimulationRestarted",
-      outcome: this.stores.simulation.getOutcomeData(this.stores.chartStore)
-    });
+    const { simulation } = this.stores;
+    if (simulation.simulationStarted) {
+      simulation.simulationEndedLogged = true;
+      log("SimulationEnded", {
+        reason: "SimulationRestarted",
+        outcome: simulation.getOutcomeData(this.stores.chartStore)
+      });
+    }
     this.stores.chartStore.reset();
-    this.stores.simulation.restart();
+    simulation.restart();
     log("SimulationRestarted");
   };
 
   public handleReload = () => {
-    this.stores.simulation.simulationEndedLogged = true;
-    log("SimulationEnded", {
-      reason: "SimulationReloaded",
-      outcome: this.stores.simulation.getOutcomeData(this.stores.chartStore)
-    });
+    const { simulation } = this.stores;
+    if (simulation.simulationStarted) {
+      simulation.simulationEndedLogged = true;
+      log("SimulationEnded", {
+        reason: "SimulationReloaded",
+        outcome: simulation.getOutcomeData(this.stores.chartStore)
+      });
+    }
     this.stores.chartStore.reset();
-    this.stores.simulation.reload();
+    simulation.reload();
     log("SimulationReloaded");
   };
 

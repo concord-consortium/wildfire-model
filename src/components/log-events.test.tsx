@@ -26,6 +26,7 @@ describe("Log events", () => {
   describe("SimulationEnded", () => {
     it("fires with reason 'SimulationRestarted' before restart", async () => {
       jest.spyOn(stores.simulation, "restart");
+      stores.simulation.simulationStarted = true;
       render(
         <Provider stores={stores}>
           <BottomBar />
@@ -55,6 +56,7 @@ describe("Log events", () => {
 
     it("fires with reason 'SimulationReloaded' before reload", async () => {
       jest.spyOn(stores.simulation, "reload");
+      stores.simulation.simulationStarted = true;
       render(
         <Provider stores={stores}>
           <BottomBar />
@@ -126,6 +128,7 @@ describe("Log events", () => {
     });
 
     it("sets simulationEndedLogged guard on restart", async () => {
+      stores.simulation.simulationStarted = true;
       render(
         <Provider stores={stores}>
           <BottomBar />
@@ -134,6 +137,22 @@ describe("Log events", () => {
       expect(stores.simulation.simulationEndedLogged).toBe(false);
       await userEvent.click(screen.getByTestId("restart-button"));
       expect(stores.simulation.simulationEndedLogged).toBe(true);
+    });
+
+    it("does NOT fire SimulationEnded on restart when simulation was never started", async () => {
+      jest.spyOn(stores.simulation, "restart");
+      render(
+        <Provider stores={stores}>
+          <BottomBar />
+        </Provider>
+      );
+      await userEvent.click(screen.getByTestId("restart-button"));
+
+      const endedCalls = mockLog.mock.calls.filter(
+        (call: unknown[]) => call[0] === "SimulationEnded"
+      );
+      expect(endedCalls).toHaveLength(0);
+      expect(stores.simulation.simulationEndedLogged).toBe(false);
     });
   });
 
