@@ -11,7 +11,7 @@ export default defineConfig({
     setupNodeEvents(on, config) {
       on('before:browser:launch', (browser, launchOptions) => {
         // Force software WebGL rendering on CI runners that lack a real GPU
-        if (browser.family === 'chromium') {
+        if (process.env.CI && browser.family === 'chromium') {
           launchOptions.args.push('--use-gl=angle', '--use-angle=swiftshader');
         }
         return launchOptions;
