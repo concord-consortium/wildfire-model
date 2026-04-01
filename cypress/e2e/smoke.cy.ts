@@ -103,8 +103,7 @@ context("Wildfire Smoke Test", () => {
       modelInfo.getModelTimeProgress().should("contain", "0 hours");
 
       bottomBar.getStartButton().click({ force: true });
-      cy.wait(3000);
-      bottomBar.getStartButton().should("contain", "Stop");
+      bottomBar.getStartButton({ timeout: 15000 }).should("contain", "Stop");
       modelInfo.getModelTimeProgress().should("not.contain", "0 hours");
     });
     it("restarts mode", () => {
