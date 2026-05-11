@@ -86,8 +86,12 @@ function parseTab(sheetName, rows) {
     const fvColIdx = mapFactorVarColumnIndices(fvHeader);
     for (let i = fvHeaderIdx + 1; i < rows.length; i++) {
       const row = rows[i];
-      const name = String(row[fvColIdx.name] ?? "").trim();
-      if (!name) continue;
+      const rawName = String(row[fvColIdx.name] ?? "").trim();
+      if (!rawName) continue;
+      // Strip type-annotation suffix the sheet authors use to label non-boolean
+      // factor variables, e.g. "uniqueWindValuesUsed (Set)" → "uniqueWindValuesUsed".
+      // The DSL identifier is the bare name; the type annotation is informational.
+      const name = rawName.replace(/\s*\([^)]*\)\s*$/, "");
       const def = {
         name,
         definition: String(row[fvColIdx.definition] ?? "").trim(),
@@ -95,7 +99,7 @@ function parseTab(sheetName, rows) {
         details: String(row[fvColIdx.details] ?? ""),
       };
       factorVariables.push(def);
-      mergeDefaults(defaults, def.details);
+      mergeDefaults(defaults, def.details, def.name);
     }
   }
 
@@ -116,15 +120,17 @@ function mapRuleColumnIndices(header) {
     }
     return -1;
   };
-  const arrowIdx = findCol("text to go with arrows", "arrow");
+  // Tab 23 uses "Text to Go with Coach Marks" between visualFeedback and pseudocode;
+  // earlier sheet revisions called this "Text to Go with Arrows". Match both.
+  const arrowIdx = findCol("text to go with coach marks", "text to go with arrows", "coach marks");
   return {
-    id: findCol("#"),
+    id: findCol("category", "#"),
     studentAction: findCol("student action"),
-    feedback: findCol("hazbot feedback", "feedback"),
+    // "Feedback to Student" matches modern headers; "Hazbot Feedback" matches earlier drafts.
+    feedback: findCol("feedback to student", "hazbot feedback", "feedback"),
     visualFeedback: findCol("visual feedback"),
     arrowText: arrowIdx >= 0 ? arrowIdx : undefined,
     expression: findCol("pseudocode"),
-    details: findCol("details"),
   };
 }
 
@@ -140,7 +146,9 @@ function mapFactorVarColumnIndices(header) {
   return {
     name: findCol("factor variable", "name"),
     definition: findCol("definition"),
-    logEvents: findCol("log event"),
+    // "Log Data Events and Fields To Examine" (modern) → "log data events";
+    // "Log events" (earlier drafts) → "log event"
+    logEvents: findCol("log data event", "log event", "log data"),
     details: findCol("details"),
   };
 }
@@ -151,28 +159,61 @@ function parseLogEvents(s) {
 
 // === Defaults parsing from Details column ===
 
-function mergeDefaults(defaults, details) {
+// Map known set-X factor variable names to the per-zone defaults field they read.
+const FACTOR_VAR_TO_FIELD = {
+  setTerrainType: "terrainType",
+  setVegetation: "vegetation",
+  setDroughtLevel: "droughtLevel",
+};
+
+function mergeDefaults(defaults, details, factorVarName) {
   // Match patterns like:
   //   `Default values = "Plains" (zone 1), "Plains" (zone 2)`
   //   `Default value = "Mild Drought" (zone 1)`
   //   `Default speed = 0`, `Default direction = 0`
-  // These are heuristic — TBD entries leave defaults absent so the engine's
-  // load-time validator catches the gap (per Req 11a).
+  // TBD entries leave defaults absent so the engine's load-time validator catches
+  // the gap (per Req 11a).
   if (!details || /\bTBD\b/i.test(details)) return;
 
-  // Per-zone defaults: terrainType / vegetation / droughtLevel. Only field-specific
-  // keywords are parsed — a generic "Default values = ..." wording without a
-  // field-keyword would silently get the field wrong, so we don't try.
+  // Per-zone defaults: prefer the explicit field-keyword pattern (handles details
+  // text that says "Default terrain = ..."); fall back to the generic
+  // "Default values = ..." pattern dispatched via the impl's name → field mapping.
   parsePerZoneDefault(defaults, details, /default\s+terrain[^=]*=\s*([^.]+)/i, "terrainType");
   parsePerZoneDefault(defaults, details, /default\s+vegetation[^=]*=\s*([^.]+)/i, "vegetation");
   parsePerZoneDefault(defaults, details, /default\s+drought[^=]*=\s*([^.]+)/i, "droughtLevel");
 
-  // Wind speed/direction defaults.
+  const inferredField = factorVarName ? FACTOR_VAR_TO_FIELD[factorVarName] : undefined;
+  if (inferredField) {
+    parsePerZoneDefault(defaults, details, /default\s+values?[^=]*=\s*([^.]+)/i, inferredField);
+  }
+
+  // Wind speed/direction defaults. Two patterns supported:
+  //   `Default speed = 0`, `Default direction = 0`        (explicit field-keyword form)
+  //   `Default values = 0 (magnitude), 0 (direction)`     (the wildfire sheet's wording —
+  //                                                        magnitude is the wind speed)
+  if (factorVarName && /wind/i.test(factorVarName)) {
+    parseWindDefaults(defaults, details);
+  }
   const speedMatch = /default\s+(?:wind\s+)?speed\s*=\s*([0-9.]+)/i.exec(details);
   const dirMatch = /default\s+(?:wind\s+)?direction\s*=\s*([0-9.]+)/i.exec(details);
   if (speedMatch || dirMatch) {
     if (!defaults.wind) defaults.wind = { speed: 0, direction: 0 };
     if (speedMatch) defaults.wind.speed = parseFloat(speedMatch[1]);
+    if (dirMatch) defaults.wind.direction = parseFloat(dirMatch[1]);
+  }
+}
+
+function parseWindDefaults(defaults, details) {
+  // `Default values = 0 (magnitude), 0 (direction).`
+  const valuesRe = /default\s+values?\s*=\s*([^.]+)/i;
+  const match = valuesRe.exec(details);
+  if (!match) return;
+  const valuesStr = match[1];
+  const magMatch = /([0-9.]+)\s*\(magnitude\)/i.exec(valuesStr);
+  const dirMatch = /([0-9.]+)\s*\(direction\)/i.exec(valuesStr);
+  if (magMatch || dirMatch) {
+    if (!defaults.wind) defaults.wind = { speed: 0, direction: 0 };
+    if (magMatch) defaults.wind.speed = parseFloat(magMatch[1]);
     if (dirMatch) defaults.wind.direction = parseFloat(dirMatch[1]);
   }
 }
@@ -254,8 +295,36 @@ function emitIndex(tabIds) {
 }
 
 function readmeToMarkdown(rows) {
-  // README is a list of paragraphs in the first column.
-  return rows.map((row) => String(row[0] ?? "")).join("\n\n") + "\n";
+  // README is a two-column key/body layout: column 0 is a label or section
+  // heading; column 1 is the body. We render labels that look like section
+  // headings as `## Heading`, short markers (numerals / single letters) as
+  // `**marker:**`, and pure-body rows as continuation paragraphs.
+  const SECTION_RE = /^[A-Z][A-Za-z][A-Za-z ]*$/; // "Sources", "WITH", "Examples", "PRECEDENCE", etc.
+  const lines = [];
+  for (const row of rows) {
+    const label = String(row[0] ?? "").trim();
+    const body = String(row[1] ?? "").trim();
+    if (!label && !body) continue;
+    if (label && !body) {
+      // Section heading — empty body means it's a header for the rows below.
+      if (SECTION_RE.test(label)) {
+        lines.push(`## ${label}`);
+      } else {
+        lines.push(label);
+      }
+    } else if (!label && body) {
+      lines.push(body);
+    } else {
+      // Both present.
+      if (SECTION_RE.test(label) && body.length > 80) {
+        // Section heading + long body → render as heading + paragraph.
+        lines.push(`## ${label}\n\n${body}`);
+      } else {
+        lines.push(`**${label}:** ${body}`);
+      }
+    }
+  }
+  return lines.join("\n\n") + "\n";
 }
 
 // === TS string escaping ===

@@ -43,12 +43,18 @@ describe("getAnalysisEngine", () => {
   });
 
   it("returns an inactive engine when ?hazbotRules references a missing rule set", () => {
-    // The stub rule-set registry is empty (step 10 lands the real registry), so
-    // any rule-set id resolves to undefined → missing-rule-set load failure.
-    setUrl("?hazbotRules=23");
+    setUrl("?hazbotRules=missing-id");
     const e = getAnalysisEngine();
     if (!e) throw new Error("expected engine");
     expect(e.isActive).toBe(false);
+    expect(e.requestedRuleSetId).toBe("missing-id");
+  });
+
+  it("returns an active engine when ?hazbotRules resolves to a known rule set (tab 23)", () => {
+    setUrl("?hazbotRules=23");
+    const e = getAnalysisEngine();
+    if (!e) throw new Error("expected engine");
+    expect(e.isActive).toBe(true);
     expect(e.requestedRuleSetId).toBe("23");
   });
 });
