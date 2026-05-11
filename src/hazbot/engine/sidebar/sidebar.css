@@ -1,0 +1,107 @@
+/* Hazbot debug sidebar — plain CSS, light theme only (per Req 17 / R9-4).
+   Class names use the flat `hazbot-sidebar-` prefix per LIB-4 to avoid
+   collisions with host-app CSS. */
+
+.hazbot-sidebar {
+  --hazbot-bg: #ffffff;
+  --hazbot-fg: #1a1a1a;
+  --hazbot-muted: #6e6e6e;
+  --hazbot-border: #d8d8d8;
+  --hazbot-header-bg: #f7f7f7;
+  --hazbot-entry-bg: #fafafa;
+  --hazbot-true: #155724;       /* dark green — passes WCAG AA against bg */
+  --hazbot-false: #721c24;      /* dark red */
+  --hazbot-warning-bg: #fff8e1;
+  --hazbot-error-bg: #fde8e8;
+  --hazbot-matched-border: #1e6091;
+
+  position: relative;
+  width: 300px;
+  height: 100%;
+  background: var(--hazbot-bg);
+  color: var(--hazbot-fg);
+  border-left: 1px solid var(--hazbot-border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.hazbot-sidebar-header {
+  background: var(--hazbot-header-bg);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--hazbot-border);
+}
+
+.hazbot-sidebar-header strong { font-size: 13px; }
+.hazbot-sidebar-header .hazbot-sidebar-muted { color: var(--hazbot-muted); margin-left: 6px; font-size: 11px; }
+
+.hazbot-sidebar-section {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--hazbot-border);
+}
+
+.hazbot-sidebar-section-title {
+  font-weight: bold;
+  font-size: 12px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  color: var(--hazbot-muted);
+}
+
+.hazbot-sidebar-entry {
+  background: var(--hazbot-entry-bg);
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border: 1px solid var(--hazbot-border);
+  border-radius: 3px;
+}
+
+.hazbot-sidebar-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.hazbot-sidebar-button:focus-visible {
+  outline: 2px solid var(--hazbot-matched-border);
+  outline-offset: 1px;
+}
+
+.hazbot-sidebar-category-matched {
+  border: 2px solid var(--hazbot-matched-border);
+}
+
+.hazbot-sidebar-leaf-true { color: var(--hazbot-true); text-decoration: underline; }
+.hazbot-sidebar-leaf-false { color: var(--hazbot-false); text-decoration: line-through; }
+
+.hazbot-sidebar-error {
+  background: var(--hazbot-error-bg);
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-radius: 3px;
+}
+
+.hazbot-sidebar-warning {
+  background: var(--hazbot-warning-bg);
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-radius: 3px;
+}
+
+.hazbot-sidebar-pre {
+  white-space: pre-wrap;
+  font-size: 11px;
+  background: #f0f0f0;
+  padding: 6px;
+  margin: 4px 0 0 0;
+  border-radius: 3px;
+  overflow-x: auto;
+}
