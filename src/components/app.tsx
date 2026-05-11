@@ -14,11 +14,11 @@ import { LogMonitor } from "@concord-consortium/log-monitor";
 import { getUrlConfig } from "../config";
 import { log } from "../log";
 import Shutterbug from "shutterbug";
+import { AnalysisEngineProvider, Sidebar } from "../hazbot/engine";
+import { APP_RULES_VERSION, getAnalysisEngine } from "../hazbot/wildfire";
 
 import css from "./app.scss";
 import { useCustomCursor } from "./use-custom-cursors";
-
-const { logMonitor } = getUrlConfig();
 
 const getMousePosition = (e: React.MouseEvent) => {
   const rect = e.currentTarget.getBoundingClientRect();
@@ -40,6 +40,10 @@ const handleMouseLeave = (e: React.MouseEvent) => {
 
 export const AppComponent = observer(function WrappedComponent() {
   const { simulation, ui, chartStore } = useStores();
+  const { logMonitor, hazbotSidebar } = getUrlConfig();
+  // Construct (or retrieve cached) the Hazbot analysis engine. Returns undefined
+  // when neither URL flag (?hazbotRules / ?hazbotSidebar) is set.
+  const engine = getAnalysisEngine();
 
   useEffect(() => {
     Shutterbug.enable("." + css.app);
@@ -105,13 +109,22 @@ export const AppComponent = observer(function WrappedComponent() {
     </div>
   );
 
+  // Mount the Hazbot sidebar as a third optional right column when ?hazbotSidebar=true
+  // AND the engine constructed (per FE-4 / R9-2 — Provider mounts iff Sidebar mounts).
+  const showHazbotSidebar = hazbotSidebar && engine !== undefined;
+  const showAnyRightSidebar = logMonitor || showHazbotSidebar;
   return (
-    <div style={logMonitor ? { display: "flex", width: "100%", height: "100%" } : { width: "100%", height: "100%" }}>
-      {logMonitor
+    <div style={showAnyRightSidebar ? { display: "flex", width: "100%", height: "100%" } : { width: "100%", height: "100%" }}>
+      {showAnyRightSidebar
         ? <div style={{ flex: 1, overflow: "hidden", position: "relative", transform: "scale(1)" }}>{content}</div>
         : content
       }
       {logMonitor && <LogMonitor logFilePrefix="wildfire-log-events" />}
+      {showHazbotSidebar && engine && (
+        <AnalysisEngineProvider engine={engine} appRulesVersion={APP_RULES_VERSION}>
+          <Sidebar />
+        </AnalysisEngineProvider>
+      )}
     </div>
   );
 });

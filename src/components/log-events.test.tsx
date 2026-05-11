@@ -281,6 +281,22 @@ describe("Log events", () => {
       expect(params).toHaveProperty("fireLineMarkers");
     });
 
+    it.each([true, false])("passes ambientState.chartTabOpenAtStart = %p reflecting ui.showChart", async (showChart) => {
+      // AC: ambientState plumbing end-to-end. The Start handler reads ui.showChart at call time.
+      jest.spyOn(stores.simulation, "start").mockImplementation(() => { /* noop */ });
+      stores.ui.showChart = showChart;
+      act(() => {
+        stores.simulation.dataReady = true;
+        stores.simulation.sparks.push(new Vector2(50000, 50000));
+      });
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      await userEvent.click(screen.getByTestId("start-button"));
+      const startedCall = mockLog.mock.calls.find((call: unknown[]) => call[0] === "SimulationStarted");
+      expect(startedCall).toBeDefined();
+      // Third arg is ambientState; reflects the current chart-tab state at run-start.
+      expect(startedCall[2]).toEqual({ chartTabOpenAtStart: showChart });
+    });
+
     it("replaces 2D arrays with metadata strings", async () => {
       jest.spyOn(stores.simulation, "start").mockImplementation(() => { /* noop */ });
 

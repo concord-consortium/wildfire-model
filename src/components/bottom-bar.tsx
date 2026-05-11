@@ -246,7 +246,10 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       };
       configSnapshot.towns = config.towns;
 
-      log("SimulationStarted", configSnapshot);
+      // Third arg (ambientState) is engine-only state the LARA payload doesn't carry
+      // (per WM-10 Req 3a). For SimulationStarted, the chart-tab open/closed state
+      // at run-start is needed by the GraphOpen sim-prop.
+      log("SimulationStarted", configSnapshot, { chartTabOpenAtStart: ui.showChart });
       simulation.start();
     }
   };
