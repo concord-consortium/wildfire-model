@@ -1,0 +1,88 @@
+// Substrate types — the host-app-facing interfaces.
+// Per requirements.md "Library scope and the Reading boundary" + "Rule-set TypeScript shape"
+// + "Factor-variable / Sim-prop implementation interface".
+
+export interface BaseReading {
+  triggeredBy: string;
+  at: number;
+  sessionId: string;
+  updates: ReadingUpdate[];
+}
+
+export interface ReadingUpdate {
+  at: number;
+  source: string;
+  value: unknown;
+}
+
+export interface ConsumedEvent {
+  name: string;            // e.g. "SimulationStarted"
+  data?: unknown;          // public log payload (LARA-bound)
+  ambientState?: unknown;  // engine-only ambient app state (Req 3a)
+  at: number;              // timestamp the event was emitted
+}
+
+// Recursive-partial form per EXT-8 — lets generated rule sets emit incomplete defaults
+// (e.g. tabs 32–35 with per-zone TBD fields) without TS-level escapes.
+export type DeepPartial<T> = T extends object ? { [K in keyof T]?: DeepPartial<T[K]> } : T;
+
+export interface RuleSet<TDefaults = unknown> {
+  id: string;                       // tab name, e.g. "23"
+  categories: Category[];           // ordered lowest-to-highest by id
+  factorVariables: FactorVariableDef[];
+  defaults: DeepPartial<TDefaults>; // per EXT-8 — partial typing for generated rule sets
+}
+
+export interface Category {
+  id: number;
+  studentAction: string;
+  feedback: string;
+  visualFeedback: string;
+  arrowText?: string;
+  expression: string;
+}
+
+export interface FactorVariableDef {
+  name: string;
+  definition: string;
+  logEvents: string[];
+  details: string;
+}
+
+export interface FactorVariableImpl<V = unknown, TReading extends BaseReading = BaseReading, TDefaults = unknown> {
+  ambientStateKeys?: { [triggerEventType: string]: string[] };
+  requiredDefaults?: string[];
+  // Substrate's catch handler reads `defaultValue` on impl throw (per ENG-1).
+  defaultValue: V;
+  isStub?: boolean;
+  compute: (readings: TReading[], defaults: TDefaults) => { value: V; witnesses: TReading[] };
+}
+
+export interface SimPropImpl<TReading extends BaseReading = BaseReading, TDefaults = unknown> {
+  ambientStateKeys?: { [triggerEventType: string]: string[] };
+  requiredDefaults?: string[];
+  defaultValue: boolean;
+  isStub?: boolean;
+  evaluate: (reading: TReading, defaults: TDefaults) => boolean;
+}
+
+export type EngineError =
+  | { kind: "load-failure"; reason: "missing-rule-set" | "missing-defaults" | "missing-impl"; ruleSetId?: string; detail: string; at: number }
+  | {
+      kind: "parse-error"; ruleSetId: string; categoryId: number; expression: string;
+      tokenSpan: { start: number; end: number }; offendingToken: string; detail: string; at: number;
+    }
+  | {
+      kind: "ambient-validation"; ruleSetId: string; trigger: string; implName: string;
+      missingKey: string; event: ConsumedEvent; at: number;
+    }
+  | {
+      kind: "orphan-modifier"; source: string;
+      reason: "no-prior-trigger" | "prior-trigger-failed" | "between-runs";
+      event: ConsumedEvent; at: number;
+    }
+  | {
+      kind: "impl-eval-throw"; ruleSetId: string; implName: string;
+      implKind: "factor-variable" | "sim-prop"; readingIndex?: number; thrown: unknown; at: number;
+    }
+  | { kind: "stub-warning"; stubName: string; at: number };

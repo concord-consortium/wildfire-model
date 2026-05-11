@@ -500,6 +500,7 @@ The substrate's `src/hazbot/engine/index.ts` re-exports exactly the following na
 - `AnalysisEngineProvider` (component) — wraps the app subtree with the engine and `appRulesVersion`.
 - `AnalysisEngineProviderProps` (interface) — host apps may spec props in typed wrappers (e.g., a wildfire-shaped Provider re-export).
 - `useAnalysisEngine` (hook) — the access surface for engine state.
+- `HookReturn` (type alias) — the named return shape of `useAnalysisEngine`. Surfaced so post-extraction host apps can write typed factory wrappers like `useWildfireAnalysisEngine = (): HookReturn<WildfireReading, WildfireDefaults> => useAnalysisEngine()` (per LIB-3 / PASS3-API-3); without this export the wrapper would have to use `ReturnType<typeof useAnalysisEngine>`, which doesn't propagate the hook's generics cleanly.
 
 **Sidebar UI**:
 - `Sidebar` (component) — the top-level debug sidebar. No props (light-mode only per Req 17 — no `theme` prop, no theme switching). Host apps mount it directly; sub-components are composed only by `Sidebar` itself.
@@ -528,13 +529,13 @@ type EngineError =
   | { kind: "parse-error"; ruleSetId: string; categoryId: number; expression: string; tokenSpan: { start: number; end: number }; offendingToken: string; detail: string; at: number }
   | { kind: "ambient-validation"; ruleSetId: string; trigger: string; implName: string; missingKey: string; event: ConsumedEvent; at: number }  // implName: factor-variable or sim-prop name (Finding 14 — both impl kinds can emit ambient-validation errors)
   | { kind: "orphan-modifier"; source: string; reason: "no-prior-trigger" | "prior-trigger-failed" | "between-runs"; event: ConsumedEvent; at: number }
-  | { kind: "impl-eval-throw"; ruleSetId: string; implName: string; implKind: "factor-variable" | "sim-prop"; readingIndex: number; thrown: unknown; at: number }  // R17-1: unified across factor-variable compute() throws and sim-prop evaluate() throws; `implKind` discriminates so the rendering map and any programmatic consumer can branch on it
+  | { kind: "impl-eval-throw"; ruleSetId: string; implName: string; implKind: "factor-variable" | "sim-prop"; readingIndex?: number; thrown: unknown; at: number }  // R17-1: unified across factor-variable compute() throws and sim-prop evaluate() throws; `implKind` discriminates so the rendering map and any programmatic consumer can branch on it. `readingIndex` is optional per EXT-19 — populated for sim-prop throws (the WITH-bound witness reading) and omitted for factor-variable throws (compute operates over the full readings array, the substrate cannot attribute to a single reading without re-running compute incrementally).
   | { kind: "stub-warning"; stubName: string; at: number };
 ```
 
 **Context derivation** (errors panel, Req 17): where context is derivable from existing engine state, the error carries an index/key rather than duplicating the data:
 
-- `impl-eval-throw`'s `readingIndex` resolves to the full reading (including trigger event name and payload) via `engine.readings[readingIndex]`. For factor-variable throws, `readingIndex` points to the bad input reading whose payload triggered the throw inside `compute()`. For sim-prop throws (R17-1), `readingIndex` points to the WITH-bound witness reading whose payload triggered the throw inside `evaluate()`. The errors panel hydrates this at render time.
+- `impl-eval-throw`'s `readingIndex` (when present) resolves to the full reading (including trigger event name and payload) via `engine.readings[readingIndex]`. For sim-prop throws (R17-1), `readingIndex` points to the WITH-bound witness reading whose payload triggered the throw inside `evaluate()` and the errors panel hydrates this at render time. For factor-variable throws, `readingIndex` is omitted (per EXT-19) because `compute(readings, defaults)` operates over the full readings array and the substrate cannot attribute the throw to a specific reading without re-running compute incrementally — rejected as too heavy for an error path. The errors panel renders the impl-level message for these (substituting the substrate-known readings count via `renderError`'s optional context) and the developer scrubs the readings panel to investigate.
 
 Where context is *not* derivable — pre-reading failures have no Reading to point at — the error stores the full `ConsumedEvent` directly:
 
@@ -575,7 +576,8 @@ The substrate exposes a single source-of-truth mapping from `EngineError.kind` (
 | `orphan-modifier` (`reason: no-prior-trigger`) | error | `Modifier ${source} dropped: no trigger has fired yet` |
 | `orphan-modifier` (`reason: prior-trigger-failed`) | error | `Modifier ${source} dropped: prior trigger failed validation` |
 | `orphan-modifier` (`reason: between-runs`) | error | `Modifier ${source} dropped: no run currently in progress` |
-| `impl-eval-throw` | error | `${implKind === "sim-prop" ? "Sim-prop" : "Factor variable"} ${implName} threw at reading ${readingIndex}: ${String(thrown)}` |
+| `impl-eval-throw` (sim-prop) | error | `Sim-prop ${implName} threw at reading ${readingIndex}: ${String(thrown)}` |
+| `impl-eval-throw` (factor-variable) | error | `Factor variable ${implName} threw during computation over ${ctx.readingsLength} readings: ${String(thrown)}` (per EXT-19; render call site supplies `ctx.readingsLength` from `engine.readings.length`) |
 | `stub-warning` | warning | `Stub not yet implemented: ${stubName}` |
 
 Templates use placeholder syntax for clarity; implementer chooses formatting (string concat / template literal / i18n hook). Substrate exports a small render helper consumed by the engine's `console.error`/`console.warn` path AND by the sidebar's errors panel — keeping a single function call site means future template edits land in one place. Tests assert each `kind` × `reason` row produces a non-empty message and the documented severity. Adding a new `EngineError` variant or `reason` value is a substrate API expansion (semver minor bump per Req 20) and must add a corresponding row to this table — the spec author and implementer should treat the table as the source of truth for both engine console output and sidebar presentation.
@@ -593,7 +595,7 @@ Per render, the sidebar runs the non-short-circuiting evaluator over every categ
 Factor-variable implementations are hand-written TS modules (per Req 14) that bridge the DSL (rule expressions) and the readings substrate. Each implementation entry has the following shape:
 
 ```ts
-interface FactorVariableImpl<V = unknown, TReading extends BaseReading = BaseReading> {
+interface FactorVariableImpl<V = unknown, TReading extends BaseReading = BaseReading, TDefaults = unknown> {
   // Per-trigger-event ambient-state keys this impl reads. Validated by the engine
   // at trigger time (Req 3b). Declared by the code author, not the sheet author.
   ambientStateKeys?: { [triggerEventType: string]: string[] };
@@ -605,14 +607,28 @@ interface FactorVariableImpl<V = unknown, TReading extends BaseReading = BaseRea
   // Declared by the code author, not the sheet author.
   requiredDefaults?: string[];
 
+  // Substrate-required fallback returned by `safelyEvaluateImpl`/`evaluateForRender`
+  // on impl throw (per ENG-1). Declare per the impl's value type:
+  // `false` for boolean, `new Set()` for Set-typed, `[]` for array-typed, etc.
+  defaultValue: V;
+
+  // When true, the substrate emits a `stub-warning` for this impl at load
+  // (per Req 6 / IMPL-4). Optional metadata, fits alongside the other optional fields.
+  isStub?: boolean;
+
   // Computes the factor variable's current value plus provenance. `witnesses` is
   // the subset of readings that materially contributed to the value (e.g., the
   // readings whose wind keys make up `uniqueWindValuesUsed`). Empty array is valid.
   // `TReading` is the app's reading shape — for WM-10 this is `WildfireReading`
-  // (see Tech Notes' "Library scope and the Reading boundary").
-  compute: (readings: TReading[]) => { value: V; witnesses: TReading[] };
+  // (see Tech Notes' "Library scope and the Reading boundary"). `defaults` is the
+  // rule set's defaults — symmetric with `SimPropImpl.evaluate(reading, defaults)`,
+  // letting comparison-against-default impls (e.g., `setDroughtLevel`) read the
+  // baseline at compute time. Same load-time `requiredDefaults` validation applies.
+  compute: (readings: TReading[], defaults: TDefaults) => { value: V; witnesses: TReading[] };
 }
 ```
+
+Factor-variable impls receive defaults at compute-time, with the same load-time `requiredDefaults` validation pattern as before — the substrate validates declared paths resolve before the engine becomes active, so impl authors can read defaults fields without null-guards inside the active path.
 
 A factor-variable implementations module exports a `Record<string, FactorVariableImpl>` keyed by factor-variable name; the engine resolves a `FactorVariableDef` (sheet-extracted metadata) to its `FactorVariableImpl` (code) by name lookup at load time. If a `FactorVariableDef` has no matching implementation, the engine rejects the rule set per the "fail loudly" pattern.
 
@@ -733,11 +749,17 @@ Substrate-owned types:
 
 ```ts
 // substrate (future library)
+export type DeepPartial<T> = T extends object ? { [K in keyof T]?: DeepPartial<T[K]> } : T;
+
 export interface RuleSet<TDefaults = unknown> {
   id: string;                       // tab name, e.g. "23"
   categories: Category[];           // ordered lowest-to-highest by id; matching evaluator iterates in reverse (highest-first)
   factorVariables: FactorVariableDef[];
-  defaults: TDefaults;              // per Requirement 11a — validated at load via path traversal
+  defaults: DeepPartial<TDefaults>; // per Requirement 11a + EXT-8 — partial typing lets generated rule sets emit incomplete defaults
+                                    // (e.g., tabs 32–35 with per-zone TBD fields) without TS-level escapes; substrate runtime
+                                    // validation walks `requiredDefaults` paths and emits `missing-defaults` load failures for
+                                    // unresolved paths; bridge-side impls receive `defaults: TDefaults` (cast internally by
+                                    // `safelyEvaluateImpl` when `isActive`).
 }
 
 export interface Category {
