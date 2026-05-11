@@ -18,6 +18,13 @@ describe("wildfire sim-props", () => {
       const r = mkRead({ zones: [{ index: 0 }, { index: 1 }], sparks: [{ x: 0, y: 0, zoneIdx: 0 }] });
       expect(simProps.OneSparkPerZone.evaluate(r, {})).toBe(false);
     });
+    it("false for a trivial 1-zone / 1-spark setup (predicate is for multi-zone activities)", () => {
+      const r = mkRead({
+        zones: [{ index: 0 }],
+        sparks: [{ x: 0, y: 0, zoneIdx: 0 }],
+      });
+      expect(simProps.OneSparkPerZone.evaluate(r, {})).toBe(false);
+    });
     it("false when two sparks share a zone (legitimate-zoneIdx case)", () => {
       const r = mkRead({
         zones: [{ index: 0 }, { index: 1 }],

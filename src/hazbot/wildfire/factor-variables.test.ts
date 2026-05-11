@@ -47,6 +47,17 @@ describe("wildfire factor variables", () => {
       });
       expect(factorVariables.usedOneSparkPerZone.compute([reading], {}).value).toBe(false);
     });
+    it("false for a trivial 1-zone / 1-spark setup (sheet definition requires multi-zone)", () => {
+      // Scenario: student ran the model with one zone and one spark earlier in
+      // the session, then added a second zone but hasn't placed a second spark.
+      // The 1+1 reading must not satisfy the multi-zone rubric, even though it
+      // passes the generic length-and-distinct check.
+      const reading = mkRead("SimulationStarted", {
+        zones: [{ index: 0 }],
+        sparks: [{ x: 0, y: 0, zoneIdx: 0 }],
+      });
+      expect(factorVariables.usedOneSparkPerZone.compute([reading], {}).value).toBe(false);
+    });
     it("false when any spark has undefined zoneIdx (would falsely look distinct in Set)", () => {
       // Real-data hazard: bottom-bar.tsx captures `zoneIdx: cell?.zoneIdx`; if
       // cellAt returns null for a spark (cells not loaded, out-of-bounds), zoneIdx

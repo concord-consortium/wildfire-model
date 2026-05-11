@@ -9,6 +9,11 @@ const OneSparkPerZone: SimPropImpl<WildfireReading, WildfireDefaults> = {
   evaluate: (reading) => {
     if (!reading.sparks || !reading.zones) return false;
     if (reading.sparks.length !== reading.zones.length) return false;
+    // Reject the trivial 1-zone / 1-spark case — symmetric with `usedOneSparkPerZone`.
+    // The predicate is meant for multi-zone activities; a single spark in a single
+    // zone passes the length+distinct check but doesn't demonstrate the per-zone
+    // distribution the rubric is testing.
+    if (reading.sparks.length < 2) return false;
     // Same fail-closed rule as `usedOneSparkPerZone` — undefined zoneIdx values
     // mixed with real ones would inflate the distinct-zone count via Set semantics.
     if (reading.sparks.some((s) => s.zoneIdx === undefined)) return false;

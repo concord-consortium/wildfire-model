@@ -108,6 +108,15 @@ const usedOneSparkPerZone: FactorVariableImpl<boolean, WildfireReading, Wildfire
     const witnesses = simulationStartedReadings(readings).filter((r) => {
       if (!r.sparks || !r.zones) return false;
       if (r.sparks.length !== r.zones.length) return false;
+      // The sheet definition reads "two sparks were used with one spark per zone"
+      // — the rubric is designed for multi-zone activities (tab 23 needs exactly
+      // two zones and two sparks). A 1-zone / 1-spark setup trivially passes the
+      // length+distinct check but doesn't demonstrate the behavior the rubric is
+      // testing, so we'd falsely advance students who happen to run with one zone
+      // earlier in the session. Require at least two sparks (and zones, since the
+      // lengths match) so the predicate fires only when the multi-zone constraint
+      // is actually exercised.
+      if (r.sparks.length < 2) return false;
       // Reject sparks with undefined zoneIdx — `new Set` treats undefined as a
       // distinct value, so a mix like [0, undefined] would falsely look like 2
       // distinct zones in a 2-zone activity (e.g., when the cell lookup at
