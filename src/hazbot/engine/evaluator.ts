@@ -1,0 +1,232 @@
+import { BaseReading, FactorVariableImpl, RuleSet, SimPropImpl } from "./types";
+import { Expression, Operand } from "./parser";
+import { CachedAst, PARSE_ERROR_SENTINEL } from "./engine";
+import {
+  FactorVarWrap, SimPropWrap,
+  evaluateFactorVarForRender, evaluateSimPropForRender,
+} from "./safely-evaluate-impl";
+
+// Per-leaf truth tree mirror used by the sidebar's truth-coloring (Req 17).
+// Each node carries a `truth` boolean alongside the original AST shape so the
+// renderer can color leaves without re-evaluating.
+export type LeafTruth =
+  | { kind: "boolean-leaf"; name: string; truth: boolean }
+  | { kind: "comparison"; op: string; lhs: Operand; rhs: Operand; truth: boolean }
+  | {
+      kind: "with"; varName: string; propExpr: Expression; truth: boolean;
+      boundReading?: BaseReading;
+      candidateEvaluations?: Array<{ reading: BaseReading; propResult: boolean }>;
+    }
+  | { kind: "and"; left: LeafTruth; right: LeafTruth; truth: boolean }
+  | { kind: "or"; left: LeafTruth; right: LeafTruth; truth: boolean }
+  | { kind: "not"; child: LeafTruth; truth: boolean };
+
+export interface EvalCtx<TR extends BaseReading, TD> {
+  readings: TR[];
+  defaults: TD | undefined;
+  factorVariables: Record<string, FactorVariableImpl<unknown, TR, TD>>;
+  simProps: Record<string, SimPropImpl<TR, TD>>;
+  // Wrappers — call sites pass safelyEvaluate* (consume) or evaluateForRender (render).
+  wrapFactorVar: FactorVarWrap<TR, TD>;
+  wrapSimProp: SimPropWrap<TR, TD>;
+}
+
+// Render-path ctx builder using `evaluateForRender` and the engine's
+// per-impl incomplete-defaults Set (per EXT-7 / EXT-18).
+export function makeRenderCtx<TR extends BaseReading, TD>(
+  readings: TR[],
+  defaults: TD | undefined,
+  factorVariables: Record<string, FactorVariableImpl<unknown, TR, TD>>,
+  simProps: Record<string, SimPropImpl<TR, TD>>,
+  implsWithIncompleteDefaults?: Set<string>,
+): EvalCtx<TR, TD> {
+  return {
+    readings, defaults, factorVariables, simProps,
+    wrapFactorVar: (fvar, rs, ds) => evaluateFactorVarForRender(fvar, rs, ds, implsWithIncompleteDefaults),
+    wrapSimProp: (sprop, r, _i, ds) => evaluateSimPropForRender(sprop, r, ds, implsWithIncompleteDefaults),
+  };
+}
+
+// Evaluate an expression to a boolean (short-circuit OK; matching path uses this).
+export function evaluateExpr<TR extends BaseReading, TD>(expr: Expression, ctx: EvalCtx<TR, TD>): boolean {
+  switch (expr.kind) {
+    case "boolean-leaf": {
+      const fvar = ctx.factorVariables[expr.name];
+      if (!fvar) return false;
+      const v = ctx.wrapFactorVar({ name: expr.name, impl: fvar }, ctx.readings, ctx.defaults).value;
+      return Boolean(v);
+    }
+    case "comparison": {
+      const lhs = readOperand(expr.lhs, ctx);
+      const rhs = readOperand(expr.rhs, ctx);
+      return compare(expr.op, lhs, rhs);
+    }
+    case "and": return evaluateExpr(expr.left, ctx) && evaluateExpr(expr.right, ctx);
+    case "or": return evaluateExpr(expr.left, ctx) || evaluateExpr(expr.right, ctx);
+    case "not": return !evaluateExpr(expr.child, ctx);
+    case "with": return evaluateWith(expr.varName, expr.propExpr, ctx).value;
+    case "sim-prop-leaf":
+    case "accessor":
+    case "literal":
+      // These leaves are only valid inside WITH or comparison; reaching them at
+      // top level means the AST is malformed (parser bug or hand-constructed AST).
+      // Throw rather than silently return false — caller wraps via safelyEvaluate
+      // wrappers, so the throw lands in engine.errors as impl-eval-throw rather
+      // than escaping into render.
+      throw new Error(`evaluateExpr: ${expr.kind} is only valid as a sub-node, not as a top-level expression`);
+    default: {
+      const _exhaustive: never = expr;
+      throw new Error(`evaluateExpr: unhandled ${(_exhaustive as { kind: string }).kind}`);
+    }
+  }
+}
+
+function readOperand<TR extends BaseReading, TD>(op: Operand, ctx: EvalCtx<TR, TD>): unknown {
+  if (op.kind === "literal") return op.value;
+  // accessor: read factor variable via wrap, then apply .size or .length.
+  const fvar = ctx.factorVariables[op.name];
+  if (!fvar) return undefined;
+  const v = ctx.wrapFactorVar({ name: op.name, impl: fvar }, ctx.readings, ctx.defaults).value;
+  if (op.accessor === ".size" && v instanceof Set) return v.size;
+  if (op.accessor === ".length" && Array.isArray(v)) return v.length;
+  return undefined;
+}
+
+function compare(op: string, lhs: unknown, rhs: unknown): boolean {
+  if (typeof lhs !== "number" || typeof rhs !== "number") return false;
+  switch (op) {
+    case "==": return lhs === rhs;
+    case "!=": return lhs !== rhs;
+    case ">": return lhs > rhs;
+    case "<": return lhs < rhs;
+    case ">=": return lhs >= rhs;
+    case "<=": return lhs <= rhs;
+    default: return false;
+  }
+}
+
+// Per Tech Notes "Evaluator interface extensions" — WITH evaluator iterates over
+// witnesses returned by routing the factor-variable compute through the wrap.
+export interface WithResult<TR extends BaseReading> {
+  value: boolean;
+  boundReading?: TR;
+  candidateEvaluations: Array<{ reading: TR; propResult: boolean }>;
+}
+
+export function evaluateWith<TR extends BaseReading, TD>(
+  varName: string, propExpr: Expression, ctx: EvalCtx<TR, TD>,
+): WithResult<TR> {
+  const fvar = ctx.factorVariables[varName];
+  if (!fvar) return { value: false, candidateEvaluations: [] };
+  // Route factor-variable compute through wrap (per EXT-13). On throw the wrap
+  // returns { value: defaultValue, witnesses: [] } — empty candidates path.
+  const wrapped = ctx.wrapFactorVar({ name: varName, impl: fvar }, ctx.readings, ctx.defaults);
+  const witnesses = wrapped.witnesses ?? [];
+  const candidates: Array<{ reading: TR; propResult: boolean }> = [];
+  let bound: TR | undefined;
+  for (const w of witnesses) {
+    const propResult = evaluatePropExpr(propExpr, w, ctx);
+    candidates.push({ reading: w, propResult });
+    if (propResult && bound === undefined) bound = w;
+  }
+  return { value: bound !== undefined, boundReading: bound, candidateEvaluations: candidates };
+}
+
+// Within a WITH binding, the propExpr is evaluated against a single witness reading.
+// Sim-prop leaves route through wrapSimProp.
+function evaluatePropExpr<TR extends BaseReading, TD>(expr: Expression, reading: TR, ctx: EvalCtx<TR, TD>): boolean {
+  switch (expr.kind) {
+    case "sim-prop-leaf": {
+      const sprop = ctx.simProps[expr.name];
+      if (!sprop) return false;
+      // We don't have a stable readingIndex for the witness in this scope; pass -1
+      // (used only by sim-prop wraps that need an index for their EngineError append;
+      // render path doesn't read it, consume path uses it through a different code path).
+      return ctx.wrapSimProp({ name: expr.name, impl: sprop }, reading, -1, ctx.defaults);
+    }
+    case "and": return evaluatePropExpr(expr.left, reading, ctx) && evaluatePropExpr(expr.right, reading, ctx);
+    case "or": return evaluatePropExpr(expr.left, reading, ctx) || evaluatePropExpr(expr.right, reading, ctx);
+    case "not": return !evaluatePropExpr(expr.child, reading, ctx);
+    // boolean-leaf / comparison / with / accessor / literal are invalid inside a WITH
+    // prop expression — the parser rejects them at parse time. Throw rather than
+    // silently return false (defensive degradation) so a malformed AST surfaces.
+    default:
+      throw new Error(`evaluatePropExpr: ${expr.kind} is not valid inside a WITH prop expression`);
+  }
+}
+
+// Non-short-circuit leaf evaluator for the sidebar's truth-coloring.
+export function evaluateLeaf<TR extends BaseReading, TD>(expr: Expression, ctx: EvalCtx<TR, TD>): LeafTruth {
+  switch (expr.kind) {
+    case "boolean-leaf": {
+      const truth = evaluateExpr(expr, ctx);
+      return { kind: "boolean-leaf", name: expr.name, truth };
+    }
+    case "comparison": {
+      return { kind: "comparison", op: expr.op, lhs: expr.lhs, rhs: expr.rhs, truth: evaluateExpr(expr, ctx) };
+    }
+    case "with": {
+      const result = evaluateWith(expr.varName, expr.propExpr, ctx);
+      return {
+        kind: "with", varName: expr.varName, propExpr: expr.propExpr,
+        truth: result.value, boundReading: result.boundReading,
+        candidateEvaluations: result.candidateEvaluations,
+      };
+    }
+    case "and": {
+      const left = evaluateLeaf(expr.left, ctx);
+      const right = evaluateLeaf(expr.right, ctx);
+      return { kind: "and", left, right, truth: left.truth && right.truth };
+    }
+    case "or": {
+      const left = evaluateLeaf(expr.left, ctx);
+      const right = evaluateLeaf(expr.right, ctx);
+      return { kind: "or", left, right, truth: left.truth || right.truth };
+    }
+    case "not": {
+      const child = evaluateLeaf(expr.child, ctx);
+      return { kind: "not", child, truth: !child.truth };
+    }
+    case "sim-prop-leaf":
+    case "accessor":
+    case "literal":
+      // These leaves are only valid inside WITH or comparison; unreachable in well-formed ASTs.
+      return { kind: "boolean-leaf", name: "<invalid>", truth: false };
+    default: {
+      const _exhaustive: never = expr;
+      throw new Error(`evaluateLeaf: unhandled ${(_exhaustive as { kind: string }).kind}`);
+    }
+  }
+}
+
+// One-shot per-state matching evaluator: returns the highest-id category whose
+// expression evaluates true, iterating in reverse over the rule set's categories.
+export function highestTrueAt<TR extends BaseReading, TD>(
+  ruleSet: RuleSet<TD>, parsedExpressions: Map<number, CachedAst>, ctx: EvalCtx<TR, TD>,
+): number | null {
+  for (let i = ruleSet.categories.length - 1; i >= 0; i--) {
+    const category = ruleSet.categories[i];
+    const ast = parsedExpressions.get(category.id);
+    if (!ast || ast === PARSE_ERROR_SENTINEL) continue;
+    if (evaluateExpr(ast, ctx)) return category.id;
+  }
+  return null;
+}
+
+// Monotone floor: max over i of highestTrueAt(readings.slice(0, i+1)).
+// Per Req 7 / ENG-3 — required because non-monotone expressions over monotone
+// impls can produce non-monotone per-state matches.
+export function computeMatchedCategoryFloor<TR extends BaseReading, TD>(
+  ruleSet: RuleSet<TD>, parsedExpressions: Map<number, CachedAst>,
+  ctxBuilder: (readingsSlice: TR[]) => EvalCtx<TR, TD>,
+  readings: TR[],
+): number | null {
+  let floor: number | null = null;
+  for (let i = 0; i < readings.length; i++) {
+    const slice = readings.slice(0, i + 1);
+    const ctx = ctxBuilder(slice);
+    const matched = highestTrueAt(ruleSet, parsedExpressions, ctx);
+    if (matched !== null && (floor === null || matched > floor)) floor = matched;
+  }
+  return floor;
+}

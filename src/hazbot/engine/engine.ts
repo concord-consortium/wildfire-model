@@ -6,6 +6,7 @@ import { Expression, parse, ParseError } from "./parser";
 import { generateSessionId } from "./session-id";
 import { validateDefaultsPath } from "./validate-defaults";
 import { walkReferences } from "./walk-references";
+import { findLast } from "./find-last";
 
 export interface EngineOpts<TReading extends BaseReading, TDefaults = unknown> {
   ruleSet?: RuleSet<TDefaults>;
@@ -40,6 +41,10 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
   // Used by step-4's `evaluateForRender` to suppress nonsensical comparisons
   // against `undefined` defaults fields without throwing.
   implsWithIncompleteDefaults: Set<string> = new Set();
+  // Names of impls that some category expression references. Step 4 uses this
+  // to scope ambient-state validation to only referenced impls (Finding 15 /
+  // Req 11a "referenced only" rule).
+  protected referencedImplNames: Set<string> = new Set();
 
   // Step 4's consume pipeline reads these directly off opts.
   protected translate: EngineOpts<TReading, TDefaults>["translate"];
@@ -109,6 +114,11 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
         }
       }
     }
+
+    // Snapshot the union of referenced impl names. Step 4 reads this to scope
+    // ambient validation (Finding 15 / Req 11a — only referenced impls participate).
+    allReferencedFactorVars.forEach((n) => this.referencedImplNames.add(n));
+    allReferencedSimProps.forEach((n) => this.referencedImplNames.add(n));
 
     // Reference-driven walk: missing-impl + missing-defaults + ambient-key collection.
     // (Run even if some categories failed to parse — surface every load issue at once
@@ -204,14 +214,109 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
 
   getSnapshot = (): number => this.snapshotVersion;
 
-  // Public state-changing entry. Step 3 lands the `!isActive` early-return shell;
-  // step 4 fills in the trigger / modifier / no-op pipeline.
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  // Public state-changing entry. Per Req 10 a no-op when inactive.
+  // Atomicity (Req 19): single notify at the end of the call iff state mutated.
   consume(event: ConsumedEvent): void {
     if (!this.isActive) return;
-    // step 4 fills in the trigger / modifier / no-op pipeline below this guard.
-    /* eslint-disable-next-line no-unused-expressions */
-    void event;
+    const result = this.translate(event, this.sessionId);
+    let mutated = false;
+    switch (result.kind) {
+      case "trigger": {
+        // Trigger-time ambient-state validation (Req 3b).
+        const requiredKeys = this.ambientKeysByTrigger.get(event.name);
+        const ambient = (event.ambientState ?? {}) as Record<string, unknown>;
+        const missingPerImpl: { implName: string; key: string }[] = [];
+        if (requiredKeys && requiredKeys.size > 0) {
+          // Re-walk the impls to attribute missing keys per impl (cardinality per Req 3b).
+          this.checkAmbientForTrigger(event.name, ambient, missingPerImpl);
+        }
+        if (missingPerImpl.length > 0) {
+          for (const { implName, key } of missingPerImpl) {
+            this.errors.push({
+              kind: "ambient-validation",
+              ruleSetId: this.ruleSet?.id ?? "(unknown)",
+              trigger: event.name,
+              implName,
+              missingKey: key,
+              event,
+              at: event.at,
+            });
+          }
+          mutated = true;
+        } else {
+          this.readings.push(result.reading);
+          mutated = true;
+        }
+        break;
+      }
+      case "modifier": {
+        const lastReading = this.readings.length > 0 ? this.readings[this.readings.length - 1] : undefined;
+        const lastFailedTrigger = findLast(this.errors, (e) => e.kind === "ambient-validation");
+        const orphan = this.detectOrphan(lastReading, lastFailedTrigger);
+        if (orphan) {
+          this.errors.push({
+            kind: "orphan-modifier",
+            source: result.update.source,
+            reason: orphan,
+            event,
+            at: event.at,
+          });
+          mutated = true;
+        } else if (lastReading) {
+          lastReading.updates.push(result.update);
+          mutated = true;
+        }
+        break;
+      }
+      case "no-op":
+        // Intentionally no mutation, no tick.
+        break;
+      default: {
+        const _exhaustive: never = result;
+        throw new Error(`consume: unhandled translate result ${(_exhaustive as { kind: string }).kind}`);
+      }
+    }
+    if (mutated) this.tickAndNotify();
+  }
+
+  // Per-trigger ambient-key check. Attributes missing keys to the impl that declares them,
+  // restricted to impls referenced by some category (Finding 15 / Req 11a — unused impls
+  // declaring ambient keys must not produce spurious validation errors).
+  private checkAmbientForTrigger(
+    trigger: string, ambient: Record<string, unknown>, missing: { implName: string; key: string }[],
+  ): void {
+    const checkImpl = (
+      implName: string,
+      keysByTrigger: { [k: string]: string[] } | undefined,
+    ): void => {
+      if (!this.referencedImplNames.has(implName)) return;
+      const keys = keysByTrigger?.[trigger];
+      if (!keys) return;
+      for (const k of keys) {
+        if (!(k in ambient)) missing.push({ implName, key: k });
+      }
+    };
+    Object.entries(this.factorVariables).forEach(([name, impl]) => checkImpl(name, impl.ambientStateKeys));
+    Object.entries(this.simProps).forEach(([name, impl]) => checkImpl(name, impl.ambientStateKeys));
+  }
+
+  // Orphan-modifier detection per Tech Notes pseudocode.
+  // - no-prior-trigger: never fired anything yet.
+  // - prior-trigger-failed: latest event was a failed trigger (more recent than latest reading).
+  // - between-runs: latest reading exists but its triggeredBy is not in runStartTriggers.
+  // Returns null when the modifier should attach to lastReading.
+  private detectOrphan(
+    lastReading: TReading | undefined,
+    lastFailedTrigger: EngineError | undefined,
+  ): "no-prior-trigger" | "prior-trigger-failed" | "between-runs" | null {
+    if (!lastReading && !lastFailedTrigger) return "no-prior-trigger";
+    if (lastReading && lastFailedTrigger && lastFailedTrigger.kind === "ambient-validation"
+        && lastFailedTrigger.at > lastReading.at) return "prior-trigger-failed";
+    if (!lastReading && lastFailedTrigger) return "prior-trigger-failed";
+    if (lastReading && this.runStartTriggers && !this.runStartTriggers.includes(lastReading.triggeredBy)) {
+      return "between-runs";
+    }
+    return null;
   }
 
   // Substrate-internal: tick the snapshot counter and notify listeners.
