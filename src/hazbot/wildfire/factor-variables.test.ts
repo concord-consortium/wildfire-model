@@ -47,6 +47,17 @@ describe("wildfire factor variables", () => {
       });
       expect(factorVariables.usedOneSparkPerZone.compute([reading], {}).value).toBe(false);
     });
+    it("false when any spark has undefined zoneIdx (would falsely look distinct in Set)", () => {
+      // Real-data hazard: bottom-bar.tsx captures `zoneIdx: cell?.zoneIdx`; if
+      // cellAt returns null for a spark (cells not loaded, out-of-bounds), zoneIdx
+      // is undefined. Without the guard, [0, undefined] would Set-dedupe to size 2
+      // and falsely satisfy a 2-zone activity's "one-per-zone" check.
+      const reading = mkRead("SimulationStarted", {
+        zones: [{ index: 0 }, { index: 1 }],
+        sparks: [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 1, zoneIdx: undefined }],
+      });
+      expect(factorVariables.usedOneSparkPerZone.compute([reading], {}).value).toBe(false);
+    });
   });
 
   describe("uniqueWindValuesUsed", () => {

@@ -108,6 +108,12 @@ const usedOneSparkPerZone: FactorVariableImpl<boolean, WildfireReading, Wildfire
     const witnesses = simulationStartedReadings(readings).filter((r) => {
       if (!r.sparks || !r.zones) return false;
       if (r.sparks.length !== r.zones.length) return false;
+      // Reject sparks with undefined zoneIdx — `new Set` treats undefined as a
+      // distinct value, so a mix like [0, undefined] would falsely look like 2
+      // distinct zones in a 2-zone activity (e.g., when the cell lookup at
+      // SimulationStarted captured zoneIdx for one spark but not the other).
+      // Failing closed here keeps the "used one per zone" predicate honest.
+      if (r.sparks.some((s) => s.zoneIdx === undefined)) return false;
       const zonesUsed = new Set(r.sparks.map((s) => s.zoneIdx));
       return zonesUsed.size === r.zones.length;
     });

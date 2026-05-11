@@ -18,6 +18,20 @@ describe("wildfire sim-props", () => {
       const r = mkRead({ zones: [{ index: 0 }, { index: 1 }], sparks: [{ x: 0, y: 0, zoneIdx: 0 }] });
       expect(simProps.OneSparkPerZone.evaluate(r, {})).toBe(false);
     });
+    it("false when two sparks share a zone (legitimate-zoneIdx case)", () => {
+      const r = mkRead({
+        zones: [{ index: 0 }, { index: 1 }],
+        sparks: [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 0 }],
+      });
+      expect(simProps.OneSparkPerZone.evaluate(r, {})).toBe(false);
+    });
+    it("false when any spark has undefined zoneIdx (would falsely look distinct in Set)", () => {
+      const r = mkRead({
+        zones: [{ index: 0 }, { index: 1 }],
+        sparks: [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: undefined }],
+      });
+      expect(simProps.OneSparkPerZone.evaluate(r, {})).toBe(false);
+    });
   });
 
   describe("UniqueVegetationPerZone", () => {
@@ -29,6 +43,10 @@ describe("wildfire sim-props", () => {
       const r = mkRead({ zones: [{ vegetation: "Grass" }, { vegetation: "Grass" }] });
       expect(simProps.UniqueVegetationPerZone.evaluate(r, {})).toBe(false);
     });
+    it("false when any zone's vegetation is undefined (fails closed)", () => {
+      const r = mkRead({ zones: [{ vegetation: "Grass" }, { vegetation: undefined }] });
+      expect(simProps.UniqueVegetationPerZone.evaluate(r, {})).toBe(false);
+    });
   });
 
   describe("UniformDroughtLevels / UniformTerrainTypes", () => {
@@ -38,6 +56,16 @@ describe("wildfire sim-props", () => {
     });
     it("UniformTerrainTypes is false when zones differ", () => {
       const r = mkRead({ zones: [{ terrainType: "Plains" }, { terrainType: "Mountains" }] });
+      expect(simProps.UniformTerrainTypes.evaluate(r, {})).toBe(false);
+    });
+    it("UniformDroughtLevels is false when any zone's droughtLevel is undefined (fails closed)", () => {
+      // Without the guard, Set([undefined, undefined]).size === 1 would falsely
+      // report "uniform" before any zone's drought is set.
+      const r = mkRead({ zones: [{ droughtLevel: undefined }, { droughtLevel: undefined }] });
+      expect(simProps.UniformDroughtLevels.evaluate(r, {})).toBe(false);
+    });
+    it("UniformTerrainTypes is false when any zone's terrainType is undefined (fails closed)", () => {
+      const r = mkRead({ zones: [{ terrainType: "Plains" }, { terrainType: undefined }] });
       expect(simProps.UniformTerrainTypes.evaluate(r, {})).toBe(false);
     });
   });
