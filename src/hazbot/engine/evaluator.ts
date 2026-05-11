@@ -213,15 +213,22 @@ export function highestTrueAt<TR extends BaseReading, TD>(
   return null;
 }
 
-// Monotone floor: max over i of highestTrueAt(readings.slice(0, i+1)).
-// Per Req 7 / ENG-3 — required because non-monotone expressions over monotone
-// impls can produce non-monotone per-state matches.
+// Monotone floor: max over i of highestTrueAt(readings.slice(0, i+1)),
+// including an i=-1 empty-prefix evaluation so categories that fire on the
+// "nothing has happened yet" state (e.g., `NOT ranSimulation`) match correctly.
+// Rule sets without such categories see `highestTrueAt([])` return null, so the
+// empty-prefix iteration is a no-op for them. Per Req 7 / ENG-3.
 export function computeMatchedCategoryFloor<TR extends BaseReading, TD>(
   ruleSet: RuleSet<TD>, parsedExpressions: Map<number, CachedAst>,
   ctxBuilder: (readingsSlice: TR[]) => EvalCtx<TR, TD>,
   readings: TR[],
 ): number | null {
   let floor: number | null = null;
+  // Empty-prefix state — covers rule sets whose lowest category fires when
+  // no readings have been consumed yet (e.g., the "Did not run the simulation"
+  // category that's standard across tabs 23–35).
+  const emptyMatch = highestTrueAt(ruleSet, parsedExpressions, ctxBuilder([]));
+  if (emptyMatch !== null) floor = emptyMatch;
   for (let i = 0; i < readings.length; i++) {
     const slice = readings.slice(0, i + 1);
     const ctx = ctxBuilder(slice);

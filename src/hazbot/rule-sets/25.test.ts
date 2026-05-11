@@ -1,0 +1,79 @@
+import { ruleSet25 } from "./25";
+import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
+import { WildfireReading } from "../wildfire/types";
+
+// Tab 25 categories (no zone defaults — just sparks/graph/sim props):
+//   1: NOT ranSimulation
+//   2: ranSimulation WITH NOT TwoSparks
+//   3: ranSimulation WITH NOT OneSparkPerZone AND TwoSparks
+//   4: ranSimulation WITH OneSparkPerZone AND NOT SparksAtTopAndBottom
+//   5: ranSimulation WITH OneSparkPerZone AND NOT GraphOpen
+//   6: ranSimulation WITH OneSparkPerZone AND SparksAtTopAndBottom AND GraphOpen
+//
+// (e) is the SparksAtTopAndBottom-stubbed cat 6 — even when an otherwise-fully-
+// satisfying state arrives, cat 6 must NOT match because the stub returns false.
+
+const twoZones = [{ index: 0 }, { index: 1 }];
+
+function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
+  return mkReading("SimulationStarted", opts.at ?? 100, {
+    zones: twoZones,
+    sparks: [],
+    wind: { speed: 0, direction: 0 },
+    ...opts,
+  });
+}
+
+describe("ruleSet 25 — per-rule-set five-shape sweep", () => {
+  it("(a) empty readings → cat 1", () => {
+    const e = makeWildfireEngine(ruleSet25);
+    expect(matchAgainst(ruleSet25, e, [])).toBe(1);
+  });
+
+  it("(b) state matching exactly one category — ran sim with one spark → cat 2", () => {
+    const e = makeWildfireEngine(ruleSet25);
+    const r = startReading({ sparks: [{ x: 0, y: 0, zone: 0 }] });
+    expect(matchAgainst(ruleSet25, e, [r])).toBe(2);
+  });
+
+  it("(c) multi-true with highest selected — sparks per zone + graph open → cat 5 wins (cat 6 blocked by stub)", () => {
+    const e = makeWildfireEngine(ruleSet25);
+    const r = startReading({
+      sparks: [{ x: 0, y: 0, zone: 0 }, { x: 1, y: 0, zone: 1 }],
+      ambientState: { chartTabOpenAtStart: true },
+    });
+    // cat 4: NOT SparksAtTopAndBottom (stub returns false → !false = true) AND OneSparkPerZone → true
+    // cat 5: NOT GraphOpen → false (graph is open), so cat 5 doesn't match
+    // cat 6: SparksAtTopAndBottom (stub) → false, so cat 6 doesn't match
+    // Highest matching is cat 4.
+    expect(matchAgainst(ruleSet25, e, [r])).toBe(4);
+  });
+
+  it("(d) monotonicity — once cat 5 matches (sparks per zone, graph not open), a later state with one spark leaves floor at 5", () => {
+    const e = makeWildfireEngine(ruleSet25);
+    const r1 = startReading({ sparks: [{ x: 0, y: 0, zone: 0 }, { x: 1, y: 0, zone: 1 }] });
+    // cat 4: OneSparkPerZone AND NOT SparksAtTopAndBottom → true (stub false)
+    // cat 5: OneSparkPerZone AND NOT GraphOpen → true (graph not open)
+    // Highest: cat 5.
+    expect(matchAgainst(ruleSet25, e, [r1])).toBe(5);
+    const r2 = startReading({ at: 200, sparks: [{ x: 0, y: 0, zone: 0 }] });
+    // r2 alone matches cat 2; but the floor across [r1, r2] is still cat 5.
+    expect(matchAgainst(ruleSet25, e, [r1, r2])).toBe(5);
+  });
+
+  it("(e) AC: SparksAtTopAndBottom-stubbed cat 6 is unreachable — fully-satisfying state never matches cat 6", () => {
+    const e = makeWildfireEngine(ruleSet25);
+    // Witness configured to satisfy every leaf in cat 6 except SparksAtTopAndBottom:
+    // - 2 sparks (TwoSparks=true)
+    // - one per zone (OneSparkPerZone=true)
+    // - chart open at start (GraphOpen=true)
+    // Cat 6 = OneSparkPerZone AND SparksAtTopAndBottom AND GraphOpen.
+    // The stub keeps cat 6 from matching even when everything else lines up.
+    const r = startReading({
+      sparks: [{ x: 0, y: 0, zone: 0 }, { x: 1, y: 0, zone: 1 }],
+      ambientState: { chartTabOpenAtStart: true },
+    });
+    const matched = matchAgainst(ruleSet25, e, [r]);
+    expect(matched).not.toBe(6);
+  });
+});

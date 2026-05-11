@@ -1,0 +1,2 @@
+src/hazbot/rule-sets/*.ts linguist-generated=true
+src/hazbot/dsl-grammar.md linguist-generated=true
