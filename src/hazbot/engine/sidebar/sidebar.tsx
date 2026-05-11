@@ -88,9 +88,6 @@ const CategoriesPanel: React.FC<{
       {categories.map((cat) => {
         const truth = perCategoryTruth[cat.id];
         const matched = cat.id === matchedCategory;
-        const truthIcon = isActive
-          ? (truth?.truth ? "✓" : "✗")
-          : "·"; // suppressed when inactive
         return (
           <CategoryRow
             key={cat.id}
@@ -98,7 +95,6 @@ const CategoriesPanel: React.FC<{
             truth={truth}
             ast={parsedExpressions.get(cat.id)}
             matched={matched}
-            truthIcon={truthIcon}
             isActive={isActive}
           />
         );
@@ -115,10 +111,16 @@ const CategoryRow: React.FC<{
   truth: Parameters<typeof ExpressionRenderer>[0]["tree"] | undefined;
   ast: unknown;
   matched: boolean;
-  truthIcon: string;
   isActive: boolean;
-}> = ({ cat, truth, ast, matched, truthIcon, isActive }) => {
+}> = ({ cat, truth, ast, matched, isActive }) => {
   const [open, setOpen] = React.useState(false);
+  // Icon + class are computed from the row's truth state (or suppressed when
+  // inactive). The class drives green/red coloring per CSS — same palette as
+  // the per-leaf truth coloring so the row reads consistently top-to-bottom.
+  const truthIcon = isActive ? (truth?.truth ? "✓" : "✗") : "·";
+  const truthIconClass = isActive
+    ? (truth?.truth ? "hazbot-sidebar-icon-true" : "hazbot-sidebar-icon-false")
+    : "hazbot-sidebar-muted";
   return (
     <div className={`hazbot-sidebar-entry ${matched ? "hazbot-sidebar-category-matched" : ""}`}>
       <button
@@ -126,8 +128,9 @@ const CategoryRow: React.FC<{
         className="hazbot-sidebar-button"
         onClick={() => setOpen((x) => !x)}
         aria-expanded={open}
+        title={open ? "Hide category details" : "Show category details"}
       >
-        <strong>{open ? "▾" : "▸"} {truthIcon} {cat.id}:</strong>
+        <strong>{open ? "▾" : "▸"} <span className={truthIconClass}>{truthIcon}</span> {cat.id}:</strong>
         {cat.studentAction && <span> {cat.studentAction}</span>}
       </button>
       <div className="hazbot-sidebar-category-expression">
@@ -159,10 +162,16 @@ function formatAst(ast: unknown): string {
 }
 
 const ReadingsPanel: React.FC<{ readings: BaseReading[] }> = ({ readings }) => {
+  // Render newest-first for scan-ergonomics — the substrate keeps engine.readings
+  // chronological (append-only invariant); the reversal is a presentation-only
+  // concern. slice() prevents mutating the engine's array.
+  const newestFirst = readings.slice().reverse();
   return (
     <div className="hazbot-sidebar-section">
-      <div className="hazbot-sidebar-section-title">Readings ({readings.length})</div>
-      {readings.map((r, i) => (
+      <div className="hazbot-sidebar-section-title">
+        Readings ({readings.length}) <span className="hazbot-sidebar-muted">· newest first</span>
+      </div>
+      {newestFirst.map((r, i) => (
         <ReadingRow key={`${r.at}-${r.triggeredBy}-${i}`} reading={r} />
       ))}
     </div>
@@ -178,6 +187,7 @@ const ReadingRow: React.FC<{ reading: BaseReading }> = ({ reading }) => {
         className="hazbot-sidebar-button"
         onClick={() => setExpanded((x) => !x)}
         aria-expanded={expanded}
+        title={expanded ? "Hide reading payload" : "Show reading payload"}
       >
         <strong>{expanded ? "▾" : "▸"}</strong> {reading.triggeredBy} · {reading.updates.length} update(s)
       </button>
@@ -198,7 +208,7 @@ const FactorVariablesPanel: React.FC<{
       {showFallbackNote && (
         <div className="hazbot-sidebar-warning">Engine inactive — values may be impl defaults</div>
       )}
-      {Object.entries(values).map(([name, value]) => (
+      {Object.entries(values).sort(([a], [b]) => a.localeCompare(b)).map(([name, value]) => (
         <div key={name} className="hazbot-sidebar-entry">
           <strong>{name}</strong>: {formatValue(value)}
         </div>

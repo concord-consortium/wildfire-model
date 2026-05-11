@@ -53,6 +53,7 @@ const WithNode: React.FC<{ node: Extract<LeafTruth, { kind: "with" }> }> = ({ no
         className="hazbot-sidebar-button"
         onClick={() => setExpanded((x) => !x)}
         aria-expanded={expanded}
+        title={expanded ? "Hide WITH binding detail" : "Show WITH binding detail"}
       >
         <span className={leafClass(node.truth)}>{node.varName}</span> <strong>WITH</strong> ⟨…⟩
       </button>

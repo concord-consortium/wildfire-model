@@ -86,6 +86,20 @@
 .hazbot-sidebar-leaf-true { color: var(--hazbot-true); text-decoration: underline; }
 .hazbot-sidebar-leaf-false { color: var(--hazbot-false); text-decoration: line-through; }
 
+/* Category-row status icons — same palette as per-leaf coloring for consistency.
+   font-size bumps the glyph above the inherited entry size so the icon reads at
+   a glance; bold weight is belt-and-suspenders in case the surrounding <strong>
+   ever changes. */
+.hazbot-sidebar-icon-true,
+.hazbot-sidebar-icon-false {
+  font-size: 1.4em;
+  font-weight: bold;
+  line-height: 1;
+  vertical-align: -0.1em;
+}
+.hazbot-sidebar-icon-true { color: var(--hazbot-true); }
+.hazbot-sidebar-icon-false { color: var(--hazbot-false); }
+
 .hazbot-sidebar-error {
   background: var(--hazbot-error-bg);
   padding: 6px 8px;
