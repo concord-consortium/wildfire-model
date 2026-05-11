@@ -36,13 +36,8 @@ jest.mock("../hazbot/wildfire", () => ({
   buildAnalysisEngineActivatedPayload: jest.fn(),
 }));
 
-// Module-level mocks above run before the import below — AppComponent's
-// `const { logMonitor, hazbotSidebar } = getUrlConfig();` reads our mock at module load.
-// We can't change that per-test (it's module-level state), but the layout decision
-// inside the render uses the per-render `getUrlConfig()` call inside the component
-// path indirectly — the test cases that need different URL configs would need
-// per-module-isolation. For now, set the mock once and re-render with different
-// engine return values to cover the engine-defined-vs-undefined cases.
+// AppComponent re-reads `getUrlConfig()` on every render, so per-test mock updates
+// take effect on the next renderApp() call — no module-isolation gymnastics needed.
 import { AppComponent } from "./app";
 
 describe("AppComponent — Hazbot sidebar mount truth table", () => {
@@ -70,6 +65,14 @@ describe("AppComponent — Hazbot sidebar mount truth table", () => {
     renderApp();
     expect(screen.getByTestId("log-monitor-mock")).toBeInTheDocument();
     expect(screen.getByTestId("hazbot-sidebar-mock")).toBeInTheDocument();
+  });
+
+  it("renders only LogMonitor when ?logMonitor=true and ?hazbotSidebar is unset", () => {
+    mockUrlConfig.mockReturnValue({ logMonitor: true, hazbotSidebar: false });
+    mockGetEngine.mockReturnValue(undefined);
+    renderApp();
+    expect(screen.getByTestId("log-monitor-mock")).toBeInTheDocument();
+    expect(screen.queryByTestId("hazbot-sidebar-mock")).not.toBeInTheDocument();
   });
 
   it("renders neither sidebar when both URL flags are unset", () => {

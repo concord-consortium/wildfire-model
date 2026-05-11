@@ -6,7 +6,7 @@ import { AnalysisEngineContext } from "./context";
 export interface AnalysisEngineProviderProps<TReading extends BaseReading = BaseReading, TDefaults = unknown> {
   engine: Engine<TReading, TDefaults>;
   appRulesVersion: string | number;
-  children?: React.ReactNode;
+  children: React.ReactNode;
 }
 
 export function AnalysisEngineProvider<TReading extends BaseReading, TDefaults>(

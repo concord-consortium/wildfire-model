@@ -7,8 +7,15 @@ function simulationStartedReadings(readings: WildfireReading[]): WildfireReading
   return readings.filter((r) => r.triggeredBy === "SimulationStarted");
 }
 
+// Per the sheet (tab 24, `uniqueWindValuesUsed` Details): "If the magnitude is 0,
+// then the direction has no effect and must be ignored. So set the direction to null,
+// if the magnitude is 0." Collapsing zero-speed readings to a single key prevents
+// two zero-magnitude runs with different directions from inflating the set's size
+// and falsely tripping `uniqueWindValuesUsed.size > 1`.
 function windKey(r: WildfireReading): string {
-  return `${r.wind?.speed ?? "?"}-${r.wind?.direction ?? "?"}`;
+  const speed = r.wind?.speed ?? "?";
+  const direction = speed === 0 ? "null" : (r.wind?.direction ?? "?");
+  return `${speed}-${direction}`;
 }
 
 // === Boolean factor variables ===

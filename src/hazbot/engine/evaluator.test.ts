@@ -23,7 +23,7 @@ function makeCtx(
     factorVariables,
     simProps,
     wrapFactorVar: (fvar, rs, ds) => evaluateFactorVarForRender(fvar, rs, ds),
-    wrapSimProp: (sprop, r, _i, ds) => evaluateSimPropForRender(sprop, r, ds),
+    wrapSimProp: (sprop, r, ds) => evaluateSimPropForRender(sprop, r, ds),
   };
 }
 

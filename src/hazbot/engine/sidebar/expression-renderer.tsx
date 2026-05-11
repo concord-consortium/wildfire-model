@@ -7,7 +7,10 @@ import { BaseReading } from "../types";
 // Operators and parens stay neutral so the structure remains readable.
 
 export const ExpressionRenderer: React.FC<{ tree: LeafTruth }> = ({ tree }) => {
-  return <span>{renderNode(tree)}</span>;
+  // Outer wrapper is a div (not span) because some leaf nodes — e.g., WithNode's
+  // click-expanded detail — render block-level children. Inline phrasing inside
+  // would be invalid HTML5.
+  return <div className="hazbot-sidebar-expression">{renderNode(tree)}</div>;
 };
 
 function leafClass(truth: boolean): string {
@@ -40,10 +43,11 @@ function renderNode(node: LeafTruth): React.ReactNode {
 
 const WithNode: React.FC<{ node: Extract<LeafTruth, { kind: "with" }> }> = ({ node }) => {
   const [expanded, setExpanded] = React.useState(false);
-  // Click expands; CSS :hover provides an alternative trigger via the same content
-  // (per EXT-11 — the click path is the keyboard-accessible primary).
+  // Click toggles expansion; the <button> handles keyboard activation and focus
+  // automatically (per Req 17 / EXT-11). No hover affordance — keyboard parity is
+  // the only requirement for this dev-only tool.
   return (
-    <span>
+    <>
       <button
         type="button"
         className="hazbot-sidebar-button"
@@ -53,13 +57,13 @@ const WithNode: React.FC<{ node: Extract<LeafTruth, { kind: "with" }> }> = ({ no
         <span className={leafClass(node.truth)}>{node.varName}</span> <strong>WITH</strong> ⟨…⟩
       </button>
       {expanded && (
-        <pre className="hazbot-sidebar-pre">
+        <div className="hazbot-sidebar-pre">
           {node.boundReading
             ? `bound: ${formatReading(node.boundReading)}`
             : `no candidate matched (${node.candidateEvaluations?.length ?? 0} examined)`}
-        </pre>
+        </div>
       )}
-    </span>
+    </>
   );
 };
 

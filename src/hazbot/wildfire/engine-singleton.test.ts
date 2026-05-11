@@ -37,9 +37,9 @@ describe("getAnalysisEngine", () => {
     setUrl("?hazbotSidebar=true");
     const e = getAnalysisEngine();
     expect(e).toBeDefined();
-    // Engine is inactive in this test because the rule-sets stub is empty (step 10
-    // lands the real registry). Behavior verification of runStartTriggers happens
-    // in step 10's bridge-side sidebar test against ruleSets["23"].
+    // Engine is inactive here because no `?hazbotRules` was passed — no rule set is
+    // selected. runStartTriggers / active-engine behavior is verified in the
+    // bridge-side sidebar test against ruleSets["23"].
   });
 
   it("returns an inactive engine when ?hazbotRules references a missing rule set", () => {

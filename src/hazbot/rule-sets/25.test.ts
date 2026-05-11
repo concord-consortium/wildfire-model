@@ -36,17 +36,22 @@ describe("ruleSet 25 — per-rule-set five-shape sweep", () => {
     expect(matchAgainst(ruleSet25, e, [r])).toBe(2);
   });
 
-  it("(c) multi-true with highest selected — sparks per zone + graph open → cat 5 wins (cat 6 blocked by stub)", () => {
+  it("(c) multi-true with highest selected — sparks per zone + graph NOT open → cat 4 AND cat 5 both true; highest (cat 5) wins", () => {
     const e = makeWildfireEngine(ruleSet25);
     const r = startReading({
       sparks: [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }],
-      ambientState: { chartTabOpenAtStart: true },
+      ambientState: { chartTabOpenAtStart: false },
     });
-    // cat 4: NOT SparksAtTopAndBottom (stub returns false → !false = true) AND OneSparkPerZone → true
-    // cat 5: NOT GraphOpen → false (graph is open), so cat 5 doesn't match
-    // cat 6: SparksAtTopAndBottom (stub) → false, so cat 6 doesn't match
-    // Highest matching is cat 4.
-    expect(matchAgainst(ruleSet25, e, [r])).toBe(4);
+    // cat 4: ranSimulation WITH (OneSparkPerZone AND NOT SparksAtTopAndBottom)
+    //        OneSparkPerZone=true (2 sparks, distinct zones); SparksAtTopAndBottom=false (stub)
+    //        → true
+    // cat 5: ranSimulation WITH (OneSparkPerZone AND NOT GraphOpen)
+    //        OneSparkPerZone=true; GraphOpen=false (chartTabOpenAtStart:false, no ChartTabShown)
+    //        → true
+    // cat 6: ranSimulation WITH (OneSparkPerZone AND SparksAtTopAndBottom AND GraphOpen)
+    //        SparksAtTopAndBottom=false (stub) → false
+    // Cats 4 and 5 both fire; highest-first selection picks cat 5.
+    expect(matchAgainst(ruleSet25, e, [r])).toBe(5);
   });
 
   it("(d) monotonicity — once cat 5 matches (sparks per zone, graph not open), a later state with one spark leaves floor at 5", () => {

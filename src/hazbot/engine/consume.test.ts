@@ -68,6 +68,52 @@ describe("Engine consume — trigger pipeline", () => {
     expect(e.getSnapshot()).toBe(before + 1);
   });
 
+  it("ambient-validation cardinality: 2 impls × 2 missing keys = 4 errors, all sharing same event ref (Req 3b)", () => {
+    // Two referenced impls, each declaring two ambient keys for SimulationStarted.
+    // Fire the trigger with empty ambientState — each (impl, missingKey) pair must
+    // produce its own ambient-validation entry, all four entries must share the
+    // same `event` ConsumedEvent reference, and no Reading should be appended.
+    const sim1: SimPropImpl<TR, TD> = {
+      defaultValue: false,
+      ambientStateKeys: { SimulationStarted: ["keyA", "keyB"] },
+      evaluate: () => false,
+    };
+    const sim2: SimPropImpl<TR, TD> = {
+      defaultValue: false,
+      ambientStateKeys: { SimulationStarted: ["keyC", "keyD"] },
+      evaluate: () => false,
+    };
+    const ruleSet = makeRuleSet({
+      categories: [{
+        id: 1, studentAction: "", feedback: "", visualFeedback: "",
+        expression: "ranSimulation WITH Sim1 AND ranSimulation WITH Sim2",
+      }],
+    });
+    const e = new Engine<TR, TD>({
+      ruleSet,
+      factorVariables: { ranSimulation: ranSimulationImpl },
+      simProps: { Sim1: sim1, Sim2: sim2 },
+      translate: makeTranslate(),
+      runStartTriggers: ["SimulationStarted"],
+    });
+    expect(e.isActive).toBe(true);
+    e.consume({ name: "SimulationStarted", at: 100 /* no ambientState */ });
+    const avs = e.errors.filter((x) => x.kind === "ambient-validation");
+    expect(avs).toHaveLength(4);
+    // All four share the same event ConsumedEvent reference.
+    const firstEvent = avs[0].kind === "ambient-validation" ? avs[0].event : null;
+    expect(firstEvent).not.toBeNull();
+    for (const av of avs) {
+      if (av.kind !== "ambient-validation") throw new Error("type narrow");
+      expect(av.event).toBe(firstEvent);
+    }
+    // Per (impl, missingKey) breakdown — one entry each.
+    const pairs = avs.map((av) => av.kind === "ambient-validation" ? `${av.implName}:${av.missingKey}` : "").sort();
+    expect(pairs).toEqual(["Sim1:keyA", "Sim1:keyB", "Sim2:keyC", "Sim2:keyD"]);
+    // No Reading appended.
+    expect(e.readings).toHaveLength(0);
+  });
+
   it("ambient-validation: missing required key produces ambient-validation error and no Reading", () => {
     const graphOpenSim: SimPropImpl<TR, TD> = {
       defaultValue: false,
@@ -153,7 +199,7 @@ describe("Engine consume — trigger pipeline", () => {
     expect(orphans[0].reason).toBe("between-runs");
   });
 
-  it("modifier appends to latest reading when run is in progress", () => {
+  it("modifier appends to latest reading when run is in progress and ticks the snapshot", () => {
     const e = new Engine<TR, TD>({
       ruleSet: makeRuleSet(),
       factorVariables: { ranSimulation: ranSimulationImpl },
@@ -162,8 +208,11 @@ describe("Engine consume — trigger pipeline", () => {
       runStartTriggers: ["SimulationStarted"],
     });
     e.consume({ name: "SimulationStarted", at: 100, ambientState: {} });
+    const snapAfterTrigger = e.getSnapshot();
     e.consume({ name: "ChartTabShown", at: 110 });
     expect(e.readings[0].updates).toEqual([{ source: "ChartTabShown", value: true, at: 110 }]);
+    // Modifier attach mutates state — snapshot must tick so React consumers re-render.
+    expect(e.getSnapshot()).toBe(snapAfterTrigger + 1);
   });
 
   it("no-op events do not tick the snapshot", () => {

@@ -59,6 +59,14 @@ describe("wildfire factor variables", () => {
       expect((r.value as Set<string>).size).toBe(2);
       expect(r.witnesses).toHaveLength(2);
     });
+
+    it("treats zero-speed readings with different directions as one entry (sheet rule: direction ignored when magnitude is 0)", () => {
+      const a = mkRead("SimulationStarted", { wind: { speed: 0, direction: 0 } });
+      const b = mkRead("SimulationStarted", { wind: { speed: 0, direction: 90 } });
+      const r = factorVariables.uniqueWindValuesUsed.compute([a, b], {});
+      expect((r.value as Set<string>).size).toBe(1);
+      expect(r.witnesses).toHaveLength(1);
+    });
   });
 
   describe("uniqueNonZeroWindValuesUsed", () => {

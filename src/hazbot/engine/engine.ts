@@ -251,7 +251,10 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
       }
       case "modifier": {
         const lastReading = this.readings.length > 0 ? this.readings[this.readings.length - 1] : undefined;
-        const lastFailedTrigger = findLast(this.errors, (e) => e.kind === "ambient-validation");
+        const lastFailedTrigger = findLast(
+          this.errors,
+          (e): e is EngineError & { kind: "ambient-validation" } => e.kind === "ambient-validation",
+        );
         const orphan = this.detectOrphan(lastReading, lastFailedTrigger);
         if (orphan) {
           this.errors.push({
@@ -307,11 +310,10 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
   // Returns null when the modifier should attach to lastReading.
   private detectOrphan(
     lastReading: TReading | undefined,
-    lastFailedTrigger: EngineError | undefined,
+    lastFailedTrigger: (EngineError & { kind: "ambient-validation" }) | undefined,
   ): "no-prior-trigger" | "prior-trigger-failed" | "between-runs" | null {
     if (!lastReading && !lastFailedTrigger) return "no-prior-trigger";
-    if (lastReading && lastFailedTrigger && lastFailedTrigger.kind === "ambient-validation"
-        && lastFailedTrigger.at > lastReading.at) return "prior-trigger-failed";
+    if (lastReading && lastFailedTrigger && lastFailedTrigger.at > lastReading.at) return "prior-trigger-failed";
     if (!lastReading && lastFailedTrigger) return "prior-trigger-failed";
     if (lastReading && this.runStartTriggers && !this.runStartTriggers.includes(lastReading.triggeredBy)) {
       return "between-runs";

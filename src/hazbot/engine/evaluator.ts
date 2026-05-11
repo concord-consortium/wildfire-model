@@ -43,7 +43,7 @@ export function makeRenderCtx<TR extends BaseReading, TD>(
   return {
     readings, defaults, factorVariables, simProps,
     wrapFactorVar: (fvar, rs, ds) => evaluateFactorVarForRender(fvar, rs, ds, implsWithIncompleteDefaults),
-    wrapSimProp: (sprop, r, _i, ds) => evaluateSimPropForRender(sprop, r, ds, implsWithIncompleteDefaults),
+    wrapSimProp: (sprop, r, ds) => evaluateSimPropForRender(sprop, r, ds, implsWithIncompleteDefaults),
   };
 }
 
@@ -139,10 +139,7 @@ function evaluatePropExpr<TR extends BaseReading, TD>(expr: Expression, reading:
     case "sim-prop-leaf": {
       const sprop = ctx.simProps[expr.name];
       if (!sprop) return false;
-      // We don't have a stable readingIndex for the witness in this scope; pass -1
-      // (used only by sim-prop wraps that need an index for their EngineError append;
-      // render path doesn't read it, consume path uses it through a different code path).
-      return ctx.wrapSimProp({ name: expr.name, impl: sprop }, reading, -1, ctx.defaults);
+      return ctx.wrapSimProp({ name: expr.name, impl: sprop }, reading, ctx.defaults);
     }
     case "and": return evaluatePropExpr(expr.left, reading, ctx) && evaluatePropExpr(expr.right, reading, ctx);
     case "or": return evaluatePropExpr(expr.left, reading, ctx) || evaluatePropExpr(expr.right, reading, ctx);

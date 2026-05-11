@@ -22,6 +22,15 @@ interface NamedSimProp<TR extends BaseReading, TD> {
 // On throw: append impl-eval-throw to engine.errors (no readingIndex per EXT-19),
 // log to console, and return the per-impl-kind fallback shape (per EXT-12):
 // `{ value: impl.defaultValue, witnesses: [] }`.
+//
+// NOTE: WM-10's engine deliberately performs no expression evaluation during
+// `consume()` — all evaluation happens off the React render path via
+// `evaluateFactorVarForRender` / `evaluateSimPropForRender`. This consume-path
+// wrapper exists as a substrate API for future consumers that want to evaluate
+// at consume time (e.g., emitting matched-category transitions as engine events,
+// log replay, non-React analytic surfaces); the `impl-eval-throw` variant in
+// `EngineError` is reachable through this path. Engine state mutation lives here,
+// not in the render-path wrapper, per ENG-2.
 export function safelyEvaluateFactorVar<V, TR extends BaseReading, TD>(
   engine: EngineLite<TR>,
   fvar: NamedFactorVar<V, TR, TD>,
@@ -140,8 +149,15 @@ export function evaluateSimPropForRender<TR extends BaseReading, TD>(
 
 // Helpers used by step 5 / step 6 for substrate-internal type-narrowing.
 // Re-exported via internal-only convention; not part of the published surface.
+//
+// SimPropWrap omits `readingIndex` deliberately: the only live caller is the
+// evaluator's WITH path (evaluatePropExpr), which iterates witnesses without a
+// stable index into engine.readings — the witness set is filtered from the full
+// readings array but isn't 1:1 with it. The consume-path `safelyEvaluateSimProp`
+// takes readingIndex separately because its own callers (none today, but reserved
+// for a future consume-time evaluator) have an authoritative index in scope.
 export type FactorVarWrap<TR extends BaseReading, TD> =
   <V>(fvar: NamedFactorVar<V, TR, TD>, readings: TR[], defaults: TD | undefined) => { value: V; witnesses: TR[] };
 export type SimPropWrap<TR extends BaseReading, TD> =
-  (sprop: NamedSimProp<TR, TD>, reading: TR, readingIndex: number, defaults: TD | undefined) => boolean;
+  (sprop: NamedSimProp<TR, TD>, reading: TR, defaults: TD | undefined) => boolean;
 

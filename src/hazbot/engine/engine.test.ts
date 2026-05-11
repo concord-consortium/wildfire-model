@@ -272,6 +272,41 @@ describe("Engine — listener / snapshot API", () => {
     expect(inner).toHaveBeenCalledTimes(1);
   });
 
+  it("listener that calls consume() produces exactly one outer + one follow-up notify (no cascade)", () => {
+    // Req 19 contract: a listener that triggers a state-changing op (e.g., a debug
+    // listener that calls consume()) must NOT cause a recursive notify cascade. The
+    // engine buffers the inner mutation's notify until the outer one finishes, then
+    // fires exactly one follow-up.
+    const ruleSet = makeRuleSet();
+    const e = new Engine<TestReading, TestDefaults>({
+      ruleSet,
+      factorVariables: { ranSimulation: makeImpl() },
+      simProps: {},
+      translate: (event, sessionId) => {
+        if (event.name === "T1" || event.name === "T2") {
+          return { kind: "trigger", reading: { triggeredBy: event.name, at: event.at, sessionId, updates: [] } };
+        }
+        return { kind: "no-op" };
+      },
+      runStartTriggers: ["T1", "T2"],
+    });
+    let firstFired = false;
+    const fn = jest.fn(() => {
+      // On the FIRST notify, re-enter the engine with a state-changing consume.
+      // The substrate must buffer the inner notify rather than recurse.
+      if (!firstFired) {
+        firstFired = true;
+        e.consume({ name: "T2", at: 2 });
+      }
+    });
+    e.subscribe(fn);
+    e.consume({ name: "T1", at: 1 });
+    // Expected: outer notify (1) + buffered follow-up notify (1) = exactly 2 calls.
+    expect(fn).toHaveBeenCalledTimes(2);
+    // Both readings landed (no buffering of the consume itself — only the notify).
+    expect(e.readings).toHaveLength(2);
+  });
+
   it("unsubscribe during a notify prevents not-yet-iterated listeners from firing", () => {
     class TestEngine extends Engine<TestReading, TestDefaults> {
       forceNotify() { this.tickAndNotify(); }

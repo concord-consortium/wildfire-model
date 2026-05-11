@@ -27,7 +27,7 @@ export const log = (name: string, data?: object, ambientState?: unknown): void =
   // lands in LARA + log-monitor like every other event. Not fed back through
   // engine.consume — the engine emits it on behalf of itself; routing it back
   // through translate() (which maps it to a no-op) would be a needless cycle.
-  if (engine && engine.isActive && !analysisEngineActivatedEmitted && engine.ruleSet) {
+  if (engine?.isActive && !analysisEngineActivatedEmitted && engine.ruleSet) {
     analysisEngineActivatedEmitted = true;
     externalLog("AnalysisEngineActivated", buildAnalysisEngineActivatedPayload(engine.ruleSet.id));
   }

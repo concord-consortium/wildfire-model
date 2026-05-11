@@ -6,6 +6,12 @@ import { ExpressionRenderer } from "./expression-renderer";
 import { BaseReading, EngineError } from "../types";
 import "./sidebar.css";
 
+function formatTimestamp(at: number): string {
+  const d = new Date(at);
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${String(d.getMilliseconds()).padStart(3, "0")}`;
+}
+
 export interface SidebarProps {
   // Required: the host app's name for this analysis engine instance. The substrate
   // is generic across host apps (wildfire passes "Hazbot"; a future host might pass
@@ -52,12 +58,19 @@ export const Sidebar: React.FC<SidebarProps> = ({ title }) => {
         />
       )}
 
-      <ReadingsPanel readings={engine.readings} />
-      <FactorVariablesPanel
-        values={factorVariableValues}
-        ruleSetUndefined={engine.ruleSet === undefined}
-      />
-      <ErrorsPanel errors={engine.errors} readingsLength={engine.readings.length} />
+      {/* Req 17 case (b): when ruleSet is undefined (missing-rule-set), the sidebar
+          shows only the load-error banner, the rule-set-id fallback (in the header),
+          and the engine errors panel. Readings + factor variables would be either
+          empty (no consume happens — engine is inactive) or impl-default fallbacks
+          that mislead the developer. */}
+      {engine.ruleSet && <ReadingsPanel readings={engine.readings} />}
+      {engine.ruleSet && (
+        <FactorVariablesPanel
+          values={factorVariableValues}
+          showFallbackNote={!engine.isActive}
+        />
+      )}
+      <ErrorsPanel errors={engine.errors} readings={engine.readings} />
     </div>
   );
 };
@@ -177,13 +190,13 @@ const ReadingRow: React.FC<{ reading: BaseReading }> = ({ reading }) => {
 
 const FactorVariablesPanel: React.FC<{
   values: Record<string, unknown>;
-  ruleSetUndefined: boolean;
-}> = ({ values, ruleSetUndefined }) => {
+  showFallbackNote: boolean;
+}> = ({ values, showFallbackNote }) => {
   return (
     <div className="hazbot-sidebar-section">
       <div className="hazbot-sidebar-section-title">Factor Variables</div>
-      {ruleSetUndefined && (
-        <div className="hazbot-sidebar-warning">Engine inactive — values shown are impl defaults</div>
+      {showFallbackNote && (
+        <div className="hazbot-sidebar-warning">Engine inactive — values may be impl defaults</div>
       )}
       {Object.entries(values).map(([name, value]) => (
         <div key={name} className="hazbot-sidebar-entry">
@@ -201,16 +214,78 @@ function formatValue(v: unknown): string {
   return JSON.stringify(v);
 }
 
-const ErrorsPanel: React.FC<{ errors: EngineError[]; readingsLength: number }> = ({ errors, readingsLength }) => {
+const ErrorsPanel: React.FC<{ errors: EngineError[]; readings: BaseReading[] }> = ({ errors, readings }) => {
   if (errors.length === 0) return null;
   return (
     <div className="hazbot-sidebar-section">
       <div className="hazbot-sidebar-section-title">Errors / Warnings ({errors.length})</div>
-      {errors.map((e, i) => {
-        const rendered = renderError(e, { readingsLength });
-        const cls = rendered.severity === "warning" ? "hazbot-sidebar-warning" : "hazbot-sidebar-error";
-        return <div key={`${e.kind}-${e.at}-${i}`} className={cls}>{rendered.message}</div>;
-      })}
+      {errors.map((e, i) => (
+        <ErrorRow key={`${e.kind}-${e.at}-${i}`} error={e} readings={readings} />
+      ))}
     </div>
   );
 };
+
+// Renders one error entry: timestamp + canonical message + a contextual hint pulled
+// from the variant's discriminating fields. Per Req 17's errors-panel bullet — message,
+// severity, timestamp, and triggering context when applicable.
+const ErrorRow: React.FC<{ error: EngineError; readings: BaseReading[] }> = ({ error, readings }) => {
+  const rendered = renderError(error, { readingsLength: readings.length });
+  const cls = rendered.severity === "warning" ? "hazbot-sidebar-warning" : "hazbot-sidebar-error";
+  const context = describeErrorContext(error, readings);
+  return (
+    <div className={`hazbot-sidebar-entry ${cls}`}>
+      <div>
+        <time
+          className="hazbot-sidebar-muted"
+          dateTime={new Date(error.at).toISOString()}
+        >
+          [{formatTimestamp(error.at)}]
+        </time>{" "}
+        {rendered.message}
+      </div>
+      {context && <div className="hazbot-sidebar-muted">{context}</div>}
+    </div>
+  );
+};
+
+// Pulls per-variant context: the triggering event for ambient/orphan, the hydrated
+// reading for sim-prop throws (via readingIndex). Factor-variable throws have no
+// extra context line — their readings count is already substituted into the message
+// by renderError (per EXT-19, the substrate can't attribute a compute() throw to a
+// single reading).
+//
+// Returns a ReactNode so embedded timestamps wrap in <time dateTime=...> elements
+// (parity with ErrorRow's primary timestamp — screen readers get a semantic anchor).
+function describeErrorContext(e: EngineError, readings: BaseReading[]): React.ReactNode {
+  switch (e.kind) {
+    case "ambient-validation":
+      return <>event: {e.event.name} @ <TimestampInline at={e.event.at} /></>;
+    case "orphan-modifier":
+      return <>event: {e.event.name} @ <TimestampInline at={e.event.at} /></>;
+    case "impl-eval-throw": {
+      if (e.implKind === "sim-prop" && e.readingIndex !== undefined) {
+        const r = readings[e.readingIndex];
+        if (r) return <>at reading[{e.readingIndex}]: {r.triggeredBy} @ <TimestampInline at={r.at} /></>;
+      }
+      return null;
+    }
+    case "parse-error":
+      return <>category {e.categoryId} · token span {e.tokenSpan.start}-{e.tokenSpan.end}</>;
+    case "load-failure":
+    case "stub-warning":
+      return null;
+    default: {
+      // TS-compile-time exhaustiveness check: adding a new EngineError variant fails
+      // the cast and forces the author to add a context-derivation branch here.
+      const _exhaustive: never = e;
+      void _exhaustive;
+      return null;
+    }
+  }
+}
+
+// Inline timestamp rendered as a semantic <time> element for screen readers.
+const TimestampInline: React.FC<{ at: number }> = ({ at }) => (
+  <time dateTime={new Date(at).toISOString()}>{formatTimestamp(at)}</time>
+);

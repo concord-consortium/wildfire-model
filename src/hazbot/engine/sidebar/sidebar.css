@@ -75,8 +75,12 @@
   outline-offset: 1px;
 }
 
+/* Use outline (not border) so the 1px → 2px transition does not reflow surrounding
+   entries when the matched category changes. outline sits outside the box and is
+   collapsed against the offset, so the row geometry stays constant. */
 .hazbot-sidebar-category-matched {
-  border: 2px solid var(--hazbot-matched-border);
+  outline: 2px solid var(--hazbot-matched-border);
+  outline-offset: -2px;
 }
 
 .hazbot-sidebar-leaf-true { color: var(--hazbot-true); text-decoration: underline; }
