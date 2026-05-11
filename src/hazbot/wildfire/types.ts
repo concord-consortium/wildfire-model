@@ -22,7 +22,10 @@ export interface WildfireZone {
 export interface WildfireSpark {
   x: number;
   y: number;
-  zone?: number;
+  // Matches the LARA payload field — see src/components/bottom-bar.tsx
+  // SimulationStarted call site (`zoneIdx: cell?.zoneIdx`).
+  zoneIdx?: number;
+  elevation?: number;
 }
 
 // Wildfire-specific defaults. All fields optional at the type level so the

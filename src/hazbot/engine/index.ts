@@ -13,3 +13,4 @@ export { ENGINE_VERSION } from "./version";
 export { AnalysisEngineProvider, useAnalysisEngine } from "./react";
 export type { AnalysisEngineProviderProps, HookReturn } from "./react";
 export { Sidebar } from "./sidebar";
+export type { SidebarProps } from "./sidebar";

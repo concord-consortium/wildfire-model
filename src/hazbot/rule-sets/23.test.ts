@@ -49,7 +49,7 @@ describe("ruleSet 23 — per-rule-set five-shape sweep (AC: per-rule-set five-sh
         { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Severe Drought" },
         { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Mild Drought" },
       ],
-      sparks: [{ x: 0, y: 0, zone: 0 }, { x: 1, y: 0, zone: 1 }],
+      sparks: [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }],
     });
     expect(matchAgainst(ruleSet23, e, [r])).toBe(5);
   });
@@ -62,7 +62,7 @@ describe("ruleSet 23 — per-rule-set five-shape sweep (AC: per-rule-set five-sh
         { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Severe Drought" },
         { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Mild Drought" },
       ],
-      sparks: [{ x: 0, y: 0, zone: 0 }],  // only one spark
+      sparks: [{ x: 0, y: 0, zoneIdx: 0 }],  // only one spark
     });
     expect(matchAgainst(ruleSet23, e, [r0])).toBe(4);
     // Reading 1: revert zones to defaults — per-state highest drops to cat 2 ("ran sim, no zone vars set").

@@ -30,7 +30,7 @@ function makeRuleSet(): RuleSet<TestDefaults> {
   return {
     id: "tab1",
     categories: [
-      { id: 1, studentAction: "", feedback: "Step 1 done", visualFeedback: "", expression: "ranSimulation" },
+      { id: 1, studentAction: "Ran the sim", feedback: "Step 1 done", visualFeedback: "", expression: "ranSimulation" },
     ],
     factorVariables: [{ name: "ranSimulation", definition: "", logEvents: [], details: "" }],
     defaults: {},
@@ -54,11 +54,11 @@ describe("Sidebar (substrate, generic over TReading)", () => {
       runStartTriggers: ["Triggered"],
     });
     const Wrapper = wrap(engine);
-    render(<Wrapper><Sidebar /></Wrapper>);
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
     expect(screen.getByText(/Hazbot/)).toBeInTheDocument();
   });
 
-  it("displays matched-category number + feedback text once a reading triggers cat 1", () => {
+  it("displays matched-category studentAction once a reading triggers cat 1; feedback shows when expanded", () => {
     const engine = new Engine<TestReading, TestDefaults>({
       ruleSet: makeRuleSet(),
       factorVariables: { ranSimulation: ranSimulationImpl },
@@ -67,15 +67,18 @@ describe("Sidebar (substrate, generic over TReading)", () => {
       runStartTriggers: ["Triggered"],
     });
     const Wrapper = wrap(engine);
-    render(<Wrapper><Sidebar /></Wrapper>);
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
     act(() => engine.consume({ name: "Triggered", at: 100, ambientState: {} }));
-    expect(screen.getByText(/Step 1 done/)).toBeInTheDocument();
+    // studentAction is in the always-visible header; feedback is only shown on expand.
+    expect(screen.getByText(/Ran the sim/)).toBeInTheDocument();
+    expect(screen.queryByText(/Step 1 done/)).not.toBeInTheDocument();
     // Matched category gets the matched-class for the bold-border highlight (Req 17).
-    // Direct DOM access here because RTL has no first-class API for "did this entry get
-    // a particular class"; suppress the lint rule for this specific assertion.
     // eslint-disable-next-line testing-library/no-node-access
-    const entry = screen.getByText(/Step 1 done/).closest(".hazbot-sidebar-entry");
+    const entry = screen.getByText(/Ran the sim/).closest(".hazbot-sidebar-entry");
     expect(entry?.className).toMatch(/hazbot-sidebar-category-matched/);
+    // Click the row's header to expand and reveal the feedback.
+    act(() => { screen.getByText(/Ran the sim/).click(); });
+    expect(screen.getByText(/Step 1 done/)).toBeInTheDocument();
   });
 
   it("renders the load-error banner when engine is inactive due to bad rule-set id", () => {
@@ -86,7 +89,7 @@ describe("Sidebar (substrate, generic over TReading)", () => {
       translate: noopTranslate,
     });
     const Wrapper = wrap(engine);
-    render(<Wrapper><Sidebar /></Wrapper>);
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
     expect(screen.getByText(/Load error/)).toBeInTheDocument();
     // The same error appears in both the banner and the errors panel — both should render.
     expect(screen.getAllByText(/Rule set not found: missing/).length).toBeGreaterThanOrEqual(1);
@@ -101,7 +104,7 @@ describe("Sidebar (substrate, generic over TReading)", () => {
       runStartTriggers: ["Triggered"],
     });
     const Wrapper = wrap(engine);
-    render(<Wrapper><Sidebar /></Wrapper>);
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
     expect(screen.getByText(/Readings \(0\)/)).toBeInTheDocument();
     act(() => engine.consume({ name: "Triggered", at: 100, ambientState: {} }));
     expect(screen.getByText(/Readings \(1\)/)).toBeInTheDocument();
@@ -116,10 +119,10 @@ describe("Sidebar (substrate, generic over TReading)", () => {
       runStartTriggers: ["Triggered"],
     });
     const Wrapper = wrap(engine);
-    render(<Wrapper><Sidebar /></Wrapper>);
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
     act(() => engine.consume({ name: "Triggered", at: 100, ambientState: {} }));
     // Click the reading row to expand.
-    const row = screen.getByText(/Triggered @ 100/);
+    const row = screen.getByText(/Triggered ·/);
     act(() => { row.click(); });
     // Foo and bar should appear in the JSON pretty-print.
     expect(screen.getByText(/"foo": "f"/)).toBeInTheDocument();
@@ -134,7 +137,7 @@ describe("Sidebar (substrate, generic over TReading)", () => {
       translate: noopTranslate,
     });
     const Wrapper = wrap(engine);
-    render(<Wrapper><Sidebar /></Wrapper>);
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
     expect(screen.getByText(/Engine inactive — values shown are impl defaults/)).toBeInTheDocument();
   });
 });

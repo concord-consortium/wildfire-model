@@ -101,7 +101,7 @@ const usedOneSparkPerZone: FactorVariableImpl<boolean, WildfireReading, Wildfire
     const witnesses = simulationStartedReadings(readings).filter((r) => {
       if (!r.sparks || !r.zones) return false;
       if (r.sparks.length !== r.zones.length) return false;
-      const zonesUsed = new Set(r.sparks.map((s) => s.zone));
+      const zonesUsed = new Set(r.sparks.map((s) => s.zoneIdx));
       return zonesUsed.size === r.zones.length;
     });
     return { value: witnesses.length > 0, witnesses };

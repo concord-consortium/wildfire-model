@@ -23,25 +23,26 @@ function makeEngine() {
 }
 
 describe("wildfire sidebar against ruleSets['23']", () => {
-  it("renders the rule-set id and one of tab 23's category feedback strings", () => {
+  it("renders the rule-set id and one of tab 23's category studentAction strings", () => {
     const engine = makeEngine();
     expect(engine.isActive).toBe(true);
     render(
       <AnalysisEngineProvider engine={engine} appRulesVersion={1}>
-        <Sidebar />
+        <Sidebar title="Hazbot" />
       </AnalysisEngineProvider>,
     );
     // Header includes the rule-set id.
     expect(screen.getByText(/ruleset 23/)).toBeInTheDocument();
-    // Cat 1's feedback (the "scroll up" message) is rendered as part of the categories panel.
-    expect(screen.getByText(/scroll up/i)).toBeInTheDocument();
+    // Cat 1's studentAction is shown in the always-visible category header.
+    // Feedback ("scroll up") is now hidden until the row is expanded.
+    expect(screen.getByText(/Did not run the simulation/i)).toBeInTheDocument();
   });
 
   it("renders wildfire payload fields (zones / sparks / wind) via JSON pretty-print on reading expand", () => {
     const engine = makeEngine();
     render(
       <AnalysisEngineProvider engine={engine} appRulesVersion={1}>
-        <Sidebar />
+        <Sidebar title="Hazbot" />
       </AnalysisEngineProvider>,
     );
     act(() => engine.consume({
@@ -49,13 +50,13 @@ describe("wildfire sidebar against ruleSets['23']", () => {
       at: 100,
       data: {
         zones: [{ index: 0, terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Mild Drought" }],
-        sparks: [{ x: 0, y: 0, zone: 0 }],
+        sparks: [{ x: 0, y: 0, zoneIdx: 0 }],
         wind: { speed: 5, direction: 0 },
       },
       ambientState: {},
     }));
     // Expand the reading row to show the payload.
-    const row = screen.getByText(/SimulationStarted @ 100/);
+    const row = screen.getByText(/SimulationStarted ·/);
     act(() => { row.click(); });
     expect(screen.getByText(/"terrainType": "Plains"/)).toBeInTheDocument();
     expect(screen.getByText(/"speed": 5/)).toBeInTheDocument();

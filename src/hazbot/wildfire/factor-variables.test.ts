@@ -36,14 +36,14 @@ describe("wildfire factor variables", () => {
     it("true when sparks count == zones count and zones are distinct", () => {
       const reading = mkRead("SimulationStarted", {
         zones: [{ index: 0 }, { index: 1 }],
-        sparks: [{ x: 0, y: 0, zone: 0 }, { x: 1, y: 1, zone: 1 }],
+        sparks: [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 1, zoneIdx: 1 }],
       });
       expect(factorVariables.usedOneSparkPerZone.compute([reading], {}).value).toBe(true);
     });
     it("false when sparks all in one zone", () => {
       const reading = mkRead("SimulationStarted", {
         zones: [{ index: 0 }, { index: 1 }],
-        sparks: [{ x: 0, y: 0, zone: 0 }, { x: 1, y: 1, zone: 0 }],
+        sparks: [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 1, zoneIdx: 0 }],
       });
       expect(factorVariables.usedOneSparkPerZone.compute([reading], {}).value).toBe(false);
     });

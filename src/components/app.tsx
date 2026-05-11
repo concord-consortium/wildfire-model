@@ -122,7 +122,7 @@ export const AppComponent = observer(function WrappedComponent() {
       {logMonitor && <LogMonitor logFilePrefix="wildfire-log-events" />}
       {showHazbotSidebar && engine && (
         <AnalysisEngineProvider engine={engine} appRulesVersion={APP_RULES_VERSION}>
-          <Sidebar />
+          <Sidebar title="Hazbot" />
         </AnalysisEngineProvider>
       )}
     </div>

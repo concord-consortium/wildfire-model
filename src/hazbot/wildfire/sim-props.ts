@@ -9,7 +9,7 @@ const OneSparkPerZone: SimPropImpl<WildfireReading, WildfireDefaults> = {
   evaluate: (reading) => {
     if (!reading.sparks || !reading.zones) return false;
     if (reading.sparks.length !== reading.zones.length) return false;
-    const zonesUsed = new Set(reading.sparks.map((s) => s.zone));
+    const zonesUsed = new Set(reading.sparks.map((s) => s.zoneIdx));
     return zonesUsed.size === reading.zones.length;
   },
 };

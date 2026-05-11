@@ -6,7 +6,15 @@ import { ExpressionRenderer } from "./expression-renderer";
 import { BaseReading, EngineError } from "../types";
 import "./sidebar.css";
 
-export const Sidebar: React.FC = () => {
+export interface SidebarProps {
+  // Required: the host app's name for this analysis engine instance. The substrate
+  // is generic across host apps (wildfire passes "Hazbot"; a future host might pass
+  // its own name) — making this required forces every consumer to label the sidebar
+  // explicitly rather than inheriting an opinionated default.
+  title: string;
+}
+
+export const Sidebar: React.FC<SidebarProps> = ({ title }) => {
   const { engine, appRulesVersion, factorVariableValues, matchedCategory, perCategoryTruth } = useAnalysisEngine();
   const ruleSetId = engine.ruleSet?.id ?? engine.requestedRuleSetId ?? "(none)";
   const loadError = engine.errors.find((e) => e.kind === "load-failure" || e.kind === "parse-error");
@@ -14,9 +22,12 @@ export const Sidebar: React.FC = () => {
   return (
     <div className="hazbot-sidebar">
       <header className="hazbot-sidebar-header">
-        <strong>Hazbot</strong>
-        <span className="hazbot-sidebar-muted">
-          ruleset {ruleSetId} · session {engine.sessionId} · engine {ENGINE_VERSION} · rules {appRulesVersion}
+        <strong>{title}</strong>
+        <span
+          className="hazbot-sidebar-muted"
+          title={`engine ${ENGINE_VERSION} / app rules version ${appRulesVersion}`}
+        >
+          ruleset {ruleSetId} · {ENGINE_VERSION} / {appRulesVersion}
         </span>
       </header>
 
@@ -31,9 +42,12 @@ export const Sidebar: React.FC = () => {
 
       {engine.ruleSet && (
         <CategoriesPanel
-          categories={engine.ruleSet.categories}
+          categories={engine.ruleSet.categories as Array<{
+            id: number; studentAction: string; feedback: string; visualFeedback: string; expression: string;
+          }>}
           matchedCategory={matchedCategory}
           perCategoryTruth={perCategoryTruth}
+          parsedExpressions={engine.parsedExpressions}
           isActive={engine.isActive}
         />
       )}
@@ -49,11 +63,12 @@ export const Sidebar: React.FC = () => {
 };
 
 const CategoriesPanel: React.FC<{
-  categories: { id: number; feedback: string; expression: string }[];
+  categories: { id: number; studentAction: string; feedback: string; visualFeedback: string; expression: string }[];
   matchedCategory: number | null;
   perCategoryTruth: Record<number, Parameters<typeof ExpressionRenderer>[0]["tree"]>;
+  parsedExpressions: Map<number, unknown>;
   isActive: boolean;
-}> = ({ categories, matchedCategory, perCategoryTruth, isActive }) => {
+}> = ({ categories, matchedCategory, perCategoryTruth, parsedExpressions, isActive }) => {
   return (
     <div className="hazbot-sidebar-section">
       <div className="hazbot-sidebar-section-title">Categories</div>
@@ -64,24 +79,71 @@ const CategoriesPanel: React.FC<{
           ? (truth?.truth ? "✓" : "✗")
           : "·"; // suppressed when inactive
         return (
-          <div
+          <CategoryRow
             key={cat.id}
-            className={`hazbot-sidebar-entry ${matched ? "hazbot-sidebar-category-matched" : ""}`}
-          >
-            <div>
-              <strong>{truthIcon} Cat {cat.id}</strong>: {cat.feedback}
-            </div>
-            <div>
-              {isActive && truth
-                ? <ExpressionRenderer tree={truth} />
-                : <span>{cat.expression}</span>}
-            </div>
-          </div>
+            cat={cat}
+            truth={truth}
+            ast={parsedExpressions.get(cat.id)}
+            matched={matched}
+            truthIcon={truthIcon}
+            isActive={isActive}
+          />
         );
       })}
     </div>
   );
 };
+
+// The category row shows status icon + cat number + studentAction + the truth-colored
+// expression by default. Click the row's header to expand: feedback (student-facing
+// message) + visualFeedback (visual cue description) + the parsed AST.
+const CategoryRow: React.FC<{
+  cat: { id: number; studentAction: string; feedback: string; visualFeedback: string; expression: string };
+  truth: Parameters<typeof ExpressionRenderer>[0]["tree"] | undefined;
+  ast: unknown;
+  matched: boolean;
+  truthIcon: string;
+  isActive: boolean;
+}> = ({ cat, truth, ast, matched, truthIcon, isActive }) => {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <div className={`hazbot-sidebar-entry ${matched ? "hazbot-sidebar-category-matched" : ""}`}>
+      <button
+        type="button"
+        className="hazbot-sidebar-button"
+        onClick={() => setOpen((x) => !x)}
+        aria-expanded={open}
+      >
+        <strong>{open ? "▾" : "▸"} {truthIcon} {cat.id}:</strong>
+        {cat.studentAction && <span> {cat.studentAction}</span>}
+      </button>
+      <div className="hazbot-sidebar-category-expression">
+        {isActive && truth
+          ? <ExpressionRenderer tree={truth} />
+          : <span>{cat.expression}</span>}
+      </div>
+      {open && (
+        <div className="hazbot-sidebar-category-detail">
+          <div><strong>Feedback:</strong> <span style={{ whiteSpace: "pre-wrap" }}>{cat.feedback}</span></div>
+          <div>
+            <strong>Visual feedback:</strong>{" "}
+            {cat.visualFeedback
+              ? <span style={{ whiteSpace: "pre-wrap" }}>{cat.visualFeedback}</span>
+              : <strong>None</strong>}
+          </div>
+          <div><strong>Parsed expression:</strong></div>
+          <pre className="hazbot-sidebar-pre">{formatAst(ast)}</pre>
+        </div>
+      )}
+    </div>
+  );
+};
+
+function formatAst(ast: unknown): string {
+  if (ast === undefined) return "(no AST — category not parsed)";
+  if (typeof ast === "symbol") return "(parse-error sentinel — see Errors panel)";
+  return JSON.stringify(ast, null, 2);
+}
 
 const ReadingsPanel: React.FC<{ readings: BaseReading[] }> = ({ readings }) => {
   return (
@@ -104,7 +166,7 @@ const ReadingRow: React.FC<{ reading: BaseReading }> = ({ reading }) => {
         onClick={() => setExpanded((x) => !x)}
         aria-expanded={expanded}
       >
-        {reading.triggeredBy} @ {reading.at} · {reading.updates.length} update(s)
+        <strong>{expanded ? "▾" : "▸"}</strong> {reading.triggeredBy} · {reading.updates.length} update(s)
       </button>
       {expanded && (
         <pre className="hazbot-sidebar-pre">{JSON.stringify(reading, null, 2)}</pre>

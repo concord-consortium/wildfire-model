@@ -96,6 +96,19 @@
   border-radius: 3px;
 }
 
+.hazbot-sidebar-category-expression {
+  margin-top: 6px;
+}
+
+.hazbot-sidebar-category-detail {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--hazbot-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
 .hazbot-sidebar-pre {
   white-space: pre-wrap;
   font-size: 11px;

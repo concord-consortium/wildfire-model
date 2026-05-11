@@ -10,12 +10,12 @@ describe("wildfire sim-props", () => {
     it("true when sparks.length === zones.length and zones distinct", () => {
       const r = mkRead({
         zones: [{ index: 0 }, { index: 1 }],
-        sparks: [{ x: 0, y: 0, zone: 0 }, { x: 1, y: 0, zone: 1 }],
+        sparks: [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }],
       });
       expect(simProps.OneSparkPerZone.evaluate(r, {})).toBe(true);
     });
     it("false when sparks count != zones count", () => {
-      const r = mkRead({ zones: [{ index: 0 }, { index: 1 }], sparks: [{ x: 0, y: 0, zone: 0 }] });
+      const r = mkRead({ zones: [{ index: 0 }, { index: 1 }], sparks: [{ x: 0, y: 0, zoneIdx: 0 }] });
       expect(simProps.OneSparkPerZone.evaluate(r, {})).toBe(false);
     });
   });
