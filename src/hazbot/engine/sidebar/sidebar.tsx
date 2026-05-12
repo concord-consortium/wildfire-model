@@ -21,7 +21,7 @@ export interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ title }) => {
-  const { engine, appRulesVersion, factorVariableValues, matchedCategory, perCategoryTruth } = useAnalysisEngine();
+  const { engine, appRulesVersion, factorVariableValues, simPropValues, matchedCategory, perCategoryTruth } = useAnalysisEngine();
   const ruleSetId = engine.ruleSet?.id ?? engine.requestedRuleSetId ?? "(none)";
 
   return (
@@ -55,13 +55,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ title }) => {
           header). Readings + factor variables would be either empty (no consume
           happens — engine is inactive) or impl-default fallbacks that mislead the
           developer. */}
-      {engine.ruleSet && <ReadingsPanel readings={engine.readings} />}
       {engine.ruleSet && (
         <FactorVariablesPanel
           values={factorVariableValues}
           showFallbackNote={!engine.isActive}
         />
       )}
+      {engine.ruleSet && <SimPropsPanel values={simPropValues} />}
+      {engine.ruleSet && <ReadingsPanel readings={engine.readings} />}
     </div>
   );
 };
@@ -163,24 +164,40 @@ function formatAst(ast: unknown): string {
   return JSON.stringify(ast, null, 2);
 }
 
+// Stringify a reading for the Readings panel's expanded payload — drops sessionId
+// (internal-only; not useful for rule-set debugging) but keeps everything else.
+function formatReadingForDisplay(reading: BaseReading): string {
+  const { sessionId: _ignored, ...rest } = reading as BaseReading & { sessionId?: string };
+  return JSON.stringify(rest, null, 2);
+}
+
 const ReadingsPanel: React.FC<{ readings: BaseReading[] }> = ({ readings }) => {
   // Render newest-first for scan-ergonomics — the substrate keeps engine.readings
   // chronological (append-only invariant); the reversal is a presentation-only
-  // concern. slice() prevents mutating the engine's array.
+  // concern. slice() prevents mutating the engine's array. The displayed index is
+  // 1-based and chronological (oldest = 1), so a WithNode's "bound to readings[N]"
+  // line points at the same row regardless of newest-first ordering.
   const newestFirst = readings.slice().reverse();
   return (
     <div className="hazbot-sidebar-section">
       <div className="hazbot-sidebar-section-title">
         Readings ({readings.length}) <span className="hazbot-sidebar-muted">· newest first</span>
       </div>
-      {newestFirst.map((r, i) => (
-        <ReadingRow key={`${r.at}-${r.triggeredBy}-${i}`} reading={r} />
-      ))}
+      {newestFirst.map((r, i) => {
+        const chronologicalIndex = readings.length - i; // 1-based
+        return (
+          <ReadingRow
+            key={`${r.at}-${r.triggeredBy}-${i}`}
+            reading={r}
+            displayIndex={chronologicalIndex}
+          />
+        );
+      })}
     </div>
   );
 };
 
-const ReadingRow: React.FC<{ reading: BaseReading }> = ({ reading }) => {
+const ReadingRow: React.FC<{ reading: BaseReading; displayIndex: number }> = ({ reading, displayIndex }) => {
   const [expanded, setExpanded] = React.useState(false);
   return (
     <div className="hazbot-sidebar-entry">
@@ -191,10 +208,10 @@ const ReadingRow: React.FC<{ reading: BaseReading }> = ({ reading }) => {
         aria-expanded={expanded}
         title={expanded ? "Hide reading payload" : "Show reading payload"}
       >
-        <strong>{expanded ? "▾" : "▸"}</strong> {reading.triggeredBy} · {reading.updates.length} update(s)
+        <strong>{expanded ? "▾" : "▸"} {displayIndex}:</strong> {reading.triggeredBy} · {reading.updates.length} update(s)
       </button>
       {expanded && (
-        <pre className="hazbot-sidebar-pre">{JSON.stringify(reading, null, 2)}</pre>
+        <pre className="hazbot-sidebar-pre">{formatReadingForDisplay(reading)}</pre>
       )}
     </div>
   );
@@ -225,6 +242,29 @@ function formatValue(v: unknown): string {
   if (Array.isArray(v)) return `[${v.length}]`;
   return JSON.stringify(v);
 }
+
+// Sim-props evaluate per-reading; the panel surfaces each one's value at the
+// latest run-start reading. null means no run-start reading has been recorded yet,
+// so the value is undefined rather than impl-default.
+const SimPropsPanel: React.FC<{ values: Record<string, boolean | null> }> = ({ values }) => {
+  const entries = Object.entries(values).sort(([a], [b]) => a.localeCompare(b));
+  if (entries.length === 0) return null;
+  return (
+    <div className="hazbot-sidebar-section">
+      <div className="hazbot-sidebar-section-title">Sim Props</div>
+      {entries.map(([name, value]) => (
+        <div key={name} className="hazbot-sidebar-entry">
+          <strong>{name}</strong>: {value === null
+            ? <span
+                className="hazbot-sidebar-muted"
+                title="Sim-props evaluate per-reading; no run-start reading has been recorded yet, so this value is undefined."
+              >n/a</span>
+            : String(value)}
+        </div>
+      ))}
+    </div>
+  );
+};
 
 const ErrorsPanel: React.FC<{ errors: EngineError[]; readings: BaseReading[] }> = ({ errors, readings }) => {
   if (errors.length === 0) return null;

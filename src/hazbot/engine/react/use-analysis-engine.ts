@@ -5,12 +5,15 @@ import { AnalysisEngineContext } from "./context";
 import {
   computeMatchedCategoryFloor, evaluateLeaf, makeRenderCtx, LeafTruth,
 } from "../evaluator";
-import { evaluateFactorVarForRender } from "../safely-evaluate-impl";
+import { evaluateFactorVarForRender, evaluateSimPropForRender } from "../safely-evaluate-impl";
 
 export interface HookReturn<TReading extends BaseReading = BaseReading, TDefaults = unknown> {
   engine: Engine<TReading, TDefaults>;
   appRulesVersion: string | number;
   factorVariableValues: Record<string, unknown>;
+  // Each sim-prop's value at the latest run-start reading, or null when no run-start
+  // reading exists yet (sim-props are per-reading; no reading = no meaningful value).
+  simPropValues: Record<string, boolean | null>;
   matchedCategory: number | null;
   perCategoryTruth: Record<number, LeafTruth>;
 }
@@ -39,11 +42,26 @@ function computeView<TR extends BaseReading, TD>(
     factorVariableValues[name] = wrapped.value;
   });
 
+  // Sim-props evaluate per-reading, so "current value" means the latest run-start
+  // reading. Without one, sim-props have no meaningful value — surface null so the
+  // sidebar can show a placeholder rather than a misleading default.
+  const simPropValues: Record<string, boolean | null> = {};
+  const witnessReading = engine.latestRunStartReading;
+  const defaults = engine.ruleSet?.defaults as TD | undefined;
+  Object.entries(engine.simProps).forEach(([name, impl]) => {
+    if (witnessReading === undefined) {
+      simPropValues[name] = null;
+    } else {
+      simPropValues[name] = evaluateSimPropForRender(
+        { name, impl }, witnessReading, defaults, engine.implsWithIncompleteDefaults,
+      );
+    }
+  });
+
   // matchedCategory + perCategoryTruth short-circuit when !isActive (per EXT-9).
   let matchedCategory: number | null = null;
   const perCategoryTruth: Record<number, LeafTruth> = {};
   if (engine.isActive && engine.ruleSet) {
-    const defaults = engine.ruleSet.defaults as TD | undefined;
     matchedCategory = computeMatchedCategoryFloor(
       engine.ruleSet, engine.parsedExpressions,
       (slice) => makeRenderCtx(slice, defaults, engine.factorVariables, engine.simProps, engine.implsWithIncompleteDefaults),
@@ -59,7 +77,7 @@ function computeView<TR extends BaseReading, TD>(
     });
   }
 
-  return { engine, appRulesVersion, factorVariableValues, matchedCategory, perCategoryTruth };
+  return { engine, appRulesVersion, factorVariableValues, simPropValues, matchedCategory, perCategoryTruth };
 }
 
 export function useAnalysisEngine<TReading extends BaseReading = BaseReading, TDefaults = unknown>(): HookReturn<TReading, TDefaults> {

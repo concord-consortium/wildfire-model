@@ -15,11 +15,29 @@ export type LeafTruth =
   | {
       kind: "with"; varName: string; propExpr: Expression; truth: boolean;
       boundReading?: BaseReading;
+      // Chronological index of boundReading within engine.readings (matches the
+      // underlying array shape; Readings panel displays newest-first). Undefined
+      // when boundReading is undefined.
+      boundReadingIndex?: number;
       candidateEvaluations?: Array<{ reading: BaseReading; propResult: boolean }>;
+      // Per-leaf truth tree for the inner propExpr, evaluated against the witness
+      // reading (bound reading when WITH matched; latest candidate otherwise). Lets
+      // the sidebar color sim-prop leaves inside a WITH the same way it colors
+      // outer leaves. Undefined when no witnesses exist (no run-start reading yet).
+      propTruth?: PropLeafTruth;
     }
   | { kind: "and"; left: LeafTruth; right: LeafTruth; truth: boolean }
   | { kind: "or"; left: LeafTruth; right: LeafTruth; truth: boolean }
   | { kind: "not"; child: LeafTruth; truth: boolean };
+
+// Per-leaf truth tree for the inner propExpr of a WITH clause. Distinct from
+// LeafTruth because the propExpr grammar is narrower — only sim-prop leaves and
+// boolean combinators are valid here (per the parser).
+export type PropLeafTruth =
+  | { kind: "sim-prop-leaf"; name: string; truth: boolean }
+  | { kind: "and"; left: PropLeafTruth; right: PropLeafTruth; truth: boolean }
+  | { kind: "or"; left: PropLeafTruth; right: PropLeafTruth; truth: boolean }
+  | { kind: "not"; child: PropLeafTruth; truth: boolean };
 
 export interface EvalCtx<TR extends BaseReading, TD> {
   readings: TR[];
@@ -152,6 +170,37 @@ function evaluatePropExpr<TR extends BaseReading, TD>(expr: Expression, reading:
   }
 }
 
+// Render-path mirror of evaluatePropExpr that produces a PropLeafTruth tree
+// (not just a boolean), so the sidebar can color individual sim-prop leaves
+// inside a WITH clause. Non-short-circuit — every branch is evaluated.
+function evaluatePropLeaf<TR extends BaseReading, TD>(
+  expr: Expression, reading: TR, ctx: EvalCtx<TR, TD>,
+): PropLeafTruth {
+  switch (expr.kind) {
+    case "sim-prop-leaf": {
+      const sprop = ctx.simProps[expr.name];
+      const truth = sprop ? ctx.wrapSimProp({ name: expr.name, impl: sprop }, reading, ctx.defaults) : false;
+      return { kind: "sim-prop-leaf", name: expr.name, truth };
+    }
+    case "and": {
+      const left = evaluatePropLeaf(expr.left, reading, ctx);
+      const right = evaluatePropLeaf(expr.right, reading, ctx);
+      return { kind: "and", left, right, truth: left.truth && right.truth };
+    }
+    case "or": {
+      const left = evaluatePropLeaf(expr.left, reading, ctx);
+      const right = evaluatePropLeaf(expr.right, reading, ctx);
+      return { kind: "or", left, right, truth: left.truth || right.truth };
+    }
+    case "not": {
+      const child = evaluatePropLeaf(expr.child, reading, ctx);
+      return { kind: "not", child, truth: !child.truth };
+    }
+    default:
+      throw new Error(`evaluatePropLeaf: ${expr.kind} is not valid inside a WITH prop expression`);
+  }
+}
+
 // Non-short-circuit leaf evaluator for the sidebar's truth-coloring.
 export function evaluateLeaf<TR extends BaseReading, TD>(expr: Expression, ctx: EvalCtx<TR, TD>): LeafTruth {
   switch (expr.kind) {
@@ -164,10 +213,26 @@ export function evaluateLeaf<TR extends BaseReading, TD>(expr: Expression, ctx: 
     }
     case "with": {
       const result = evaluateWith(expr.varName, expr.propExpr, ctx);
+      // Witness reading for per-leaf truth: bound reading when WITH matched, else
+      // the most recent candidate (so even a failing WITH shows current sim-prop
+      // truths). When no candidates exist (factor variable returned no witnesses),
+      // propTruth stays undefined and the renderer falls back to plain text.
+      const witness = result.boundReading
+        ?? (result.candidateEvaluations.length > 0
+          ? result.candidateEvaluations[result.candidateEvaluations.length - 1].reading
+          : undefined);
+      const propTruth = witness !== undefined
+        ? evaluatePropLeaf(expr.propExpr, witness, ctx)
+        : undefined;
+      const boundReadingIndex = result.boundReading !== undefined
+        ? ctx.readings.indexOf(result.boundReading)
+        : undefined;
       return {
         kind: "with", varName: expr.varName, propExpr: expr.propExpr,
         truth: result.value, boundReading: result.boundReading,
+        boundReadingIndex: boundReadingIndex !== undefined && boundReadingIndex >= 0 ? boundReadingIndex : undefined,
         candidateEvaluations: result.candidateEvaluations,
+        propTruth,
       };
     }
     case "and": {

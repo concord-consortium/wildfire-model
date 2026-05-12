@@ -49,6 +49,21 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
   // Step 4's consume pipeline reads these directly off opts.
   protected translate: EngineOpts<TReading, TDefaults>["translate"];
   protected runStartTriggers: string[] | undefined;
+
+  // Latest reading whose triggeredBy is in runStartTriggers (i.e., the most recent
+  // "witness" reading for sim-props that bind via WITH). Returns undefined when no
+  // run-start reading has been recorded yet. Walks backwards so we stop at the first
+  // match instead of scanning the full readings array.
+  get latestRunStartReading(): TReading | undefined {
+    if (!this.runStartTriggers || this.runStartTriggers.length === 0) {
+      return this.readings.length > 0 ? this.readings[this.readings.length - 1] : undefined;
+    }
+    const triggers = new Set(this.runStartTriggers);
+    for (let i = this.readings.length - 1; i >= 0; i--) {
+      if (triggers.has(this.readings[i].triggeredBy)) return this.readings[i];
+    }
+    return undefined;
+  }
   private listeners: Set<() => void> = new Set();
   private snapshotVersion = 0;
   private notifying = false;

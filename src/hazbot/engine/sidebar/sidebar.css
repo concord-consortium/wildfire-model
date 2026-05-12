@@ -96,6 +96,10 @@
 
 .hazbot-sidebar-leaf-true { color: var(--hazbot-true); text-decoration: underline; }
 .hazbot-sidebar-leaf-false { color: var(--hazbot-false); text-decoration: line-through; }
+/* Leaves inside a WITH whose witness reading doesn't exist yet (no run-start
+   reading recorded). Muted gray + dashed underline distinguishes "no value yet"
+   from confidently-true/false. */
+.hazbot-sidebar-leaf-no-value { color: var(--hazbot-muted); text-decoration: underline dashed; }
 
 /* Category-row status icons — same palette as per-leaf coloring for consistency.
    font-size bumps the glyph above the inherited entry size so the icon reads at

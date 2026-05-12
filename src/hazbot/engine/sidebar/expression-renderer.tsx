@@ -1,5 +1,5 @@
 import * as React from "react";
-import { LeafTruth } from "../evaluator";
+import { LeafTruth, PropLeafTruth } from "../evaluator";
 import { Expression } from "../parser/ast";
 import { BaseReading } from "../types";
 
@@ -45,31 +45,60 @@ function renderNode(node: LeafTruth, expanded: boolean): React.ReactNode {
 // The WITH node's witness-reading detail follows the enclosing CategoryRow's open state —
 // one click on the row header toggles both the row's Feedback / Visual feedback / AST detail
 // and every nested WITH's witness reading, so there's a single source of "expanded."
+//
+// Inner propExpr renders with per-leaf truth coloring when propTruth is available (i.e.,
+// the engine has at least one candidate reading to evaluate against). Falls back to
+// plain text rendering of the raw AST when there are no candidates yet.
 const WithNode: React.FC<{ node: Extract<LeafTruth, { kind: "with" }>; expanded: boolean }> = ({ node, expanded }) => {
   return (
     <>
-      <span><span className={leafClass(node.truth)}>{node.varName}</span> <strong>WITH</strong> {renderExpression(node.propExpr)}</span>
+      <span>
+        <span className={leafClass(node.truth)}>{node.varName}</span>{" "}
+        <strong>WITH</strong>{" "}
+        {node.propTruth ? renderPropLeaf(node.propTruth) : renderExpression(node.propExpr)}
+      </span>
       {expanded && (
         <div className="hazbot-sidebar-pre">
           {node.boundReading
-            ? `bound: ${formatReading(node.boundReading)}`
-            : `no candidate matched (${node.candidateEvaluations?.length ?? 0} examined)`}
+            ? `Matched on reading #${node.boundReadingIndex !== undefined ? node.boundReadingIndex + 1 : "?"}: ${formatReading(node.boundReading)}`
+            : formatUnboundMessage(node.candidateEvaluations?.length ?? 0)}
         </div>
       )}
     </>
   );
 };
 
-// Render an unevaluated Expression AST inline (no truth coloring — sub-expressions inside
-// a WITH clause aren't pre-evaluated into the LeafTruth tree). Used to show the body of a
-// WITH leaf alongside the collapsed binding-detail toggle.
+// Render a PropLeafTruth tree (inner WITH expression) with per-leaf truth coloring.
+// Mirrors renderNode's structure but operates on the narrower PropLeafTruth shape
+// (sim-prop leaves only, plus boolean combinators).
+function renderPropLeaf(node: PropLeafTruth): React.ReactNode {
+  switch (node.kind) {
+    case "sim-prop-leaf":
+      return <span className={leafClass(node.truth)}>{node.name}</span>;
+    case "and":
+      return <span>({renderPropLeaf(node.left)} <strong>AND</strong> {renderPropLeaf(node.right)})</span>;
+    case "or":
+      return <span>({renderPropLeaf(node.left)} <strong>OR</strong> {renderPropLeaf(node.right)})</span>;
+    case "not":
+      return <span><strong>NOT</strong> {renderPropLeaf(node.child)}</span>;
+    default: {
+      const _exhaustive: never = node;
+      throw new Error(`renderPropLeaf: unhandled ${(_exhaustive as { kind: string }).kind}`);
+    }
+  }
+}
+
+// Render an unevaluated Expression AST inline. Used as a fallback inside a WITH leaf
+// when no witness reading exists yet — sim-prop / boolean leaves are rendered with the
+// "no-value" class (muted gray + dashed underline) to signal "this hasn't been
+// evaluated yet" rather than confidently-true or confidently-false.
 function renderExpression(expr: Expression): React.ReactNode {
   switch (expr.kind) {
     case "boolean-leaf":
     case "sim-prop-leaf":
-      return expr.name;
+      return <span className="hazbot-sidebar-leaf-no-value">{expr.name}</span>;
     case "accessor":
-      return `${expr.name}${expr.accessor}`;
+      return <span className="hazbot-sidebar-leaf-no-value">{`${expr.name}${expr.accessor}`}</span>;
     case "literal":
       return String(expr.value);
     case "comparison": {
@@ -92,6 +121,22 @@ function renderExpression(expr: Expression): React.ReactNode {
   }
 }
 
+// Message shown when a WITH clause has no bound reading. Distinguishes "factor
+// variable produced no candidates" from "candidates exist but none satisfied
+// the inner clause." "Readings" here is a slight oversimplification — strictly
+// it's candidate readings (those the factor variable returned as witnesses),
+// not engine.readings as a whole — but the two coincide in the wildfire host
+// since every reading is a SimulationStarted that all factor variables key on.
+function formatUnboundMessage(candidateCount: number): string {
+  if (candidateCount === 0) return "No readings yet";
+  return `${candidateCount} reading${candidateCount === 1 ? "" : "s"} checked, no match`;
+}
+
 function formatReading(r: BaseReading): string {
-  return JSON.stringify({ triggeredBy: r.triggeredBy, at: r.at, updates: r.updates }, null, 2);
+  // Full reading payload — includes app-specific fields (zones, sparks, wind, etc.
+  // for the wildfire host) alongside the BaseReading metadata. Verbose but answers
+  // "what conditions did this WITH bind to?" without round-tripping through the
+  // Readings panel. Drops sessionId (internal-only).
+  const { sessionId: _ignored, ...rest } = r as BaseReading & { sessionId?: string };
+  return JSON.stringify(rest, null, 2);
 }
