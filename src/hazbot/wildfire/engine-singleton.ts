@@ -16,7 +16,9 @@ export function getAnalysisEngine(): Engine<WildfireReading, WildfireDefaults> |
   if (init === "initialized") return cached;
   init = "initialized";
   const cfg = getUrlConfig();
-  if (!cfg.hazbotRules && !cfg.hazbotSidebar) {
+  // Explicit undefined check (not `!cfg.hazbotRules`): the URL parser converts
+  // numeric strings to numbers, and a future ruleset id of 0 would be valid.
+  if (cfg.hazbotRules === undefined && !cfg.hazbotSidebar) {
     cached = undefined;
     return undefined;
   }

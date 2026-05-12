@@ -65,7 +65,7 @@ function parseTab(sheetName, rows) {
     const cat = {
       id,
       studentAction: String(row[colIdx.studentAction] ?? ""),
-      feedback: String(row[colIdx.feedback] ?? ""),
+      feedback: normalizeFeedback(String(row[colIdx.feedback] ?? "")),
       visualFeedback: String(row[colIdx.visualFeedback] ?? ""),
       expression: String(row[colIdx.expression] ?? "").trim(),
     };
@@ -155,6 +155,12 @@ function mapFactorVarColumnIndices(header) {
 
 function parseLogEvents(s) {
   return s.split(/[,;\n]/).map((x) => x.trim()).filter(Boolean);
+}
+
+// Collapse accidental "Hazbot: Hazbot: …" prefixes that crept into sheet content
+// so they don't reach the user-facing feedback string.
+function normalizeFeedback(s) {
+  return s.replace(/^(?:Hazbot:\s*){2,}/, "Hazbot: ");
 }
 
 // === Defaults parsing from Details column ===

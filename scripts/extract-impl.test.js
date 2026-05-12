@@ -51,6 +51,15 @@ describe("extractFromSheets", () => {
 });
 
 describe("parseTab — categories", () => {
+  it("collapses duplicated 'Hazbot:' prefixes in feedback", () => {
+    const sheet = [
+      ["#", "Student Action", "Hazbot Feedback", "Visual Feedback", "Pseudocode for Rules"],
+      [1, "Action", "Hazbot: Hazbot: try again", "Visual", "ranSimulation"],
+    ];
+    const parsed = parseTab("xx", sheet);
+    expect(parsed.categories[0].feedback).toBe("Hazbot: try again");
+  });
+
   it("extracts categories with arrowText when the column exists", () => {
     const parsed = parseTab("23", SYNTHETIC_SHEETS[1].data);
     expect(parsed.categories).toHaveLength(2);

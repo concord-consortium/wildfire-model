@@ -9,7 +9,7 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
     {
       id: 1,
       studentAction: "Did not run the simulation",
-      feedback: "Hazbot: Hazbot: You haven’t run the model yet. Add sparks and run the model first.",
+      feedback: "Hazbot: You haven’t run the model yet. Add sparks and run the model first.",
       visualFeedback: "Arrows pointing to the spark tool and the Play button",
       expression: "NOT ranSimulation",
     },
