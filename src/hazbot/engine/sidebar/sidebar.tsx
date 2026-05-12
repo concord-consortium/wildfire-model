@@ -23,7 +23,6 @@ export interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ title }) => {
   const { engine, appRulesVersion, factorVariableValues, matchedCategory, perCategoryTruth } = useAnalysisEngine();
   const ruleSetId = engine.ruleSet?.id ?? engine.requestedRuleSetId ?? "(none)";
-  const loadError = engine.errors.find((e) => e.kind === "load-failure" || e.kind === "parse-error");
 
   return (
     <div className="hazbot-sidebar">
@@ -37,14 +36,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ title }) => {
         </span>
       </header>
 
-      {loadError && (
-        <div className="hazbot-sidebar-section">
-          <div className="hazbot-sidebar-section-title">Load error</div>
-          <div className="hazbot-sidebar-error">
-            {renderError(loadError, { readingsLength: engine.readings.length }).message}
-          </div>
-        </div>
-      )}
+      <ErrorsPanel errors={engine.errors} readings={engine.readings} />
 
       {engine.ruleSet && (
         <CategoriesPanel
@@ -59,10 +51,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ title }) => {
       )}
 
       {/* Req 17 case (b): when ruleSet is undefined (missing-rule-set), the sidebar
-          shows only the load-error banner, the rule-set-id fallback (in the header),
-          and the engine errors panel. Readings + factor variables would be either
-          empty (no consume happens — engine is inactive) or impl-default fallbacks
-          that mislead the developer. */}
+          shows only the errors panel (at top) and the rule-set-id fallback (in the
+          header). Readings + factor variables would be either empty (no consume
+          happens — engine is inactive) or impl-default fallbacks that mislead the
+          developer. */}
       {engine.ruleSet && <ReadingsPanel readings={engine.readings} />}
       {engine.ruleSet && (
         <FactorVariablesPanel
@@ -70,7 +62,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ title }) => {
           showFallbackNote={!engine.isActive}
         />
       )}
-      <ErrorsPanel errors={engine.errors} readings={engine.readings} />
     </div>
   );
 };
@@ -104,8 +95,9 @@ const CategoriesPanel: React.FC<{
 };
 
 // The category row shows status icon + cat number + studentAction + the truth-colored
-// expression by default. Click the row's header to expand: feedback (student-facing
-// message) + visualFeedback (visual cue description) + the parsed AST.
+// expression by default. Click anywhere on the card to expand: feedback (student-facing
+// message) + visualFeedback (visual cue description) + the parsed AST + WITH witness
+// detail (single open state covers all of these).
 const CategoryRow: React.FC<{
   cat: { id: number; studentAction: string; feedback: string; visualFeedback: string; expression: string };
   truth: Parameters<typeof ExpressionRenderer>[0]["tree"] | undefined;
@@ -121,21 +113,31 @@ const CategoryRow: React.FC<{
   const truthIconClass = isActive
     ? (truth?.truth ? "hazbot-sidebar-icon-true" : "hazbot-sidebar-icon-false")
     : "hazbot-sidebar-muted";
+  const toggle = () => setOpen((x) => !x);
+  // Whole card is clickable: role=button + Enter/Space activation for keyboard parity.
+  const onKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggle();
+    }
+  };
   return (
-    <div className={`hazbot-sidebar-entry ${matched ? "hazbot-sidebar-category-matched" : ""}`}>
-      <button
-        type="button"
-        className="hazbot-sidebar-button"
-        onClick={() => setOpen((x) => !x)}
-        aria-expanded={open}
-        title={open ? "Hide category details" : "Show category details"}
-      >
+    <div
+      className={`hazbot-sidebar-entry hazbot-sidebar-category-row ${matched ? "hazbot-sidebar-category-matched" : ""}`}
+      role="button"
+      tabIndex={0}
+      aria-expanded={open}
+      onClick={toggle}
+      onKeyDown={onKeyDown}
+      title={open ? "Hide category details" : "Show category details"}
+    >
+      <div className="hazbot-sidebar-category-header">
         <strong>{open ? "▾" : "▸"} <span className={truthIconClass}>{truthIcon}</span> {cat.id}:</strong>
         {cat.studentAction && <span> {cat.studentAction}</span>}
-      </button>
+      </div>
       <div className="hazbot-sidebar-category-expression">
         {isActive && truth
-          ? <ExpressionRenderer tree={truth} />
+          ? <ExpressionRenderer tree={truth} expanded={open} />
           : <span>{cat.expression}</span>}
       </div>
       {open && (

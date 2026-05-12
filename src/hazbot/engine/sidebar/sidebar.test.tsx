@@ -81,7 +81,7 @@ describe("Sidebar (substrate, generic over TReading)", () => {
     expect(screen.getByText(/Step 1 done/)).toBeInTheDocument();
   });
 
-  it("renders the load-error banner when engine is inactive due to bad rule-set id", () => {
+  it("renders the errors panel when engine is inactive due to bad rule-set id", () => {
     const engine = new Engine<TestReading, TestDefaults>({
       requestedRuleSetId: "missing",
       factorVariables: { ranSimulation: ranSimulationImpl },
@@ -90,9 +90,9 @@ describe("Sidebar (substrate, generic over TReading)", () => {
     });
     const Wrapper = wrap(engine);
     render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
-    expect(screen.getByText(/Load error/)).toBeInTheDocument();
-    // The same error appears in both the banner and the errors panel — both should render.
-    expect(screen.getAllByText(/Rule set not found: missing/).length).toBeGreaterThanOrEqual(1);
+    // Load-failure surfaces in the Errors / Warnings panel (now at top of sidebar).
+    expect(screen.getByText(/Errors \/ Warnings/)).toBeInTheDocument();
+    expect(screen.getByText(/Rule set not found: missing/)).toBeInTheDocument();
   });
 
   it("re-renders readings count when consume() ticks the snapshot", () => {
@@ -138,14 +138,13 @@ describe("Sidebar (substrate, generic over TReading)", () => {
     });
     const Wrapper = wrap(engine);
     render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
-    // Per Req 17 case (b): sidebar shows only the load-error banner, rule-set-id
-    // fallback (in header), and the engine errors panel — no Categories, Readings,
-    // or Factor Variables panels.
+    // Per Req 17 case (b): sidebar shows only the engine errors panel (at top) and
+    // the rule-set-id fallback (in the header) — no Categories, Readings, or Factor
+    // Variables panels.
     expect(screen.queryByText(/^Categories$/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^Readings/)).not.toBeInTheDocument();
     expect(screen.queryByText(/^Factor Variables$/)).not.toBeInTheDocument();
-    // Load error + errors panel still visible.
-    expect(screen.getByText(/Load error/)).toBeInTheDocument();
+    // Errors panel still visible.
     expect(screen.getByText(/Errors \/ Warnings/)).toBeInTheDocument();
   });
 
