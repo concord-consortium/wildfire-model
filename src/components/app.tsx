@@ -14,7 +14,8 @@ import { LogMonitor } from "@concord-consortium/log-monitor";
 import { getUrlConfig } from "../config";
 import { log } from "../log";
 import Shutterbug from "shutterbug";
-import { AnalysisEngineProvider, Sidebar } from "../hazbot/engine";
+import { AnalysisEngineProvider } from "../hazbot/engine";
+import { Sidebar } from "../hazbot/engine/sidebar";
 import { APP_RULES_VERSION, getAnalysisEngine } from "../hazbot/wildfire";
 
 import css from "./app.scss";

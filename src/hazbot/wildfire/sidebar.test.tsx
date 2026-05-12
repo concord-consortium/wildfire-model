@@ -1,6 +1,7 @@
 import * as React from "react";
 import { render, screen, act } from "@testing-library/react";
-import { AnalysisEngineProvider, Engine, Sidebar } from "../engine";
+import { AnalysisEngineProvider, Engine } from "../engine";
+import { Sidebar } from "../engine/sidebar";
 import { ruleSets } from "../rule-sets";
 import { factorVariables } from "./factor-variables";
 import { simProps } from "./sim-props";
