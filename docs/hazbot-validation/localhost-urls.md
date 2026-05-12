@@ -139,6 +139,7 @@ Multiple categories can match simultaneously — the engine picks the **highest-
 - **Categories with `WITH`** (e.g. `ranSimulation WITH OneSparkPerZone …`) iterate across *all* readings — once true on any reading, the clause stays true even after subsequent runs change conditions. Use **Reload** + page navigation to fully clear.
 - **Stubbed sim-props always return `false`** — currently `SparksAtTopAndBottom` and `sawIntenseFire`. Categories that require them be `true` (e.g. ruleset 25 Cat 6, ruleset 34 Cat 5) are **unreachable** until implemented.
 - **Empty `defaults: {}`** in rule-set modules blocks engine load entirely — the sidebar shows `Missing defaults: <id> · <var> reads defaults path …`. Currently affects rulesets 32–35. Defaults must be filled into the source Google Sheet, then re-extracted via [scripts/extract-hazbot-sheets.js](../../scripts/extract-hazbot-sheets.js).
+- **Set-valued factor variables accumulate across the whole session.** `uniqueWindValuesUsed` / `uniqueNonZeroWindValuesUsed` fold over every `SimulationStarted` reading in `engine.readings`, not just the most recent one. Validating ruleset 24 Cat 4 (`NOT (uniqueWindValuesUsed.size > 1) AND uniqueNonZeroWindValuesUsed.size > 0`) requires a **full page reload before** the wind-non-zero run, not just Restart — otherwise a leftover zero-wind reading from a Cat 2/3 run inflates `uniqueWindValuesUsed.size` to 2 and the match jumps straight to Cat 5.
 
 ### Current validation status (snapshot — 2026-05-11)
 

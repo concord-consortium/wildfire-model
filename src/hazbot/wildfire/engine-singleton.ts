@@ -25,12 +25,22 @@ export function getAnalysisEngine(): Engine<WildfireReading, WildfireDefaults> |
   // EngineError.ruleSetId) work uniformly.
   const requestedRuleSetId = cfg.hazbotRules !== undefined ? String(cfg.hazbotRules) : undefined;
   const ruleSet = requestedRuleSetId ? ruleSets[requestedRuleSetId] : undefined;
-  const engine = new Engine<WildfireReading, WildfireDefaults>({
+  // Forward the latest reading to translate so it can downgrade
+  // `ChartTabShown`/`ChartTabHidden` to no-ops when no run is in progress (the
+  // modifier would orphan, but `GraphOpen` already captures the state via
+  // `ambientState.chartTabOpenAtStart` at the next `SimulationStarted`).
+  // The closure captures `engine` by reference; its body only runs at consume
+  // time, after the `new Engine(...)` initializer has assigned to `engine`.
+  const engine: Engine<WildfireReading, WildfireDefaults> = new Engine<WildfireReading, WildfireDefaults>({
     ruleSet,
     requestedRuleSetId,
     factorVariables,
     simProps,
-    translate,
+    translate: (event, sessionId) => {
+      const readings = engine.readings;
+      const last = readings.length > 0 ? readings[readings.length - 1] : undefined;
+      return translate(event, sessionId, last);
+    },
     runStartTriggers: ["SimulationStarted"],
   });
   // Step 14 wires src/log.ts to detect this just-constructed active engine and

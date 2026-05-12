@@ -8,7 +8,11 @@ export type TranslateResult =
   | { kind: "modifier"; update: ReadingUpdate }
   | { kind: "no-op" };
 
-export function translate(event: ConsumedEvent, sessionId: string): TranslateResult {
+export function translate(
+  event: ConsumedEvent,
+  sessionId: string,
+  latestReading?: WildfireReading,
+): TranslateResult {
   switch (event.name) {
     case "SimulationStarted": {
       const data = (event.data ?? {}) as Partial<WildfireReading>;
@@ -38,9 +42,20 @@ export function translate(event: ConsumedEvent, sessionId: string): TranslateRes
       return { kind: "trigger", reading };
     }
     case "ChartTabShown":
-      return { kind: "modifier", update: { source: "ChartTabShown", value: true, at: event.at } };
-    case "ChartTabHidden":
-      return { kind: "modifier", update: { source: "ChartTabHidden", value: false, at: event.at } };
+    case "ChartTabHidden": {
+      // Only emit as a modifier when a run is in progress (latest reading is a
+      // SimulationStarted that hasn't yet ended). Otherwise the substrate's
+      // orphan-modifier detector would emit a noisy "no-prior-trigger" or
+      // "between-runs" error — but the GraphOpen sim-prop already captures
+      // chart state at the next SimulationStarted via
+      // `ambientState.chartTabOpenAtStart`, so the modifier carries no
+      // additional information here. Silently no-op instead.
+      if (!latestReading || latestReading.triggeredBy !== "SimulationStarted") {
+        return { kind: "no-op" };
+      }
+      const value = event.name === "ChartTabShown";
+      return { kind: "modifier", update: { source: event.name, value, at: event.at } };
+    }
     case "SimulationRestarted":
     case "SimulationReloaded":
     case "TopBarReloadButtonClicked":
