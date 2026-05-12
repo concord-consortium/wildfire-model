@@ -255,10 +255,14 @@ const SimPropsPanel: React.FC<{ values: Record<string, boolean | null> }> = ({ v
       {entries.map(([name, value]) => (
         <div key={name} className="hazbot-sidebar-entry">
           <strong>{name}</strong>: {value === null
-            ? <span
+            ? (
+              <span
                 className="hazbot-sidebar-muted"
                 title="Sim-props evaluate per-reading; no run-start reading has been recorded yet, so this value is undefined."
-              >n/a</span>
+              >
+                n/a
+              </span>
+            )
             : String(value)}
         </div>
       ))}
