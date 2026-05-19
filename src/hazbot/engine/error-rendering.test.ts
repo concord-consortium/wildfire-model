@@ -128,4 +128,68 @@ describe("renderError", () => {
       message: "Stub not yet implemented: SparksAtTopAndBottom",
     });
   });
+
+  describe("temporal variants", () => {
+    it("renders temporal-validation for a factor variable", () => {
+      const e: EngineError = {
+        kind: "temporal-validation", ruleSetId: "23", implName: "ranSimulation",
+        implType: "factorVariable", missingVariableName: "fooVar", at: 0,
+      };
+      const view = renderError(e);
+      expect(view.severity).toBe("error");
+      expect(view.message).toContain("factor variable ranSimulation");
+      expect(view.message).toContain('temporalReads "fooVar"');
+      expect(view.message).toContain("ruleset 23");
+    });
+
+    it("renders temporal-validation for a sim-prop", () => {
+      const e: EngineError = {
+        kind: "temporal-validation", ruleSetId: "25", implName: "GraphOpen",
+        implType: "simProp", missingVariableName: "chartTabOpen", at: 0,
+      };
+      const view = renderError(e);
+      expect(view.severity).toBe("error");
+      expect(view.message).toContain("sim-prop GraphOpen");
+      expect(view.message).toContain('temporalReads "chartTabOpen"');
+    });
+
+    it("renders temporal-reducer-error with variable + event + thrown", () => {
+      const e: EngineError = {
+        kind: "temporal-reducer-error", ruleSetId: "23", variableName: "v",
+        event: { name: "X", at: 0 }, thrown: new Error("boom"), at: 0,
+      };
+      const view = renderError(e);
+      expect(view.severity).toBe("error");
+      expect(view.message).toContain("v");
+      expect(view.message).toContain("X");
+      expect(view.message).toContain("boom");
+    });
+
+    it("renders trigger-state-change-overlap", () => {
+      const e: EngineError = {
+        kind: "trigger-state-change-overlap", ruleSetId: "23",
+        variableName: "v", eventName: "SimulationStarted", factorVariableName: "ranSimulation", at: 0,
+      };
+      const view = renderError(e);
+      expect(view.severity).toBe("error");
+      expect(view.message).toContain("v");
+      expect(view.message).toContain("SimulationStarted");
+      expect(view.message).toContain("ranSimulation");
+      expect(view.message).toContain("ruleset 23");
+    });
+
+    it("renders temporal-initial-values-mismatch with all three parts", () => {
+      const e: EngineError = {
+        kind: "temporal-initial-values-mismatch", ruleSetId: "23",
+        missing: ["a"], unknown: ["b"],
+        typeMismatches: [{ name: "c", expectedType: "boolean", actualType: "string" }],
+        at: 0,
+      };
+      const view = renderError(e);
+      expect(view.severity).toBe("error");
+      expect(view.message).toContain("missing: a");
+      expect(view.message).toContain("unknown: b");
+      expect(view.message).toContain("c expected boolean, got string");
+    });
+  });
 });

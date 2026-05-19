@@ -9,6 +9,7 @@ export type {
 export { EngineConstructionError } from "./types";
 export { Engine } from "./engine";
 export { computeMatchedCategoryForEngine } from "./evaluator";
+export { currentTemporal } from "./temporal";
 export type { EngineOpts } from "./engine";
 export type { Expression } from "./parser";
 export { ParseError } from "./parser";
