@@ -7,12 +7,27 @@ export interface BaseReading {
   at: number;
   sessionId: string;
   updates: ReadingUpdate[];
+  temporalHistory: TemporalVariableChange[];
 }
 
 export interface ReadingUpdate {
   at: number;
   source: string;
   value: unknown;
+}
+
+export interface TemporalVariableChange {
+  at: number;
+  name: string;
+  value: unknown;
+  eventName: string;
+}
+
+export interface TemporalVariableImpl<V = unknown> {
+  name: string;
+  initialValue: V;
+  acceptedEvents: string[];
+  reduce: (currentValue: V, event: ConsumedEvent) => V;
 }
 
 export interface ConsumedEvent {
@@ -52,6 +67,7 @@ export interface FactorVariableDef {
 export interface FactorVariableImpl<V = unknown, TReading extends BaseReading = BaseReading, TDefaults = unknown> {
   ambientStateKeys?: { [triggerEventType: string]: string[] };
   requiredDefaults?: string[];
+  temporalReads?: string[];
   // Substrate's catch handler reads `defaultValue` on impl throw (per ENG-1).
   defaultValue: V;
   isStub?: boolean;
@@ -61,6 +77,7 @@ export interface FactorVariableImpl<V = unknown, TReading extends BaseReading = 
 export interface SimPropImpl<TReading extends BaseReading = BaseReading, TDefaults = unknown> {
   ambientStateKeys?: { [triggerEventType: string]: string[] };
   requiredDefaults?: string[];
+  temporalReads?: string[];
   defaultValue: boolean;
   isStub?: boolean;
   evaluate: (reading: TReading, defaults: TDefaults) => boolean;
@@ -85,4 +102,32 @@ export type EngineError =
       kind: "impl-eval-throw"; ruleSetId: string; implName: string;
       implKind: "factor-variable" | "sim-prop"; readingIndex?: number; thrown: unknown; at: number;
     }
-  | { kind: "stub-warning"; stubName: string; at: number };
+  | { kind: "stub-warning"; stubName: string; at: number }
+  | {
+      kind: "temporal-validation"; ruleSetId: string; implName: string;
+      implType: "factorVariable" | "simProp"; missingVariableName: string; at: number;
+    }
+  | {
+      kind: "temporal-reducer-error"; ruleSetId: string; variableName: string;
+      event: ConsumedEvent; thrown: unknown; at: number;
+    }
+  | {
+      kind: "trigger-state-change-overlap"; ruleSetId: string; variableName: string;
+      eventName: string; factorVariableName: string; at: number;
+    }
+  | {
+      kind: "temporal-initial-values-mismatch"; ruleSetId: string;
+      missing: string[]; unknown: string[];
+      typeMismatches: Array<{ name: string; expectedType: string; actualType: string }>;
+      at: number;
+    };
+
+export class EngineConstructionError extends Error {
+  constructor(
+    public readonly errors: EngineError[],
+    public readonly ruleSetId: string,
+  ) {
+    super(`Engine construction failed for rule set ${ruleSetId} (${errors.length} error(s))`);
+    this.name = "EngineConstructionError";
+  }
+}

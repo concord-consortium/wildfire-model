@@ -2,7 +2,7 @@ import { simProps } from "./sim-props";
 import { WildfireReading } from "./types";
 
 function mkRead(opts: Partial<WildfireReading> = {}): WildfireReading {
-  return { triggeredBy: "SimulationStarted", sessionId: "test", at: 0, updates: [], ...opts };
+  return { triggeredBy: "SimulationStarted", sessionId: "test", at: 0, updates: [], temporalHistory: [], ...opts };
 }
 
 describe("wildfire sim-props", () => {

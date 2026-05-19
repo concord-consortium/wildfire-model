@@ -22,6 +22,7 @@ export function translate(
         sessionId,
         at: event.at,
         updates: [],
+        temporalHistory: [],
         zones: data.zones,
         sparks: data.sparks,
         wind: data.wind,
@@ -37,6 +38,7 @@ export function translate(
         sessionId,
         at: event.at,
         updates: [],
+        temporalHistory: [],
         outcome: data.outcome,
       };
       return { kind: "trigger", reading };

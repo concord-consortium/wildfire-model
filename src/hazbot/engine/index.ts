@@ -4,7 +4,9 @@
 export type {
   BaseReading, ReadingUpdate, ConsumedEvent, EngineError,
   RuleSet, Category, FactorVariableDef, FactorVariableImpl, SimPropImpl,
+  TemporalVariableImpl, TemporalVariableChange,
 } from "./types";
+export { EngineConstructionError } from "./types";
 export { Engine } from "./engine";
 export type { EngineOpts } from "./engine";
 export type { Expression } from "./parser";

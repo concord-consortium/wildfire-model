@@ -15,12 +15,13 @@ function makeTranslate(): EngineOpts<TR, TD>["translate"] {
         sessionId,
         at: event.at,
         updates: [],
+        temporalHistory: [],
         ambientState: (event.ambientState as TR["ambientState"]) ?? {},
       };
       return { kind: "trigger", reading };
     }
     if (event.name === "SimulationEnded") {
-      const reading: TR = { triggeredBy: "SimulationEnded", sessionId, at: event.at, updates: [] };
+      const reading: TR = { triggeredBy: "SimulationEnded", sessionId, at: event.at, updates: [], temporalHistory: [] };
       return { kind: "trigger", reading };
     }
     if (event.name === "ChartTabShown") {

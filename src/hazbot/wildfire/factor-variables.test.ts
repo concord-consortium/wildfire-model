@@ -2,7 +2,7 @@ import { factorVariables } from "./factor-variables";
 import { WildfireDefaults, WildfireReading } from "./types";
 
 function mkRead(triggeredBy: string, opts: Partial<WildfireReading> = {}): WildfireReading {
-  return { triggeredBy, sessionId: "test", at: 0, updates: [], ...opts };
+  return { triggeredBy, sessionId: "test", at: 0, updates: [], temporalHistory: [], ...opts };
 }
 
 describe("wildfire factor variables", () => {

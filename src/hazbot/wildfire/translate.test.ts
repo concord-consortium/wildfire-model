@@ -38,7 +38,7 @@ describe("wildfire translate", () => {
 
   it("maps ChartTabShown / ChartTabHidden to modifier updates when a run is in progress", () => {
     const inRun: WildfireReading = {
-      triggeredBy: "SimulationStarted", sessionId: "s", at: 50, updates: [],
+      triggeredBy: "SimulationStarted", sessionId: "s", at: 50, updates: [], temporalHistory: [],
     };
     const shown = translate(ev("ChartTabShown"), "s", inRun);
     const hidden = translate(ev("ChartTabHidden"), "s", inRun);
@@ -56,7 +56,7 @@ describe("wildfire translate", () => {
     expect(translate(ev("ChartTabHidden"), "s").kind).toBe("no-op");
     // Latest reading exists but is a run-end trigger (between-runs case).
     const ended: WildfireReading = {
-      triggeredBy: "SimulationEnded", sessionId: "s", at: 50, updates: [],
+      triggeredBy: "SimulationEnded", sessionId: "s", at: 50, updates: [], temporalHistory: [],
     };
     expect(translate(ev("ChartTabShown"), "s", ended).kind).toBe("no-op");
     expect(translate(ev("ChartTabHidden"), "s", ended).kind).toBe("no-op");

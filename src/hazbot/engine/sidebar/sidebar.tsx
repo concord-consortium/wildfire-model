@@ -331,6 +331,21 @@ function describeErrorContext(e: EngineError, readings: BaseReading[]): React.Re
     case "load-failure":
     case "stub-warning":
       return null;
+    case "temporal-validation":
+      return <>{e.implType === "factorVariable" ? "factor variable" : "sim-prop"} {e.implName} · missing temporal variable {e.missingVariableName}</>;
+    case "temporal-reducer-error":
+      return <>variable {e.variableName} · event: {e.event.name} @ <TimestampInline at={e.event.at} /></>;
+    case "trigger-state-change-overlap":
+      return <>variable {e.variableName} · event {e.eventName} · factor variable {e.factorVariableName}</>;
+    case "temporal-initial-values-mismatch": {
+      const parts: React.ReactNode[] = [];
+      if (e.missing.length > 0) parts.push(<>missing: {e.missing.join(", ")}</>);
+      if (e.unknown.length > 0) parts.push(<>unknown: {e.unknown.join(", ")}</>);
+      if (e.typeMismatches.length > 0) {
+        parts.push(<>type mismatches: {e.typeMismatches.map((t) => `${t.name} (${t.expectedType} → ${t.actualType})`).join("; ")}</>);
+      }
+      return <>{parts.map((p, i) => <React.Fragment key={i}>{i > 0 && " · "}{p}</React.Fragment>)}</>;
+    }
     default: {
       // TS-compile-time exhaustiveness check: adding a new EngineError variant fails
       // the cast and forces the author to add a context-derivation branch here.

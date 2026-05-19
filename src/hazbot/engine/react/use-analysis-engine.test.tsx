@@ -10,7 +10,7 @@ type TD = unknown;
 
 const noopTranslate: EngineOpts<TR, TD>["translate"] = (event, sessionId) => {
   if (event.name === "SimulationStarted") {
-    const reading: TR = { triggeredBy: "SimulationStarted", at: event.at, sessionId, updates: [] };
+    const reading: TR = { triggeredBy: "SimulationStarted", at: event.at, sessionId, updates: [], temporalHistory: [] };
     return { kind: "trigger", reading };
   }
   return { kind: "no-op" };

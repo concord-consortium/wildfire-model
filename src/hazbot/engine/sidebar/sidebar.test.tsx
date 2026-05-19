@@ -15,7 +15,7 @@ const noopTranslate: EngineOpts<TestReading, TestDefaults>["translate"] = (event
   if (event.name === "Triggered") {
     return {
       kind: "trigger",
-      reading: { triggeredBy: "Triggered", at: event.at, sessionId, updates: [], foo: "f", bar: 1 },
+      reading: { triggeredBy: "Triggered", at: event.at, sessionId, updates: [], temporalHistory: [], foo: "f", bar: 1 },
     };
   }
   return { kind: "no-op" };

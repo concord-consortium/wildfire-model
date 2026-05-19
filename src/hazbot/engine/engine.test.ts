@@ -284,7 +284,7 @@ describe("Engine — listener / snapshot API", () => {
       simProps: {},
       translate: (event, sessionId) => {
         if (event.name === "T1" || event.name === "T2") {
-          return { kind: "trigger", reading: { triggeredBy: event.name, at: event.at, sessionId, updates: [] } };
+          return { kind: "trigger", reading: { triggeredBy: event.name, at: event.at, sessionId, updates: [], temporalHistory: [] } };
         }
         return { kind: "no-op" };
       },
