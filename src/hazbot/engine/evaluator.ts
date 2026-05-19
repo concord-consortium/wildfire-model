@@ -1,6 +1,6 @@
 import { BaseReading, FactorVariableImpl, RuleSet, SimPropImpl } from "./types";
 import { Expression, Operand } from "./parser";
-import { CachedAst, PARSE_ERROR_SENTINEL } from "./engine";
+import { CachedAst, Engine, PARSE_ERROR_SENTINEL } from "./engine";
 import {
   FactorVarWrap, SimPropWrap,
   evaluateFactorVarForRender, evaluateSimPropForRender,
@@ -298,4 +298,21 @@ export function computeMatchedCategoryFloor<TR extends BaseReading, TD>(
     if (matched !== null && (floor === null || matched > floor)) floor = matched;
   }
   return floor;
+}
+
+// React-free helper for computing an engine's current matched category.
+// Mirrors the wrap currently inline in use-analysis-engine.ts; also used by
+// replay-determinism and fixture tests so they don't need React on the import path.
+export function computeMatchedCategoryForEngine<TR extends BaseReading, TD>(
+  engine: Engine<TR, TD>,
+): number | null {
+  if (!engine.isActive || !engine.ruleSet) return null;
+  const defaults = engine.ruleSet.defaults as TD | undefined;
+  return computeMatchedCategoryFloor(
+    engine.ruleSet, engine.parsedExpressions,
+    (slice) => makeRenderCtx(
+      slice, defaults, engine.factorVariables, engine.simProps, engine.implsWithIncompleteDefaults,
+    ),
+    engine.readings,
+  );
 }

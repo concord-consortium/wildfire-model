@@ -8,6 +8,7 @@ export type {
 } from "./types";
 export { EngineConstructionError } from "./types";
 export { Engine } from "./engine";
+export { computeMatchedCategoryForEngine } from "./evaluator";
 export type { EngineOpts } from "./engine";
 export type { Expression } from "./parser";
 export { ParseError } from "./parser";

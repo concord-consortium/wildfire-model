@@ -3,7 +3,7 @@ import { Engine, PARSE_ERROR_SENTINEL } from "../engine";
 import { BaseReading } from "../types";
 import { AnalysisEngineContext } from "./context";
 import {
-  computeMatchedCategoryFloor, evaluateLeaf, makeRenderCtx, LeafTruth,
+  computeMatchedCategoryForEngine, evaluateLeaf, makeRenderCtx, LeafTruth,
 } from "../evaluator";
 import { evaluateFactorVarForRender, evaluateSimPropForRender } from "../safely-evaluate-impl";
 
@@ -59,14 +59,9 @@ function computeView<TR extends BaseReading, TD>(
   });
 
   // matchedCategory + perCategoryTruth short-circuit when !isActive (per EXT-9).
-  let matchedCategory: number | null = null;
+  const matchedCategory = computeMatchedCategoryForEngine(engine);
   const perCategoryTruth: Record<number, LeafTruth> = {};
   if (engine.isActive && engine.ruleSet) {
-    matchedCategory = computeMatchedCategoryFloor(
-      engine.ruleSet, engine.parsedExpressions,
-      (slice) => makeRenderCtx(slice, defaults, engine.factorVariables, engine.simProps, engine.implsWithIncompleteDefaults),
-      engine.readings,
-    );
     const ctx = makeRenderCtx(
       engine.readings, defaults, engine.factorVariables, engine.simProps, engine.implsWithIncompleteDefaults,
     );
