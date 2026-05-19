@@ -1,12 +1,13 @@
 import {
-  BaseReading, ConsumedEvent, EngineError, FactorVariableImpl, ReadingUpdate,
-  RuleSet, SimPropImpl,
+  BaseReading, ConsumedEvent, EngineConstructionError, EngineError, FactorVariableImpl, ReadingUpdate,
+  RuleSet, SimPropImpl, TemporalVariableChange, TemporalVariableImpl,
 } from "./types";
 import { Expression, parse, ParseError } from "./parser";
 import { generateSessionId } from "./session-id";
 import { validateDefaultsPath } from "./validate-defaults";
 import { walkReferences } from "./walk-references";
 import { findLast } from "./find-last";
+import { runtimeType } from "./runtime-type";
 
 export interface EngineOpts<TReading extends BaseReading, TDefaults = unknown> {
   ruleSet?: RuleSet<TDefaults>;
@@ -18,6 +19,16 @@ export interface EngineOpts<TReading extends BaseReading, TDefaults = unknown> {
     | { kind: "modifier"; update: ReadingUpdate }
     | { kind: "no-op" };
   runStartTriggers?: string[];
+  temporalVariables?: Record<string, TemporalVariableImpl<unknown>>;
+  initialTemporalValues?: Record<string, unknown>;
+  // Used by the bridge's EngineConstructionError catch path to inject caught
+  // construction errors into a placeholder engine without post-construction
+  // mutation. When provided AND non-empty, the synthetic `load-failure:
+  // missing-rule-set` entry from the `ruleSet === undefined` branch is
+  // suppressed — the caller-supplied errors are the authoritative diagnostic.
+  // An empty `initialErrors` array falls back to the synthetic entry so the
+  // load-blocking sentinel is never silently dropped.
+  initialErrors?: EngineError[];
 }
 
 // Sentinel for AST cache slots that failed to parse.
@@ -45,6 +56,15 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
   // to scope ambient-state validation to only referenced impls (Finding 15 /
   // Req 11a "referenced only" rule).
   protected referencedImplNames: Set<string> = new Set();
+
+  temporalVariables: Record<string, TemporalVariableImpl<unknown>> = {};
+  temporalValues: Record<string, unknown> = {};
+  observed: Record<string, boolean> = {};
+  // Hoisted at construction so the substrate's hot path (consume() + R5a seed
+  // loop) iterates a stable array without re-allocating per event. Public-readable
+  // so the sidebar can iterate the same memoized array on every snapshot tick
+  // without re-allocating Object.keys(...) per render.
+  temporalVariableNames: string[] = [];
 
   // Step 4's consume pipeline reads these directly off opts.
   protected translate: EngineOpts<TReading, TDefaults>["translate"];
@@ -78,19 +98,76 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
     this.runStartTriggers = opts.runStartTriggers;
 
     if (opts.ruleSet === undefined) {
-      // Per Req 11a: this is the only rejection mode where ruleSet stays undefined.
-      this.errors.push({
-        kind: "load-failure",
-        reason: "missing-rule-set",
-        ruleSetId: opts.requestedRuleSetId,
-        detail: opts.requestedRuleSetId
-          ? `requested rule set "${opts.requestedRuleSetId}" not found`
-          : "no rule set provided",
-        at: Date.now(),
-      });
+      // Maintenance gate: this branch must remain throw-free.
+      // engine-singleton.ts catches EngineConstructionError and constructs a
+      // placeholder Engine via this same `ruleSet === undefined` path so the
+      // sidebar can render structured errors. The placeholder passes
+      // `temporalVariables: {}` and omits `initialTemporalValues`, short-circuiting
+      // every temporal-variable check; today no other branch can throw here.
+      // The placeholder's caller injects its caught errors via `initialErrors`
+      // — when provided and non-empty, the synthetic `missing-rule-set` entry
+      // below is suppressed in favor of the caller-supplied errors. An empty
+      // `initialErrors` array falls back to the synthetic entry so the
+      // load-blocking sentinel is never silently dropped.
+      if (opts.initialErrors !== undefined && opts.initialErrors.length > 0) {
+        for (const err of opts.initialErrors) this.errors.push(err);
+      } else {
+        // Per Req 11a: this is the only rejection mode where ruleSet stays undefined.
+        this.errors.push({
+          kind: "load-failure",
+          reason: "missing-rule-set",
+          ruleSetId: opts.requestedRuleSetId,
+          detail: opts.requestedRuleSetId
+            ? `requested rule set "${opts.requestedRuleSetId}" not found`
+            : "no rule set provided",
+          at: Date.now(),
+        });
+      }
     } else {
       this.ruleSet = opts.ruleSet;
       this.runLoadTimeValidation();
+    }
+
+    // Initialize temporal-variable state. These run for every Engine instance
+    // (including placeholders): temporalVariables defaults to {} which makes
+    // the hoisted name list empty and every R7 check short-circuit.
+    this.temporalVariables = opts.temporalVariables ?? {};
+    this.temporalVariableNames = Object.keys(this.temporalVariables);
+    for (const name of this.temporalVariableNames) {
+      this.observed[name] = false;
+    }
+
+    // Asymmetric construction-error model (deliberate):
+    // - The temporal R7 variants (temporal-validation, trigger-state-change-overlap,
+    //   temporal-initial-values-mismatch) throw EngineConstructionError. These are
+    //   fundamental misconfigurations where returning an inert-but-live engine
+    //   would invite silent miswiring.
+    // - The existing variants (parse-error, missing-impl, missing-defaults) push to
+    //   this.errors and rely on isActive to gate consume(). These are partial
+    //   brokenness (e.g. one bad category among many) where partial recovery is
+    //   useful.
+    // The bridge handles both shapes cleanly.
+    const constructionErrors: EngineError[] = [];
+    if (opts.initialTemporalValues !== undefined) {
+      this.checkInitialTemporalValues(opts.initialTemporalValues, constructionErrors);
+    }
+    // Initialize temporalValues. Object.freeze is a runtime backstop for R1's
+    // immutability constraint — primitives pass through unchanged; complex-V
+    // values are sealed against later mutation.
+    if (opts.initialTemporalValues !== undefined && constructionErrors.length === 0) {
+      for (const name of this.temporalVariableNames) {
+        this.temporalValues[name] = Object.freeze(opts.initialTemporalValues[name]);
+      }
+    } else {
+      for (const name of this.temporalVariableNames) {
+        this.temporalValues[name] = Object.freeze(this.temporalVariables[name].initialValue);
+      }
+    }
+    this.validateTemporalVariables(constructionErrors);
+
+    if (constructionErrors.length > 0) {
+      const ruleSetId = this.ruleSet?.id ?? opts.requestedRuleSetId ?? "(unknown)";
+      throw new EngineConstructionError(constructionErrors, ruleSetId);
     }
 
     // Always emit the constructor's notify, even with zero listeners — the snapshot
@@ -215,7 +292,97 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
   }
 
   private hasLoadBlockingError(): boolean {
-    return this.errors.some((e) => e.kind === "load-failure" || e.kind === "parse-error");
+    return this.errors.some((e) =>
+      e.kind === "load-failure"
+      || e.kind === "parse-error"
+      || e.kind === "temporal-validation"
+      || e.kind === "trigger-state-change-overlap"
+      || e.kind === "temporal-initial-values-mismatch",
+    );
+  }
+
+  private checkInitialTemporalValues(
+    initialOverride: Record<string, unknown>,
+    constructionErrors: EngineError[],
+  ): void {
+    const ruleSetId = this.ruleSet?.id ?? this.requestedRuleSetId ?? "(unknown)";
+    const declaredNames = Object.keys(this.temporalVariables);
+    const providedNames = Object.keys(initialOverride);
+    const providedSet = new Set(providedNames);
+    const declaredSet = new Set(declaredNames);
+    const missing = declaredNames.filter((n) => !providedSet.has(n));
+    const unknownKeys = providedNames.filter((n) => !declaredSet.has(n));
+    const typeMismatches: { name: string; expectedType: string; actualType: string }[] = [];
+    for (const name of declaredNames) {
+      if (!providedSet.has(name)) continue;
+      const expectedType = runtimeType(this.temporalVariables[name].initialValue);
+      const actualType = runtimeType(initialOverride[name]);
+      if (expectedType !== actualType) typeMismatches.push({ name, expectedType, actualType });
+    }
+    if (missing.length > 0 || unknownKeys.length > 0 || typeMismatches.length > 0) {
+      constructionErrors.push({
+        kind: "temporal-initial-values-mismatch",
+        ruleSetId,
+        missing,
+        unknown: unknownKeys,
+        typeMismatches,
+        at: Date.now(),
+      });
+    }
+  }
+
+  private validateTemporalVariables(constructionErrors: EngineError[]): void {
+    const ruleSetId = this.ruleSet?.id ?? this.requestedRuleSetId ?? "(unknown)";
+
+    // (1) temporal-validation: reference-driven. For every referenced impl,
+    //     check that every name in `temporalReads` matches a declared temporal variable.
+    for (const implName of Array.from(this.referencedImplNames)) {
+      const fvImpl = this.factorVariables[implName];
+      const spImpl = this.simProps[implName];
+      const impl = fvImpl ?? spImpl;
+      if (!impl?.temporalReads) continue;
+      const implType: "factorVariable" | "simProp" = fvImpl ? "factorVariable" : "simProp";
+      for (const varName of impl.temporalReads) {
+        if (!(varName in this.temporalVariables)) {
+          constructionErrors.push({
+            kind: "temporal-validation",
+            ruleSetId,
+            implName,
+            implType,
+            missingVariableName: varName,
+            at: Date.now(),
+          });
+        }
+      }
+    }
+
+    // (2) trigger-state-change-overlap: scan declared temporal variables'
+    //     acceptedEvents against every factor variable's logEvents.
+    if (this.ruleSet) {
+      const logEventsByFactorVar = new Map<string, string>();
+      for (const fvDef of this.ruleSet.factorVariables) {
+        for (const eventName of fvDef.logEvents) {
+          if (!logEventsByFactorVar.has(eventName)) {
+            logEventsByFactorVar.set(eventName, fvDef.name);
+          }
+        }
+      }
+      for (const [varName, impl] of Object.entries(this.temporalVariables)) {
+        for (const eventName of impl.acceptedEvents) {
+          const factorVariableName = logEventsByFactorVar.get(eventName);
+          if (factorVariableName) {
+            constructionErrors.push({
+              kind: "trigger-state-change-overlap",
+              ruleSetId,
+              variableName: varName,
+              eventName,
+              factorVariableName,
+              at: Date.now(),
+            });
+          }
+        }
+      }
+    }
   }
 
   get isActive(): boolean { return !this.hasLoadBlockingError(); }
@@ -233,8 +400,63 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
   // Atomicity (Req 19): single notify at the end of the call iff state mutated.
   consume(event: ConsumedEvent): void {
     if (!this.isActive) return;
-    const result = this.translate(event, this.sessionId);
+
+    // Single `mutated` flag spans the temporal phase and the translate pipeline so
+    // the bottom tick fires exactly once per consume() iff any state mutated.
     let mutated = false;
+
+    // === Temporal-variable phase (R1: two-phase atomicity) ===
+    // Phase 1: buffer reducer outputs. No live mutation.
+    const variableNames = this.temporalVariableNames;  // declaration order per R2
+    type BufferedCommit = { name: string; newValue: unknown; change: TemporalVariableChange };
+    const buffer: BufferedCommit[] = [];
+    let reducerThrew = false;
+    for (const name of variableNames) {
+      const impl = this.temporalVariables[name];
+      if (!impl.acceptedEvents.includes(event.name)) continue;
+      try {
+        // Object.freeze backs R1's immutability constraint at runtime. Primitives
+        // pass through unchanged; complex-V values throw TypeError on mutation in
+        // strict mode (ESM is strict by default). Shallow only.
+        const newValue = Object.freeze(impl.reduce(this.temporalValues[name], event));
+        buffer.push({
+          name,
+          newValue,
+          change: { at: event.at, name, value: newValue, eventName: event.name },
+        });
+      } catch (thrown) {
+        this.errors.push({
+          kind: "temporal-reducer-error",
+          ruleSetId: this.ruleSet?.id ?? this.requestedRuleSetId ?? "(unknown)",
+          variableName: name,
+          event,
+          thrown,
+          at: event.at,
+        });
+        mutated = true;
+        reducerThrew = true;
+        break;  // fail-fast per R1
+      }
+    }
+    if (reducerThrew) {
+      // Phase 2 / translate / trigger evaluation all skipped per R1 fail-fast.
+      // Gate the tick on `mutated` so the single-notify-iff-mutated contract is preserved.
+      if (mutated) this.tickAndNotify();
+      return;
+    }
+
+    // Phase 2: commit. Atomic.
+    const lastReading = this.readings.length > 0 ? this.readings[this.readings.length - 1] : undefined;
+    for (const { name, newValue, change } of buffer) {
+      this.temporalValues[name] = newValue;
+      this.observed[name] = true;
+      if (lastReading) lastReading.temporalHistory.push(change);
+      // If no reading exists yet, the temporalValues/observed commits still happen
+      // but the temporalHistory append is a no-op (R5b).
+    }
+    if (buffer.length > 0) mutated = true;
+
+    const result = this.translate(event, this.sessionId);
     switch (result.kind) {
       case "trigger": {
         // Trigger-time ambient-state validation (Req 3b).
@@ -245,7 +467,21 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
           // Re-walk the impls to attribute missing keys per impl (cardinality per Req 3b).
           this.checkAmbientForTrigger(event.name, ambient, missingPerImpl);
         }
-        if (missingPerImpl.length > 0) {
+        if (missingPerImpl.length === 0) {
+          const reading = result.reading;
+          // R5a seed: every newly-pushed reading carries one entry per declared
+          // temporal variable, capturing the live value at trigger time.
+          for (const name of variableNames) {
+            reading.temporalHistory.push({
+              at: reading.at,
+              name,
+              value: this.temporalValues[name],
+              eventName: event.name,
+            });
+          }
+          this.readings.push(reading);
+          mutated = true;
+        } else {
           for (const { implName, key } of missingPerImpl) {
             this.errors.push({
               kind: "ambient-validation",
@@ -258,19 +494,16 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
             });
           }
           mutated = true;
-        } else {
-          this.readings.push(result.reading);
-          mutated = true;
         }
         break;
       }
       case "modifier": {
-        const lastReading = this.readings.length > 0 ? this.readings[this.readings.length - 1] : undefined;
+        const lastReadingForMod = this.readings.length > 0 ? this.readings[this.readings.length - 1] : undefined;
         const lastFailedTrigger = findLast(
           this.errors,
           (e): e is EngineError & { kind: "ambient-validation" } => e.kind === "ambient-validation",
         );
-        const orphan = this.detectOrphan(lastReading, lastFailedTrigger);
+        const orphan = this.detectOrphan(lastReadingForMod, lastFailedTrigger);
         if (orphan) {
           this.errors.push({
             kind: "orphan-modifier",
@@ -280,14 +513,14 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
             at: event.at,
           });
           mutated = true;
-        } else if (lastReading) {
-          lastReading.updates.push(result.update);
+        } else if (lastReadingForMod) {
+          lastReadingForMod.updates.push(result.update);
           mutated = true;
         }
         break;
       }
       case "no-op":
-        // Intentionally no mutation, no tick.
+        // Intentionally no mutation from translate, but the temporal phase may have ticked.
         break;
       default: {
         const _exhaustive: never = result;

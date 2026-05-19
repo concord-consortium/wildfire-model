@@ -1,6 +1,6 @@
 import { Engine } from "./engine";
 import {
-  BaseReading, FactorVariableImpl, RuleSet, SimPropImpl,
+  BaseReading, EngineConstructionError, FactorVariableImpl, RuleSet, SimPropImpl, TemporalVariableImpl,
 } from "./types";
 
 interface TestReading extends BaseReading {
@@ -321,5 +321,255 @@ describe("Engine — listener / snapshot API", () => {
     unsub = e.subscribe(later);
     e.forceNotify();
     expect(later).not.toHaveBeenCalled();
+  });
+});
+
+describe("Engine — temporal variables (R18 construction + dispatch)", () => {
+  const boolReducer = (prev: boolean, event: { name: string }): boolean => event.name === "ChartTabShown";
+  function makeBoolVar(name = "chartTabOpen"): TemporalVariableImpl<boolean> {
+    return { name, initialValue: false, acceptedEvents: ["ChartTabShown", "ChartTabHidden"], reduce: boolReducer };
+  }
+
+  it("initializes temporalValues from initialValue and observed=false for every declared variable", () => {
+    const e = new Engine<TestReading, TestDefaults>({
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: makeImpl() },
+      simProps: {},
+      translate: noopTranslate,
+      temporalVariables: { chartTabOpen: makeBoolVar() as TemporalVariableImpl<unknown> },
+    });
+    expect(e.temporalValues.chartTabOpen).toBe(false);
+    expect(e.observed.chartTabOpen).toBe(false);
+    expect(e.temporalVariableNames).toEqual(["chartTabOpen"]);
+  });
+
+  it("accepts initialTemporalValues override; observed still false everywhere", () => {
+    const e = new Engine<TestReading, TestDefaults>({
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: makeImpl() },
+      simProps: {},
+      translate: noopTranslate,
+      temporalVariables: { chartTabOpen: makeBoolVar() as TemporalVariableImpl<unknown> },
+      initialTemporalValues: { chartTabOpen: true },
+    });
+    expect(e.temporalValues.chartTabOpen).toBe(true);
+    expect(e.observed.chartTabOpen).toBe(false);
+  });
+
+  it("consume invokes matching reducer; non-matching events leave temporalValues unchanged", () => {
+    const e = new Engine<TestReading, TestDefaults>({
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: makeImpl() },
+      simProps: {},
+      translate: noopTranslate,
+      temporalVariables: { chartTabOpen: makeBoolVar() as TemporalVariableImpl<unknown> },
+    });
+    e.consume({ name: "ChartTabShown", at: 10 });
+    expect(e.temporalValues.chartTabOpen).toBe(true);
+    expect(e.observed.chartTabOpen).toBe(true);
+    e.consume({ name: "UnrelatedEvent", at: 20 });
+    expect(e.temporalValues.chartTabOpen).toBe(true);  // unchanged
+  });
+
+  it("single event matching multiple variables invokes reducers in declaration order", () => {
+    const calls: string[] = [];
+    const varA: TemporalVariableImpl<number> = {
+      name: "a", initialValue: 0, acceptedEvents: ["X"],
+      reduce: (prev) => { calls.push("a"); return prev + 1; },
+    };
+    const varB: TemporalVariableImpl<number> = {
+      name: "b", initialValue: 0, acceptedEvents: ["X"],
+      reduce: (prev) => { calls.push("b"); return prev + 1; },
+    };
+    const e = new Engine<TestReading, TestDefaults>({
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: makeImpl() },
+      simProps: {},
+      translate: noopTranslate,
+      temporalVariables: {
+        a: varA as TemporalVariableImpl<unknown>,
+        b: varB as TemporalVariableImpl<unknown>,
+      },
+    });
+    e.consume({ name: "X", at: 1 });
+    expect(calls).toEqual(["a", "b"]);
+    expect(e.temporalValues.a).toBe(1);
+    expect(e.temporalValues.b).toBe(1);
+  });
+});
+
+function captureConstructionError(build: () => unknown): EngineConstructionError {
+  try { build(); }
+  catch (e) {
+    if (e instanceof EngineConstructionError) return e;
+    throw e;
+  }
+  throw new Error("expected EngineConstructionError throw");
+}
+
+describe("Engine — R18e trigger/state-change overlap guard", () => {
+  it("throws EngineConstructionError when a temporal variable's acceptedEvents overlaps a factor variable's logEvents", () => {
+    const overlappingVar: TemporalVariableImpl<boolean> = {
+      name: "v", initialValue: false, acceptedEvents: ["SimulationStarted"],
+      reduce: () => true,
+    };
+    const ruleSet = makeRuleSet({
+      factorVariables: [{ name: "ranSimulation", definition: "", logEvents: ["SimulationStarted"], details: "" }],
+    });
+    const caught = captureConstructionError(() => new Engine<TestReading, TestDefaults>({
+      ruleSet,
+      factorVariables: { ranSimulation: makeImpl() },
+      simProps: {},
+      translate: noopTranslate,
+      temporalVariables: { v: overlappingVar as TemporalVariableImpl<unknown> },
+    }));
+    const overlap = caught.errors.find((er) => er.kind === "trigger-state-change-overlap");
+    if (overlap?.kind !== "trigger-state-change-overlap") {
+      throw new Error("expected trigger-state-change-overlap error");
+    }
+    expect(overlap.variableName).toBe("v");
+    expect(overlap.eventName).toBe("SimulationStarted");
+    expect(overlap.factorVariableName).toBe("ranSimulation");
+    expect(caught.ruleSetId).toBe("test");
+  });
+});
+
+describe("Engine — R18f initialTemporalValues exhaustiveness + type-shape", () => {
+  const boolVar: TemporalVariableImpl<boolean> = {
+    name: "foo", initialValue: false, acceptedEvents: ["X"],
+    reduce: () => true,
+  };
+
+  function buildOpts(initialTemporalValues: Record<string, unknown>) {
+    return {
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: makeImpl() },
+      simProps: {},
+      translate: noopTranslate,
+      temporalVariables: { foo: boolVar as TemporalVariableImpl<unknown> },
+      initialTemporalValues,
+    };
+  }
+
+  function getMismatch(caught: EngineConstructionError): {
+    missing: string[]; unknown: string[];
+    typeMismatches: Array<{ name: string; expectedType: string; actualType: string }>;
+  } {
+    const m = caught.errors.find((er) => er.kind === "temporal-initial-values-mismatch");
+    if (m?.kind !== "temporal-initial-values-mismatch") throw new Error("expected mismatch error");
+    return { missing: m.missing, unknown: m.unknown, typeMismatches: m.typeMismatches };
+  }
+
+  it("missing key produces temporal-initial-values-mismatch with missing populated", () => {
+    const caught = captureConstructionError(() => new Engine<TestReading, TestDefaults>(buildOpts({})));
+    const m = getMismatch(caught);
+    expect(m.missing).toEqual(["foo"]);
+    expect(m.unknown).toEqual([]);
+    expect(m.typeMismatches).toEqual([]);
+  });
+
+  it("unknown key produces temporal-initial-values-mismatch with unknown populated", () => {
+    const caught = captureConstructionError(() => new Engine<TestReading, TestDefaults>(buildOpts({ foo: true, typo: true })));
+    const m = getMismatch(caught);
+    expect(m.missing).toEqual([]);
+    expect(m.unknown).toEqual(["typo"]);
+    expect(m.typeMismatches).toEqual([]);
+  });
+
+  it("string override for boolean variable produces type-mismatch", () => {
+    const caught = captureConstructionError(() => new Engine<TestReading, TestDefaults>(buildOpts({ foo: "yes" })));
+    const m = getMismatch(caught);
+    expect(m.typeMismatches).toEqual([{ name: "foo", expectedType: "boolean", actualType: "string" }]);
+  });
+
+  it("object override for null initialValue produces type-mismatch", () => {
+    const nullVar: TemporalVariableImpl<unknown> = {
+      name: "n", initialValue: null, acceptedEvents: ["X"], reduce: () => null,
+    };
+    const caught = captureConstructionError(() => new Engine<TestReading, TestDefaults>({
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: makeImpl() },
+      simProps: {},
+      translate: noopTranslate,
+      temporalVariables: { n: nullVar },
+      initialTemporalValues: { n: {} },
+    }));
+    const m = getMismatch(caught);
+    expect(m.typeMismatches).toEqual([{ name: "n", expectedType: "null", actualType: "object" }]);
+  });
+
+  it("happy path: exhaustive correctly-typed override constructs cleanly", () => {
+    const e = new Engine<TestReading, TestDefaults>(buildOpts({ foo: true }));
+    expect(e.temporalValues.foo).toBe(true);
+    expect(e.observed.foo).toBe(false);
+  });
+});
+
+describe("Engine — initialErrors suppression contract", () => {
+  it("ruleSet undefined + non-empty initialErrors → errors equals supplied entries; isActive false", () => {
+    const supplied: import("./types").EngineError[] = [{
+      kind: "temporal-validation",
+      ruleSetId: "23",
+      implName: "GraphOpen",
+      implType: "simProp",
+      missingVariableName: "missingVar",
+      at: 1234,
+    }];
+    const e = new Engine<TestReading, TestDefaults>({
+      requestedRuleSetId: "23",
+      factorVariables: {},
+      simProps: {},
+      translate: noopTranslate,
+      initialErrors: supplied,
+    });
+    expect(e.errors).toEqual(supplied);
+    expect(e.isActive).toBe(false);
+  });
+
+  it("ruleSet undefined + empty initialErrors → synthetic missing-rule-set entry; isActive false", () => {
+    const e = new Engine<TestReading, TestDefaults>({
+      requestedRuleSetId: "23",
+      factorVariables: {},
+      simProps: {},
+      translate: noopTranslate,
+      initialErrors: [],
+    });
+    expect(e.errors).toHaveLength(1);
+    expect(e.errors[0]).toEqual(expect.objectContaining({ kind: "load-failure", reason: "missing-rule-set", ruleSetId: "23" }));
+    expect(e.isActive).toBe(false);
+  });
+
+  it("ruleSet undefined + initialErrors absent → synthetic missing-rule-set entry (existing behavior pinned)", () => {
+    const e = new Engine<TestReading, TestDefaults>({
+      requestedRuleSetId: "23",
+      factorVariables: {},
+      simProps: {},
+      translate: noopTranslate,
+    });
+    expect(e.errors).toHaveLength(1);
+    expect(e.errors[0]).toEqual(expect.objectContaining({ kind: "load-failure", reason: "missing-rule-set" }));
+    expect(e.isActive).toBe(false);
+  });
+
+  it("ruleSet undefined + multiple R7 initialErrors → all surfaced; isActive false via extended hasLoadBlockingError", () => {
+    const supplied: import("./types").EngineError[] = [
+      {
+        kind: "temporal-validation", ruleSetId: "23", implName: "X",
+        implType: "factorVariable", missingVariableName: "v", at: 1,
+      },
+      {
+        kind: "trigger-state-change-overlap", ruleSetId: "23",
+        variableName: "v", eventName: "E", factorVariableName: "f", at: 2,
+      },
+    ];
+    const e = new Engine<TestReading, TestDefaults>({
+      requestedRuleSetId: "23",
+      factorVariables: {},
+      simProps: {},
+      translate: noopTranslate,
+      initialErrors: supplied,
+    });
+    expect(e.errors).toEqual(supplied);
+    expect(e.isActive).toBe(false);
   });
 });

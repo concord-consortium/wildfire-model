@@ -129,5 +129,8 @@ export class EngineConstructionError extends Error {
   ) {
     super(`Engine construction failed for rule set ${ruleSetId} (${errors.length} error(s))`);
     this.name = "EngineConstructionError";
+    // Restore prototype chain — required when targeting ES5/lower for `instanceof`
+    // to work across class boundaries (TS handbook "Extending Built-ins").
+    Object.setPrototypeOf(this, EngineConstructionError.prototype);
   }
 }
