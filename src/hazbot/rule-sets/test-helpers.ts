@@ -9,6 +9,7 @@ import { Engine, EngineOpts, RuleSet } from "../engine";
 import { computeMatchedCategoryFloor, makeRenderCtx } from "../engine/evaluator";
 import { factorVariables } from "../wildfire/factor-variables";
 import { simProps } from "../wildfire/sim-props";
+import { temporalVariables } from "../wildfire/temporal-variables";
 import { translate } from "../wildfire/translate";
 import { WildfireDefaults, WildfireReading } from "../wildfire/types";
 
@@ -18,6 +19,7 @@ export function makeWildfireEngine(ruleSet: RuleSet<WildfireDefaults>): Engine<W
     requestedRuleSetId: ruleSet.id,
     factorVariables,
     simProps,
+    temporalVariables,
     translate,
     runStartTriggers: ["SimulationStarted"],
   };

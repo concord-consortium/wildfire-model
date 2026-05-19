@@ -40,13 +40,13 @@ describe("ruleSet 25 — per-rule-set five-shape sweep", () => {
     const e = makeWildfireEngine(ruleSet25);
     const r = startReading({
       sparks: [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }],
-      ambientState: { chartTabOpenAtStart: false },
+      temporalHistory: [{ at: 0, name: "chartTabOpen", value: false, eventName: "SimulationStarted" }],
     });
     // cat 4: ranSimulation WITH (OneSparkPerZone AND NOT SparksAtTopAndBottom)
     //        OneSparkPerZone=true (2 sparks, distinct zones); SparksAtTopAndBottom=false (stub)
     //        → true
     // cat 5: ranSimulation WITH (OneSparkPerZone AND NOT GraphOpen)
-    //        OneSparkPerZone=true; GraphOpen=false (chartTabOpenAtStart:false, no ChartTabShown)
+    //        OneSparkPerZone=true; GraphOpen=false (chartTabOpen=false; seed false, no appends)
     //        → true
     // cat 6: ranSimulation WITH (OneSparkPerZone AND SparksAtTopAndBottom AND GraphOpen)
     //        SparksAtTopAndBottom=false (stub) → false
@@ -76,7 +76,7 @@ describe("ruleSet 25 — per-rule-set five-shape sweep", () => {
     // The stub keeps cat 6 from matching even when everything else lines up.
     const r = startReading({
       sparks: [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }],
-      ambientState: { chartTabOpenAtStart: true },
+      temporalHistory: [{ at: 0, name: "chartTabOpen", value: true, eventName: "SimulationStarted" }],
     });
     const matched = matchAgainst(ruleSet25, e, [r]);
     expect(matched).not.toBe(6);

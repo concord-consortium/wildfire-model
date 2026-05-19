@@ -89,23 +89,50 @@ describe("wildfire sim-props", () => {
   });
 
   describe("GraphOpen", () => {
-    it("declares ambientStateKeys for SimulationStarted (per AC: GraphOpen ambient validation)", () => {
-      expect(simProps.GraphOpen.ambientStateKeys).toEqual({ SimulationStarted: ["chartTabOpenAtStart"] });
+    it("declares temporalReads for chartTabOpen", () => {
+      expect(simProps.GraphOpen.temporalReads).toEqual(["chartTabOpen"]);
     });
-    it("true when ambientState.chartTabOpenAtStart is true", () => {
-      const r = mkRead({ ambientState: { chartTabOpenAtStart: true } });
-      expect(simProps.GraphOpen.evaluate(r, {})).toBe(true);
-    });
-    it("true when reading.updates contains a ChartTabShown", () => {
+    // R18b corners — sticky-OR over reading.temporalHistory.
+    it("(corner 1) seed-only true → true", () => {
       const r = mkRead({
-        ambientState: { chartTabOpenAtStart: false },
-        updates: [{ source: "ChartTabShown", value: true, at: 100 }],
+        temporalHistory: [{ at: 0, name: "chartTabOpen", value: true, eventName: "SimulationStarted" }],
       });
       expect(simProps.GraphOpen.evaluate(r, {})).toBe(true);
     });
-    it("false when neither condition holds", () => {
-      const r = mkRead({ ambientState: { chartTabOpenAtStart: false } });
+    it("(corner 2) seed false + appended true → true", () => {
+      const r = mkRead({
+        temporalHistory: [
+          { at: 0, name: "chartTabOpen", value: false, eventName: "SimulationStarted" },
+          { at: 50, name: "chartTabOpen", value: true, eventName: "ChartTabShown" },
+        ],
+      });
+      expect(simProps.GraphOpen.evaluate(r, {})).toBe(true);
+    });
+    it("(corner 3) seed true + later appends → true", () => {
+      const r = mkRead({
+        temporalHistory: [
+          { at: 0, name: "chartTabOpen", value: true, eventName: "SimulationStarted" },
+          { at: 50, name: "chartTabOpen", value: false, eventName: "ChartTabHidden" },
+          { at: 80, name: "chartTabOpen", value: true, eventName: "ChartTabShown" },
+        ],
+      });
+      expect(simProps.GraphOpen.evaluate(r, {})).toBe(true);
+    });
+    it("(corner 4) never open → false", () => {
+      const r = mkRead({
+        temporalHistory: [{ at: 0, name: "chartTabOpen", value: false, eventName: "SimulationStarted" }],
+      });
       expect(simProps.GraphOpen.evaluate(r, {})).toBe(false);
+    });
+    it("sticky-OR: close-after-open still resolves to true", () => {
+      const r = mkRead({
+        temporalHistory: [
+          { at: 0, name: "chartTabOpen", value: false, eventName: "SimulationStarted" },
+          { at: 50, name: "chartTabOpen", value: true, eventName: "ChartTabShown" },
+          { at: 80, name: "chartTabOpen", value: false, eventName: "ChartTabHidden" },
+        ],
+      });
+      expect(simProps.GraphOpen.evaluate(r, {})).toBe(true);
     });
   });
 

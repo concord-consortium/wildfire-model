@@ -357,10 +357,16 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
     }
 
     // (2) trigger-state-change-overlap: scan declared temporal variables'
-    //     acceptedEvents against every factor variable's logEvents.
+    //     acceptedEvents against factor variables' logEvents. Scoped to
+    //     `ruleSet.factorVariables` entries that have a corresponding impl in
+    //     `this.factorVariables` — entries without an impl are sim-prop-only
+    //     names that some rule sets (e.g. 25) carry as legacy metadata; those
+    //     are not factor variables in the operational sense and would
+    //     false-positive the overlap check.
     if (this.ruleSet) {
       const logEventsByFactorVar = new Map<string, string>();
       for (const fvDef of this.ruleSet.factorVariables) {
+        if (!(fvDef.name in this.factorVariables)) continue;
         for (const eventName of fvDef.logEvents) {
           if (!logEventsByFactorVar.has(eventName)) {
             logEventsByFactorVar.set(eventName, fvDef.name);

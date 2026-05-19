@@ -75,15 +75,15 @@ const TwoSparks: SimPropImpl<WildfireReading, WildfireDefaults> = {
   evaluate: (reading) => (reading.sparks?.length ?? 0) === 2,
 };
 
-// Reads ambient state (chartTabOpenAtStart) on the witness reading + walks
-// updates for ChartTabShown (per Tech Notes / sheet definition).
+// Sticky-OR over the temporal trail: true if chartTabOpen was ever true at any
+// point during the reading's window. Both the R5a seed entry (capturing the
+// live value at trigger time) and R5b appends (from ChartTabShown during the
+// window) participate; the close-after-open pattern still resolves to true.
 const GraphOpen: SimPropImpl<WildfireReading, WildfireDefaults> = {
   defaultValue: false,
-  ambientStateKeys: { SimulationStarted: ["chartTabOpenAtStart"] },
-  evaluate: (reading) => {
-    if (reading.ambientState?.chartTabOpenAtStart) return true;
-    return reading.updates.some((u) => u.source === "ChartTabShown");
-  },
+  temporalReads: ["chartTabOpen"],
+  evaluate: (reading) =>
+    reading.temporalHistory.some((c) => c.name === "chartTabOpen" && c.value === true),
 };
 
 // Stub (per Req 6 / IMPL-4).
