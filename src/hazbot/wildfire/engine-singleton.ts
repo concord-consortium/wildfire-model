@@ -1,8 +1,9 @@
-import { Engine, ENGINE_VERSION } from "../engine";
+import { Engine, EngineConstructionError, ENGINE_VERSION } from "../engine";
 import { getUrlConfig } from "../../config";
 import { ruleSets } from "../rule-sets";
 import { factorVariables } from "./factor-variables";
 import { simProps } from "./sim-props";
+import { temporalVariables } from "./temporal-variables";
 import { translate } from "./translate";
 import { WildfireDefaults, WildfireReading } from "./types";
 import { APP_RULES_VERSION } from "./rules-version";
@@ -28,28 +29,51 @@ export function getAnalysisEngine(): Engine<WildfireReading, WildfireDefaults> |
   const requestedRuleSetId = cfg.hazbotRules !== undefined ? String(cfg.hazbotRules) : undefined;
   const ruleSet = requestedRuleSetId ? ruleSets[requestedRuleSetId] : undefined;
   // Forward the latest reading to translate so it can downgrade
-  // `ChartTabShown`/`ChartTabHidden` to no-ops when no run is in progress (the
-  // modifier would orphan, but `GraphOpen` already captures the state via
-  // `ambientState.chartTabOpenAtStart` at the next `SimulationStarted`).
+  // `ChartTabShown`/`ChartTabHidden` to no-ops when no run is in progress.
   // The closure captures `engine` by reference; its body only runs at consume
   // time, after the `new Engine(...)` initializer has assigned to `engine`.
-  const engine: Engine<WildfireReading, WildfireDefaults> = new Engine<WildfireReading, WildfireDefaults>({
-    ruleSet,
-    requestedRuleSetId,
-    factorVariables,
-    simProps,
-    translate: (event, sessionId) => {
-      const readings = engine.readings;
-      const last = readings.length > 0 ? readings[readings.length - 1] : undefined;
-      return translate(event, sessionId, last);
-    },
-    runStartTriggers: ["SimulationStarted"],
-  });
-  // Step 14 wires src/log.ts to detect this just-constructed active engine and
-  // emit AnalysisEngineActivated using buildAnalysisEngineActivatedPayload below.
-  // The substrate's Engine doesn't emit logs itself.
-  cached = engine;
-  return engine;
+  try {
+    const engine: Engine<WildfireReading, WildfireDefaults> = new Engine<WildfireReading, WildfireDefaults>({
+      ruleSet,
+      requestedRuleSetId,
+      factorVariables,
+      simProps,
+      temporalVariables,
+      translate: (event, sessionId) => {
+        const readings = engine.readings;
+        const last = readings.length > 0 ? readings[readings.length - 1] : undefined;
+        return translate(event, sessionId, last);
+      },
+      runStartTriggers: ["SimulationStarted"],
+    });
+    // Step 14 wires src/log.ts to detect this just-constructed active engine and
+    // emit AnalysisEngineActivated using buildAnalysisEngineActivatedPayload below.
+    // The substrate's Engine doesn't emit logs itself.
+    cached = engine;
+    return engine;
+  } catch (e) {
+    if (e instanceof EngineConstructionError) {
+      // Surface caught construction errors via a placeholder engine so the
+      // sidebar's ErrorsPanel renders them. The placeholder construction is
+      // provably throw-free — see the matching maintenance-gate comment in
+      // engine.ts on the `ruleSet === undefined` branch. `initialErrors`
+      // suppresses the engine's synthetic missing-rule-set entry; the
+      // caller-supplied errors are the authoritative diagnostic.
+      const placeholder = new Engine<WildfireReading, WildfireDefaults>({
+        ruleSet: undefined,
+        requestedRuleSetId,
+        factorVariables,
+        simProps,
+        temporalVariables: {},
+        translate,
+        runStartTriggers: ["SimulationStarted"],
+        initialErrors: e.errors,
+      });
+      cached = placeholder;
+      return placeholder;
+    }
+    throw e;
+  }
 }
 
 // Reset hook for tests so they can construct multiple engines (test-only).

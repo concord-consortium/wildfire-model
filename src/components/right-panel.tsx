@@ -4,11 +4,12 @@ import { RightPanelTab, TabType } from "./right-panel-tab";
 import { useStores } from "../use-stores";
 import { Graph } from "./graph";
 import { log } from "../log";
+import { CHART_TAB_INITIAL_OPEN } from "../hazbot/wildfire/constants";
 import css from "./right-panel.scss";
 
 export const RightPanel = observer(function WrappedComponent() {
   const { ui } = useStores();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(CHART_TAB_INITIAL_OPEN);
   const [selectedTab, setSelectedTab] = useState("graph");
 
   const handleToggleDrawer = (e: React.SyntheticEvent) => {

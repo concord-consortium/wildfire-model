@@ -1,4 +1,5 @@
 import { observable, makeObservable } from "mobx";
+import { CHART_TAB_INITIAL_OPEN } from "../hazbot/wildfire/constants";
 
 export enum Interaction {
   PlaceSpark = "PlaceSpark",
@@ -8,7 +9,7 @@ export enum Interaction {
 }
 
 export class UIModel {
-  @observable public showChart = false;
+  @observable public showChart = CHART_TAB_INITIAL_OPEN;
   @observable public showTerrainUI = false;
   @observable public terrainUISelectedZone?: number = undefined;
   @observable public maxSparks: number;
