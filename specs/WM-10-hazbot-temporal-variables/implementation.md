@@ -2229,3 +2229,46 @@ Suggest (a). This is the same conclusion as the MobX/React finding (MR-2) reache
 
 ---
 
+## Post-Implementation Notes
+
+Recorded after the 11-step implementation landed across commits `cb60eb0..d28e3ad` on branch `WM-10-add-analysis-engine`. These deltas are mostly small accommodations the spec didn't anticipate; none change the design contract.
+
+### Error-rendering case-additions landed in Step 1, not Step 3
+
+Step 1 added new `EngineError` variants. The substrate's `renderError` and the sidebar's `describeErrorContext` use `const _exhaustive: never = e;` for exhaustiveness — adding variants without simultaneously adding their case branches fails ts-jest typecheck. So the four new case branches (the four new EngineError variants in [error-rendering.ts](../../src/hazbot/engine/error-rendering.ts) and [sidebar.tsx](../../src/hazbot/engine/sidebar/sidebar.tsx)) landed in Step 1 to keep the build green. Step 3's deliverable shrank to just the corresponding tests in `error-rendering.test.ts`.
+
+### `validateTemporalVariables` overlap check is scoped to factor variables with impls
+
+Spec Step 2's `validateTemporalVariables` body iterates all entries in `this.ruleSet.factorVariables` (metadata) when collecting `logEventsByFactorVar`. In practice, ruleset 25's metadata lists `GraphOpen` and `TwoSparks` as factor variables even though they're implemented as sim-props — a pre-existing inconsistency from the Sheet-generation. The unscoped spec implementation would false-positive the overlap check (ruleset 25's `GraphOpen` declares `logEvents: ["ChartTabShown", "ChartTabHidden", ...]`, overlapping `chartTabOpen.acceptedEvents`).
+
+The implementation scopes the inner loop to factor variables that have a corresponding factor-variable impl: `if (!(fvDef.name in this.factorVariables)) continue;`. This preserves the design intent (catch real overlaps between a factor variable that records the event and a temporal variable that processes it) while avoiding the false positive from stale metadata. See [engine.ts:344-354](../../src/hazbot/engine/engine.ts#L344-L354).
+
+### `EngineConstructionError` needs `Object.setPrototypeOf` for `instanceof`
+
+The project's tsconfig targets ES5. TS class-based subclasses of `Error` lose `instanceof` capability under ES5 without explicit prototype restoration in the constructor. Added `Object.setPrototypeOf(this, EngineConstructionError.prototype)` to [types.ts:110-119](../../src/hazbot/engine/types.ts#L110-L119). Without this, the bridge's `e instanceof EngineConstructionError` catch check in `engine-singleton.ts` silently fails, the placeholder path doesn't run, and the original throw propagates uncaught.
+
+### `sessionId` stripped in R18a and R18c equality checks
+
+Spec snippets show direct `expect(engineA.readings).toEqual(engineB.readings)` and `expect(roundTrip(engine.readings)).toEqual(expectedFile.readings)`. In practice, `Engine` calls `generateSessionId()` in the constructor — each instance produces a fresh, non-deterministic id. Both tests strip `sessionId` from the readings via a `stripSessionId(r)` helper before comparing.
+
+The alternative — mocking `generateSessionId()` — would have required mocking module-level imports in two test files for a property that's already not load-bearing for the determinism contract. Stripping is the smaller-surface fix. See [replay-determinism.test.ts:85-93](../../src/hazbot/engine/replay-determinism.test.ts#L85-L93) and [replay-fixture.test.ts](../../src/hazbot/wildfire/replay-fixture.test.ts).
+
+### `replay-fixture.test.ts` declares node-builtins locally
+
+The project's tsconfig has `types: ["jest"]` — `@types/node` is intentionally excluded so substrate code can't accidentally reach for Node-only APIs. The R18c test needs `fs.readFileSync` + `path.resolve` + `__dirname` to load fixtures. Rather than add `@types/node` globally, the test declares the three symbols locally with minimal types. See [replay-fixture.test.ts:1-7](../../src/hazbot/wildfire/replay-fixture.test.ts#L1-L7).
+
+### Test-variable-name choice constrained by lint
+
+Several `renderError(e)` test assertions originally used `const result = renderError(e)` or `const r = ...`. The project's `testing-library/render-result-naming-convention` lint rule false-positives on these (it's looking for testing-library's `render()` return value). Renamed to `const view = ...` to satisfy the rule's allowed names. Purely cosmetic.
+
+### Step 4 `temporal-variables.ts` includes a host-emission invariant comment
+
+Spec Pass-4 finding SB-1 considered four options for documenting the "every `ui.showChart` mutation must emit `ChartTabShown`/`ChartTabHidden`" invariant. The decision recorded was "no spec change" — but a comment naming the invariant did land in [temporal-variables.ts:8-15](../../src/hazbot/wildfire/temporal-variables.ts#L8-L15) on the grounds that the spec's resolution explicitly preserved option (a) as the cheapest defense for current scope. Minor documentation, not a behavior change.
+
+### Step 9 commit-message did not transcribe the full deletion manifest
+
+Spec Step 9 prescribed a detailed deletion-by-file manifest in the commit body for bisect navigability. The actual commit ([43cf20d](https://github.com/...)) carries a shorter body. The spec's prescribed pattern remains as future guidance; future deletion-heavy commits should follow it.
+
+### Bridge-integration test added for `EngineConstructionError` catch path
+
+Spec Step 4 calls for `engine-singleton.test.ts` to be extended with tests asserting the catch-block placeholder behavior. The test was added after the initial Step 4 commit, in the spec-comparison phase. It uses `jest.isolateModules` + `jest.doMock` to inject a malformed `temporalVariables` against a real wildfire ruleset, exercising the bridge's catch path end-to-end. See [engine-singleton.test.ts](../../src/hazbot/wildfire/engine-singleton.test.ts).

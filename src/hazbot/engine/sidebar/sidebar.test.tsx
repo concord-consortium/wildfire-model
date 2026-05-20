@@ -386,4 +386,87 @@ describe("Sidebar — ReadingRow temporal summary", () => {
     render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
     expect(screen.getByText(/chartTabOpen: false \(2 updates\)/)).toBeInTheDocument();
   });
+
+  it("expanded view renders one trail row per TemporalVariableChange", () => {
+    const tv: TemporalVariableImpl<boolean> = {
+      name: "chartTabOpen", initialValue: false,
+      acceptedEvents: ["ChartTabShown", "ChartTabHidden"],
+      reduce: (_p, e) => e.name === "ChartTabShown",
+    };
+    const engine = new Engine<TestReading, TestDefaults>({
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: ranSimulationImpl },
+      simProps: {},
+      translate: noopTranslate,
+      runStartTriggers: ["Triggered"],
+      temporalVariables: { chartTabOpen: tv as TemporalVariableImpl<unknown> },
+    });
+    act(() => engine.consume({ name: "Triggered", at: 100 }));
+    act(() => engine.consume({ name: "ChartTabShown", at: 110 }));
+    act(() => engine.consume({ name: "ChartTabHidden", at: 120 }));
+    const Wrapper = wrap(engine);
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
+    // Expand the reading row.
+    act(() => { screen.getByText(/Triggered/).click(); });
+    // The trail section renders.
+    expect(screen.getByText(/Temporal trail/)).toBeInTheDocument();
+    // One trail row per change: seed + two appends = 3 events ("from <eventName>").
+    expect(screen.getByText(/from Triggered/)).toBeInTheDocument();
+    expect(screen.getByText(/from ChartTabShown/)).toBeInTheDocument();
+    expect(screen.getByText(/from ChartTabHidden/)).toBeInTheDocument();
+  });
+});
+
+describe("Sidebar — describeErrorContext for the four new EngineError variants", () => {
+  function renderWithInitialError(err: import("../types").EngineError): void {
+    const engine = new Engine<TestReading, TestDefaults>({
+      requestedRuleSetId: "test",
+      factorVariables: { ranSimulation: ranSimulationImpl },
+      simProps: {},
+      translate: noopTranslate,
+      initialErrors: [err],
+    });
+    const Wrapper = wrap(engine);
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
+  }
+
+  it("renders context for temporal-validation (factor variable case)", () => {
+    renderWithInitialError({
+      kind: "temporal-validation", ruleSetId: "test", implName: "ranSimulation",
+      implType: "factorVariable", missingVariableName: "missingVar", at: 0,
+    });
+    expect(screen.getAllByText(/factor variable ranSimulation/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/missing temporal variable missingVar/).length).toBeGreaterThan(0);
+  });
+
+  it("renders context for temporal-reducer-error with variable + event", () => {
+    renderWithInitialError({
+      kind: "temporal-reducer-error", ruleSetId: "test", variableName: "v",
+      event: { name: "SomeEvent", at: 1234 }, thrown: new Error("boom"), at: 1234,
+    });
+    expect(screen.getAllByText(/variable v/).length).toBeGreaterThan(0);
+    expect(screen.getByText(/event: SomeEvent/)).toBeInTheDocument();
+  });
+
+  it("renders context for trigger-state-change-overlap", () => {
+    renderWithInitialError({
+      kind: "trigger-state-change-overlap", ruleSetId: "test",
+      variableName: "v", eventName: "SimulationStarted", factorVariableName: "ranSimulation", at: 0,
+    });
+    expect(screen.getAllByText(/variable v/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/event SimulationStarted/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/factor variable ranSimulation/).length).toBeGreaterThan(0);
+  });
+
+  it("renders context for temporal-initial-values-mismatch with all three parts joined by ·", () => {
+    renderWithInitialError({
+      kind: "temporal-initial-values-mismatch", ruleSetId: "test",
+      missing: ["a"], unknown: ["b"],
+      typeMismatches: [{ name: "c", expectedType: "boolean", actualType: "string" }],
+      at: 0,
+    });
+    expect(screen.getAllByText(/missing: a/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/unknown: b/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/c \(boolean → string\)/).length).toBeGreaterThan(0);
+  });
 });

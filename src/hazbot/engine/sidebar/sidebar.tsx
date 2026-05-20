@@ -240,6 +240,9 @@ const ReadingsPanel: React.FC<{ readings: BaseReading[]; temporalVariableNames: 
 // (everything after the seed block of length N). Equivalent to
 // reading.temporalHistory.slice(N).filter(c => c.name === name).length but
 // allocation-free — sidebar re-renders on every engine tick.
+// Depends on the R5a invariant: every reading's temporalHistory begins with
+// exactly N seed entries (one per declared temporal variable), so entries at
+// index >= N are within-window appends.
 function formatTemporalSummary(reading: BaseReading, variableNames: string[]): string {
   const n = variableNames.length;
   return variableNames.map((name) => {

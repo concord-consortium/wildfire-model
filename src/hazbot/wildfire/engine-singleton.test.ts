@@ -59,6 +59,49 @@ describe("getAnalysisEngine", () => {
   });
 });
 
+describe("getAnalysisEngine — EngineConstructionError catch path", () => {
+  // The wildfire rulesets don't currently trigger R7 construction errors; we
+  // inject a malformed `temporalVariables` via jest.isolateModules so the
+  // bridge's catch branch runs against a real wildfire ruleset.
+  function loadSingletonWithBadTemporal(): { getAnalysisEngine: typeof import("./engine-singleton").getAnalysisEngine } {
+    let captured: { getAnalysisEngine: typeof import("./engine-singleton").getAnalysisEngine } | null = null;
+    jest.isolateModules(() => {
+      // Inject a temporal variable whose acceptedEvents overlaps ruleset 25's
+      // factor variable `ranSimulation` (logEvents: ["SimulationStarted"]),
+      // which triggers `trigger-state-change-overlap` at engine construction.
+      jest.doMock("./temporal-variables", () => ({
+        temporalVariables: {
+          overlapping: {
+            name: "overlapping",
+            initialValue: false,
+            acceptedEvents: ["SimulationStarted"],
+            reduce: () => true,
+          },
+        },
+      }));
+      // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
+      const singleton = jest.requireActual<typeof import("./engine-singleton")>("./engine-singleton");
+      singleton._resetAnalysisEngineForTests();
+      captured = { getAnalysisEngine: singleton.getAnalysisEngine };
+    });
+    if (!captured) throw new Error("isolateModules did not run");
+    return captured;
+  }
+
+  it("returns an inactive placeholder Engine when temporal-variable misconfiguration triggers EngineConstructionError", () => {
+    setUrl("?hazbotRules=25");
+    const { getAnalysisEngine: getEngine } = loadSingletonWithBadTemporal();
+    const e = getEngine();
+    if (!e) throw new Error("expected placeholder engine, got undefined");
+    expect(e.isActive).toBe(false);
+    // Caught construction error is surfaced on the placeholder.
+    const overlap = e.errors.find((err) => err.kind === "trigger-state-change-overlap");
+    expect(overlap).toBeDefined();
+    // Synthetic `load-failure: missing-rule-set` is suppressed when initialErrors is non-empty.
+    expect(e.errors.find((err) => err.kind === "load-failure" && err.reason === "missing-rule-set")).toBeUndefined();
+  });
+});
+
 describe("buildAnalysisEngineActivatedPayload (per Req 20)", () => {
   it("includes engineVersion + appRulesVersion + ruleSetId; no sessionId", () => {
     const payload = buildAnalysisEngineActivatedPayload("23");
