@@ -71,25 +71,22 @@ describe("log() — AnalysisEngineActivated emission (Req 20)", () => {
     expect(activated).toBeUndefined();
   });
 
-  it("forwards ambientState only to the engine, never to LARA (neither as 3rd arg nor smuggled into data)", () => {
+  it("forwards data only — no third arg routed to the engine or LARA", () => {
     const consume = jest.fn();
     const { log, laraLog } = loadLogWithMocks({
       engine: { isActive: true, ruleSet: { id: "23" }, consume },
     });
-    log("SimulationStarted", { run: 1 }, { chartTabOpenAtStart: true });
-    // LARA call has only two args (name + data); ambientState absent.
+    log("SimulationStarted", { run: 1 });
+    // LARA call has only two args (name + data); no third arg.
     const simStartedCall = laraLog.mock.calls.find((c) => c[0] === "SimulationStarted");
     expect(simStartedCall).toBeDefined();
     expect(simStartedCall![1]).toEqual({ run: 1 });
     expect(simStartedCall![2]).toBeUndefined();
-    // Defense against a future refactor that copies ambientState into the data payload.
-    expect(simStartedCall![1]).not.toHaveProperty("chartTabOpenAtStart");
-    expect(simStartedCall![1]).not.toHaveProperty("ambientState");
-    // Engine receives the full ambientState on consume().
+    // Engine receives only name + data + at on consume().
     expect(consume).toHaveBeenCalledWith(expect.objectContaining({
       name: "SimulationStarted",
       data: { run: 1 },
-      ambientState: { chartTabOpenAtStart: true },
     }));
+    expect(consume.mock.calls[0][0]).not.toHaveProperty("ambientState");
   });
 });

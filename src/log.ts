@@ -13,7 +13,7 @@ const externalLog = logMonitor ? createLogWrapper(laraLog) : laraLog;
 // state isolation.
 let analysisEngineActivatedEmitted = false;
 
-export const log = (name: string, data?: object, ambientState?: unknown): void => {
+export const log = (name: string, data?: object): void => {
   // Cast: lara's log accepts `object`; createLogWrapper narrows to Record<string, unknown>
   // for its log-monitor mirror. Both shapes are satisfied by any plain payload object.
   externalLog(name, data as Record<string, unknown> | undefined);
@@ -21,7 +21,7 @@ export const log = (name: string, data?: object, ambientState?: unknown): void =
   // The `?.` covers the no-engine case (URL flags unset); the engine's consume()
   // covers the inactive-engine case via its own !isActive early return.
   const engine = getAnalysisEngine();
-  engine?.consume({ name, data, ambientState, at: Date.now() });
+  engine?.consume({ name, data, at: Date.now() });
   // Once-per-page-load AnalysisEngineActivated emission (per Req 20). Fires only
   // when the engine constructed cleanly. Sent via the external log path so it
   // lands in LARA + log-monitor like every other event. Not fed back through
