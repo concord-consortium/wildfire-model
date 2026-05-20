@@ -22,6 +22,7 @@ Project-specific notes for working in this repo. Conventions, gotchas, and tools
 | Lint | `npm run lint` |
 | Build | `npm run build` |
 | Regenerate validation playbook | `node scripts/generate-hazbot-validation-playbook.js` |
+| Regenerate replay fixture | `node scripts/generate-replay-fixture.js` |
 
 ## Playwright MCP testing
 
