@@ -1,7 +1,7 @@
 import * as React from "react";
 import { render, screen, act } from "@testing-library/react";
 import { Engine, EngineOpts } from "../engine";
-import { BaseReading, FactorVariableImpl, RuleSet } from "../types";
+import { BaseReading, FactorVariableImpl, RuleSet, SimPropImpl, TemporalVariableImpl } from "../types";
 import { AnalysisEngineProvider } from "../react";
 import { Sidebar } from "./sidebar";
 
@@ -263,5 +263,127 @@ describe("Sidebar (substrate, generic over TReading)", () => {
     const Wrapper = wrap(engine);
     render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
     expect(screen.getByText(/Engine inactive — values may be impl defaults/)).toBeInTheDocument();
+  });
+});
+
+describe("Sidebar — Temporal Variables panel", () => {
+  const boolVar: TemporalVariableImpl<boolean> = {
+    name: "chartTabOpen", initialValue: false,
+    acceptedEvents: ["ChartTabShown", "ChartTabHidden"],
+    reduce: (_p, e) => e.name === "ChartTabShown",
+  };
+
+  it("renders the Temporal Variables panel; unobserved variables show with muted style", () => {
+    const engine = new Engine<TestReading, TestDefaults>({
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: ranSimulationImpl },
+      simProps: {},
+      translate: noopTranslate,
+      temporalVariables: { chartTabOpen: boolVar as TemporalVariableImpl<unknown> },
+    });
+    const Wrapper = wrap(engine);
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
+    expect(screen.getByText("Temporal Variables")).toBeInTheDocument();
+    expect(screen.getByText("chartTabOpen")).toBeInTheDocument();
+    const valueSpan = screen.getByText("false");
+    expect(valueSpan.className).toMatch(/hazbot-sidebar-temporal-unobserved/);
+  });
+
+  it("flips to observed (no muted style) after a matching event fires", () => {
+    const engine = new Engine<TestReading, TestDefaults>({
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: ranSimulationImpl },
+      simProps: {},
+      translate: noopTranslate,
+      temporalVariables: { chartTabOpen: boolVar as TemporalVariableImpl<unknown> },
+    });
+    const Wrapper = wrap(engine);
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
+    act(() => engine.consume({ name: "ChartTabShown", at: 10 }));
+    const valueSpan = screen.getByText("true");
+    expect(valueSpan.className).not.toMatch(/hazbot-sidebar-temporal-unobserved/);
+  });
+});
+
+describe("Sidebar — SimPropsPanel temporalReads hint", () => {
+  it("renders · reads: <name> for sim-props declaring temporalReads", () => {
+    const graphOpen: SimPropImpl<TestReading, TestDefaults> = {
+      defaultValue: false,
+      temporalReads: ["chartTabOpen"],
+      evaluate: (reading) => reading.temporalHistory.some(
+        (c) => c.name === "chartTabOpen" && c.value === true,
+      ),
+    };
+    const ruleSet: RuleSet<TestDefaults> = {
+      id: "tab1",
+      categories: [
+        { id: 1, studentAction: "x", feedback: "f", visualFeedback: "",
+          expression: "ranSimulation WITH GraphOpen" },
+      ],
+      factorVariables: [{ name: "ranSimulation", definition: "", logEvents: [], details: "" }],
+      defaults: {},
+    };
+    const tv: TemporalVariableImpl<boolean> = {
+      name: "chartTabOpen", initialValue: false,
+      acceptedEvents: ["ChartTabShown", "ChartTabHidden"],
+      reduce: (_p, e) => e.name === "ChartTabShown",
+    };
+    const engine = new Engine<TestReading, TestDefaults>({
+      ruleSet,
+      factorVariables: { ranSimulation: ranSimulationImpl },
+      simProps: { GraphOpen: graphOpen },
+      translate: noopTranslate,
+      runStartTriggers: ["Triggered"],
+      temporalVariables: { chartTabOpen: tv as TemporalVariableImpl<unknown> },
+    });
+    act(() => engine.consume({ name: "Triggered", at: 100 }));
+    const Wrapper = wrap(engine);
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
+    expect(screen.getByText(/· reads: chartTabOpen/)).toBeInTheDocument();
+  });
+});
+
+describe("Sidebar — ReadingRow temporal summary", () => {
+  it("shows 'chartTabOpen: <value> (N updates)' in the collapsed view", () => {
+    const tv: TemporalVariableImpl<boolean> = {
+      name: "chartTabOpen", initialValue: false,
+      acceptedEvents: ["ChartTabShown", "ChartTabHidden"],
+      reduce: (_p, e) => e.name === "ChartTabShown",
+    };
+    const engine = new Engine<TestReading, TestDefaults>({
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: ranSimulationImpl },
+      simProps: {},
+      translate: noopTranslate,
+      runStartTriggers: ["Triggered"],
+      temporalVariables: { chartTabOpen: tv as TemporalVariableImpl<unknown> },
+    });
+    // Triggered with no chart-tab events: seed-only, 0 updates.
+    act(() => engine.consume({ name: "Triggered", at: 100 }));
+    const Wrapper = wrap(engine);
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
+    expect(screen.getByText(/chartTabOpen: false \(0 updates\)/)).toBeInTheDocument();
+  });
+
+  it("counts within-window appends correctly", () => {
+    const tv: TemporalVariableImpl<boolean> = {
+      name: "chartTabOpen", initialValue: false,
+      acceptedEvents: ["ChartTabShown", "ChartTabHidden"],
+      reduce: (_p, e) => e.name === "ChartTabShown",
+    };
+    const engine = new Engine<TestReading, TestDefaults>({
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: ranSimulationImpl },
+      simProps: {},
+      translate: noopTranslate,
+      runStartTriggers: ["Triggered"],
+      temporalVariables: { chartTabOpen: tv as TemporalVariableImpl<unknown> },
+    });
+    act(() => engine.consume({ name: "Triggered", at: 100 }));
+    act(() => engine.consume({ name: "ChartTabShown", at: 110 }));
+    act(() => engine.consume({ name: "ChartTabHidden", at: 120 }));
+    const Wrapper = wrap(engine);
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
+    expect(screen.getByText(/chartTabOpen: false \(2 updates\)/)).toBeInTheDocument();
   });
 });

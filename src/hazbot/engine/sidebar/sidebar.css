@@ -151,3 +151,14 @@
   border-radius: 3px;
   overflow-x: auto;
 }
+
+.hazbot-sidebar-temporal-unobserved {
+  font-style: italic;
+  color: var(--hazbot-muted);
+}
+
+.hazbot-sidebar-temporal-trail {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--hazbot-border);
+}

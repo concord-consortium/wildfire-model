@@ -3,7 +3,7 @@ import { useAnalysisEngine } from "../react";
 import { renderError } from "../error-rendering";
 import { ENGINE_VERSION } from "../version";
 import { ExpressionRenderer } from "./expression-renderer";
-import { BaseReading, EngineError } from "../types";
+import { BaseReading, EngineError, SimPropImpl } from "../types";
 import "./sidebar.css";
 
 function formatTimestamp(at: number): string {
@@ -61,8 +61,43 @@ export const Sidebar: React.FC<SidebarProps> = ({ title }) => {
           showFallbackNote={!engine.isActive}
         />
       )}
-      {engine.ruleSet && <SimPropsPanel values={simPropValues} />}
-      {engine.ruleSet && <ReadingsPanel readings={engine.readings} />}
+      {engine.ruleSet && (
+        <TemporalVariablesPanel
+          temporalVariableNames={engine.temporalVariableNames}
+          values={engine.temporalValues}
+          observed={engine.observed}
+        />
+      )}
+      {engine.ruleSet && (
+        <SimPropsPanel values={simPropValues} simProps={engine.simProps} />
+      )}
+      {engine.ruleSet && (
+        <ReadingsPanel
+          readings={engine.readings}
+          temporalVariableNames={engine.temporalVariableNames}
+        />
+      )}
+    </div>
+  );
+};
+
+const TemporalVariablesPanel: React.FC<{
+  temporalVariableNames: string[];
+  values: Record<string, unknown>;
+  observed: Record<string, boolean>;
+}> = ({ temporalVariableNames, values, observed }) => {
+  if (temporalVariableNames.length === 0) return null;
+  return (
+    <div className="hazbot-sidebar-section">
+      <div className="hazbot-sidebar-section-title">Temporal Variables</div>
+      {temporalVariableNames.map((name) => (
+        <div key={name} className="hazbot-sidebar-entry">
+          <strong>{name}</strong>:{" "}
+          <span className={observed[name] ? "" : "hazbot-sidebar-temporal-unobserved"}>
+            {formatValue(values[name])}
+          </span>
+        </div>
+      ))}
     </div>
   );
 };
@@ -171,7 +206,10 @@ function formatReadingForDisplay(reading: BaseReading): string {
   return JSON.stringify(rest, null, 2);
 }
 
-const ReadingsPanel: React.FC<{ readings: BaseReading[] }> = ({ readings }) => {
+const ReadingsPanel: React.FC<{ readings: BaseReading[]; temporalVariableNames: string[] }> = ({
+  readings,
+  temporalVariableNames,
+}) => {
   // Render newest-first for scan-ergonomics — the substrate keeps engine.readings
   // chronological (append-only invariant); the reversal is a presentation-only
   // concern. slice() prevents mutating the engine's array. The displayed index is
@@ -190,6 +228,7 @@ const ReadingsPanel: React.FC<{ readings: BaseReading[] }> = ({ readings }) => {
             key={`${r.at}-${r.triggeredBy}-${i}`}
             reading={r}
             displayIndex={chronologicalIndex}
+            temporalVariableNames={temporalVariableNames}
           />
         );
       })}
@@ -197,8 +236,34 @@ const ReadingsPanel: React.FC<{ readings: BaseReading[] }> = ({ readings }) => {
   );
 };
 
-const ReadingRow: React.FC<{ reading: BaseReading; displayIndex: number }> = ({ reading, displayIndex }) => {
+// Single-pass per-name update counter: counts entries in the append slice
+// (everything after the seed block of length N). Equivalent to
+// reading.temporalHistory.slice(N).filter(c => c.name === name).length but
+// allocation-free — sidebar re-renders on every engine tick.
+function formatTemporalSummary(reading: BaseReading, variableNames: string[]): string {
+  const n = variableNames.length;
+  return variableNames.map((name) => {
+    let updateCount = 0;
+    let lastValue: unknown = undefined;
+    for (let i = 0; i < reading.temporalHistory.length; i++) {
+      const c = reading.temporalHistory[i];
+      if (c.name !== name) continue;
+      lastValue = c.value;
+      if (i >= n) updateCount++;
+    }
+    return `${name}: ${formatValue(lastValue)} (${updateCount} updates)`;
+  }).join(", ");
+}
+
+const ReadingRow: React.FC<{
+  reading: BaseReading;
+  displayIndex: number;
+  temporalVariableNames: string[];
+}> = ({ reading, displayIndex, temporalVariableNames }) => {
   const [expanded, setExpanded] = React.useState(false);
+  const temporalSummary = temporalVariableNames.length > 0
+    ? formatTemporalSummary(reading, temporalVariableNames)
+    : "";
   return (
     <div className="hazbot-sidebar-entry">
       <button
@@ -208,10 +273,24 @@ const ReadingRow: React.FC<{ reading: BaseReading; displayIndex: number }> = ({ 
         aria-expanded={expanded}
         title={expanded ? "Hide reading payload" : "Show reading payload"}
       >
-        <strong>{expanded ? "▾" : "▸"} {displayIndex}:</strong> {reading.triggeredBy} · {reading.updates.length} update(s)
+        <strong>{expanded ? "▾" : "▸"} {displayIndex}:</strong> {reading.triggeredBy}
+        {temporalSummary && <> · {temporalSummary}</>}
+        {" "}· {reading.updates.length} update(s)
       </button>
       {expanded && (
-        <pre className="hazbot-sidebar-pre">{formatReadingForDisplay(reading)}</pre>
+        <>
+          <pre className="hazbot-sidebar-pre">{formatReadingForDisplay(reading)}</pre>
+          {reading.temporalHistory.length > 0 && (
+            <div className="hazbot-sidebar-temporal-trail">
+              <div className="hazbot-sidebar-section-title">Temporal trail</div>
+              {reading.temporalHistory.map((c, i) => (
+                <div key={i} className="hazbot-sidebar-entry">
+                  <TimestampInline at={c.at} /> · {c.name}: {formatValue(c.value)} · from {c.eventName}
+                </div>
+              ))}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
@@ -246,26 +325,35 @@ function formatValue(v: unknown): string {
 // Sim-props evaluate per-reading; the panel surfaces each one's value at the
 // latest run-start reading. null means no run-start reading has been recorded yet,
 // so the value is undefined rather than impl-default.
-const SimPropsPanel: React.FC<{ values: Record<string, boolean | null> }> = ({ values }) => {
+const SimPropsPanel: React.FC<{
+  values: Record<string, boolean | null>;
+  simProps: Record<string, SimPropImpl<BaseReading, unknown>>;
+}> = ({ values, simProps }) => {
   const entries = Object.entries(values).sort(([a], [b]) => a.localeCompare(b));
   if (entries.length === 0) return null;
   return (
     <div className="hazbot-sidebar-section">
       <div className="hazbot-sidebar-section-title">Sim Props</div>
-      {entries.map(([name, value]) => (
-        <div key={name} className="hazbot-sidebar-entry">
-          <strong>{name}</strong>: {value === null
-            ? (
-              <span
-                className="hazbot-sidebar-muted"
-                title="Sim-props evaluate per-reading; no run-start reading has been recorded yet, so this value is undefined."
-              >
-                n/a
-              </span>
-            )
-            : String(value)}
-        </div>
-      ))}
+      {entries.map(([name, value]) => {
+        const reads = simProps[name]?.temporalReads;
+        return (
+          <div key={name} className="hazbot-sidebar-entry">
+            <strong>{name}</strong>: {value === null
+              ? (
+                <span
+                  className="hazbot-sidebar-muted"
+                  title="Sim-props evaluate per-reading; no run-start reading has been recorded yet, so this value is undefined."
+                >
+                  n/a
+                </span>
+              )
+              : String(value)}
+            {reads && reads.length > 0 && (
+              <span className="hazbot-sidebar-muted"> · reads: {reads.join(", ")}</span>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
