@@ -275,7 +275,6 @@ const ReadingRow: React.FC<{
       >
         <strong>{expanded ? "▾" : "▸"} {displayIndex}:</strong> {reading.triggeredBy}
         {temporalSummary && <> · {temporalSummary}</>}
-        {" "}· {reading.updates.length} update(s)
       </button>
       {expanded && (
         <>

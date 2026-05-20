@@ -57,7 +57,7 @@ describe("wildfire sidebar against ruleSets['23']", () => {
       ambientState: {},
     }));
     // Expand the reading row to show the payload.
-    const row = screen.getByText(/SimulationStarted ·/);
+    const row = screen.getByText(/SimulationStarted/);
     act(() => { row.click(); });
     expect(screen.getByText(/"terrainType": "Plains"/)).toBeInTheDocument();
     expect(screen.getByText(/"speed": 5/)).toBeInTheDocument();

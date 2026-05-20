@@ -122,7 +122,7 @@ describe("Sidebar (substrate, generic over TReading)", () => {
     render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
     act(() => engine.consume({ name: "Triggered", at: 100, ambientState: {} }));
     // Click the reading row to expand.
-    const row = screen.getByText(/Triggered ·/);
+    const row = screen.getByText(/Triggered/);
     act(() => { row.click(); });
     // Foo and bar should appear in the JSON pretty-print.
     expect(screen.getByText(/"foo": "f"/)).toBeInTheDocument();
