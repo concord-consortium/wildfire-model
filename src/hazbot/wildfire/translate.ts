@@ -3,11 +3,9 @@ import { WildfireReading } from "./types";
 
 // Maps incoming events to triggers / no-ops for the engine.
 // ChartTabShown / ChartTabHidden are handled by the chartTabOpen temporal
-// variable now; they never produce modifiers (and the substrate's modifier
-// branch is retired in Step 9).
+// variable; they never produce modifiers.
 export type TranslateResult =
   | { kind: "trigger"; reading: WildfireReading }
-  | { kind: "modifier"; update: import("../engine").ReadingUpdate }
   | { kind: "no-op" };
 
 export function translate(
@@ -21,7 +19,6 @@ export function translate(
         triggeredBy: "SimulationStarted",
         sessionId,
         at: event.at,
-        updates: [],
         temporalHistory: [],
         zones: data.zones,
         sparks: data.sparks,
@@ -36,7 +33,6 @@ export function translate(
         triggeredBy: event.name,
         sessionId,
         at: event.at,
-        updates: [],
         temporalHistory: [],
         outcome: data.outcome,
       };

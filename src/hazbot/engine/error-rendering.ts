@@ -28,43 +28,14 @@ export function renderError(e: EngineError, ctx?: RenderErrorContext): RenderedE
             severity: "error",
             message: `Missing impl: ${e.ruleSetId} · ${e.detail}`,
           };
-        default: {
-          const _exhaustive: never = e;
-          throw new Error(`Unrendered load-failure reason: ${String((_exhaustive as { reason: string }).reason)}`);
-        }
+        default:
+          throw new Error(`Unrendered load-failure reason: ${String((e as { reason: string }).reason)}`);
       }
     case "parse-error":
       return {
         severity: "error",
         message: `Parse error in category ${e.categoryId}: ${e.detail} (offending: \`${e.offendingToken}\`)`,
       };
-    case "ambient-validation":
-      return {
-        severity: "error",
-        message: `Missing ambient state for ${e.trigger}: ${e.implName} reads ${e.missingKey}`,
-      };
-    case "orphan-modifier":
-      switch (e.reason) {
-        case "no-prior-trigger":
-          return {
-            severity: "error",
-            message: `Modifier ${e.source} dropped: no trigger has fired yet`,
-          };
-        case "prior-trigger-failed":
-          return {
-            severity: "error",
-            message: `Modifier ${e.source} dropped: prior trigger failed validation`,
-          };
-        case "between-runs":
-          return {
-            severity: "error",
-            message: `Modifier ${e.source} dropped: no run currently in progress`,
-          };
-        default: {
-          const _exhaustive: never = e;
-          throw new Error(`Unrendered orphan-modifier reason: ${String((_exhaustive as { reason: string }).reason)}`);
-        }
-      }
     case "impl-eval-throw":
       if (e.implKind === "sim-prop") {
         return {

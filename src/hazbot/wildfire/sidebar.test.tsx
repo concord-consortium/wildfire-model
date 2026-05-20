@@ -54,7 +54,6 @@ describe("wildfire sidebar against ruleSets['23']", () => {
         sparks: [{ x: 0, y: 0, zoneIdx: 0 }],
         wind: { speed: 5, direction: 0 },
       },
-      ambientState: {},
     }));
     // Expand the reading row to show the payload.
     const row = screen.getByText(/SimulationStarted/);

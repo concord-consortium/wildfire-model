@@ -402,10 +402,6 @@ const ErrorRow: React.FC<{ error: EngineError; readings: BaseReading[] }> = ({ e
 // (parity with ErrorRow's primary timestamp — screen readers get a semantic anchor).
 function describeErrorContext(e: EngineError, readings: BaseReading[]): React.ReactNode {
   switch (e.kind) {
-    case "ambient-validation":
-      return <>event: {e.event.name} @ <TimestampInline at={e.event.at} /></>;
-    case "orphan-modifier":
-      return <>event: {e.event.name} @ <TimestampInline at={e.event.at} /></>;
     case "impl-eval-throw": {
       if (e.implKind === "sim-prop" && e.readingIndex !== undefined) {
         const r = readings[e.readingIndex];

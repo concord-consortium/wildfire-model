@@ -7,7 +7,6 @@ export interface WildfireReading extends BaseReading {
   zones?: WildfireZone[];
   sparks?: WildfireSpark[];
   wind?: { speed: number; direction: number };
-  ambientState?: { chartTabOpenAtStart?: boolean };
   // Outcome data from end-of-run triggers; opaque to current rule sets.
   outcome?: unknown;
 }

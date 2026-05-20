@@ -2,7 +2,7 @@
 // for broader runtime support without polluting the global prototype.
 //
 // The overload signature lets callers narrow the return type when the predicate is a
-// type guard (e.g., `(e): e is AmbientValidationError => e.kind === "ambient-validation"`).
+// type guard (e.g., `(e): e is ParseError => e.kind === "parse-error"`).
 export function findLast<T, S extends T>(arr: readonly T[], pred: (item: T, i: number) => item is S): S | undefined;
 export function findLast<T>(arr: readonly T[], pred: (item: T, i: number) => boolean): T | undefined;
 export function findLast<T>(arr: readonly T[], pred: (item: T, i: number) => boolean): T | undefined {

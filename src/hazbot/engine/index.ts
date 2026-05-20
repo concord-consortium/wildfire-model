@@ -2,7 +2,7 @@
 // This is the host-app-facing barrel; everything not re-exported here is substrate-internal.
 
 export type {
-  BaseReading, ReadingUpdate, ConsumedEvent, EngineError,
+  BaseReading, ConsumedEvent, EngineError,
   RuleSet, Category, FactorVariableDef, FactorVariableImpl, SimPropImpl,
   TemporalVariableImpl, TemporalVariableChange,
 } from "./types";

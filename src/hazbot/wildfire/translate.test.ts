@@ -18,8 +18,6 @@ describe("wildfire translate", () => {
     expect(result.reading.triggeredBy).toBe("SimulationStarted");
     expect(result.reading.sessionId).toBe("session-id-1");
     expect(result.reading.zones).toEqual([{ index: 0, terrainType: "Plains" }]);
-    // ambientState is no longer populated by translate (chartTabOpen temporal
-    // variable replaces the ambient capture; full surface removed in Step 9).
   });
 
   it("maps SimulationEnded to a trigger Reading carrying outcome", () => {

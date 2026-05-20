@@ -47,5 +47,5 @@ export function matchAgainst(
 }
 
 export function mkReading(triggeredBy: string, at: number, opts: Partial<WildfireReading> = {}): WildfireReading {
-  return { triggeredBy, sessionId: "test", at, updates: [], temporalHistory: [], ...opts };
+  return { triggeredBy, sessionId: "test", at, temporalHistory: [], ...opts };
 }

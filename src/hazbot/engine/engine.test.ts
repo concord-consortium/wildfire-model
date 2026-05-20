@@ -5,7 +5,6 @@ import {
 
 interface TestReading extends BaseReading {
   payload?: Record<string, unknown>;
-  ambientState?: { chartTabOpenAtStart?: boolean };
 }
 
 type TestDefaults = { wind?: { speed: number; direction: number }; zones?: Array<{ terrainType?: string }> };
@@ -121,24 +120,6 @@ describe("Engine — construction", () => {
     });
     expect(e.isActive).toBe(true);
     expect(e.errors).toHaveLength(0);
-  });
-
-  it("collects ambient-state keys per trigger across factor-vars and sim-props", () => {
-    const ruleSet = makeRuleSet({
-      categories: [{
-        id: 1, studentAction: "", feedback: "", visualFeedback: "",
-        expression: "ranSimulation WITH GraphOpen",
-      }],
-      factorVariables: [{ name: "ranSimulation", definition: "", logEvents: [], details: "" }],
-    });
-    const e = new Engine<TestReading, TestDefaults>({
-      ruleSet,
-      factorVariables: { ranSimulation: makeImpl() },
-      simProps: { GraphOpen: makeSimImpl({ ambientStateKeys: { SimulationStarted: ["chartTabOpenAtStart"] } }) },
-      translate: noopTranslate,
-    });
-    expect(e.isActive).toBe(true);
-    expect(e.ambientKeysByTrigger.get("SimulationStarted")?.has("chartTabOpenAtStart")).toBe(true);
   });
 
   it("emits one stub-warning per stubbed referenced impl when load is otherwise clean", () => {
@@ -284,7 +265,7 @@ describe("Engine — listener / snapshot API", () => {
       simProps: {},
       translate: (event, sessionId) => {
         if (event.name === "T1" || event.name === "T2") {
-          return { kind: "trigger", reading: { triggeredBy: event.name, at: event.at, sessionId, updates: [], temporalHistory: [] } };
+          return { kind: "trigger", reading: { triggeredBy: event.name, at: event.at, sessionId, temporalHistory: [] } };
         }
         return { kind: "no-op" };
       },

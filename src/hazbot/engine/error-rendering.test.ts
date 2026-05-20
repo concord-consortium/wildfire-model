@@ -40,52 +40,6 @@ describe("renderError", () => {
     });
   });
 
-  it("renders ambient-validation", () => {
-    const e: EngineError = {
-      kind: "ambient-validation", ruleSetId: "23", trigger: "SimulationStarted", implName: "GraphOpen",
-      missingKey: "chartTabOpenAtStart", event: { name: "SimulationStarted", at: 0 }, at: 0,
-    };
-    expect(renderError(e)).toEqual({
-      severity: "error",
-      message: "Missing ambient state for SimulationStarted: GraphOpen reads chartTabOpenAtStart",
-    });
-  });
-
-  describe("orphan-modifier", () => {
-    it("renders no-prior-trigger", () => {
-      const e: EngineError = {
-        kind: "orphan-modifier", source: "ChartTabShown", reason: "no-prior-trigger",
-        event: { name: "ChartTabShown", at: 0 }, at: 0,
-      };
-      expect(renderError(e)).toEqual({
-        severity: "error",
-        message: "Modifier ChartTabShown dropped: no trigger has fired yet",
-      });
-    });
-
-    it("renders prior-trigger-failed", () => {
-      const e: EngineError = {
-        kind: "orphan-modifier", source: "ChartTabShown", reason: "prior-trigger-failed",
-        event: { name: "ChartTabShown", at: 0 }, at: 0,
-      };
-      expect(renderError(e)).toEqual({
-        severity: "error",
-        message: "Modifier ChartTabShown dropped: prior trigger failed validation",
-      });
-    });
-
-    it("renders between-runs", () => {
-      const e: EngineError = {
-        kind: "orphan-modifier", source: "ChartTabShown", reason: "between-runs",
-        event: { name: "ChartTabShown", at: 0 }, at: 0,
-      };
-      expect(renderError(e)).toEqual({
-        severity: "error",
-        message: "Modifier ChartTabShown dropped: no run currently in progress",
-      });
-    });
-  });
-
   describe("impl-eval-throw", () => {
     it("renders sim-prop throws with reading index", () => {
       const e: EngineError = {

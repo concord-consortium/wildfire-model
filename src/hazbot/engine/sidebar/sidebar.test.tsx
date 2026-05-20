@@ -15,7 +15,7 @@ const noopTranslate: EngineOpts<TestReading, TestDefaults>["translate"] = (event
   if (event.name === "Triggered") {
     return {
       kind: "trigger",
-      reading: { triggeredBy: "Triggered", at: event.at, sessionId, updates: [], temporalHistory: [], foo: "f", bar: 1 },
+      reading: { triggeredBy: "Triggered", at: event.at, sessionId, temporalHistory: [], foo: "f", bar: 1 },
     };
   }
   return { kind: "no-op" };
@@ -68,7 +68,7 @@ describe("Sidebar (substrate, generic over TReading)", () => {
     });
     const Wrapper = wrap(engine);
     render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
-    act(() => engine.consume({ name: "Triggered", at: 100, ambientState: {} }));
+    act(() => engine.consume({ name: "Triggered", at: 100 }));
     // studentAction is in the always-visible header; feedback is only shown on expand.
     expect(screen.getByText(/Ran the sim/)).toBeInTheDocument();
     expect(screen.queryByText(/Step 1 done/)).not.toBeInTheDocument();
@@ -106,7 +106,7 @@ describe("Sidebar (substrate, generic over TReading)", () => {
     const Wrapper = wrap(engine);
     render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
     expect(screen.getByText(/Readings \(0\)/)).toBeInTheDocument();
-    act(() => engine.consume({ name: "Triggered", at: 100, ambientState: {} }));
+    act(() => engine.consume({ name: "Triggered", at: 100 }));
     expect(screen.getByText(/Readings \(1\)/)).toBeInTheDocument();
   });
 
@@ -120,7 +120,7 @@ describe("Sidebar (substrate, generic over TReading)", () => {
     });
     const Wrapper = wrap(engine);
     render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
-    act(() => engine.consume({ name: "Triggered", at: 100, ambientState: {} }));
+    act(() => engine.consume({ name: "Triggered", at: 100 }));
     // Click the reading row to expand.
     const row = screen.getByText(/Triggered/);
     act(() => { row.click(); });
@@ -226,10 +226,10 @@ describe("Sidebar (substrate, generic over TReading)", () => {
     const Wrapper = wrap(engine);
     render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
     // Reading 1 → both a and b are true → cat 2 matches. Floor = 2.
-    act(() => engine.consume({ name: "Triggered", at: 100, ambientState: {} }));
+    act(() => engine.consume({ name: "Triggered", at: 100 }));
     // Reading 2 → a still true but b becomes false → cat 2 currently false.
     // Floor stays at 2 (monotonicity); per-category status for cat 2 = ✗.
-    act(() => engine.consume({ name: "Triggered", at: 200, ambientState: {} }));
+    act(() => engine.consume({ name: "Triggered", at: 200 }));
     // Matched-class outline is on cat 2's row.
     // eslint-disable-next-line testing-library/no-node-access
     const cat2Row = screen.getByText(/Cat 2/).closest(".hazbot-sidebar-entry");

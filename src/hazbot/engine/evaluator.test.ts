@@ -28,7 +28,7 @@ function makeCtx(
 }
 
 function mkReading(triggeredBy: string, at: number): TR {
-  return { triggeredBy, at, sessionId: "test", updates: [], temporalHistory: [] };
+  return { triggeredBy, at, sessionId: "test", temporalHistory: [] };
 }
 
 const ranSimulationImpl: FactorVariableImpl<boolean, TR, TD> = {

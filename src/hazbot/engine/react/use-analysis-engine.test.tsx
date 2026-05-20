@@ -10,7 +10,7 @@ type TD = unknown;
 
 const noopTranslate: EngineOpts<TR, TD>["translate"] = (event, sessionId) => {
   if (event.name === "SimulationStarted") {
-    const reading: TR = { triggeredBy: "SimulationStarted", at: event.at, sessionId, updates: [], temporalHistory: [] };
+    const reading: TR = { triggeredBy: "SimulationStarted", at: event.at, sessionId, temporalHistory: [] };
     return { kind: "trigger", reading };
   }
   return { kind: "no-op" };
@@ -74,7 +74,7 @@ describe("useAnalysisEngine", () => {
     const engine = makeEngine();
     const { result } = renderHook(() => useAnalysisEngine<TR, TD>(), { wrapper: wrap(engine) });
     expect(result.current.matchedCategory).toBeNull();
-    act(() => engine.consume({ name: "SimulationStarted", at: 100, ambientState: {} }));
+    act(() => engine.consume({ name: "SimulationStarted", at: 100 }));
     expect(result.current.factorVariableValues.ranSimulation).toBe(true);
     expect(result.current.matchedCategory).toBe(1);
   });

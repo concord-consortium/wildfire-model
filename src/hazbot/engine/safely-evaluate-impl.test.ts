@@ -68,7 +68,7 @@ describe("safelyEvaluateSimProp (consume path)", () => {
   it("appends impl-eval-throw with readingIndex", () => {
     jest.spyOn(console, "error").mockImplementation(() => undefined);
     const e = makeEngine();
-    const r: TR = { triggeredBy: "SimulationStarted", at: 0, sessionId: "x", updates: [], temporalHistory: [] };
+    const r: TR = { triggeredBy: "SimulationStarted", at: 0, sessionId: "x", temporalHistory: [] };
     const result = safelyEvaluateSimProp(e, { name: "S", impl: throwingSimProp }, r, 3, {});
     expect(result).toBe(false);
     if (e.errors[0].kind !== "impl-eval-throw") throw new Error("expected");
@@ -139,7 +139,7 @@ describe("evaluateFactorVarForRender (render path)", () => {
 describe("evaluateSimPropForRender (render path)", () => {
   it("on throw returns the impl's defaultValue WITHOUT mutating engine state", () => {
     const e = makeEngine();
-    const reading: TR = { triggeredBy: "X", at: 0, sessionId: "x", updates: [], temporalHistory: [] };
+    const reading: TR = { triggeredBy: "X", at: 0, sessionId: "x", temporalHistory: [] };
     const computed = evaluateSimPropForRender(
       { name: "S", impl: throwingSimProp }, reading, { wind: { speed: 0 } }, e.implsWithIncompleteDefaults,
     );

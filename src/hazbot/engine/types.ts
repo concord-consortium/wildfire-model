@@ -1,19 +1,10 @@
 // Substrate types — the host-app-facing interfaces.
-// Per requirements.md "Library scope and the Reading boundary" + "Rule-set TypeScript shape"
-// + "Factor-variable / Sim-prop implementation interface".
 
 export interface BaseReading {
   triggeredBy: string;
   at: number;
   sessionId: string;
-  updates: ReadingUpdate[];
   temporalHistory: TemporalVariableChange[];
-}
-
-export interface ReadingUpdate {
-  at: number;
-  source: string;
-  value: unknown;
 }
 
 export interface TemporalVariableChange {
@@ -33,7 +24,6 @@ export interface TemporalVariableImpl<V = unknown> {
 export interface ConsumedEvent {
   name: string;            // e.g. "SimulationStarted"
   data?: unknown;          // public log payload (LARA-bound)
-  ambientState?: unknown;  // engine-only ambient app state (Req 3a)
   at: number;              // timestamp the event was emitted
 }
 
@@ -65,7 +55,6 @@ export interface FactorVariableDef {
 }
 
 export interface FactorVariableImpl<V = unknown, TReading extends BaseReading = BaseReading, TDefaults = unknown> {
-  ambientStateKeys?: { [triggerEventType: string]: string[] };
   requiredDefaults?: string[];
   temporalReads?: string[];
   // Substrate's catch handler reads `defaultValue` on impl throw (per ENG-1).
@@ -75,7 +64,6 @@ export interface FactorVariableImpl<V = unknown, TReading extends BaseReading = 
 }
 
 export interface SimPropImpl<TReading extends BaseReading = BaseReading, TDefaults = unknown> {
-  ambientStateKeys?: { [triggerEventType: string]: string[] };
   requiredDefaults?: string[];
   temporalReads?: string[];
   defaultValue: boolean;
@@ -88,15 +76,6 @@ export type EngineError =
   | {
       kind: "parse-error"; ruleSetId: string; categoryId: number; expression: string;
       tokenSpan: { start: number; end: number }; offendingToken: string; detail: string; at: number;
-    }
-  | {
-      kind: "ambient-validation"; ruleSetId: string; trigger: string; implName: string;
-      missingKey: string; event: ConsumedEvent; at: number;
-    }
-  | {
-      kind: "orphan-modifier"; source: string;
-      reason: "no-prior-trigger" | "prior-trigger-failed" | "between-runs";
-      event: ConsumedEvent; at: number;
     }
   | {
       kind: "impl-eval-throw"; ruleSetId: string; implName: string;
@@ -129,8 +108,6 @@ export class EngineConstructionError extends Error {
   ) {
     super(`Engine construction failed for rule set ${ruleSetId} (${errors.length} error(s))`);
     this.name = "EngineConstructionError";
-    // Restore prototype chain — required when targeting ES5/lower for `instanceof`
-    // to work across class boundaries (TS handbook "Extending Built-ins").
     Object.setPrototypeOf(this, EngineConstructionError.prototype);
   }
 }

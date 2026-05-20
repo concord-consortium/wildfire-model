@@ -7,9 +7,7 @@ import { Engine, EngineOpts } from "./engine";
 import { BaseReading, ConsumedEvent, FactorVariableImpl, RuleSet, TemporalVariableImpl } from "./types";
 import { computeMatchedCategoryForEngine } from "./evaluator";
 
-interface TR extends BaseReading {
-  ambientState?: Record<string, unknown>;
-}
+type TR = BaseReading;
 type TD = unknown;
 
 function makeOpts(): EngineOpts<TR, TD> {
@@ -42,13 +40,13 @@ function makeOpts(): EngineOpts<TR, TD> {
       if (event.name === "SimulationStarted") {
         return {
           kind: "trigger",
-          reading: { triggeredBy: "SimulationStarted", sessionId, at: event.at, updates: [], temporalHistory: [] },
+          reading: { triggeredBy: "SimulationStarted", sessionId, at: event.at, temporalHistory: [] },
         };
       }
       if (event.name === "SimulationEnded") {
         return {
           kind: "trigger",
-          reading: { triggeredBy: "SimulationEnded", sessionId, at: event.at, updates: [], temporalHistory: [] },
+          reading: { triggeredBy: "SimulationEnded", sessionId, at: event.at, temporalHistory: [] },
         };
       }
       return { kind: "no-op" };
@@ -62,10 +60,10 @@ describe("Engine — replay determinism (R18a)", () => {
   it("two engines with identical opts produce identical state over the same event stream", () => {
     const events: ConsumedEvent[] = [
       { name: "ChartTabShown", at: 10 },          // pre-trigger state change
-      { name: "SimulationStarted", at: 100, ambientState: {} },
+      { name: "SimulationStarted", at: 100 },
       { name: "ChartTabHidden", at: 150 },        // within-window state change
       { name: "ChartTabShown", at: 200 },         // within-window state change
-      { name: "SimulationEnded", at: 300, ambientState: {} },
+      { name: "SimulationEnded", at: 300 },
       { name: "ChartTabHidden", at: 400 },        // between-runs state change
     ];
 

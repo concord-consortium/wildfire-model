@@ -2,7 +2,7 @@ import { currentTemporal } from "./temporal";
 import { BaseReading, TemporalVariableChange } from "./types";
 
 function mkReading(history: TemporalVariableChange[]): BaseReading {
-  return { triggeredBy: "X", at: 0, sessionId: "s", updates: [], temporalHistory: history };
+  return { triggeredBy: "X", at: 0, sessionId: "s", temporalHistory: history };
 }
 
 describe("currentTemporal", () => {

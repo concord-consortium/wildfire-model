@@ -1,12 +1,11 @@
 import {
-  BaseReading, ConsumedEvent, EngineConstructionError, EngineError, FactorVariableImpl, ReadingUpdate,
+  BaseReading, ConsumedEvent, EngineConstructionError, EngineError, FactorVariableImpl,
   RuleSet, SimPropImpl, TemporalVariableChange, TemporalVariableImpl,
 } from "./types";
 import { Expression, parse, ParseError } from "./parser";
 import { generateSessionId } from "./session-id";
 import { validateDefaultsPath } from "./validate-defaults";
 import { walkReferences } from "./walk-references";
-import { findLast } from "./find-last";
 import { runtimeType } from "./runtime-type";
 
 export interface EngineOpts<TReading extends BaseReading, TDefaults = unknown> {
@@ -16,7 +15,6 @@ export interface EngineOpts<TReading extends BaseReading, TDefaults = unknown> {
   simProps: Record<string, SimPropImpl<TReading, TDefaults>>;
   translate: (event: ConsumedEvent, sessionId: string) =>
     | { kind: "trigger"; reading: TReading }
-    | { kind: "modifier"; update: ReadingUpdate }
     | { kind: "no-op" };
   runStartTriggers?: string[];
   temporalVariables?: Record<string, TemporalVariableImpl<unknown>>;
@@ -46,8 +44,6 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
   // Substrate-internal: cached parsed ASTs per category id. Per Req 12 the
   // matching evaluator never re-parses at runtime.
   parsedExpressions: Map<number, CachedAst> = new Map();
-  // Per-trigger union of ambient state keys collected from referenced impls.
-  ambientKeysByTrigger: Map<string, Set<string>> = new Map();
   // Impls whose declared `requiredDefaults` paths don't all resolve (per EXT-18).
   // Used by step-4's `evaluateForRender` to suppress nonsensical comparisons
   // against `undefined` defaults fields without throwing.
@@ -261,7 +257,7 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
 
   private collectFromImpl(
     implName: string,
-    impl: { requiredDefaults?: string[]; ambientStateKeys?: { [k: string]: string[] } },
+    impl: { requiredDefaults?: string[] },
   ): void {
     if (impl.requiredDefaults && this.ruleSet) {
       impl.requiredDefaults.forEach((path) => {
@@ -277,16 +273,6 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
           });
           this.implsWithIncompleteDefaults.add(implName);
         }
-      });
-    }
-    if (impl.ambientStateKeys) {
-      Object.entries(impl.ambientStateKeys).forEach(([trigger, keys]) => {
-        let bucket = this.ambientKeysByTrigger.get(trigger);
-        if (!bucket) {
-          bucket = new Set();
-          this.ambientKeysByTrigger.set(trigger, bucket);
-        }
-        keys.forEach((k) => { bucket?.add(k); });
       });
     }
   }
@@ -465,64 +451,19 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
     const result = this.translate(event, this.sessionId);
     switch (result.kind) {
       case "trigger": {
-        // Trigger-time ambient-state validation (Req 3b).
-        const requiredKeys = this.ambientKeysByTrigger.get(event.name);
-        const ambient = (event.ambientState ?? {}) as Record<string, unknown>;
-        const missingPerImpl: { implName: string; key: string }[] = [];
-        if (requiredKeys && requiredKeys.size > 0) {
-          // Re-walk the impls to attribute missing keys per impl (cardinality per Req 3b).
-          this.checkAmbientForTrigger(event.name, ambient, missingPerImpl);
-        }
-        if (missingPerImpl.length === 0) {
-          const reading = result.reading;
-          // R5a seed: every newly-pushed reading carries one entry per declared
-          // temporal variable, capturing the live value at trigger time.
-          for (const name of variableNames) {
-            reading.temporalHistory.push({
-              at: reading.at,
-              name,
-              value: this.temporalValues[name],
-              eventName: event.name,
-            });
-          }
-          this.readings.push(reading);
-          mutated = true;
-        } else {
-          for (const { implName, key } of missingPerImpl) {
-            this.errors.push({
-              kind: "ambient-validation",
-              ruleSetId: this.ruleSet?.id ?? "(unknown)",
-              trigger: event.name,
-              implName,
-              missingKey: key,
-              event,
-              at: event.at,
-            });
-          }
-          mutated = true;
-        }
-        break;
-      }
-      case "modifier": {
-        const lastReadingForMod = this.readings.length > 0 ? this.readings[this.readings.length - 1] : undefined;
-        const lastFailedTrigger = findLast(
-          this.errors,
-          (e): e is EngineError & { kind: "ambient-validation" } => e.kind === "ambient-validation",
-        );
-        const orphan = this.detectOrphan(lastReadingForMod, lastFailedTrigger);
-        if (orphan) {
-          this.errors.push({
-            kind: "orphan-modifier",
-            source: result.update.source,
-            reason: orphan,
-            event,
-            at: event.at,
+        const reading = result.reading;
+        // R5a seed: every newly-pushed reading carries one entry per declared
+        // temporal variable, capturing the live value at trigger time.
+        for (const name of variableNames) {
+          reading.temporalHistory.push({
+            at: reading.at,
+            name,
+            value: this.temporalValues[name],
+            eventName: event.name,
           });
-          mutated = true;
-        } else if (lastReadingForMod) {
-          lastReadingForMod.updates.push(result.update);
-          mutated = true;
         }
+        this.readings.push(reading);
+        mutated = true;
         break;
       }
       case "no-op":
@@ -534,45 +475,6 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
       }
     }
     if (mutated) this.tickAndNotify();
-  }
-
-  // Per-trigger ambient-key check. Attributes missing keys to the impl that declares them,
-  // restricted to impls referenced by some category (Finding 15 / Req 11a — unused impls
-  // declaring ambient keys must not produce spurious validation errors).
-  private checkAmbientForTrigger(
-    trigger: string, ambient: Record<string, unknown>, missing: { implName: string; key: string }[],
-  ): void {
-    const checkImpl = (
-      implName: string,
-      keysByTrigger: { [k: string]: string[] } | undefined,
-    ): void => {
-      if (!this.referencedImplNames.has(implName)) return;
-      const keys = keysByTrigger?.[trigger];
-      if (!keys) return;
-      for (const k of keys) {
-        if (!(k in ambient)) missing.push({ implName, key: k });
-      }
-    };
-    Object.entries(this.factorVariables).forEach(([name, impl]) => checkImpl(name, impl.ambientStateKeys));
-    Object.entries(this.simProps).forEach(([name, impl]) => checkImpl(name, impl.ambientStateKeys));
-  }
-
-  // Orphan-modifier detection per Tech Notes pseudocode.
-  // - no-prior-trigger: never fired anything yet.
-  // - prior-trigger-failed: latest event was a failed trigger (more recent than latest reading).
-  // - between-runs: latest reading exists but its triggeredBy is not in runStartTriggers.
-  // Returns null when the modifier should attach to lastReading.
-  private detectOrphan(
-    lastReading: TReading | undefined,
-    lastFailedTrigger: (EngineError & { kind: "ambient-validation" }) | undefined,
-  ): "no-prior-trigger" | "prior-trigger-failed" | "between-runs" | null {
-    if (!lastReading && !lastFailedTrigger) return "no-prior-trigger";
-    if (lastReading && lastFailedTrigger && lastFailedTrigger.at > lastReading.at) return "prior-trigger-failed";
-    if (!lastReading && lastFailedTrigger) return "prior-trigger-failed";
-    if (lastReading && this.runStartTriggers && !this.runStartTriggers.includes(lastReading.triggeredBy)) {
-      return "between-runs";
-    }
-    return null;
   }
 
   // Substrate-internal: tick the snapshot counter and notify listeners.
