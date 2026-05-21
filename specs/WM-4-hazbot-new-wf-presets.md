@@ -6,7 +6,7 @@
 
 ## Overview
 
-Add two new simulation presets to [src/presets.ts](src/presets.ts) so Hazbot activity
+Add two new simulation presets to [src/presets.ts](../src/presets.ts) so Hazbot activity
 pages 25 and 42 start from the initial conditions specified in the project's "Wildfire
 Hazbot Feedback Tables" spreadsheet (the **SIMINIT** sheet). Each new preset is an
 existing base preset plus an `elevation` field that locks zone terrain type:
@@ -22,7 +22,7 @@ existing preset.
 
 Page 25's zones match the existing `mountainTwoZone` and page 42's match
 `defaultTwoZone`, but both SIMINIT rows require terrain type to be **fixed**. In the
-Terrain Setup dialog, [terrain-panel.tsx:235](src/components/terrain-panel.tsx#L235)
+Terrain Setup dialog, [terrain-panel.tsx:235](../src/components/terrain-panel.tsx#L235)
 renders the editable terrain-type selector only when `!config.elevation &&
 zones.length === 2`; setting `elevation` on a two-zone preset hides it. The existing
 base presets cannot be modified in place — `mountainTwoZone` is reused by pages 33/35
@@ -37,7 +37,7 @@ the behavior classification.
 ## Requirements
 
 - **R1 — Page 25 preset.** Add a new preset named **`mountainTwoZoneFixedTerrain`** to
-  [src/presets.ts](src/presets.ts). It carries the same landscape as the existing
+  [src/presets.ts](../src/presets.ts). It carries the same landscape as the existing
   `mountainTwoZone`, plus the R2 terrain lock:
   - `zonesCount: 2`
   - Zone 1 and Zone 2: `terrainType: Mountains`, `vegetation: Shrub`, `droughtLevel: MildDrought`
@@ -51,7 +51,7 @@ the behavior classification.
   terrain's appearance is unchanged while the Terrain Setup terrain-type selector is
   hidden.
 - **R3 — Page 42 preset.** Add a new preset named **`defaultTwoZoneFixedTerrain`** to
-  [src/presets.ts](src/presets.ts). It carries the same landscape as the existing
+  [src/presets.ts](../src/presets.ts). It carries the same landscape as the existing
   `defaultTwoZone` (its `zones` and `towns`), plus the R4 terrain lock:
   - `zonesCount: 2`
   - Zone 1: `terrainType: Foothills`, `vegetation: Grass`, `droughtLevel: MediumDrought`
@@ -88,28 +88,28 @@ the behavior classification.
   appended — confirming the spark appears at `[74510, 34414]`, the Spark tool is
   disabled, the fixed spark cannot be moved or removed, the two coincident spark
   markers cause no visual or simulation problems, and wind reads 10 MPH from the west.
-  Validation is manual; [src/presets.ts](src/presets.ts) has no automated test
+  Validation is manual; [src/presets.ts](../src/presets.ts) has no automated test
   coverage today, and matching that practice is a conscious choice for WM-4.
 
 ## Technical Notes
 
-- **Preset structure** ([src/presets.ts](src/presets.ts)): each preset is a
+- **Preset structure** ([src/presets.ts](../src/presets.ts)): each preset is a
   `Partial<ISimulationConfig>`. Relevant fields — `zonesCount`, `zones[]`
   (`terrainType`, `vegetation`, `droughtLevel`), `sparks: number[][]` (model feet),
   `windSpeed` (mph), `windDirection` (degrees, 0 = north), `elevation`
-  (`number[][] | string`). Enums come from [src/types.ts](src/types.ts).
+  (`number[][] | string`). Enums come from [src/types.ts](../src/types.ts).
 - **Config merge order**: `Object.assign(getDefaultConfig(), presetConfig, getUrlConfig())`
-  ([simulation.ts:162](src/models/simulation.ts#L162)) — URL params override preset
+  ([simulation.ts:162](../src/models/simulation.ts#L162)) — URL params override preset
   values.
-- **Terrain-type lock**: [terrain-panel.tsx:235](src/components/terrain-panel.tsx#L235)
+- **Terrain-type lock**: [terrain-panel.tsx:235](../src/components/terrain-panel.tsx#L235)
   gates the `TerrainTypeSelector` on `!config.elevation && zones.length === 2`.
-- **Heightmap derivation**: [data-loaders.ts](src/models/utils/data-loaders.ts)
+- **Heightmap derivation**: [data-loaders.ts](../src/models/utils/data-loaders.ts)
   `getElevationData` builds `data/<zone0>-<zone1>[-<zone2>]-heightmap.png` from zone
   terrain types when `elevation` is absent. Supplying that exact path as `elevation`
   yields identical terrain but a truthy `config.elevation`. Files
   `mountains-mountains-heightmap.png` and `foothills-foothills-heightmap.png` already
-  exist in [src/public/data/](src/public/data/).
-- **`elevation` accepts a string OR an array.** [image-utils.ts](src/models/utils/image-utils.ts)
+  exist in [src/public/data/](../src/public/data/).
+- **`elevation` accepts a string OR an array.** [image-utils.ts](../src/models/utils/image-utils.ts)
   `getInputData` branches on `input.constructor === Array` (inline grid) vs string
   (image URL — the same branch the auto-derived path uses). This spec uses the string
   image-path form. The `number[][]` arrays in existing presets (`slope45deg`, `basic`,
@@ -123,9 +123,9 @@ the behavior classification.
   `displayed = windSpeed / windScaleFactor` and `windScaleFactor` defaults to 0.2, so
   displayed 10 MPH ⇒ `windSpeed: 2`.
 - **`showCoordsOnClick` is currently broken** (discovered while authoring this spec).
-  [use-show-coords-interaction.tsx](src/components/view-3d/use-show-coords-interaction.tsx)
+  [use-show-coords-interaction.tsx](../src/components/view-3d/use-show-coords-interaction.tsx)
   registers its handler under `onClick`, but `getEventHandlers`
-  ([interaction-handler.ts](src/components/view-3d/interaction-handler.ts)) only wires
+  ([interaction-handler.ts](../src/components/view-3d/interaction-handler.ts)) only wires
   up pointer events — `onClick` is intentionally excluded. So the flag has no effect.
   Fixing it (a one-line `onClick` → `onPointerUp` change) is out of scope for WM-4.
 
@@ -133,7 +133,7 @@ the behavior classification.
 
 - Updating the LARA activity sequence so pages 25 and 42 reference the new `preset=`
   names — that lives in LARA, not this repo.
-- Regenerating [docs/hazbot-validation/localhost-urls.md](docs/hazbot-validation/localhost-urls.md)
+- Regenerating [docs/hazbot-validation/localhost-urls.md](../docs/hazbot-validation/localhost-urls.md)
   (auto-generated from a LARA sequence export).
 - Any change to Hazbot rule-set modules — creating a `42.ts` rule-set, or
   re-validating `25.ts` against the new 2-zone model (see Dependencies).
