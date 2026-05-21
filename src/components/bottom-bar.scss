@@ -98,8 +98,17 @@ $overflowHeight: 11px;
   }
 
   .terrainButton{
-    width: 100px;
+    width: 82px;
     text-align: center;
+
+    // Constrain the Setup icon to its 62px design size (centered, 10px padding each side),
+    // overriding the shared `.iconButton svg { width: 100% }` rule. The extra `button`
+    // element keeps this selector more specific than that shared rule regardless of
+    // stylesheet order. Targets both the icon and its hover-highlight SVG.
+    button svg {
+      width: 62px;
+      left: 10px;
+    }
   }
 
   .fullscreenIcon {

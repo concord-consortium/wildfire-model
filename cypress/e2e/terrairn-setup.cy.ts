@@ -17,7 +17,7 @@ context("Test First Page In Terrain Setup", () => {
     it("Create 3 zone setup using first page display", () => {
       bottomBar.getTerrainSetupButton().click();
       terrain.getTerrainSetupComponent().should("be.visible");
-      terrain.getTerrainHeader().should("be.visible").and("contain", "Terrain Setup");
+      terrain.getTerrainHeader().should("be.visible").and("contain", "Setup");
       terrain.getStepIcon().should("exist").and("contain", "1");
       terrain.getInstructions().should("exist").and("contain", "Select the number of zones in your model");
       terrain.getThreeZoneSetup("exist");
@@ -42,7 +42,7 @@ context("Test First Page In Terrain Setup", () => {
     it("Create 2 zone setup using first page display", () => {
       bottomBar.getTerrainSetupButton().click();
       terrain.getTerrainSetupComponent().should("be.visible");
-      terrain.getTerrainHeader().should("be.visible").and("contain", "Terrain Setup");
+      terrain.getTerrainHeader().should("be.visible").and("contain", "Setup");
       terrain.getRadioButton(1).click();
       terrain.verifyRadioButtonChecked(1);
       terrain.verifyRadioButtonUnchecked(0);

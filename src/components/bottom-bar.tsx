@@ -103,7 +103,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               icon={simulation.zonesCount < 3 ? <TerrainIcon /> : <TerrainThreeIcon />}
               highlightIcon={simulation.zonesCount < 3 ? <TerrainHighlightIcon /> : <TerrainThreeHighlightIcon />}
               disabled={uiDisabled}
-              buttonText="Terrain Setup"
+              buttonText="Setup"
               dataTest="terrain-button"
               onClick={this.handleTerrain}
             />

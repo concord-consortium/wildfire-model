@@ -193,7 +193,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
         ui.showTerrainUI &&
         <div className={`${css.background} ${cssClasses[selectedZone]} ${panelClasses[currentPanel]}`}>
           <div className={css.closeButton} onClick={handleClose}>X</div>
-          <div className={css.header} data-testid="terrain-header">Terrain Setup</div>
+          <div className={css.header} data-testid="terrain-header">Setup</div>
           <div className={css.instructions}>
             <span className={css.setupStepIcon}>{firstPanel === 0 ? currentPanel + 1 : currentPanel}</span>
             { panelInstructions[currentPanel] }
