@@ -2,7 +2,7 @@ import { action, computed, observable, makeObservable } from "mobx";
 import { IWindProps, Town } from "../types";
 import { Cell, CellOptions, FireState } from "./cell";
 import { ChartStore } from "./chart-store";
-import { getDefaultConfig, ISimulationConfig, getUrlConfig } from "../config";
+import { ISimulationConfig, getResolvedConfig } from "../config";
 import { Vector2 } from "three";
 import { getElevationData, getRiverData, getUnburntIslandsData, getZoneIndex } from "./utils/data-loaders";
 import { Zone } from "./zone";
@@ -63,7 +63,7 @@ export class SimulationModel {
   @observable public cellsElevationFlag = 0;
   @observable public simulationEndedLogged = false;
 
-  constructor(presetConfig: Partial<ISimulationConfig>) {
+  constructor(presetConfig?: Partial<ISimulationConfig>) {
     makeObservable(this);
     this.load(presetConfig);
   }
@@ -155,11 +155,12 @@ export class SimulationModel {
     });
   }
 
-  @action.bound public load(presetConfig: Partial<ISimulationConfig>) {
+  @action.bound public load(presetConfig?: Partial<ISimulationConfig>) {
     this.restart();
-    // Configuration are joined together. Default values can be replaced by preset, and preset values can be replaced
-    // by URL parameters.
-    this.config = Object.assign(getDefaultConfig(), presetConfig, getUrlConfig());
+    // Default values, overlaid with the preset, overlaid with URL params — see
+    // getResolvedConfig(). `presetConfig` is retained only so tests can inject a
+    // config; when omitted the helper resolves the preset from the URL.
+    this.config = getResolvedConfig(presetConfig);
     this.setInputParamsFromConfig();
     this.populateCellsData();
   }

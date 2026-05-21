@@ -1,4 +1,4 @@
-import { ISimulationConfig } from "./config";
+import type { ISimulationConfig } from "./config";
 import { DroughtLevel, TerrainType, Vegetation } from "./types";
 
 const presets: { [key: string]: Partial<ISimulationConfig> } = {
