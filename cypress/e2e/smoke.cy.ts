@@ -14,7 +14,7 @@ context("Wildfire Smoke Test", () => {
   });
 
   describe("Terrain setup - Adjusting Variables", () => {
-    const headerText = "Terrain Setup";
+    const headerText = "Setup";
     const instructionText1 = "Adjust variables in each zone";
     const zoneTotal = 3;
 

@@ -10,7 +10,7 @@ export const AboutDialogContent = () => (
       model over time.
     </p>
     <p>
-      Use the Terrain Setup window to set the environmental conditions of the simulation including the vegetation type,
+      Use the Setup window to set the environmental conditions of the simulation including the vegetation type,
       drought level, wind speed, and wind direction.
     </p>
     <p>Add sparks to the model, click the play button, and watch the wildfire spread.</p>
