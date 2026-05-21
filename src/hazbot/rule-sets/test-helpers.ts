@@ -13,7 +13,17 @@ import { temporalVariables } from "../wildfire/temporal-variables";
 import { translate } from "../wildfire/translate";
 import { WildfireDefaults, WildfireReading } from "../wildfire/types";
 
-export function makeWildfireEngine(ruleSet: RuleSet<WildfireDefaults>): Engine<WildfireReading, WildfireDefaults> {
+// `defaults` is intentionally optional: it mirrors the optional
+// EngineOpts.defaults, and rule-set 25 references no defaults-bearing factor
+// variable so a required parameter would force a meaningless argument in
+// 25.test.ts. Caution: a `set*`-using rule-set built without `defaults`
+// evaluates against `undefined` — every `set*` factor variable throws and is
+// caught to its `false` fallback, silently misclassifying — so a caller testing
+// such a rule-set (23, 24, 32–35) must pass `defaults`.
+export function makeWildfireEngine(
+  ruleSet: RuleSet<WildfireDefaults>,
+  defaults?: WildfireDefaults,
+): Engine<WildfireReading, WildfireDefaults> {
   const opts: EngineOpts<WildfireReading, WildfireDefaults> = {
     ruleSet,
     requestedRuleSetId: ruleSet.id,
@@ -22,6 +32,7 @@ export function makeWildfireEngine(ruleSet: RuleSet<WildfireDefaults>): Engine<W
     temporalVariables,
     translate,
     runStartTriggers: ["SimulationStarted"],
+    defaults,
   };
   return new Engine<WildfireReading, WildfireDefaults>(opts);
 }
@@ -36,11 +47,10 @@ export function matchAgainst(
   engine: Engine<WildfireReading, WildfireDefaults>,
   readings: WildfireReading[],
 ): number | null {
-  const defaults = ruleSet.defaults as WildfireDefaults;
   return computeMatchedCategoryFloor(
     ruleSet, engine.parsedExpressions,
     (slice) => makeRenderCtx(
-      slice, defaults, engine.factorVariables, engine.simProps, engine.implsWithIncompleteDefaults,
+      slice, engine.defaults, engine.factorVariables, engine.simProps, engine.implsWithIncompleteDefaults,
     ),
     readings,
   );

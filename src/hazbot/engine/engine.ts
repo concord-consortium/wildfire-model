@@ -27,6 +27,9 @@ export interface EngineOpts<TReading extends BaseReading, TDefaults = unknown> {
   // An empty `initialErrors` array falls back to the synthetic entry so the
   // load-blocking sentinel is never silently dropped.
   initialErrors?: EngineError[];
+  // Engine-level change-detection defaults, supplied by the consumer at
+  // construction (per WM-27 — defaults are a construction input, not RuleSet-baked).
+  defaults?: TDefaults;
 }
 
 // Sentinel for AST cache slots that failed to parse.
@@ -38,6 +41,9 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
   errors: EngineError[] = [];
   sessionId: string;
   ruleSet: RuleSet<TDefaults> | undefined = undefined;
+  // Engine-level change-detection defaults, supplied by the consumer via
+  // EngineOpts.defaults at construction (per WM-27).
+  defaults: TDefaults | undefined = undefined;
   requestedRuleSetId: string | undefined;
   factorVariables: Record<string, FactorVariableImpl<unknown, TReading, TDefaults>>;
   simProps: Record<string, SimPropImpl<TReading, TDefaults>>;
@@ -92,6 +98,7 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
     this.simProps = opts.simProps;
     this.translate = opts.translate;
     this.runStartTriggers = opts.runStartTriggers;
+    this.defaults = opts.defaults;
 
     if (opts.ruleSet === undefined) {
       // Maintenance gate: this branch must remain throw-free.

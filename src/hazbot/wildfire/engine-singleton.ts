@@ -1,6 +1,7 @@
 import { Engine, EngineConstructionError, ENGINE_VERSION } from "../engine";
-import { getUrlConfig } from "../../config";
+import { getResolvedConfig, getUrlConfig } from "../../config";
 import { ruleSets } from "../rule-sets";
+import { deriveWildfireDefaults } from "./derive-defaults";
 import { factorVariables } from "./factor-variables";
 import { simProps } from "./sim-props";
 import { temporalVariables } from "./temporal-variables";
@@ -28,6 +29,10 @@ export function getAnalysisEngine(): Engine<WildfireReading, WildfireDefaults> |
   // EngineError.ruleSetId) work uniformly.
   const requestedRuleSetId = cfg.hazbotRules !== undefined ? String(cfg.hazbotRules) : undefined;
   const ruleSet = requestedRuleSetId ? ruleSets[requestedRuleSetId] : undefined;
+  // Derive the engine's change-detection defaults from the resolved simulation
+  // config (preset + URL params) — the same initial state the running
+  // SimulationModel loads (per WM-27 Requirements 2–5).
+  const defaults = deriveWildfireDefaults(getResolvedConfig());
   // ChartTab events are now state changes processed by the chartTabOpen
   // temporal variable; translate no longer needs the latest reading.
   try {
@@ -39,6 +44,7 @@ export function getAnalysisEngine(): Engine<WildfireReading, WildfireDefaults> |
       temporalVariables,
       translate,
       runStartTriggers: ["SimulationStarted"],
+      defaults,
     });
     // Step 14 wires src/log.ts to detect this just-constructed active engine and
     // emit AnalysisEngineActivated using buildAnalysisEngineActivatedPayload below.
@@ -62,6 +68,7 @@ export function getAnalysisEngine(): Engine<WildfireReading, WildfireDefaults> |
         translate,
         runStartTriggers: ["SimulationStarted"],
         initialErrors: e.errors,
+        defaults,
       });
       cached = placeholder;
       return placeholder;

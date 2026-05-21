@@ -36,7 +36,7 @@ function computeView<TR extends BaseReading, TD>(
   // factorVariableValues runs in all states via evaluateForRender's 3-branch guard.
   Object.entries(engine.factorVariables).forEach(([name, impl]) => {
     const wrapped = evaluateFactorVarForRender(
-      { name, impl }, engine.readings, engine.ruleSet?.defaults as TD | undefined,
+      { name, impl }, engine.readings, engine.defaults,
       engine.implsWithIncompleteDefaults,
     );
     factorVariableValues[name] = wrapped.value;
@@ -47,7 +47,7 @@ function computeView<TR extends BaseReading, TD>(
   // sidebar can show a placeholder rather than a misleading default.
   const simPropValues: Record<string, boolean | null> = {};
   const witnessReading = engine.latestRunStartReading;
-  const defaults = engine.ruleSet?.defaults as TD | undefined;
+  const defaults = engine.defaults;
   Object.entries(engine.simProps).forEach(([name, impl]) => {
     if (witnessReading === undefined) {
       simPropValues[name] = null;

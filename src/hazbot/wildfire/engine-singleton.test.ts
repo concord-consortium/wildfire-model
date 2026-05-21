@@ -59,6 +59,24 @@ describe("getAnalysisEngine", () => {
   });
 });
 
+describe("getAnalysisEngine — config-derived defaults wiring (per WM-27)", () => {
+  it("threads deriveWildfireDefaults(getResolvedConfig()) onto engine.defaults for a known preset", () => {
+    setUrl("?hazbotRules=23&preset=plainsTwoZone");
+    const e = getAnalysisEngine();
+    if (!e) throw new Error("expected engine");
+    // Explicit WildfireDefaults literal (not re-derived) so the test catches a
+    // wrong derivation as well as broken wiring. plainsTwoZone is Plains/Shrub/1
+    // ×2; the base config carries wind 0/0.
+    expect(e.defaults).toEqual({
+      zones: [
+        { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Mild Drought" },
+        { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Mild Drought" },
+      ],
+      wind: { speed: 0, direction: 0 },
+    });
+  });
+});
+
 describe("getAnalysisEngine — EngineConstructionError catch path", () => {
   // The wildfire rulesets don't currently trigger R7 construction errors; we
   // inject a malformed `temporalVariables` via jest.isolateModules so the

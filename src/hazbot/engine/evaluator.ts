@@ -307,7 +307,7 @@ export function computeMatchedCategoryForEngine<TR extends BaseReading, TD>(
   engine: Engine<TR, TD>,
 ): number | null {
   if (!engine.isActive || !engine.ruleSet) return null;
-  const defaults = engine.ruleSet.defaults as TD | undefined;
+  const defaults = engine.defaults;
   return computeMatchedCategoryFloor(
     engine.ruleSet, engine.parsedExpressions,
     (slice) => makeRenderCtx(
