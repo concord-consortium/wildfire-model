@@ -43,6 +43,8 @@ describe("extractFromSheets", () => {
     expect(result.tabs[0].id).toBe("23");
     expect(result.tabs[0].tsSource).toMatch(/AUTO-GENERATED/);
     expect(result.tabs[0].tsSource).toMatch(/export const ruleSet23/);
+    // The generator no longer emits a `defaults` field (per WM-27 Requirement 10).
+    expect(result.tabs[0].tsSource).not.toMatch(/defaults:/);
     expect(result.indexSource).toMatch(/AUTO-GENERATED/);
     expect(result.indexSource).toMatch(/"23": ruleSet23/);
     expect(result.dslGrammar).toMatch(/AUTO-GENERATED/);
@@ -77,28 +79,6 @@ describe("parseTab — categories", () => {
   });
 });
 
-describe("parseTab — defaults", () => {
-  it("parses per-zone drought defaults from the Details column", () => {
-    const parsed = parseTab("23", SYNTHETIC_SHEETS[1].data);
-    expect(parsed.defaults.zones).toEqual([
-      { droughtLevel: "Mild" },
-      { droughtLevel: "Mild" },
-    ]);
-  });
-
-  it("leaves defaults absent when Details says TBD", () => {
-    const tbdRows = [
-      ["#", "Student Action", "Hazbot Feedback", "Visual Feedback", "Pseudocode for Rules", "Details"],
-      [1, "X", "Y", "Z", "ranSimulation", "details"],
-      [""],
-      ["Factor variable", "Definition", "Log events", "Details"],
-      ["setDroughtLevel", "X", "SimulationStarted", "TBD (activity revision)"],
-    ];
-    const parsed = parseTab("32", tbdRows);
-    expect(parsed.defaults.zones).toBeUndefined();
-  });
-});
-
 describe("tsString — escape behavior", () => {
   it("quotes simple strings with double quotes", () => {
     expect(tsString("hello")).toBe('"hello"');
@@ -124,7 +104,7 @@ function compileAndLoad(tsSource, fileName) {
   // Replace substrate-relative imports with inline stubs so the tmpdir
   // compile doesn't need the real substrate code on the resolution path.
   const stubbed = tsSource
-    .replace('import { RuleSet } from "../engine";', "interface RuleSet<TDefaults> { id: string; categories: any[]; factorVariables: any[]; defaults: any }")
+    .replace('import { RuleSet } from "../engine";', "interface RuleSet<TDefaults> { id: string; categories: any[]; factorVariables: any[]; }")
     .replace('import { WildfireDefaults } from "../wildfire/types";', "type WildfireDefaults = any;");
   fs.writeFileSync(tabPath, stubbed);
   // ts-node/register handles compilation; require errors on TS compile failure.

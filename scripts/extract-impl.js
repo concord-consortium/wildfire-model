@@ -80,7 +80,6 @@ function parseTab(sheetName, rows) {
 
   // Factor-variable block.
   const factorVariables = [];
-  const defaults = { zones: [], wind: undefined };
   if (fvHeaderIdx > 0) {
     const fvHeader = rows[fvHeaderIdx];
     const fvColIdx = mapFactorVarColumnIndices(fvHeader);
@@ -99,16 +98,10 @@ function parseTab(sheetName, rows) {
         details: String(row[fvColIdx.details] ?? ""),
       };
       factorVariables.push(def);
-      mergeDefaults(defaults, def.details, def.name);
     }
   }
 
-  // Drop empty zones array (no per-zone data found).
-  const finalDefaults = { zones: defaults.zones, wind: defaults.wind };
-  if (finalDefaults.zones.length === 0) delete finalDefaults.zones;
-  if (finalDefaults.wind === undefined) delete finalDefaults.wind;
-
-  return { id: sheetName, categories, factorVariables, defaults: finalDefaults };
+  return { id: sheetName, categories, factorVariables };
 }
 
 function mapRuleColumnIndices(header) {
@@ -163,82 +156,6 @@ function normalizeFeedback(s) {
   return s.replace(/^(?:Hazbot:\s*){2,}/, "Hazbot: ");
 }
 
-// === Defaults parsing from Details column ===
-
-// Map known set-X factor variable names to the per-zone defaults field they read.
-const FACTOR_VAR_TO_FIELD = {
-  setTerrainType: "terrainType",
-  setVegetation: "vegetation",
-  setDroughtLevel: "droughtLevel",
-};
-
-function mergeDefaults(defaults, details, factorVarName) {
-  // Match patterns like:
-  //   `Default values = "Plains" (zone 1), "Plains" (zone 2)`
-  //   `Default value = "Mild Drought" (zone 1)`
-  //   `Default speed = 0`, `Default direction = 0`
-  // TBD entries leave defaults absent so the engine's load-time validator catches
-  // the gap (per Req 11a).
-  if (!details || /\bTBD\b/i.test(details)) return;
-
-  // Per-zone defaults: prefer the explicit field-keyword pattern (handles details
-  // text that says "Default terrain = ..."); fall back to the generic
-  // "Default values = ..." pattern dispatched via the impl's name → field mapping.
-  parsePerZoneDefault(defaults, details, /default\s+terrain[^=]*=\s*([^.]+)/i, "terrainType");
-  parsePerZoneDefault(defaults, details, /default\s+vegetation[^=]*=\s*([^.]+)/i, "vegetation");
-  parsePerZoneDefault(defaults, details, /default\s+drought[^=]*=\s*([^.]+)/i, "droughtLevel");
-
-  const inferredField = factorVarName ? FACTOR_VAR_TO_FIELD[factorVarName] : undefined;
-  if (inferredField) {
-    parsePerZoneDefault(defaults, details, /default\s+values?[^=]*=\s*([^.]+)/i, inferredField);
-  }
-
-  // Wind speed/direction defaults. Two patterns supported:
-  //   `Default speed = 0`, `Default direction = 0`        (explicit field-keyword form)
-  //   `Default values = 0 (magnitude), 0 (direction)`     (the wildfire sheet's wording —
-  //                                                        magnitude is the wind speed)
-  if (factorVarName && /wind/i.test(factorVarName)) {
-    parseWindDefaults(defaults, details);
-  }
-  const speedMatch = /default\s+(?:wind\s+)?speed\s*=\s*([0-9.]+)/i.exec(details);
-  const dirMatch = /default\s+(?:wind\s+)?direction\s*=\s*([0-9.]+)/i.exec(details);
-  if (speedMatch || dirMatch) {
-    if (!defaults.wind) defaults.wind = { speed: 0, direction: 0 };
-    if (speedMatch) defaults.wind.speed = parseFloat(speedMatch[1]);
-    if (dirMatch) defaults.wind.direction = parseFloat(dirMatch[1]);
-  }
-}
-
-function parseWindDefaults(defaults, details) {
-  // `Default values = 0 (magnitude), 0 (direction).`
-  const valuesRe = /default\s+values?\s*=\s*([^.]+)/i;
-  const match = valuesRe.exec(details);
-  if (!match) return;
-  const valuesStr = match[1];
-  const magMatch = /([0-9.]+)\s*\(magnitude\)/i.exec(valuesStr);
-  const dirMatch = /([0-9.]+)\s*\(direction\)/i.exec(valuesStr);
-  if (magMatch || dirMatch) {
-    if (!defaults.wind) defaults.wind = { speed: 0, direction: 0 };
-    if (magMatch) defaults.wind.speed = parseFloat(magMatch[1]);
-    if (dirMatch) defaults.wind.direction = parseFloat(dirMatch[1]);
-  }
-}
-
-function parsePerZoneDefault(defaults, details, patternRe, field) {
-  const match = patternRe.exec(details);
-  if (!match) return;
-  const valuesStr = match[1];
-  // Parse `"Plains" (zone 1), "Plains" (zone 2)` style.
-  const zoneRe = /"([^"]+)"\s*\(zone\s+(\d+)\)/g;
-  let m;
-  while ((m = zoneRe.exec(valuesStr)) !== null) {
-    const value = m[1];
-    const zoneIdx = parseInt(m[2], 10) - 1; // zones are 1-indexed in the sheet
-    while (defaults.zones.length <= zoneIdx) defaults.zones.push({});
-    defaults.zones[zoneIdx][field] = value;
-  }
-}
-
 // === Emission ===
 
 function emitTabModule(parsed) {
@@ -255,7 +172,6 @@ function emitTabModule(parsed) {
     `  factorVariables: [\n` +
     parsed.factorVariables.map(emitFactorVar).join(",\n") +
     `\n  ],\n` +
-    `  defaults: ${emitDefaults(parsed.defaults)},\n` +
     `};\n`;
 }
 
@@ -282,10 +198,6 @@ function emitFactorVar(def) {
     `      details: ${tsString(def.details)},\n` +
     `    }`
   );
-}
-
-function emitDefaults(defaults) {
-  return JSON.stringify(defaults, null, 2).replace(/\n/g, "\n  ");
 }
 
 function emitIndex(tabIds) {
