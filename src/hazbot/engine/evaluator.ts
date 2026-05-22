@@ -49,19 +49,17 @@ export interface EvalCtx<TR extends BaseReading, TD> {
   wrapSimProp: SimPropWrap<TR, TD>;
 }
 
-// Render-path ctx builder using `evaluateForRender` and the engine's
-// per-impl incomplete-defaults Set (per EXT-7 / EXT-18).
+// Render-path ctx builder using `evaluateForRender` (per EXT-7).
 export function makeRenderCtx<TR extends BaseReading, TD>(
   readings: TR[],
   defaults: TD | undefined,
   factorVariables: Record<string, FactorVariableImpl<unknown, TR, TD>>,
   simProps: Record<string, SimPropImpl<TR, TD>>,
-  implsWithIncompleteDefaults?: Set<string>,
 ): EvalCtx<TR, TD> {
   return {
     readings, defaults, factorVariables, simProps,
-    wrapFactorVar: (fvar, rs, ds) => evaluateFactorVarForRender(fvar, rs, ds, implsWithIncompleteDefaults),
-    wrapSimProp: (sprop, r, ds) => evaluateSimPropForRender(sprop, r, ds, implsWithIncompleteDefaults),
+    wrapFactorVar: (fvar, rs, ds) => evaluateFactorVarForRender(fvar, rs, ds),
+    wrapSimProp: (sprop, r, ds) => evaluateSimPropForRender(sprop, r, ds),
   };
 }
 
@@ -310,9 +308,7 @@ export function computeMatchedCategoryForEngine<TR extends BaseReading, TD>(
   const defaults = engine.defaults;
   return computeMatchedCategoryFloor(
     engine.ruleSet, engine.parsedExpressions,
-    (slice) => makeRenderCtx(
-      slice, defaults, engine.factorVariables, engine.simProps, engine.implsWithIncompleteDefaults,
-    ),
+    (slice) => makeRenderCtx(slice, defaults, engine.factorVariables, engine.simProps),
     engine.readings,
   );
 }

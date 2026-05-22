@@ -126,15 +126,4 @@ describe("wildfire factor variables", () => {
       expect(factorVariables.simulationRuns.defaultValue).toEqual([]);
     });
   });
-
-  describe("requiredDefaults", () => {
-    it("setWind declares wind.speed and wind.direction", () => {
-      expect(factorVariables.setWind.requiredDefaults).toEqual(["wind.speed", "wind.direction"]);
-    });
-    it("setAnyZoneVar declares the three per-zone defaults", () => {
-      expect(factorVariables.setAnyZoneVar.requiredDefaults).toEqual([
-        "zones[*].terrainType", "zones[*].vegetation", "zones[*].droughtLevel",
-      ]);
-    });
-  });
 });

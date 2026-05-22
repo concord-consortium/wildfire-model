@@ -81,25 +81,13 @@ describe("evaluateFactorVarForRender (render path)", () => {
   it("on throw returns fallback WITHOUT mutating engine state", () => {
     const e = makeEngine();
     const computed = evaluateFactorVarForRender(
-      { name: "x", impl: throwingFactorVar }, [], { wind: { speed: 0 } }, e.implsWithIncompleteDefaults,
+      { name: "x", impl: throwingFactorVar }, [], { wind: { speed: 0 } },
     );
     expect(computed).toEqual({ value: false, witnesses: [] });
     expect(e.errors).toEqual([]);
   });
 
-  it("Branch 1: defaults undefined && impl reads defaults → fallback without calling compute", () => {
-    let called = false;
-    const fvar: FactorVariableImpl<boolean, TR, TD> = {
-      defaultValue: false,
-      requiredDefaults: ["wind.speed"],
-      compute: () => { called = true; return { value: true, witnesses: [] }; },
-    };
-    const computed = evaluateFactorVarForRender({ name: "x", impl: fvar }, [], undefined);
-    expect(computed).toEqual({ value: false, witnesses: [] });
-    expect(called).toBe(false);
-  });
-
-  it("Branch 1: defaults undefined && no requiredDefaults → call compute", () => {
+  it("calls compute when defaults are undefined", () => {
     let called = false;
     const fvar: FactorVariableImpl<boolean, TR, TD> = {
       defaultValue: false,
@@ -110,24 +98,10 @@ describe("evaluateFactorVarForRender (render path)", () => {
     expect(called).toBe(true);
   });
 
-  it("Branch 2: defaults defined && impl in implsWithIncompleteDefaults → fallback", () => {
+  it("calls compute normally when defaults are defined", () => {
     let called = false;
     const fvar: FactorVariableImpl<boolean, TR, TD> = {
       defaultValue: false,
-      requiredDefaults: ["wind.speed"],
-      compute: () => { called = true; return { value: true, witnesses: [] }; },
-    };
-    const incomplete = new Set<string>(["x"]);
-    const computed = evaluateFactorVarForRender({ name: "x", impl: fvar }, [], { wind: { speed: 0 } }, incomplete);
-    expect(computed).toEqual({ value: false, witnesses: [] });
-    expect(called).toBe(false);
-  });
-
-  it("Branch 3: defaults defined && impl complete → call compute normally", () => {
-    let called = false;
-    const fvar: FactorVariableImpl<boolean, TR, TD> = {
-      defaultValue: false,
-      requiredDefaults: ["wind.speed"],
       compute: () => { called = true; return { value: true, witnesses: [] }; },
     };
     const computed = evaluateFactorVarForRender({ name: "x", impl: fvar }, [], { wind: { speed: 5 } });
@@ -141,7 +115,7 @@ describe("evaluateSimPropForRender (render path)", () => {
     const e = makeEngine();
     const reading: TR = { triggeredBy: "X", at: 0, sessionId: "x", temporalHistory: [] };
     const computed = evaluateSimPropForRender(
-      { name: "S", impl: throwingSimProp }, reading, { wind: { speed: 0 } }, e.implsWithIncompleteDefaults,
+      { name: "S", impl: throwingSimProp }, reading, { wind: { speed: 0 } },
     );
     expect(computed).toBe(false);
     expect(e.errors).toEqual([]);

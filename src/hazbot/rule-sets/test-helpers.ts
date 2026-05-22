@@ -49,9 +49,7 @@ export function matchAgainst(
 ): number | null {
   return computeMatchedCategoryFloor(
     ruleSet, engine.parsedExpressions,
-    (slice) => makeRenderCtx(
-      slice, engine.defaults, engine.factorVariables, engine.simProps, engine.implsWithIncompleteDefaults,
-    ),
+    (slice) => makeRenderCtx(slice, engine.defaults, engine.factorVariables, engine.simProps),
     readings,
   );
 }

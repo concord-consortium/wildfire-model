@@ -30,7 +30,6 @@ const ranSimulation: FactorVariableImpl<boolean, WildfireReading, WildfireDefaul
 
 const setDroughtLevel: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,
-  requiredDefaults: ["zones[*].droughtLevel"],
   compute: (readings, defaults) => {
     const witnesses = simulationStartedReadings(readings).filter((r) =>
       anyZoneDiffers(r.zones, defaults.zones, "droughtLevel"));
@@ -40,7 +39,6 @@ const setDroughtLevel: FactorVariableImpl<boolean, WildfireReading, WildfireDefa
 
 const setVegetation: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,
-  requiredDefaults: ["zones[*].vegetation"],
   compute: (readings, defaults) => {
     const witnesses = simulationStartedReadings(readings).filter((r) =>
       anyZoneDiffers(r.zones, defaults.zones, "vegetation"));
@@ -50,7 +48,6 @@ const setVegetation: FactorVariableImpl<boolean, WildfireReading, WildfireDefaul
 
 const setTerrainType: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,
-  requiredDefaults: ["zones[*].terrainType"],
   compute: (readings, defaults) => {
     const witnesses = simulationStartedReadings(readings).filter((r) =>
       anyZoneDiffers(r.zones, defaults.zones, "terrainType"));
@@ -60,7 +57,6 @@ const setTerrainType: FactorVariableImpl<boolean, WildfireReading, WildfireDefau
 
 const setWind: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,
-  requiredDefaults: ["wind.speed", "wind.direction"],
   compute: (readings, defaults) => {
     const witnesses = simulationStartedReadings(readings).filter((r) =>
       r.wind !== undefined && defaults.wind !== undefined &&
@@ -71,7 +67,6 @@ const setWind: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = 
 
 const setAnyZoneVar: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,
-  requiredDefaults: ["zones[*].terrainType", "zones[*].vegetation", "zones[*].droughtLevel"],
   compute: (readings, defaults) => {
     const witnesses = simulationStartedReadings(readings).filter((r) =>
       anyZoneDiffers(r.zones, defaults.zones, "terrainType") ||
@@ -83,10 +78,6 @@ const setAnyZoneVar: FactorVariableImpl<boolean, WildfireReading, WildfireDefaul
 
 const setAnyVar: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,
-  requiredDefaults: [
-    "zones[*].terrainType", "zones[*].vegetation", "zones[*].droughtLevel",
-    "wind.speed", "wind.direction",
-  ],
   compute: (readings, defaults) => {
     const sims = simulationStartedReadings(readings);
     const witnesses = sims.filter((r) => {

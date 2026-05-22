@@ -4,7 +4,6 @@ import {
 } from "./types";
 import { Expression, parse, ParseError } from "./parser";
 import { generateSessionId } from "./session-id";
-import { validateDefaultsPath } from "./validate-defaults";
 import { walkReferences } from "./walk-references";
 import { runtimeType } from "./runtime-type";
 
@@ -50,10 +49,6 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
   // Substrate-internal: cached parsed ASTs per category id. Per Req 12 the
   // matching evaluator never re-parses at runtime.
   parsedExpressions: Map<number, CachedAst> = new Map();
-  // Impls whose declared `requiredDefaults` paths don't all resolve (per EXT-18).
-  // Used by step-4's `evaluateForRender` to suppress nonsensical comparisons
-  // against `undefined` defaults fields without throwing.
-  implsWithIncompleteDefaults: Set<string> = new Set();
   // Names of impls that some category expression references. Step 4 uses this
   // to scope ambient-state validation to only referenced impls (Finding 15 /
   // Req 11a "referenced only" rule).
@@ -145,7 +140,7 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
     //   temporal-initial-values-mismatch) throw EngineConstructionError. These are
     //   fundamental misconfigurations where returning an inert-but-live engine
     //   would invite silent miswiring.
-    // - The existing variants (parse-error, missing-impl, missing-defaults) push to
+    // - The existing variants (parse-error, missing-impl) push to
     //   this.errors and rely on isActive to gate consume(). These are partial
     //   brokenness (e.g. one bad category among many) where partial recovery is
     //   useful.
@@ -215,7 +210,7 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
     allReferencedFactorVars.forEach((n) => this.referencedImplNames.add(n));
     allReferencedSimProps.forEach((n) => this.referencedImplNames.add(n));
 
-    // Reference-driven walk: missing-impl + missing-defaults + ambient-key collection.
+    // Reference-driven walk: missing-impl detection.
     // (Run even if some categories failed to parse — surface every load issue at once
     // so an implementer doesn't see "missing-impl" only after "parse-error" is fixed.)
     allReferencedFactorVars.forEach((name) => {
@@ -229,9 +224,7 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
           detail: `factor-variable \`${name}\` has no impl`,
           at: Date.now(),
         });
-        return;
       }
-      this.collectFromImpl(name, impl);
     });
     allReferencedSimProps.forEach((name) => {
       if (!this.ruleSet) return;
@@ -244,9 +237,7 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
           detail: `sim-prop \`${name}\` has no impl`,
           at: Date.now(),
         });
-        return;
       }
-      this.collectFromImpl(name, impl);
     });
 
     // Stub-warning emission: only fire when no load-blocking issue exists.
@@ -258,28 +249,6 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
       allReferencedSimProps.forEach((name) => {
         const impl = this.simProps[name];
         if (impl?.isStub) this.errors.push({ kind: "stub-warning", stubName: name, at: Date.now() });
-      });
-    }
-  }
-
-  private collectFromImpl(
-    implName: string,
-    impl: { requiredDefaults?: string[] },
-  ): void {
-    if (impl.requiredDefaults && this.ruleSet) {
-      impl.requiredDefaults.forEach((path) => {
-        if (!this.ruleSet) return;
-        const r = validateDefaultsPath(this.ruleSet.defaults, path);
-        if (!r.ok) {
-          this.errors.push({
-            kind: "load-failure",
-            reason: "missing-defaults",
-            ruleSetId: this.ruleSet.id,
-            detail: `${implName} reads defaults path \`${path}\` — ${r.failingPath}`,
-            at: Date.now(),
-          });
-          this.implsWithIncompleteDefaults.add(implName);
-        }
       });
     }
   }

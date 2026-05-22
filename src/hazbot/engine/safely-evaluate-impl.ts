@@ -5,8 +5,6 @@ export interface EngineLite<TReading extends BaseReading> {
   readings: TReading[];
   errors: EngineError[];
   ruleSet: { id: string } | undefined;
-  // For EXT-18 — render-path defaults guard.
-  implsWithIncompleteDefaults?: Set<string>;
 }
 
 interface NamedFactorVar<V, TR extends BaseReading, TD> {
@@ -84,38 +82,16 @@ export function safelyEvaluateSimProp<TR extends BaseReading, TD>(
   }
 }
 
-// Render-path wrapper for FactorVariableImpl.compute (per EXT-7 / ENG-2 / EXT-18).
-// Three-branch defaults guard:
-//   (1) defaults === undefined → if impl reads defaults, return fallback without
-//       calling compute. Else call compute with cast (impl contract: doesn't read defaults).
-//   (2) defaults defined && impl in implsWithIncompleteDefaults → return fallback.
-//   (3) defaults defined && impl complete → call compute normally.
-// Always catches throws and returns the per-impl-kind fallback shape WITHOUT
-// mutating engine state (no errors append, no console output).
+// Render-path wrapper for FactorVariableImpl.compute (per EXT-7 / ENG-2).
+// Calls compute inside a try/catch; a throw yields the per-impl-kind fallback
+// shape WITHOUT mutating engine state (no errors append, no console output).
 export function evaluateFactorVarForRender<V, TR extends BaseReading, TD>(
   fvar: NamedFactorVar<V, TR, TD>,
   readings: TR[],
   defaults: TD | undefined,
-  implsWithIncompleteDefaults?: Set<string>,
 ): { value: V; witnesses: TR[] } {
-  const reads = fvar.impl.requiredDefaults?.length ?? 0;
-  // Branch 1: defaults undefined.
-  if (defaults === undefined) {
-    if (reads > 0) return { value: fvar.impl.defaultValue, witnesses: [] };
-    // Impl doesn't read defaults; safe to call.
-    try {
-      return fvar.impl.compute(readings, undefined as TD);
-    } catch {
-      return { value: fvar.impl.defaultValue, witnesses: [] };
-    }
-  }
-  // Branch 2: defaults defined but this impl is incomplete.
-  if (implsWithIncompleteDefaults?.has(fvar.name)) {
-    return { value: fvar.impl.defaultValue, witnesses: [] };
-  }
-  // Branch 3.
   try {
-    return fvar.impl.compute(readings, defaults);
+    return fvar.impl.compute(readings, defaults as TD);
   } catch {
     return { value: fvar.impl.defaultValue, witnesses: [] };
   }
@@ -126,22 +102,9 @@ export function evaluateSimPropForRender<TR extends BaseReading, TD>(
   sprop: NamedSimProp<TR, TD>,
   reading: TR,
   defaults: TD | undefined,
-  implsWithIncompleteDefaults?: Set<string>,
 ): boolean {
-  const reads = sprop.impl.requiredDefaults?.length ?? 0;
-  if (defaults === undefined) {
-    if (reads > 0) return sprop.impl.defaultValue;
-    try {
-      return sprop.impl.evaluate(reading, undefined as TD);
-    } catch {
-      return sprop.impl.defaultValue;
-    }
-  }
-  if (implsWithIncompleteDefaults?.has(sprop.name)) {
-    return sprop.impl.defaultValue;
-  }
   try {
-    return sprop.impl.evaluate(reading, defaults);
+    return sprop.impl.evaluate(reading, defaults as TD);
   } catch {
     return sprop.impl.defaultValue;
   }

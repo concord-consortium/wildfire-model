@@ -238,25 +238,19 @@ describe("Sidebar (substrate, generic over TReading)", () => {
     expect(cat2Row?.textContent).toMatch(/✗/);
   });
 
-  it("shows the inactive-fallback note in Factor Variables panel when engine is inactive but ruleSet is defined (e.g., missing-defaults)", () => {
-    // Build a rule set whose category expression references a factor variable that
-    // declares a requiredDefaults path the rule set's defaults don't satisfy. The
-    // engine constructs (ruleSet retained), fails load validation, and the panel
-    // surfaces the fallback note for the developer.
-    const fvarReadingDefaults: FactorVariableImpl<boolean, TestReading, { needed?: string }> = {
-      defaultValue: false,
-      requiredDefaults: ["needed"],
-      compute: (_readings, defaults) => ({ value: defaults?.needed !== undefined, witnesses: [] }),
-    };
-    const rs: RuleSet<{ needed?: string }> = {
+  it("shows the inactive-fallback note in Factor Variables panel when engine is inactive but ruleSet is defined (e.g., missing-impl)", () => {
+    // Build a rule set whose category references a factor variable that has no
+    // impl. The engine constructs (ruleSet retained), fails load validation with
+    // missing-impl, and the panel surfaces the fallback note for the developer.
+    const rs: RuleSet<TestDefaults> = {
       id: "tabX",
-      categories: [{ id: 1, studentAction: "stub", feedback: "", visualFeedback: "", expression: "needsDefault" }],
-      factorVariables: [{ name: "needsDefault", definition: "", logEvents: [], details: "" }],
-      defaults: {}, // intentionally missing — triggers missing-defaults load failure
+      categories: [{ id: 1, studentAction: "stub", feedback: "", visualFeedback: "", expression: "needsImpl" }],
+      factorVariables: [{ name: "needsImpl", definition: "", logEvents: [], details: "" }],
+      defaults: {},
     };
-    const engine = new Engine<TestReading, { needed?: string }>({
+    const engine = new Engine<TestReading, TestDefaults>({
       ruleSet: rs,
-      factorVariables: { needsDefault: fvarReadingDefaults },
+      factorVariables: {}, // no impl for needsImpl → missing-impl load failure
       simProps: {},
       translate: noopTranslate,
     });

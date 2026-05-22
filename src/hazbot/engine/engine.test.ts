@@ -92,29 +92,11 @@ describe("Engine — construction", () => {
     expect(missing).toBeDefined();
   });
 
-  it("emits missing-defaults when impl declares a path that doesn't resolve", () => {
-    const ruleSet = makeRuleSet({ defaults: { wind: { speed: 5, direction: 0 } } });
-    const impl = makeImpl({ requiredDefaults: ["zones[*].terrainType"] });
+  it("succeeds when there is no missing impl and no parse error", () => {
+    const ruleSet = makeRuleSet();
     const e = new Engine<TestReading, TestDefaults>({
       ruleSet,
-      factorVariables: { ranSimulation: impl },
-      simProps: {},
-      translate: noopTranslate,
-    });
-    const missing = e.errors.find((x) => x.kind === "load-failure" && x.reason === "missing-defaults");
-    if (!missing || missing.kind !== "load-failure") throw new Error("expected missing-defaults load-failure");
-    expect(missing.detail).toMatch(/ranSimulation.*zones\[\*\]\.terrainType/);
-    expect(e.implsWithIncompleteDefaults.has("ranSimulation")).toBe(true);
-  });
-
-  it("succeeds when all defaults resolve, no missing impl, no parse error", () => {
-    const ruleSet = makeRuleSet({
-      defaults: { wind: { speed: 5, direction: 0 }, zones: [{ terrainType: "Plains" }] },
-    });
-    const impl = makeImpl({ requiredDefaults: ["zones[*].terrainType", "wind.speed"] });
-    const e = new Engine<TestReading, TestDefaults>({
-      ruleSet,
-      factorVariables: { ranSimulation: impl },
+      factorVariables: { ranSimulation: makeImpl() },
       simProps: {},
       translate: noopTranslate,
     });
@@ -167,14 +149,13 @@ describe("Engine — construction", () => {
         { name: "setWind", definition: "", logEvents: [], details: "" }, // declared but not referenced in the expression
       ],
     });
-    const setWindImpl = makeImpl({ requiredDefaults: ["wind.speed", "wind.direction"] });
     const e = new Engine<TestReading, TestDefaults>({
       ruleSet,
-      factorVariables: { ranSimulation: makeImpl(), setWind: setWindImpl },
+      factorVariables: { ranSimulation: makeImpl(), setWind: makeImpl() },
       simProps: {},
       translate: noopTranslate,
     });
-    // setWind requires wind defaults but is unreferenced — no missing-defaults should fire.
+    // setWind is declared but unreferenced — it must not block load.
     expect(e.isActive).toBe(true);
   });
 });

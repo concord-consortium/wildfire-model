@@ -77,6 +77,21 @@ describe("getAnalysisEngine — config-derived defaults wiring (per WM-27)", () 
   });
 });
 
+describe("getAnalysisEngine — rule-sets 32–35 load with no defaults-attributable error (Req 8)", () => {
+  // Replaces the removed negative `missing-defaults` assertions: with the
+  // failure mode gone, 32–35 must now load cleanly. Also guards against any
+  // other load-failure path silently re-blocking them.
+  for (const id of ["32", "33", "34", "35"]) {
+    it(`rule-set ${id} loads: isActive with no load-failure error`, () => {
+      setUrl(`?hazbotRules=${id}`);
+      const e = getAnalysisEngine();
+      if (!e) throw new Error("expected engine");
+      expect(e.isActive).toBe(true);
+      expect(e.errors.filter((err) => err.kind === "load-failure")).toEqual([]);
+    });
+  }
+});
+
 describe("getAnalysisEngine — EngineConstructionError catch path", () => {
   // The wildfire rulesets don't currently trigger R7 construction errors; we
   // inject a malformed `temporalVariables` via jest.isolateModules so the
