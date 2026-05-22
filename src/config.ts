@@ -240,9 +240,10 @@ export const getUrlConfig: () => IUrlConfig = () => {
 // highest-priority source that defines it.
 export const getResolvedConfig: (explicitPreset?: Partial<ISimulationConfig>) => IUrlConfig =
   (explicitPreset) => {
+    const base = getDefaultConfig();
     const urlConfig = getUrlConfig();
     const preset = explicitPreset
-      ?? presets[urlConfig.preset || getDefaultConfig().preset];
-    return Object.assign(getDefaultConfig(), preset, urlConfig);
+      ?? presets[urlConfig.preset || base.preset];
+    return Object.assign(base, preset, urlConfig);
   };
 

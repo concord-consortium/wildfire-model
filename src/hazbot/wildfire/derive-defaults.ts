@@ -1,4 +1,4 @@
-import { ISimulationConfig } from "../../config";
+import type { ISimulationConfig } from "../../config";
 import {
   terrainLabels, vegetationLabels, droughtLabels,
   TerrainType, Vegetation, DroughtLevel,
