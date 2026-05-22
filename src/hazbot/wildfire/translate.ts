@@ -22,6 +22,7 @@ export function translate(
         temporalHistory: [],
         zones: data.zones,
         sparks: data.sparks,
+        fireLineMarkers: data.fireLineMarkers,
         wind: data.wind,
       };
       return { kind: "trigger", reading };

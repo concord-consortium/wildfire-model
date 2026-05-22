@@ -6,9 +6,19 @@ import { BaseReading } from "../engine";
 export interface WildfireReading extends BaseReading {
   zones?: WildfireZone[];
   sparks?: WildfireSpark[];
+  fireLineMarkers?: WildfireFireLineMarker[];
   wind?: { speed: number; direction: number };
   // Outcome data from end-of-run triggers; opaque to current rule sets.
   outcome?: unknown;
+}
+
+// One endpoint of a fire line drawn during a run. Matches the SimulationStarted
+// payload built in src/components/bottom-bar.tsx (x / y normalized to the model
+// extent; elevation from the cell under the marker).
+export interface WildfireFireLineMarker {
+  x: number;
+  y: number;
+  elevation?: number;
 }
 
 export interface WildfireZone {
