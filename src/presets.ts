@@ -112,6 +112,25 @@ const presets: { [key: string]: Partial<ISimulationConfig> } = {
       { name: "Greenfield", x: 0.40, y: 0.15, terrainType: TerrainType.Plains }
     ]
   },
+  defaultTwoZoneFixedTerrain: {
+    zonesCount: 2,
+    zones: [
+      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Grass, droughtLevel: DroughtLevel.MediumDrought },
+      { terrainType: TerrainType.Foothills, vegetation: Vegetation.Shrub, droughtLevel: DroughtLevel.MildDrought },
+    ],
+    towns: [
+      { name: "Skyview", x: 0.12, y: 0.68, terrainType: TerrainType.Mountains },
+      { name: "Peaksburg", x: 0.77, y: 0.37, terrainType: TerrainType.Mountains },
+      { name: "Happy Valley", x: 0.31, y: 0.36, terrainType: TerrainType.Mountains },
+      { name: "Sunrise", x: 0.81, y: 0.60, terrainType: TerrainType.Foothills },
+      { name: "Hillsboro", x: 0.36, y: 0.55, terrainType: TerrainType.Foothills },
+      { name: "Rolling Rock", x: 0.60, y: 0.25, terrainType: TerrainType.Foothills },
+      { name: "Evensville", x: 0.78, y: 0.55, terrainType: TerrainType.Plains },
+      { name: "Meadowland", x: 0.15, y: 0.55, terrainType: TerrainType.Plains },
+      { name: "Greenfield", x: 0.40, y: 0.15, terrainType: TerrainType.Plains }
+    ],
+    elevation: "data/foothills-foothills-heightmap.png",
+  },
   townsThreeZone: {
     zonesCount: 3,
     zones: [
@@ -244,6 +263,14 @@ const presets: { [key: string]: Partial<ISimulationConfig> } = {
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.Shrub, droughtLevel: 1 },
       { terrainType: TerrainType.Mountains, vegetation: Vegetation.Shrub, droughtLevel: 1 },
     ]
+  },
+  mountainTwoZoneFixedTerrain: {
+    zonesCount: 2,
+    zones: [
+      { terrainType: TerrainType.Mountains, vegetation: Vegetation.Shrub, droughtLevel: 1 },
+      { terrainType: TerrainType.Mountains, vegetation: Vegetation.Shrub, droughtLevel: 1 },
+    ],
+    elevation: "data/mountains-mountains-heightmap.png",
   },
   plainsTwoZone: {
     zonesCount: 2,
