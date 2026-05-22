@@ -1,74 +1,90 @@
 import { ruleSet23 } from "./23";
 import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
-import { WildfireReading } from "../wildfire/types";
+import { WildfireDefaults, WildfireReading } from "../wildfire/types";
+import {
+  TerrainType, terrainLabels, Vegetation, vegetationLabels, DroughtLevel, droughtLabels,
+} from "../../types";
 
-// Per AC: per-rule-set five-shape sweep.
-//
-// Tab 23 categories (defaults: zones=Plains/Shrub/MildDrought × 2):
+// Tab 23 categories (regenerated from the 2026-05-22 sheet; the Cat 100
+// feedback-mechanism row is dropped by the extractor):
 //   1: NOT ranSimulation
 //   2: NOT setAnyZoneVar AND ranSimulation
-//   3: NOT setDroughtLevel AND setAnyZoneVar
-//   4: setDroughtLevel AND NOT usedOneSparkPerZone
-//   5: setDroughtLevel AND usedOneSparkPerZone
-//
-// (e) is N/A — no stub-gated category in this rule set.
+//   3: setAnyZoneVar AND ranSimulation WITH NOT CorrectZoneSetup
+//   4: ranSimulation WITH CorrectZoneSetup AND NOT OneSparkPerZone
+//   5: ranSimulation WITH CorrectZoneSetup AND OneSparkPerZone
+// No stub-gated category — the (e) shape is N/A.
 
-const defaultZones = [
-  { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Mild Drought" },
-  { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Mild Drought" },
+// SIMINIT defaults for tab 23: 2 zones Plains / Shrub / Mild Drought, wind 0/0.
+const defaultZone = {
+  terrainType: terrainLabels[TerrainType.Plains],
+  vegetation: vegetationLabels[Vegetation.Shrub],
+  droughtLevel: droughtLabels[DroughtLevel.MildDrought],
+};
+const defaultZones = [defaultZone, defaultZone];
+const defaults: WildfireDefaults = { zones: defaultZones, wind: { speed: 0, direction: 0 } };
+
+// The sheet-defined "correct zone setup" (CorrectZoneSetup, tab 23 R16):
+//   zone 1 = Foothills / Grass / No Drought; zone 2 = Foothills / Grass / Mild Drought.
+// Built through the label maps so a src/types.ts relabeling tracks automatically.
+const correctZones = [
+  {
+    terrainType: terrainLabels[TerrainType.Foothills],
+    vegetation: vegetationLabels[Vegetation.Grass],
+    droughtLevel: droughtLabels[DroughtLevel.NoDrought],
+  },
+  {
+    terrainType: terrainLabels[TerrainType.Foothills],
+    vegetation: vegetationLabels[Vegetation.Grass],
+    droughtLevel: droughtLabels[DroughtLevel.MildDrought],
+  },
 ];
+// Changed from default but NOT the correct setup (zone-1 drought bumped to Severe).
+const changedIncorrectZones = [
+  { ...defaultZone, droughtLevel: droughtLabels[DroughtLevel.SevereDrought] },
+  defaultZone,
+];
+const sparksPerZone = [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }];
 
 function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
   return mkReading("SimulationStarted", opts.at ?? 100, {
-    zones: defaultZones,
-    sparks: [],
-    wind: { speed: 0, direction: 0 },
-    ...opts,
+    zones: defaultZones, sparks: [], wind: { speed: 0, direction: 0 }, ...opts,
   });
 }
 
-describe("ruleSet 23 — per-rule-set five-shape sweep (AC: per-rule-set five-shape sweep)", () => {
-  it("(a) state matching no category — no readings yet, but cat 1 = NOT ranSimulation matches → returns 1", () => {
-    // With zero readings, ranSimulation is false → cat 1 matches.
-    // True "no category matches" is hard for tab 23 because cat 1 catches the empty state.
-    // The closest "matches no useful work category" is the bare empty-readings case.
-    const e = makeWildfireEngine(ruleSet23, { zones: defaultZones, wind: { speed: 0, direction: 0 } });
+describe("ruleSet 23 — per-rule-set behavior sweep", () => {
+  it("(a) empty readings → cat 1 (NOT ranSimulation)", () => {
+    const e = makeWildfireEngine(ruleSet23, defaults);
     expect(matchAgainst(ruleSet23, e, [])).toBe(1);
   });
-
-  it("(b) state matching exactly one category — ran sim with all defaults → cat 2", () => {
-    const e = makeWildfireEngine(ruleSet23, { zones: defaultZones, wind: { speed: 0, direction: 0 } });
-    const r = startReading();
-    expect(matchAgainst(ruleSet23, e, [r])).toBe(2);
+  it("(b) ran sim with all defaults → cat 2 (NOT setAnyZoneVar AND ranSimulation)", () => {
+    const e = makeWildfireEngine(ruleSet23, defaults);
+    expect(matchAgainst(ruleSet23, e, [startReading()])).toBe(2);
   });
-
-  it("(c) multi-true with highest selected — drought changed + spark per zone → cat 5 wins (highest)", () => {
-    const e = makeWildfireEngine(ruleSet23, { zones: defaultZones, wind: { speed: 0, direction: 0 } });
-    const r = startReading({
-      zones: [
-        { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Severe Drought" },
-        { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Mild Drought" },
-      ],
-      sparks: [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }],
-    });
-    expect(matchAgainst(ruleSet23, e, [r])).toBe(5);
+  it("(c) multiple-true → highest wins — an incorrect-setup run and a correct-setup spark-less run → cat 4", () => {
+    const e = makeWildfireEngine(ruleSet23, defaults);
+    const incorrect = startReading({ zones: changedIncorrectZones });
+    const correctNoSparks = startReading({ at: 200, zones: correctZones });
+    // cat 3 (an incorrect-setup run exists) and cat 4 (a correct-setup run with
+    // no spark per zone exists) are both true → highest, cat 4, wins.
+    expect(matchAgainst(ruleSet23, e, [incorrect, correctNoSparks])).toBe(4);
   });
-
-  it("(d) monotonicity sequence — once cat 4 matches, a later non-matching reading leaves the floor at 4", () => {
-    const e = makeWildfireEngine(ruleSet23, { zones: defaultZones, wind: { speed: 0, direction: 0 } });
-    // Reading 0: ran sim with drought changed + sparks NOT per-zone → cat 4 matches.
-    const r0 = startReading({
-      zones: [
-        { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Severe Drought" },
-        { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Mild Drought" },
-      ],
-      sparks: [{ x: 0, y: 0, zoneIdx: 0 }],  // only one spark
-    });
+  it("(d) stability — cat 4 holds across a later all-default run", () => {
+    const e = makeWildfireEngine(ruleSet23, defaults);
+    const r0 = startReading({ zones: correctZones });
     expect(matchAgainst(ruleSet23, e, [r0])).toBe(4);
-    // Reading 1: revert zones to defaults — per-state highest drops to cat 2 ("ran sim, no zone vars set").
-    // BUT setDroughtLevel is monotone (looking back at all readings), so cat 4 still matches at i=0.
-    // The floor stays at 4.
-    const r1 = startReading({ at: 200 });
-    expect(matchAgainst(ruleSet23, e, [r0, r1])).toBe(4);
+    expect(matchAgainst(ruleSet23, e, [r0, startReading({ at: 200 })])).toBe(4);
   });
+});
+
+describe("ruleSet 23 — R9 per-category coverage", () => {
+  const e = () => makeWildfireEngine(ruleSet23, defaults);
+  it("cat 1 — no run", () => expect(matchAgainst(ruleSet23, e(), [])).toBe(1));
+  it("cat 2 — ran with all defaults", () =>
+    expect(matchAgainst(ruleSet23, e(), [startReading()])).toBe(2));
+  it("cat 3 — ran with zones changed but not the correct setup", () =>
+    expect(matchAgainst(ruleSet23, e(), [startReading({ zones: changedIncorrectZones })])).toBe(3));
+  it("cat 4 — ran with the correct zone setup but not one spark per zone", () =>
+    expect(matchAgainst(ruleSet23, e(), [startReading({ zones: correctZones })])).toBe(4));
+  it("cat 5 — ran with the correct zone setup and one spark per zone", () =>
+    expect(matchAgainst(ruleSet23, e(), [startReading({ zones: correctZones, sparks: sparksPerZone })])).toBe(5));
 });

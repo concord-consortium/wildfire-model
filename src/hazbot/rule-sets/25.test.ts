@@ -2,83 +2,82 @@ import { ruleSet25 } from "./25";
 import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
 import { WildfireReading } from "../wildfire/types";
 
-// Tab 25 categories (no zone defaults — just sparks/graph/sim props):
+// Tab 25 categories (regenerated from the 2026-05-22 sheet; Cat 100 dropped):
 //   1: NOT ranSimulation
 //   2: ranSimulation WITH NOT TwoSparks
 //   3: ranSimulation WITH NOT OneSparkPerZone AND TwoSparks
 //   4: ranSimulation WITH OneSparkPerZone AND NOT SparksAtTopAndBottom
-//   5: ranSimulation WITH OneSparkPerZone AND NOT GraphOpen
-//   6: ranSimulation WITH OneSparkPerZone AND SparksAtTopAndBottom AND GraphOpen
+//   5: ranSimulation WITH OneSparkPerZone AND SparksAtTopAndBottom AND NOT UniformZoneSettings
+//   6: ranSimulation WITH OneSparkPerZone AND SparksAtTopAndBottom AND UniformZoneSettings
 //
-// (e) is the SparksAtTopAndBottom-stubbed cat 6 — even when an otherwise-fully-
-// satisfying state arrives, cat 6 must NOT match because the stub returns false.
+// SparksAtTopAndBottom is a stub (evaluates false → WM-15). It sits in a
+// top-level AND of the WITH prop-expression of BOTH cat 5 and cat 6, so BOTH
+// are stub-gated — unreachable in any environment until WM-15 lands. R9
+// per-category coverage therefore covers cats 1-4 only; the (e) shape asserts a
+// fully-satisfying state still never matches cat 5 or cat 6.
+// (The WM-18 spec named only tab 25 cat 6 as stub-gated; the 2026-05-22 sheet
+// adds SparksAtTopAndBottom to cat 5 as well — see the spec cross-reference.)
+//
+// Tab 25 references no `set*` factor variable and no defaults-consuming sim-prop
+// (UniformZoneSettings compares zones to each other), so it omits `defaults`.
 
-const twoZones = [{ index: 0 }, { index: 1 }];
+// SIMINIT defaults for tab 25: 2 zones Mountains / Shrub / Mild Drought.
+const uniformZones = [
+  { vegetation: "Shrub", droughtLevel: "Mild Drought" },
+  { vegetation: "Shrub", droughtLevel: "Mild Drought" },
+];
+const oneSpark = [{ x: 0, y: 0, zoneIdx: 0 }];
+const twoSparksSameZone = [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 0 }];
+const oneSparkPerZone = [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }];
 
 function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
   return mkReading("SimulationStarted", opts.at ?? 100, {
-    zones: twoZones,
-    sparks: [],
-    wind: { speed: 0, direction: 0 },
-    ...opts,
+    zones: uniformZones, sparks: [], wind: { speed: 0, direction: 0 }, ...opts,
   });
 }
 
-describe("ruleSet 25 — per-rule-set five-shape sweep", () => {
-  it("(a) empty readings → cat 1", () => {
+describe("ruleSet 25 — per-rule-set behavior sweep", () => {
+  it("(a) empty readings → cat 1 (NOT ranSimulation)", () => {
     const e = makeWildfireEngine(ruleSet25);
     expect(matchAgainst(ruleSet25, e, [])).toBe(1);
   });
-
-  it("(b) state matching exactly one category — ran sim with one spark → cat 2", () => {
+  it("(b) ran sim with one spark → cat 2 (NOT TwoSparks)", () => {
     const e = makeWildfireEngine(ruleSet25);
-    const r = startReading({ sparks: [{ x: 0, y: 0, zoneIdx: 0 }] });
-    expect(matchAgainst(ruleSet25, e, [r])).toBe(2);
+    expect(matchAgainst(ruleSet25, e, [startReading({ sparks: oneSpark })])).toBe(2);
   });
-
-  it("(c) multi-true with highest selected — sparks per zone + graph NOT open → cat 4 AND cat 5 both true; highest (cat 5) wins", () => {
+  it("(c) multiple-true → highest wins — a one-spark run and a spark-per-zone run → cat 4", () => {
     const e = makeWildfireEngine(ruleSet25);
-    const r = startReading({
-      sparks: [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }],
-      temporalHistory: [{ at: 0, name: "chartTabOpen", value: false, eventName: "SimulationStarted" }],
-    });
-    // cat 4: ranSimulation WITH (OneSparkPerZone AND NOT SparksAtTopAndBottom)
-    //        OneSparkPerZone=true (2 sparks, distinct zones); SparksAtTopAndBottom=false (stub)
-    //        → true
-    // cat 5: ranSimulation WITH (OneSparkPerZone AND NOT GraphOpen)
-    //        OneSparkPerZone=true; GraphOpen=false (chartTabOpen=false; seed false, no appends)
-    //        → true
-    // cat 6: ranSimulation WITH (OneSparkPerZone AND SparksAtTopAndBottom AND GraphOpen)
-    //        SparksAtTopAndBottom=false (stub) → false
-    // Cats 4 and 5 both fire; highest-first selection picks cat 5.
-    expect(matchAgainst(ruleSet25, e, [r])).toBe(5);
+    const r1 = startReading({ sparks: oneSpark });
+    const r2 = startReading({ at: 200, sparks: oneSparkPerZone });
+    // cat 2 (a NOT-TwoSparks run exists) and cat 4 (a OneSparkPerZone run
+    // exists) are both true → highest, cat 4, wins.
+    expect(matchAgainst(ruleSet25, e, [r1, r2])).toBe(4);
   });
-
-  it("(d) monotonicity — once cat 5 matches (sparks per zone, graph not open), a later state with one spark leaves floor at 5", () => {
+  it("(d) stability — cat 4 holds across a later one-spark run", () => {
     const e = makeWildfireEngine(ruleSet25);
-    const r1 = startReading({ sparks: [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }] });
-    // cat 4: OneSparkPerZone AND NOT SparksAtTopAndBottom → true (stub false)
-    // cat 5: OneSparkPerZone AND NOT GraphOpen → true (graph not open)
-    // Highest: cat 5.
-    expect(matchAgainst(ruleSet25, e, [r1])).toBe(5);
-    const r2 = startReading({ at: 200, sparks: [{ x: 0, y: 0, zoneIdx: 0 }] });
-    // r2 alone matches cat 2; but the floor across [r1, r2] is still cat 5.
-    expect(matchAgainst(ruleSet25, e, [r1, r2])).toBe(5);
+    const r0 = startReading({ sparks: oneSparkPerZone });
+    expect(matchAgainst(ruleSet25, e, [r0])).toBe(4);
+    expect(matchAgainst(ruleSet25, e, [r0, startReading({ at: 200, sparks: oneSpark })])).toBe(4);
   });
-
-  it("(e) AC: SparksAtTopAndBottom-stubbed cat 6 is unreachable — fully-satisfying state never matches cat 6", () => {
+  it("(e) stub-gated cats 5 & 6 — a fully-satisfying state never matches them", () => {
     const e = makeWildfireEngine(ruleSet25);
-    // Witness configured to satisfy every leaf in cat 6 except SparksAtTopAndBottom:
-    // - 2 sparks (TwoSparks=true)
-    // - one per zone (OneSparkPerZone=true)
-    // - chart open at start (GraphOpen=true)
-    // Cat 6 = OneSparkPerZone AND SparksAtTopAndBottom AND GraphOpen.
-    // The stub keeps cat 6 from matching even when everything else lines up.
-    const r = startReading({
-      sparks: [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }],
-      temporalHistory: [{ at: 0, name: "chartTabOpen", value: true, eventName: "SimulationStarted" }],
-    });
+    // One spark per zone + uniform zone settings → satisfies every leaf of
+    // cat 6 except SparksAtTopAndBottom (the stub). Cat 5/6 stay unmatched.
+    const r = startReading({ sparks: oneSparkPerZone, zones: uniformZones });
     const matched = matchAgainst(ruleSet25, e, [r]);
+    expect(matched).not.toBe(5);
     expect(matched).not.toBe(6);
   });
+});
+
+describe("ruleSet 25 — R9 per-category coverage", () => {
+  // Cats 5 and 6 are stub-gated (SparksAtTopAndBottom → WM-15) and excluded.
+  const e = () => makeWildfireEngine(ruleSet25);
+  it("cat 1 — no run", () => expect(matchAgainst(ruleSet25, e(), [])).toBe(1));
+  it("cat 2 — ran with one spark (NOT TwoSparks)", () =>
+    expect(matchAgainst(ruleSet25, e(), [startReading({ sparks: oneSpark })])).toBe(2));
+  it("cat 3 — ran with two sparks in the same zone (NOT OneSparkPerZone AND TwoSparks)", () =>
+    expect(matchAgainst(ruleSet25, e(), [startReading({ sparks: twoSparksSameZone })])).toBe(3));
+  it("cat 4 — ran with one spark per zone (OneSparkPerZone, SparksAtTopAndBottom stubbed false)", () =>
+    expect(matchAgainst(ruleSet25, e(), [startReading({ sparks: oneSparkPerZone })])).toBe(4));
 });
