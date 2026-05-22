@@ -1,0 +1,267 @@
+{
+  "readings": [
+    {
+      "triggeredBy": "SimulationStarted",
+      "sessionId": "x2LJ_BT0cMgV",
+      "at": 1001,
+      "temporalHistory": [
+        {
+          "at": 1001,
+          "name": "chartTabOpen",
+          "value": true,
+          "eventName": "SimulationStarted"
+        }
+      ],
+      "zones": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
+      "sparks": [
+        {
+          "x": 0,
+          "y": 0,
+          "zoneIdx": 0
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "zoneIdx": 1
+        }
+      ],
+      "wind": {
+        "speed": 0,
+        "direction": 0
+      }
+    },
+    {
+      "triggeredBy": "SimulationEnded",
+      "sessionId": "x2LJ_BT0cMgV",
+      "at": 1002,
+      "temporalHistory": [
+        {
+          "at": 1002,
+          "name": "chartTabOpen",
+          "value": true,
+          "eventName": "SimulationEnded"
+        },
+        {
+          "at": 1003,
+          "name": "chartTabOpen",
+          "value": false,
+          "eventName": "ChartTabHidden"
+        }
+      ],
+      "outcome": null
+    },
+    {
+      "triggeredBy": "SimulationStarted",
+      "sessionId": "x2LJ_BT0cMgV",
+      "at": 1004,
+      "temporalHistory": [
+        {
+          "at": 1004,
+          "name": "chartTabOpen",
+          "value": false,
+          "eventName": "SimulationStarted"
+        },
+        {
+          "at": 1005,
+          "name": "chartTabOpen",
+          "value": true,
+          "eventName": "ChartTabShown"
+        }
+      ],
+      "zones": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
+      "sparks": [
+        {
+          "x": 0,
+          "y": 0,
+          "zoneIdx": 0
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "zoneIdx": 1
+        }
+      ],
+      "wind": {
+        "speed": 0,
+        "direction": 0
+      }
+    },
+    {
+      "triggeredBy": "SimulationEnded",
+      "sessionId": "x2LJ_BT0cMgV",
+      "at": 1006,
+      "temporalHistory": [
+        {
+          "at": 1006,
+          "name": "chartTabOpen",
+          "value": true,
+          "eventName": "SimulationEnded"
+        },
+        {
+          "at": 1007,
+          "name": "chartTabOpen",
+          "value": true,
+          "eventName": "ChartTabShown"
+        }
+      ],
+      "outcome": null
+    },
+    {
+      "triggeredBy": "SimulationStarted",
+      "sessionId": "x2LJ_BT0cMgV",
+      "at": 1008,
+      "temporalHistory": [
+        {
+          "at": 1008,
+          "name": "chartTabOpen",
+          "value": true,
+          "eventName": "SimulationStarted"
+        },
+        {
+          "at": 1009,
+          "name": "chartTabOpen",
+          "value": false,
+          "eventName": "ChartTabHidden"
+        },
+        {
+          "at": 1010,
+          "name": "chartTabOpen",
+          "value": true,
+          "eventName": "ChartTabShown"
+        }
+      ],
+      "zones": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
+      "sparks": [
+        {
+          "x": 0,
+          "y": 0,
+          "zoneIdx": 0
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "zoneIdx": 1
+        }
+      ],
+      "wind": {
+        "speed": 0,
+        "direction": 0
+      }
+    },
+    {
+      "triggeredBy": "SimulationEnded",
+      "sessionId": "x2LJ_BT0cMgV",
+      "at": 1011,
+      "temporalHistory": [
+        {
+          "at": 1011,
+          "name": "chartTabOpen",
+          "value": true,
+          "eventName": "SimulationEnded"
+        },
+        {
+          "at": 1012,
+          "name": "chartTabOpen",
+          "value": false,
+          "eventName": "ChartTabHidden"
+        }
+      ],
+      "outcome": null
+    },
+    {
+      "triggeredBy": "SimulationStarted",
+      "sessionId": "x2LJ_BT0cMgV",
+      "at": 1013,
+      "temporalHistory": [
+        {
+          "at": 1013,
+          "name": "chartTabOpen",
+          "value": false,
+          "eventName": "SimulationStarted"
+        }
+      ],
+      "zones": [
+        {
+          "index": 0
+        },
+        {
+          "index": 1
+        }
+      ],
+      "sparks": [
+        {
+          "x": 0,
+          "y": 0,
+          "zoneIdx": 0
+        },
+        {
+          "x": 1,
+          "y": 0,
+          "zoneIdx": 1
+        }
+      ],
+      "wind": {
+        "speed": 0,
+        "direction": 0
+      }
+    },
+    {
+      "triggeredBy": "SimulationEnded",
+      "sessionId": "x2LJ_BT0cMgV",
+      "at": 1014,
+      "temporalHistory": [
+        {
+          "at": 1014,
+          "name": "chartTabOpen",
+          "value": false,
+          "eventName": "SimulationEnded"
+        }
+      ],
+      "outcome": null
+    }
+  ],
+  "observed": {
+    "chartTabOpen": true
+  },
+  "temporalValues": {
+    "chartTabOpen": false
+  },
+  "matchedCategoryHistory": [
+    1,
+    4,
+    4,
+    4,
+    5,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    4,
+    5,
+    5
+  ]
+}

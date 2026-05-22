@@ -84,6 +84,14 @@ export interface ISimulationConfig {
   newWindSpeed: number | undefined;
   // Developer/researcher tool: when true, renders a LogMonitor sidebar for real-time event inspection.
   logMonitor: boolean;
+  // Hazbot analysis engine flags (per WM-10).
+  // hazbotRules: selects the analysis-engine rule set (e.g. ?hazbotRules=23). Used in
+  // the production app once the student-facing UI lands; undefined when the flag is unset.
+  // Typed as `string | number` because the URL parser auto-converts numeric strings
+  // (most current rule-set ids are integers); the bridge coerces to string.
+  // hazbotSidebar: developer/researcher tool — mounts the substrate's debug sidebar.
+  hazbotRules?: string | number;
+  hazbotSidebar: boolean;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -157,7 +165,9 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   changeWindOnDay: undefined,
   newWindDirection: undefined,
   newWindSpeed: undefined,
-  logMonitor: false
+  logMonitor: false,
+  hazbotRules: undefined,
+  hazbotSidebar: false
 });
 
 const getURLParam = (name: string) => {

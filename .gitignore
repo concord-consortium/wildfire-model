@@ -4,6 +4,7 @@ node_modules
 npm-error.log
 .DS_Store
 ./cypress/screenshots
+tmp/
 
 # Editors
 .idea

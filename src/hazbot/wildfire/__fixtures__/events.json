@@ -1,0 +1,180 @@
+{
+  "events": [
+    {
+      "name": "ChartTabShown",
+      "at": 1000
+    },
+    {
+      "name": "SimulationStarted",
+      "data": {
+        "zones": [
+          {
+            "index": 0
+          },
+          {
+            "index": 1
+          }
+        ],
+        "sparks": [
+          {
+            "x": 0,
+            "y": 0,
+            "zoneIdx": 0
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "zoneIdx": 1
+          }
+        ],
+        "wind": {
+          "speed": 0,
+          "direction": 0
+        }
+      },
+      "at": 1001
+    },
+    {
+      "name": "SimulationEnded",
+      "data": {
+        "outcome": null
+      },
+      "at": 1002
+    },
+    {
+      "name": "ChartTabHidden",
+      "at": 1003
+    },
+    {
+      "name": "SimulationStarted",
+      "data": {
+        "zones": [
+          {
+            "index": 0
+          },
+          {
+            "index": 1
+          }
+        ],
+        "sparks": [
+          {
+            "x": 0,
+            "y": 0,
+            "zoneIdx": 0
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "zoneIdx": 1
+          }
+        ],
+        "wind": {
+          "speed": 0,
+          "direction": 0
+        }
+      },
+      "at": 1004
+    },
+    {
+      "name": "ChartTabShown",
+      "at": 1005
+    },
+    {
+      "name": "SimulationEnded",
+      "data": {
+        "outcome": null
+      },
+      "at": 1006
+    },
+    {
+      "name": "ChartTabShown",
+      "at": 1007
+    },
+    {
+      "name": "SimulationStarted",
+      "data": {
+        "zones": [
+          {
+            "index": 0
+          },
+          {
+            "index": 1
+          }
+        ],
+        "sparks": [
+          {
+            "x": 0,
+            "y": 0,
+            "zoneIdx": 0
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "zoneIdx": 1
+          }
+        ],
+        "wind": {
+          "speed": 0,
+          "direction": 0
+        }
+      },
+      "at": 1008
+    },
+    {
+      "name": "ChartTabHidden",
+      "at": 1009
+    },
+    {
+      "name": "ChartTabShown",
+      "at": 1010
+    },
+    {
+      "name": "SimulationEnded",
+      "data": {
+        "outcome": null
+      },
+      "at": 1011
+    },
+    {
+      "name": "ChartTabHidden",
+      "at": 1012
+    },
+    {
+      "name": "SimulationStarted",
+      "data": {
+        "zones": [
+          {
+            "index": 0
+          },
+          {
+            "index": 1
+          }
+        ],
+        "sparks": [
+          {
+            "x": 0,
+            "y": 0,
+            "zoneIdx": 0
+          },
+          {
+            "x": 1,
+            "y": 0,
+            "zoneIdx": 1
+          }
+        ],
+        "wind": {
+          "speed": 0,
+          "direction": 0
+        }
+      },
+      "at": 1013
+    },
+    {
+      "name": "SimulationEnded",
+      "data": {
+        "outcome": null
+      },
+      "at": 1014
+    }
+  ]
+}

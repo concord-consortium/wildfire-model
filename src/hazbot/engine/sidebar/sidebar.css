@@ -1,0 +1,164 @@
+/* Hazbot debug sidebar — plain CSS, light theme only (per Req 17 / R9-4).
+   Class names use the flat `hazbot-sidebar-` prefix per LIB-4 to avoid
+   collisions with host-app CSS. */
+
+.hazbot-sidebar {
+  --hazbot-bg: #ffffff;
+  --hazbot-fg: #1a1a1a;
+  --hazbot-muted: #6e6e6e;
+  --hazbot-border: #d8d8d8;
+  --hazbot-header-bg: #f7f7f7;
+  --hazbot-entry-bg: #fafafa;
+  --hazbot-true: #155724;       /* dark green — passes WCAG AA against bg */
+  --hazbot-false: #721c24;      /* dark red */
+  --hazbot-warning-bg: #fff8e1;
+  --hazbot-error-bg: #fde8e8;
+  --hazbot-matched-border: #1e6091;
+
+  position: relative;
+  width: 300px;
+  height: 100%;
+  background: var(--hazbot-bg);
+  color: var(--hazbot-fg);
+  border-left: 1px solid var(--hazbot-border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.hazbot-sidebar-header {
+  background: var(--hazbot-header-bg);
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--hazbot-border);
+}
+
+.hazbot-sidebar-header strong { font-size: 13px; }
+.hazbot-sidebar-header .hazbot-sidebar-muted { color: var(--hazbot-muted); margin-left: 6px; font-size: 11px; }
+
+.hazbot-sidebar-section {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--hazbot-border);
+}
+
+.hazbot-sidebar-section-title {
+  font-weight: bold;
+  font-size: 12px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  color: var(--hazbot-muted);
+}
+
+.hazbot-sidebar-entry {
+  background: var(--hazbot-entry-bg);
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border: 1px solid var(--hazbot-border);
+  border-radius: 3px;
+}
+
+.hazbot-sidebar-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.hazbot-sidebar-button:focus-visible {
+  outline: 2px solid var(--hazbot-matched-border);
+  outline-offset: 1px;
+}
+
+/* Full-card click target: the whole .hazbot-sidebar-category-row is role=button.
+   Cursor + focus ring give the affordance; matched-border outline coexists with the
+   focus outline via outline-offset. */
+.hazbot-sidebar-category-row {
+  cursor: pointer;
+}
+.hazbot-sidebar-category-row:focus-visible {
+  outline: 2px solid var(--hazbot-matched-border);
+  outline-offset: 1px;
+}
+
+/* Use outline (not border) so the 1px → 2px transition does not reflow surrounding
+   entries when the matched category changes. outline sits outside the box and is
+   collapsed against the offset, so the row geometry stays constant. */
+.hazbot-sidebar-category-matched {
+  outline: 2px solid var(--hazbot-matched-border);
+  outline-offset: -2px;
+}
+
+.hazbot-sidebar-leaf-true { color: var(--hazbot-true); text-decoration: underline; }
+.hazbot-sidebar-leaf-false { color: var(--hazbot-false); text-decoration: line-through; }
+/* Leaves inside a WITH whose witness reading doesn't exist yet (no run-start
+   reading recorded). Muted gray + dashed underline distinguishes "no value yet"
+   from confidently-true/false. */
+.hazbot-sidebar-leaf-no-value { color: var(--hazbot-muted); text-decoration: underline dashed; }
+
+/* Category-row status icons — same palette as per-leaf coloring for consistency.
+   font-size bumps the glyph above the inherited entry size so the icon reads at
+   a glance; bold weight is belt-and-suspenders in case the surrounding <strong>
+   ever changes. */
+.hazbot-sidebar-icon-true,
+.hazbot-sidebar-icon-false {
+  font-size: 1.4em;
+  font-weight: bold;
+  line-height: 1;
+  vertical-align: -0.1em;
+}
+.hazbot-sidebar-icon-true { color: var(--hazbot-true); }
+.hazbot-sidebar-icon-false { color: var(--hazbot-false); }
+
+.hazbot-sidebar-error {
+  background: var(--hazbot-error-bg);
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-radius: 3px;
+}
+
+.hazbot-sidebar-warning {
+  background: var(--hazbot-warning-bg);
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  border-radius: 3px;
+}
+
+.hazbot-sidebar-category-expression {
+  margin-top: 6px;
+}
+
+.hazbot-sidebar-category-detail {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--hazbot-border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hazbot-sidebar-pre {
+  white-space: pre-wrap;
+  font-size: 11px;
+  background: #f0f0f0;
+  padding: 6px;
+  margin: 4px 0 0 0;
+  border-radius: 3px;
+  overflow-x: auto;
+}
+
+.hazbot-sidebar-temporal-unobserved {
+  font-style: italic;
+  color: var(--hazbot-muted);
+}
+
+.hazbot-sidebar-temporal-trail {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px dashed var(--hazbot-border);
+}

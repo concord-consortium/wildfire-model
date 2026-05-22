@@ -92,7 +92,7 @@ module.exports = {
   },
   overrides: [
     { // rules specific to Jest tests
-      files: ["src/**/*.test.*"],
+      files: ["src/**/*.test.*", "scripts/**/*.test.js"],
       env: {
         node: true,
         jest: true
@@ -105,6 +105,16 @@ module.exports = {
         "@typescript-eslint/no-require-imports": "off",
         "@typescript-eslint/no-var-requires": "off",
         "jest/no-done-callback": "off"
+      }
+    },
+    { // node-only scripts (extraction tooling, etc.)
+      files: ["scripts/**/*.js"],
+      env: {
+        node: true
+      },
+      rules: {
+        "@typescript-eslint/no-require-imports": "off",
+        "@typescript-eslint/no-var-requires": "off"
       }
     },
     { // rules specific to Cypress tests

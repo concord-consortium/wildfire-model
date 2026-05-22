@@ -67,3 +67,9 @@ All model coordinates are in feet. Normalized coordinates (x, y) are relative to
 | `AboutDialogOpened` | — | User opens About dialog |
 | `FullscreenEnabled` | — | User enters fullscreen mode |
 | `FullscreenDisabled` | — | User exits fullscreen mode |
+
+## Hazbot
+
+| Event | Parameters | When |
+|-------|-----------|------|
+| `AnalysisEngineActivated` | `{ engineVersion: string, appRulesVersion: string \| number, ruleSetId: string }` | Once per page load, only when the Hazbot analysis engine is active (the URL provides `?hazbotRules=<id>` AND that id resolves to a known rule set AND load-time validation passes). Payload identifies the engine and rule-set version pair the session ran against. No `sessionId` in the payload — the engine surfaces its own session id via `engine.sessionId` for sidebar display only (per Req 20). |
