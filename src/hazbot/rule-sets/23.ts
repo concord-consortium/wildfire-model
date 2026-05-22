@@ -103,18 +103,4 @@ Hazbot: Great job on this simulation! Keep working through the activity and you'
       details: "The sparks array must be of length 2, and one element should have zoneIndex = 0 (zone 1 ) and the other with zoneIdx = 1 (zone 2).   <j> means taking the spark index (the index of the sparks data, which is, or must be, an array), 0-based.",
     }
   ],
-  defaults: {
-    "zones": [
-      {
-        "terrainType": "Plains",
-        "vegetation": "Shrub",
-        "droughtLevel": "Mild Drought"
-      },
-      {
-        "terrainType": "Plains",
-        "vegetation": "Shrub",
-        "droughtLevel": "Mild Drought"
-      }
-    ]
-  },
 };

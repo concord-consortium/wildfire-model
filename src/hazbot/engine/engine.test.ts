@@ -33,7 +33,6 @@ function makeRuleSet(overrides: Partial<RuleSet<TestDefaults>> = {}): RuleSet<Te
     id: "test",
     categories: [{ id: 1, studentAction: "", feedback: "", visualFeedback: "", expression: "ranSimulation" }],
     factorVariables: [{ name: "ranSimulation", definition: "", logEvents: [], details: "" }],
-    defaults: {},
     ...overrides,
   };
 }

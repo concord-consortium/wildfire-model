@@ -86,22 +86,4 @@ export const ruleSet24: RuleSet<WildfireDefaults> = {
       details: "",
     }
   ],
-  defaults: {
-    "zones": [
-      {
-        "terrainType": "Plains",
-        "vegetation": "Shrub",
-        "droughtLevel": "Mild Drought"
-      },
-      {
-        "terrainType": "Plains",
-        "vegetation": "Shrub",
-        "droughtLevel": "Mild Drought"
-      }
-    ],
-    "wind": {
-      "speed": 0,
-      "direction": 0
-    }
-  },
 };

@@ -33,7 +33,6 @@ function makeRuleSet(): RuleSet<TestDefaults> {
       { id: 1, studentAction: "Ran the sim", feedback: "Step 1 done", visualFeedback: "", expression: "ranSimulation" },
     ],
     factorVariables: [{ name: "ranSimulation", definition: "", logEvents: [], details: "" }],
-    defaults: {},
   };
 }
 
@@ -168,7 +167,6 @@ describe("Sidebar (substrate, generic over TReading)", () => {
         { name: "a", definition: "", logEvents: [], details: "" },
         { name: "b", definition: "", logEvents: [], details: "" },
       ],
-      defaults: {},
     };
     const engine = new Engine<TestReading, TestDefaults>({
       ruleSet: rs,
@@ -214,7 +212,6 @@ describe("Sidebar (substrate, generic over TReading)", () => {
         { name: "a", definition: "", logEvents: [], details: "" },
         { name: "b", definition: "", logEvents: [], details: "" },
       ],
-      defaults: {},
     };
     const engine = new Engine<TestReading, TestDefaults>({
       ruleSet: rs,
@@ -246,7 +243,6 @@ describe("Sidebar (substrate, generic over TReading)", () => {
       id: "tabX",
       categories: [{ id: 1, studentAction: "stub", feedback: "", visualFeedback: "", expression: "needsImpl" }],
       factorVariables: [{ name: "needsImpl", definition: "", logEvents: [], details: "" }],
-      defaults: {},
     };
     const engine = new Engine<TestReading, TestDefaults>({
       ruleSet: rs,
@@ -315,7 +311,6 @@ describe("Sidebar — SimPropsPanel temporalReads hint", () => {
           expression: "ranSimulation WITH GraphOpen" },
       ],
       factorVariables: [{ name: "ranSimulation", definition: "", logEvents: [], details: "" }],
-      defaults: {},
     };
     const tv: TemporalVariableImpl<boolean> = {
       name: "chartTabOpen", initialValue: false,

@@ -81,5 +81,4 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
       details: "This requires tracking of the chart tab show/hidden state throughout the activity.  The state is toggled by ChartTabShown and ChartTabHiddent events and is reset to hidden by the TopBarReloadButtonClicked event.",
     }
   ],
-  defaults: {},
 };

@@ -64,5 +64,4 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
       details: "",
     }
   ],
-  defaults: {},
 };

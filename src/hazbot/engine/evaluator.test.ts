@@ -140,7 +140,6 @@ describe("evaluator — highestTrueAt + computeMatchedCategoryFloor", () => {
   const ruleSet: RuleSet<TD> = {
     id: "test",
     factorVariables: [],
-    defaults: {},
     categories: [
       { id: 1, studentAction: "", feedback: "", visualFeedback: "", expression: "ranSimulation" },
       { id: 2, studentAction: "", feedback: "", visualFeedback: "", expression: "setDroughtLevel AND NOT usedOneSparkPerZone" },

@@ -547,7 +547,9 @@ export interface RuleSet<TDefaults = unknown> {
   factorVariables: FactorVariableDef[];
   defaults: DeepPartial<TDefaults>;   // DELETE this line
 }
-// after:
+// after (TDefaults is now an unused phantom parameter — kept per Open Question
+// I1 / Requirement 11; this repo's ESLint flags it, so suppress the one warning):
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface RuleSet<TDefaults = unknown> {
   id: string;
   categories: Category[];
@@ -1005,7 +1007,10 @@ that keeps those annotations live) must stay valid.
 - A) **Keep `RuleSet<TDefaults = unknown>` generic** with `TDefaults` now unused
   inside the interface. Zero edits to the rule-set modules / `index.ts` /
   evaluator beyond what's already planned. Cost: a phantom generic parameter
-  (a mild code smell; TypeScript and ESLint do not flag it). This is what the
+  (a mild code smell). TypeScript does not flag it, but this repo's ESLint
+  `@typescript-eslint/no-unused-vars` rule does — an inline
+  `// eslint-disable-next-line @typescript-eslint/no-unused-vars` on the
+  `RuleSet` interface declaration suppresses the one warning. This is what the
   plan above assumes.
 - B) **Make `RuleSet` non-generic.** Cleaner type, but `RuleSet<WildfireDefaults>`
   becomes invalid everywhere — the seven modules, `index.ts`, the evaluator's
@@ -1020,8 +1025,10 @@ now unused inside the interface. Requirement 11 mandates a mechanically-verifiab
 option B would break each module's `RuleSet<WildfireDefaults>` annotation and
 its `import { WildfireDefaults }`, forcing edits beyond that field and requiring
 Requirement 11 to be amended. The phantom parameter is a small, temporary cost
-(TypeScript and ESLint do not flag it) — WM-18 re-extracts and reconciles these
-modules and is the natural point to revisit `RuleSet`'s shape. Keeping the
+— TypeScript does not flag it; this repo's ESLint does, suppressed with a
+documented inline `eslint-disable-next-line @typescript-eslint/no-unused-vars`
+on the `RuleSet` declaration — WM-18 re-extracts and reconciles these modules
+and is the natural point to revisit `RuleSet`'s shape. Keeping the
 generic also means the generator keeps emitting `RuleSet<WildfireDefaults>`, so
 a future clean regenerate still type-checks. The plan (Step 4) already assumes A.
 

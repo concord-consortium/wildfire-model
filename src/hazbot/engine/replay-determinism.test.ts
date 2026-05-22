@@ -24,7 +24,6 @@ function makeOpts(): EngineOpts<TR, TD> {
       { id: 1, studentAction: "", feedback: "", visualFeedback: "", expression: "ranSimulation" },
     ],
     factorVariables: [{ name: "ranSimulation", definition: "", logEvents: ["SimulationStarted"], details: "" }],
-    defaults: {},
   };
   const chartTabOpen: TemporalVariableImpl<boolean> = {
     name: "chartTabOpen",
