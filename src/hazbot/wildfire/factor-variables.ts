@@ -1,6 +1,6 @@
 import { FactorVariableImpl } from "../engine";
 import { WildfireDefaults, WildfireReading, WildfireZone } from "./types";
-import { sawIntenseFire, usedHelitack } from "./factor-variable-stubs";
+import { usedHelitack } from "./factor-variable-stubs";
 import { vegetationLabels } from "../../types";
 
 // Helpers for value extraction.
@@ -206,7 +206,6 @@ export const factorVariables: Record<string, FactorVariableImpl<unknown, Wildfir
   simulationRuns,
   triedAllVegetations,
   usedFireline,
-  sawIntenseFire,
   usedHelitack,
 };
 

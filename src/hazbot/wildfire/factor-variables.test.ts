@@ -156,13 +156,6 @@ describe("wildfire factor variables", () => {
     });
   });
 
-  describe("sawIntenseFire (stub)", () => {
-    it("is flagged isStub: true and returns false", () => {
-      expect(factorVariables.sawIntenseFire.isStub).toBe(true);
-      expect(factorVariables.sawIntenseFire.compute([], {}).value).toBe(false);
-    });
-  });
-
   describe("usedHelitack (stub)", () => {
     it("is flagged isStub: true and computes to false", () => {
       expect(factorVariables.usedHelitack.isStub).toBe(true);
