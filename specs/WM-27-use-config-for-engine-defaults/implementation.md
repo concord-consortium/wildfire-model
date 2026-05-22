@@ -815,24 +815,28 @@ machine-readable backstop.
 {diagnostics && diagnostics.length > 0 && (
   <div className="hazbot-sidebar-section">
     <div className="hazbot-sidebar-section-title">Diagnostics</div>
-    {diagnostics.map((d, i) => (
-      // `${d.label}-${i}` — `label` is host-supplied free text with no
-      // uniqueness contract; composite key matches sidebar.tsx's existing
-      // convention for non-unique lists (ErrorRow / ReadingRow).
-      <div key={`${d.label}-${i}`} className="hazbot-sidebar-entry">
-        <strong>{d.label}:</strong>{" "}
-        <span className={
-          d.status === "match" ? "hazbot-sidebar-leaf-true"
-          : d.status === "no-match" ? "hazbot-sidebar-leaf-false"
-          : undefined
-        }>{d.value}</span>
-        {d.status && (
-          <span className="hazbot-sidebar-visually-hidden">
-            {d.status === "match" ? " (match)" : " (no match)"}
-          </span>
-        )}
-      </div>
-    ))}
+    {/* The status→class mapping is hoisted to a `valueClass` const rather than
+        an inline multiline `className={…}` — the inline form trips this repo's
+        `react/jsx-closing-tag-location` lint rule. */}
+    {diagnostics.map((d, i) => {
+      const valueClass = d.status === "match" ? "hazbot-sidebar-leaf-true"
+        : d.status === "no-match" ? "hazbot-sidebar-leaf-false"
+          : undefined;
+      return (
+        // `${d.label}-${i}` — `label` is host-supplied free text with no
+        // uniqueness contract; composite key matches sidebar.tsx's existing
+        // convention for non-unique lists (ErrorRow / ReadingRow).
+        <div key={`${d.label}-${i}`} className="hazbot-sidebar-entry">
+          <strong>{d.label}:</strong>{" "}
+          <span className={valueClass}>{d.value}</span>
+          {d.status && (
+            <span className="hazbot-sidebar-visually-hidden">
+              {d.status === "match" ? " (match)" : " (no match)"}
+            </span>
+          )}
+        </div>
+      );
+    })}
   </div>
 )}
 ```

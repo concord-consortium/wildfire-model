@@ -1,4 +1,7 @@
-import { getAnalysisEngine, buildAnalysisEngineActivatedPayload, APP_RULES_VERSION } from "./index";
+import {
+  getAnalysisEngine, buildAnalysisEngineActivatedPayload, APP_RULES_VERSION,
+  getRequestedPresetInfo, buildPresetDiagnostics,
+} from "./index";
 import { _resetAnalysisEngineForTests } from "./engine-singleton";
 import { ENGINE_VERSION } from "../engine";
 
@@ -135,6 +138,46 @@ describe("getAnalysisEngine — EngineConstructionError catch path", () => {
   });
 });
 
+describe("getRequestedPresetInfo (per WM-27 Requirement 13)", () => {
+  it("returns { recognized: true } for a known preset", () => {
+    setUrl("?preset=plainsTwoZone");
+    expect(getRequestedPresetInfo()).toEqual({ preset: "plainsTwoZone", recognized: true });
+  });
+
+  it("returns { recognized: false } for an unrecognized preset name", () => {
+    setUrl("?preset=bogusPresetName");
+    expect(getRequestedPresetInfo()).toEqual({ preset: "bogusPresetName", recognized: false });
+  });
+
+  it("returns undefined when the URL has no preset param", () => {
+    setUrl("?hazbotRules=23");
+    expect(getRequestedPresetInfo()).toBeUndefined();
+  });
+
+  it("does not treat an Object.prototype member name as a recognized preset", () => {
+    setUrl("?preset=constructor");
+    expect(getRequestedPresetInfo()).toEqual({ preset: "constructor", recognized: false });
+  });
+});
+
+describe("buildPresetDiagnostics (per WM-27 Requirement 13)", () => {
+  it("maps a recognized preset to a match diagnostic with the bare preset name", () => {
+    expect(buildPresetDiagnostics({ preset: "plainsTwoZone", recognized: true })).toEqual([
+      { label: "Requested preset", value: "plainsTwoZone", status: "match" },
+    ]);
+  });
+
+  it("maps an unrecognized preset to a no-match diagnostic with the (unrecognized preset) cue", () => {
+    expect(buildPresetDiagnostics({ preset: "bogus", recognized: false })).toEqual([
+      { label: "Requested preset", value: "bogus (unrecognized preset)", status: "no-match" },
+    ]);
+  });
+
+  it("returns undefined when there is no requested preset", () => {
+    expect(buildPresetDiagnostics(undefined)).toBeUndefined();
+  });
+});
+
 describe("buildAnalysisEngineActivatedPayload (per Req 20)", () => {
   it("includes engineVersion + appRulesVersion + ruleSetId; no sessionId", () => {
     const payload = buildAnalysisEngineActivatedPayload("23");
@@ -144,6 +187,23 @@ describe("buildAnalysisEngineActivatedPayload (per Req 20)", () => {
       ruleSetId: "23",
     });
     expect(payload).not.toHaveProperty("sessionId");
+  });
+
+  it("carries preset + presetRecognized only when given preset info", () => {
+    const payload = buildAnalysisEngineActivatedPayload("23", { preset: "plainsTwoZone", recognized: true });
+    expect(payload).toEqual({
+      engineVersion: ENGINE_VERSION,
+      appRulesVersion: APP_RULES_VERSION,
+      ruleSetId: "23",
+      preset: "plainsTwoZone",
+      presetRecognized: true,
+    });
+  });
+
+  it("records an unrecognized preset name verbatim with presetRecognized false", () => {
+    const payload = buildAnalysisEngineActivatedPayload("23", { preset: "bogus", recognized: false });
+    expect(payload.preset).toBe("bogus");
+    expect(payload.presetRecognized).toBe(false);
   });
 
   it("APP_RULES_VERSION is a positive integer", () => {

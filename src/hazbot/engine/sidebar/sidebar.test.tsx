@@ -459,3 +459,60 @@ describe("Sidebar — describeErrorContext for the four new EngineError variants
     expect(screen.getAllByText(/c \(boolean → string\)/).length).toBeGreaterThan(0);
   });
 });
+
+describe("Sidebar — diagnostics slot (WM-27 Requirement 13)", () => {
+  function makeEngine(): Engine<TestReading, TestDefaults> {
+    return new Engine<TestReading, TestDefaults>({
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: ranSimulationImpl },
+      simProps: {},
+      translate: noopTranslate,
+    });
+  }
+
+  it("renders a recognized preset diagnostic with the match (leaf-true) treatment", () => {
+    const Wrapper = wrap(makeEngine());
+    render(
+      <Wrapper>
+        <Sidebar title="Hazbot" diagnostics={[
+          { label: "Requested preset", value: "plainsTwoZone", status: "match" },
+        ]} />
+      </Wrapper>,
+    );
+    expect(screen.getByText("Diagnostics")).toBeInTheDocument();
+    const value = screen.getByText("plainsTwoZone");
+    expect(value.className).toBe("hazbot-sidebar-leaf-true");
+  });
+
+  it("renders an unrecognized preset with the no-match (leaf-false) treatment and the text cue", () => {
+    const Wrapper = wrap(makeEngine());
+    render(
+      <Wrapper>
+        <Sidebar title="Hazbot" diagnostics={[
+          { label: "Requested preset", value: "bogus (unrecognized preset)", status: "no-match" },
+        ]} />
+      </Wrapper>,
+    );
+    const value = screen.getByText("bogus (unrecognized preset)");
+    expect(value.className).toBe("hazbot-sidebar-leaf-false");
+  });
+
+  it("exposes a visually-hidden state equivalent independent of the host-supplied value text", () => {
+    const Wrapper = wrap(makeEngine());
+    render(
+      <Wrapper>
+        <Sidebar title="Hazbot" diagnostics={[
+          { label: "Requested preset", value: "x", status: "no-match" },
+        ]} />
+      </Wrapper>,
+    );
+    const hidden = screen.getByText("(no match)");
+    expect(hidden.className).toBe("hazbot-sidebar-visually-hidden");
+  });
+
+  it("renders no Diagnostics section when diagnostics is undefined", () => {
+    const Wrapper = wrap(makeEngine());
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
+    expect(screen.queryByText("Diagnostics")).not.toBeInTheDocument();
+  });
+});

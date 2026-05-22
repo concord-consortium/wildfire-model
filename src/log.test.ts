@@ -25,6 +25,7 @@ function loadLogWithMocks(opts: {
     }));
     jest.doMock("./hazbot/wildfire", () => ({
       getAnalysisEngine: () => opts.engine,
+      getRequestedPresetInfo: () => undefined,
       buildAnalysisEngineActivatedPayload: (ruleSetId: string) => ({
         engineVersion: "0.0.1",
         appRulesVersion: 1,

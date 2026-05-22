@@ -16,7 +16,7 @@ import { log } from "../log";
 import Shutterbug from "shutterbug";
 import { AnalysisEngineProvider } from "../hazbot/engine";
 import { Sidebar } from "../hazbot/engine/sidebar";
-import { APP_RULES_VERSION, getAnalysisEngine } from "../hazbot/wildfire";
+import { APP_RULES_VERSION, getAnalysisEngine, getRequestedPresetInfo, buildPresetDiagnostics } from "../hazbot/wildfire";
 
 import css from "./app.scss";
 import { useCustomCursor } from "./use-custom-cursors";
@@ -121,9 +121,13 @@ export const AppComponent = observer(function WrappedComponent() {
         : content
       }
       {logMonitor && <LogMonitor logFilePrefix="wildfire-log-events" />}
+      {/* `diagnostics` is computed here, inside the existing sidebar-mount branch —
+          NOT as a top-level const in the component body — so the getUrlConfig()
+          scan it entails runs only when the sidebar mounts, not on every render
+          for production users with ?hazbotSidebar unset. See Self-Review SE12. */}
       {showHazbotSidebar && engine && (
         <AnalysisEngineProvider engine={engine} appRulesVersion={APP_RULES_VERSION}>
-          <Sidebar title="Hazbot" />
+          <Sidebar title="Hazbot" diagnostics={buildPresetDiagnostics(getRequestedPresetInfo())} />
         </AnalysisEngineProvider>
       )}
     </div>
