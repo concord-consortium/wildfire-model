@@ -10,3 +10,11 @@ export const sawIntenseFire: FactorVariableImpl<boolean, WildfireReading, Wildfi
   isStub: true,
   compute: () => ({ value: false, witnesses: [] }),
 };
+
+// Stub — deferred to WM-28 ("Hazbot: Helitack run-window detection"). See the
+// Helitack Technical Notes in the WM-18 requirements spec.
+export const usedHelitack: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  isStub: true,
+  compute: () => ({ value: false, witnesses: [] }),
+};
