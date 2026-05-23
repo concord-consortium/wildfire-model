@@ -459,6 +459,46 @@ The extracted sheets reference **10 names with no impl today**:
   of scope for WM-18 — today an author learns of an unbacked name when a
   developer re-extracts (R5's `missing-impl` gate) or via the `TBD.md` stub list.
 
+## Post-implementation findings
+
+Findings surfaced during implementation that didn't match this spec's
+pre-extraction assumptions. The implementation reflects the actual sheet
+content; the notes below record where the spec's wording is now stale.
+
+- **Tab 25 stub-gated set is `{Cat 5, Cat 6}`, not just `Cat 6`.** The
+  2026-05-22 sheet places `SparksAtTopAndBottom` in a positive (top-level
+  AND) position within the `WITH` prop-expression of **both** Cat 5 and Cat 6
+  (Cat 5: `ranSimulation WITH OneSparkPerZone AND SparksAtTopAndBottom AND
+  NOT UniformZoneSettings`; Cat 6: `ranSimulation WITH OneSparkPerZone AND
+  SparksAtTopAndBottom AND UniformZoneSettings`). With the stub returning
+  false, both prop-expressions evaluate false, so **both categories are
+  unreachable**. This spec (R11, Q5, the Helitack Technical Notes, the
+  Stubbed-impl table's "Used by" column) consistently names only "tab 25
+  Cat 6" as stub-gated — accurate against the pre-WM-18 sheet but not
+  against the 2026-05-22 sheet. Implementation reflects the correct set:
+  `25.test.ts` excludes both cats 5 and 6 from R9 coverage and its (e)
+  shape asserts a fully-satisfying state matches neither. WM-15's
+  re-validation must cover both categories, not just Cat 6.
+
+- **Tab 35 Cat 2 is unreachable (shadowed by Cat 3).** Tab 35 Cat 3 is
+  `ranSimulation WITH NOT ForestWAWOSuppression` — lacking the `setAnyVar
+  AND` guard that tab 33's analogous Cat 3 carries — so any default run that
+  satisfies Cat 2 (`ranSimulation AND NOT setAnyVar`) necessarily satisfies
+  Cat 3 as well, and Cat 3 > Cat 2 wins. This is a **sheet-quality issue**
+  (faithful extraction, sheet authoring inconsistency) per R11a / Out of
+  Scope: flagged in [src/hazbot/TBD.md §4](../../src/hazbot/TBD.md);
+  `35.test.ts` documents Cat 2 as unreachable and excludes it from R9.
+
+- **Replay fixture (`src/hazbot/wildfire/__fixtures__/expected.json`)
+  regenerated.** R15's `npm test` invariant required regenerating the
+  ruleset-25 replay-regression fixture after the re-extract, since the
+  fixture's `matchedCategoryHistory` was generated against the pre-WM-18
+  modules. The fixture is a downstream generated artifact (`node
+  scripts/generate-replay-fixture.js`); the implementation step that
+  re-extracts the modules now also regenerates this fixture. R3 / R10's
+  list of generated artifacts implicitly covered it, but the spec didn't
+  call it out explicitly.
+
 ## Closeout actions
 
 Spec-process actions performed during implementation and at finalization — not

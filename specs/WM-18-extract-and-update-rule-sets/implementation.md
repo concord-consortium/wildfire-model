@@ -1061,6 +1061,26 @@ categories.
 npm run lint && npm test && npm run build
 ```
 
+**Post-implementation findings** (recorded here for trace; also captured in
+requirements.md "Post-implementation findings"):
+- The "Re-extract" step's "Files affected" did not list
+  `src/hazbot/wildfire/__fixtures__/expected.json`. The ruleset-25 replay
+  fixture is a generated regression artifact downstream of the rule-set
+  modules; regenerating modules 23–35 invalidated `matchedCategoryHistory`,
+  so `node scripts/generate-replay-fixture.js` was run as part of the
+  re-extract step and the regenerated fixture was committed alongside the
+  modules. R15 (`npm test` green) requires it.
+- Tab 25 cat 5 **and** cat 6 are stub-gated (not only cat 6 as this spec
+  consistently names). The 2026-05-22 sheet places `SparksAtTopAndBottom` in
+  a top-level AND of both cats' `WITH` prop-expressions; `25.test.ts`
+  reflects this. The (e) shape in this plan's per-rule-set test file
+  structure section names "tab 25 Cat 6" and "tab 45 Cat 4" as the canonical
+  stub-gated examples — tab 25's set is now {Cat 5, Cat 6}.
+- Tab 35 Cat 2 is unreachable (shadowed by Cat 3 — sheet authoring
+  inconsistency). Faithful extraction; flagged per R11a / Out of Scope in
+  [src/hazbot/TBD.md §4](../../src/hazbot/TBD.md). `35.test.ts` documents
+  the shadowing and excludes Cat 2 from R9.
+
 **Closeout actions** (from requirements.md "Closeout actions"; the
 `filreLineMarkers` sheet-typo flag is already done — corrected in the workbook
 before the re-extract step):
