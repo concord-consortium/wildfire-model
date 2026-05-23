@@ -21,17 +21,15 @@ These rulesets have defined categories/expressions in [src/hazbot/rule-sets/](..
 | 33 | 3 | 3 | mountainTwoZone | [33.md](33.md) | http://localhost:8080/?preset=mountainTwoZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=false&severeDroughtAvailable=false&hazbotRules=33&hazbotSidebar=true |
 | 34 | 3 | 4 | shrubThreeZone | [34.md](34.md) | http://localhost:8080/?preset=shrubThreeZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=true&severeDroughtAvailable=false&hazbotRules=34&hazbotSidebar=true |
 | 35 | 3 | 5 | mountainTwoZone | [35.md](35.md) | http://localhost:8080/?preset=mountainTwoZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=true&severeDroughtAvailable=false&hazbotRules=35&hazbotSidebar=true |
+| 42 | 4 | 2 | defaultTwoZone | [42.md](42.md) | http://localhost:8080/?preset=defaultTwoZone&windSpeed=2&windDirection=270.5&helitackAvailable=false&fireLineAvailable=false&severeDroughtAvailable=false&showBurnIndex=false&hazbotRules=42&hazbotSidebar=true |
+| 45 | 4 | 5 | townsThreeZone | [45.md](45.md) | http://localhost:8080/?preset=townsThreeZone&windSpeed=4&windDirection=100&sparks=[[50000,40000],[50000,40000],[50000,40000]]&severeDroughtAvailable=false&showBurnIndex=false&hazbotRules=45&hazbotSidebar=true |
+| 47 | 4 | 7 | dryTownsThreeZone | [47.md](47.md) | http://localhost:8080/?preset=dryTownsThreeZone&sparks=[[35000,31000],[35000,31000],[35000,31000]]&windSpeed=6&windDirection=265&severeDroughtAvailable=false&hazbotRules=47&hazbotSidebar=true |
+| 54 | 5 | 4 | fiveTownsThreeZone | [54.md](54.md) | http://localhost:8080/?preset=fiveTownsThreeZone&severeDroughtAvailable&windSpeed=2&windDirection=165&showBurnIndex=true&hazbotRules=54&hazbotSidebar=true |
 
-## Placeholder tabs (not yet defined)
+## Placeholder tabs
 
-These tabs exist in the sequence but are excluded from the rule-set extractor ([scripts/extract-impl.js EXCLUDED_TABS](../../scripts/extract-impl.js)) because their Google Sheet entries are empty/TBD. URLs are listed here so they're ready to wire up once defined.
-
-| Tab | Activity | Page | Preset | Validation Doc | Test URL (no `hazbotRules` until defined) |
-|-----|----------|------|--------|----------------|-------------------------------------------|
-| 43 | 4 | 3 | defaultTwoZone | — | http://localhost:8080/?preset=defaultTwoZone&windSpeed=2&windDirection=270.5&helitackAvailable=false&fireLineAvailable=false&severeDroughtAvailable=false&showBurnIndex=false&hazbotSidebar=true |
-| 45 | 4 | 5 | townsThreeZone | — | http://localhost:8080/?preset=townsThreeZone&windSpeed=4&windDirection=100&sparks=[[50000,40000],[50000,40000],[50000,40000]]&severeDroughtAvailable=false&showBurnIndex=false&hazbotSidebar=true |
-| 47 | 4 | 7 | dryTownsThreeZone | — | http://localhost:8080/?preset=dryTownsThreeZone&sparks=[[35000,31000],[35000,31000],[35000,31000]]&windSpeed=6&windDirection=265&severeDroughtAvailable=false&hazbotSidebar=true |
-| 54 | 5 | 4 | fiveTownsThreeZone | — | http://localhost:8080/?preset=fiveTownsThreeZone&severeDroughtAvailable&windSpeed=2&windDirection=165&showBurnIndex=true&hazbotSidebar=true |
+(none — all 11 rule-set tabs are extracted as of WM-18; `EXCLUDED_TABS` in
+[scripts/extract-impl.js](../../scripts/extract-impl.js) is empty.)
 
 ## Notes
 
@@ -73,8 +71,10 @@ seq.activities.forEach((act, ai) => {
   });
 });
 
-// Loadable rulesets have a defined rule-set module + playbook. Placeholders do not.
-const EXCLUDED = new Set(["43", "45", "47", "54"]);
+// Loadable rulesets have a defined rule-set module + playbook. Placeholders
+// do not. As of WM-18, no tabs are excluded — leave the set empty unless a
+// future workbook revision introduces empty/TBD tabs.
+const EXCLUDED = new Set([]);
 const loadable = rows.filter(r => !EXCLUDED.has(r.tabId));
 const placeholders = rows.filter(r => EXCLUDED.has(r.tabId));
 
@@ -90,7 +90,7 @@ console.log(placeholders.map(renderPlaceholder).join("\n"));
 '
 ```
 
-The `EXCLUDED` set must match [`EXCLUDED_TABS` in scripts/extract-impl.js](../../scripts/extract-impl.js). If a placeholder tab gains a rule-set module, remove it from `EXCLUDED` here (and add its playbook link to the loadable section).
+The `EXCLUDED` set must match [`EXCLUDED_TABS` in scripts/extract-impl.js](../../scripts/extract-impl.js) — both are empty as of WM-18. If a future workbook revision introduces empty/TBD tabs, add their ids to both sets.
 
 ## Testing all rulesets via Playwright MCP
 
@@ -137,7 +137,7 @@ Multiple categories can match simultaneously — the engine picks the **highest-
 - **`TwoSparks` requires exactly length 2.** With 3 sparks, `TwoSparks = false` → in ruleset 25 this still allows Cat 4–6 to evaluate because they only require `OneSparkPerZone`, but Cat 2 (`NOT TwoSparks`) will also be ✓ — relying on highest-match semantics to pick the real winner.
 - **`GraphOpen` is sticky per reading.** Opening the graph after a run doesn't retroactively flip the flag — toggle the graph *before* clicking Start.
 - **Categories with `WITH`** (e.g. `ranSimulation WITH OneSparkPerZone …`) iterate across *all* readings — once true on any reading, the clause stays true even after subsequent runs change conditions. Use **Reload** + page navigation to fully clear.
-- **Stubbed sim-props always return `false`** — currently `SparksAtTopAndBottom` and `sawIntenseFire`. Categories that require them be `true` (e.g. ruleset 25 Cat 6, ruleset 34 Cat 5) are **unreachable** until implemented.
+- **Stubbed impls always return `false`** — currently `SparksAtTopAndBottom` (sim-prop, → WM-15) and `Helitack` / `usedHelitack` (sim-prop + factor variable, → WM-28). Categories that require them be `true` in a top-level AND are **unreachable** until implemented (e.g. ruleset 25 Cat 5/6, ruleset 45 Cat 4); categories that reference a stub inside an `OR` / `NOT` are **stub-degraded** (e.g. tabs 45/47/54 Cat 3 over-match helitack-only runs).
 - **Engine change-detection defaults are config-derived (WM-27).** The `set*` factor variables compare each `SimulationStarted` reading against defaults derived from the resolved simulation config (preset + URL params), not a per-rule-set `defaults` object. There is no longer a `defaults: {}` / `missing-defaults` load failure — every rule-set loads regardless of the source sheet. If a `set*` variable misfires, check that the activity URL selects the intended `preset` (the dev sidebar's **Diagnostics** panel shows the requested preset and whether it was recognized).
 - **Set-valued factor variables accumulate across the whole session.** `uniqueWindValuesUsed` / `uniqueNonZeroWindValuesUsed` fold over every `SimulationStarted` reading in `engine.readings`, not just the most recent one. Validating ruleset 24 Cat 4 (`NOT (uniqueWindValuesUsed.size > 1) AND uniqueNonZeroWindValuesUsed.size > 0`) requires a **full page reload before** the wind-non-zero run, not just Restart — otherwise a leftover zero-wind reading from a Cat 2/3 run inflates `uniqueWindValuesUsed.size` to 2 and the match jumps straight to Cat 5.
 
