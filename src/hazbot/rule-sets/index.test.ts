@@ -51,6 +51,10 @@ describe("rule-sets/index — R5 load gate", () => {
     );
   });
 
+  it("expectedStubWarnings covers every exported rule-set", () => {
+    expect(Object.keys(expectedStubWarnings).sort()).toEqual(Object.keys(ruleSets).sort());
+  });
+
   for (const id of Object.keys(ruleSets)) {
     describe(`rule-set ${id}`, () => {
       const errors = collectErrors(id);
@@ -75,7 +79,7 @@ describe("rule-sets/index — R5 load gate", () => {
           .filter((e): e is Extract<EngineError, { kind: "stub-warning" }> => e.kind === "stub-warning")
           .map((e) => e.stubName)
           .sort();
-        expect(stubNames).toEqual([...expectedStubWarnings[id]].sort());
+        expect(stubNames).toEqual([...(expectedStubWarnings[id] ?? [])].sort());
       });
     });
   }
