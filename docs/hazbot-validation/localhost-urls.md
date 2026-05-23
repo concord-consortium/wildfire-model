@@ -141,23 +141,36 @@ Multiple categories can match simultaneously — the engine picks the **highest-
 - **Engine change-detection defaults are config-derived (WM-27).** The `set*` factor variables compare each `SimulationStarted` reading against defaults derived from the resolved simulation config (preset + URL params), not a per-rule-set `defaults` object. There is no longer a `defaults: {}` / `missing-defaults` load failure — every rule-set loads regardless of the source sheet. If a `set*` variable misfires, check that the activity URL selects the intended `preset` (the dev sidebar's **Diagnostics** panel shows the requested preset and whether it was recognized).
 - **Set-valued factor variables accumulate across the whole session.** `uniqueWindValuesUsed` / `uniqueNonZeroWindValuesUsed` fold over every `SimulationStarted` reading in `engine.readings`, not just the most recent one. Validating ruleset 24 Cat 4 (`NOT (uniqueWindValuesUsed.size > 1) AND uniqueNonZeroWindValuesUsed.size > 0`) requires a **full page reload before** the wind-non-zero run, not just Restart — otherwise a leftover zero-wind reading from a Cat 2/3 run inflates `uniqueWindValuesUsed.size` to 2 and the match jumps straight to Cat 5.
 
-### Current validation status (snapshot — 2026-05-21, post-WM-27)
+### Current validation status (snapshot — 2026-05-22, post-WM-18)
 
-Walked via Playwright MCP after WM-27 made engine defaults config-derived. All
-seven rule-sets load with no defaults-attributable error; every no-change run
-correctly yields `setAnyVar` / `setAnyZoneVar` = false (config-derived defaults
-match the unchanged `SimulationStarted` reading), and every change flips the
-relevant `set*` variable. The dev-sidebar **Diagnostics** panel showed
-`Requested preset: <name> (match)` for all seven.
+WM-18 re-extracted all 11 rule-sets from the 2026-05-22 workbook, added new
+factor-variable / sim-prop impls (`CorrectZoneSetup`, `UniformZoneSettings`,
+`triedAllVegetations`, `usedFireline`, `Fireline`, `DefaultVars`,
+`DefaultVegetations`, `SevereDroughts`), and stubbed `Helitack` / `usedHelitack`
+pending WM-28. R9 per-category Jest coverage now validates every reachable
+category for all 11 rule-sets, and the new `rule-sets/index.test.ts` R5 load
+gate asserts zero `missing-impl` / `parse-error` and the expected
+`stub-warning` distribution. The post-WM-18 dev sidebar shows
+`APP_RULES_VERSION = 2` and the new factor variables / sim-props are
+populated; a representative Playwright-MCP walk against tab 23 confirmed the
+Cat 1 → Cat 2 transition after a default-only run (sparks placed via
+`window.test.placeSparkInZone(0)/(1)` + Start). A full Playwright walk of all
+11 playbooks is deferred — WM-28 owns the helitack-dependent walk for tabs
+45/47/54, and the Jest R9 coverage already validates each reachable category
+end to end through the engine.
 
-| Ruleset | Preset | Result |
-|---------|--------|--------|
-| 23 | plainsTwoZone | 5/5 categories ✓ |
-| 24 | plainsTwoZone | 5/5 categories ✓ |
-| 25 | shrubThreeZone | Loads + classifies ✓ (Cat 1–2 walked; no `set*` vars — WM-27-neutral; Cat 6 unreachable — `SparksAtTopAndBottom` stub) |
-| 32 | threeGreenZonePlains | Loads ✓ (was blocked pre-WM-27) — Cat 1–3 ✓, Cat 5 ✓; Cat 6 success state needs an exact 3-spark setup |
-| 33 | mountainTwoZone | 5/5 categories ✓ (was blocked pre-WM-27) |
-| 34 | shrubThreeZone | Loads ✓ (was blocked pre-WM-27) — Cat 1–4 ✓; Cat 5 unreachable — `sawIntenseFire` stub |
-| 35 | mountainTwoZone | Loads ✓ (was blocked pre-WM-27) — Cat 1–3 ✓ and Cat 7 success ✓; Cat 4–6 are intermediate sim-prop combinations |
+| Ruleset | Preset | R9 Jest coverage | Stub effects (per WM-18) |
+|---------|--------|------------------|--------------------------|
+| 23 | plainsTwoZone | cats 1–5 ✓ | none |
+| 24 | plainsTwoZone | cats 1–5 ✓ | none |
+| 25 | shrubThreeZone | cats 1–4 ✓ | cats 5 & 6 stub-gated (`SparksAtTopAndBottom` → WM-15) |
+| 32 | threeGreenZonePlains | cats 1–6 ✓ | none |
+| 33 | mountainTwoZone | cats 1–6 ✓ | none |
+| 34 | shrubThreeZone | cats 1–4 ✓ | none — `sawIntenseFire` was dropped in WM-18; cat 4 now uses `triedAllVegetations` |
+| 35 | mountainTwoZone | cats 1, 3–7 ✓ | cat 2 unreachable (shadowed by cat 3 — sheet-quality issue, see [TBD.md §4](../../src/hazbot/TBD.md)) |
+| 42 | defaultTwoZone | cats 1–3 ✓ | none |
+| 45 | townsThreeZone | cats 1–3 ✓ | cat 4 stub-gated (`Helitack` → WM-28); cat 3 stub-degraded (`NOT (usedFireline AND usedHelitack)` collapses to TRUE — over-matches fireline+helitack runs) |
+| 47 | dryTownsThreeZone | cats 1–5 ✓ | cat 3 stub-degraded (`NOT (Fireline OR Helitack)` → `NOT Fireline` — over-matches helitack-only runs); cats 4/5 helitack arm dead, fireline arm reachable |
+| 54 | fiveTownsThreeZone | cats 1–4 ✓ | cat 3 stub-degraded (same as 47); cat 4 helitack arm dead, fireline arm reachable |
 
-Re-run this validation pass whenever rule-sets are regenerated from the source sheet or when stubs in [src/hazbot/wildfire/sim-props.ts](../../src/hazbot/wildfire/sim-props.ts) / [factor-variable-stubs.ts](../../src/hazbot/wildfire/factor-variable-stubs.ts) are filled in.
+Re-run this validation pass whenever rule-sets are regenerated from the source sheet, when stubs in [src/hazbot/wildfire/sim-props.ts](../../src/hazbot/wildfire/sim-props.ts) / [factor-variable-stubs.ts](../../src/hazbot/wildfire/factor-variable-stubs.ts) are filled in, or when WM-28 lands helitack run-window detection (which re-validates tabs 45/47/54).
