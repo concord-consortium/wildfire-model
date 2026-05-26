@@ -136,6 +136,22 @@ export class SimulationModel {
     return this.simulationStarted && !this.simulationRunning && !!this.engine?.fireDidStop;
   }
 
+  @computed public get setupEnabled() {
+    return !this.simulationStarted;
+  }
+
+  @computed public get startEnabled() {
+    return this.ready && !this.simulationEnded;
+  }
+
+  @computed public get reloadEnabled() {
+    return this.setupChanged || this.sparks.length > 0;
+  }
+
+  @computed public get restartEnabled() {
+    return this.simulationStarted;
+  }
+
   public getZoneBurnPercentage(zoneIdx: number) {
     const burnedCells = this.engine?.burnedCellsInZone[zoneIdx] || 0;
     return burnedCells / this.totalCellCountByZone[zoneIdx];

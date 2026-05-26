@@ -377,4 +377,43 @@ describe("SimulationModel", () => {
       dispose();
     });
   });
+
+  describe("reloadEnabled", () => {
+    const createSim = () => new SimulationModel({
+      modelWidth: 100000,
+      modelHeight: 100000,
+      gridWidth: 5,
+      sparks: [],
+      zoneIndex: [[0]],
+      elevation: [[0]],
+      unburntIslands: [[1]],
+      unburntIslandProbability: 1,
+      riverData: null,
+    });
+
+    it("is false when setupChanged=false and no sparks (Default)", async () => {
+      const sim = createSim();
+      await sim.dataReadyPromise;
+      expect(sim.setupChanged).toBe(false);
+      expect(sim.sparks.length).toBe(0);
+      expect(sim.reloadEnabled).toBe(false);
+    });
+
+    it("is true when setupChanged=true and no sparks", async () => {
+      const sim = createSim();
+      await sim.dataReadyPromise;
+      sim.setSetupChanged(true);
+      expect(sim.sparks.length).toBe(0);
+      expect(sim.reloadEnabled).toBe(true);
+    });
+
+    it("is true when setupChanged=false and at least one spark", async () => {
+      const sim = createSim();
+      await sim.dataReadyPromise;
+      sim.addSpark(50000, 50000);
+      expect(sim.setupChanged).toBe(false);
+      expect(sim.sparks.length).toBeGreaterThan(0);
+      expect(sim.reloadEnabled).toBe(true);
+    });
+  });
 });
