@@ -104,7 +104,14 @@ module.exports = {
         // require() can be useful in mocking
         "@typescript-eslint/no-require-imports": "off",
         "@typescript-eslint/no-var-requires": "off",
-        "jest/no-done-callback": "off"
+        "jest/no-done-callback": "off",
+        // Tests in this project use a few wrapper helpers (e.g.
+        // expectButtonState in bottom-bar.test.tsx) that the default
+        // expect-expect rule doesn't see through. Recognize them as
+        // assertion-bearing.
+        "jest/expect-expect": ["warn", {
+          assertFunctionNames: ["expect", "expectButtonState"]
+        }]
       }
     },
     { // node-only scripts (extraction tooling, etc.)
