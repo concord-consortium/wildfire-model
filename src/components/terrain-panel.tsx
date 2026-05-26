@@ -1,5 +1,5 @@
 import { observer } from "mobx-react";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { IBaseProps } from "./base";
 import { Button } from "@mui/material";
 import { renderZones } from "./zone-selector";
@@ -12,6 +12,7 @@ import { TerrainSummary } from "./terrain-summary";
 import { log } from "../log";
 import { useStores } from "../use-stores";
 import { ZonesCountSelector } from "./zones-count-selector";
+import { ISetupSnapshot, captureSimulationSnapshot, setupSnapshotDiffers } from "./setup-snapshot";
 
 import css from "./terrain-panel.scss";
 import { Zone } from "../models/zone";
@@ -38,6 +39,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
   const [windSpeed, setWindSpeed] = useState<number>(simulation.wind.speed);
   const [windDirection, setWindDirection] = useState<number>(simulation.wind.direction);
   const [selectedZone, setSelectedZone] = useState<number>(ui.terrainUISelectedZone || 0);
+  const openSnapshotRef = useRef<ISetupSnapshot | null>(null);
 
   const zone = zones[selectedZone];
   const displayVegetationType =
@@ -67,6 +69,30 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
     }
   }, [firstPanel, setSelectedZone, simulation.wind, simulation.zones, simulation.zones.length, simulation.zonesCount, ui.showTerrainUI]);
 
+  useEffect(() => {
+    // Capture snapshot when the wizard opens. Polarity opposite the close-time
+    // reset effect above — that one fires when ui.showTerrainUI flips to false;
+    // this one fires when it flips to true (and also on initial mount when
+    // showTerrainUI is already true).
+    //
+    // Observable reads inside captureSimulationSnapshot are intentionally
+    // untracked — useEffect callbacks run outside MobX-React's observer
+    // tracking scope (which only tracks reads during render), so this snapshot
+    // is a genuine point-in-time capture that won't re-trigger on later
+    // simulation.zones / simulation.wind mutations. Combined with useRef (no
+    // render on write), there is no render → effect → snapshot → render loop.
+    //
+    // Reactivity dependency: this effect's re-run on `ui.showTerrainUI` change
+    // relies on `TerrainPanel` being wrapped in `observer`. The dep-array read
+    // of an observable only triggers a re-render — and thus a dep-array
+    // re-evaluation by React — because of `observer`. A refactor that unwraps
+    // `observer` must replace this useEffect with a MobX `reaction`/`autorun`,
+    // or the snapshot-refresh-on-reopen path silently breaks.
+    if (ui.showTerrainUI) {
+      openSnapshotRef.current = captureSimulationSnapshot(simulation);
+    }
+  }, [simulation, ui.showTerrainUI]);
+
   const handleClose = () => {
     ui.showTerrainUI = !ui.showTerrainUI;
     log("TerrainPanelClosed");
@@ -74,6 +100,22 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
 
   const applyAndClose = () => {
     ui.showTerrainUI = !ui.showTerrainUI;
+    // Diff the open-time snapshot against the local wizard state BEFORE
+    // calling the simulation.* mutators. Computing the diff after the mutators
+    // run would always see an empty diff because the simulation would now
+    // match the local wizard state.
+    const snapshot = openSnapshotRef.current;
+    if (snapshot) {
+      const changed = setupSnapshotDiffers(snapshot, {
+        zonesCount,
+        zones,
+        windSpeed,
+        windDirection,
+      });
+      if (changed) {
+        simulation.setSetupChanged(true);
+      }
+    }
     simulation.setWindSpeed(windSpeed);
     simulation.setWindDirection(windDirection);
     simulation.updateZones(zones);
@@ -192,7 +234,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
       {
         ui.showTerrainUI &&
         <div className={`${css.background} ${cssClasses[selectedZone]} ${panelClasses[currentPanel]}`}>
-          <div className={css.closeButton} onClick={handleClose}>X</div>
+          <div className={css.closeButton} data-testid="terrain-panel-close" onClick={handleClose}>X</div>
           <div className={css.header} data-testid="terrain-header">Setup</div>
           <div className={css.instructions}>
             <span className={css.setupStepIcon}>{firstPanel === 0 ? currentPanel + 1 : currentPanel}</span>
