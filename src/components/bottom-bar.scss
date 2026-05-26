@@ -165,8 +165,17 @@ $overflowHeight: 11px;
   }
 
   &:disabled {
-    // Match Zeplin spec: text + icon at 0.35 opacity, background at full
-    // opacity. Targets the inner span (the JSX explicitly wraps content in
+    // Per Zeplin spec: grayscale + content faded to 0.35, button background
+    // unchanged.
+    //
+    // MUI's own `:disabled` rule (emotion-generated for MUI Button) applies
+    // `opacity: 0.25` to the whole button — without the `opacity: 1`
+    // override below, that 0.25 compounds with our content's
+    // `> span { opacity }` (0.25 × 0.35 ≈ 0.09), rendering icons nearly
+    // invisible against the near-white bottom bar. The `!important` is
+    // needed because MUI's emotion class is more specific.
+    opacity: 1 !important;
+    // Targets the inner span (the JSX explicitly wraps content in
     // <span><Icon/> Label</span> at bottom-bar.tsx).
     //
     // MUI-version-coupled: today (MUI v5 with `disableRipple={true}`) MUI

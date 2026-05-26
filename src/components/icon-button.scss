@@ -50,9 +50,19 @@
     // `.MuiButton-label`) would shift `> span` to match the MUI wrapper —
     // verify in DevTools on any MUI major upgrade.
     //
-    // Zeplin spec: text + icon at 0.35 opacity, background at full opacity.
-    // !important retained defensively against future MUI rules on
-    // `.Mui-disabled`.
+    // Per Zeplin spec: disabled buttons render as grayscale + content faded
+    // to 0.35, with the button background unchanged.
+    //
+    // MUI's own `:disabled` rule (emotion-generated for MUI Button) applies
+    // `opacity: 0.25` to the whole button — without this `opacity: 1`
+    // override, that 0.25 compounds with our content's `> span { opacity }`
+    // (0.25 × 0.35 ≈ 0.09), rendering the icon nearly invisible against the
+    // near-white bottom bar. The override neutralizes MUI's whole-button
+    // fade so our explicit content opacity is the only fade applied. The
+    // `!important` is needed because MUI's emotion class is more specific.
+    &:disabled, &.Mui-disabled {
+      opacity: 1 !important;
+    }
     > span {
       opacity: 0.35 !important;
     }
