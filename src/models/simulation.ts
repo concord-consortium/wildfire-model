@@ -62,6 +62,7 @@ export class SimulationModel {
   @observable public cellsStateFlag = 0;
   @observable public cellsElevationFlag = 0;
   @observable public simulationEndedLogged = false;
+  @observable public setupChanged = false;
 
   constructor(presetConfig: Partial<ISimulationConfig>) {
     makeObservable(this);
@@ -267,9 +268,20 @@ export class SimulationModel {
 
   @action.bound public reload() {
     this.restart();
+    this.setupChanged = false;
     // Reset user-controlled properties too.
     this.setInputParamsFromConfig();
     this.populateCellsData();
+  }
+
+  // Symmetric setter with three call sites: applyAndClose (terrain-panel.tsx)
+  // passes true to record a user customization; reload() writes the field
+  // directly as part of a larger reset that also clears sparks/engine/cells,
+  // bypassing the setter; the case (h) snapshot-refresh test passes false to
+  // reset the flag mid-test without going through reload() (which would wipe
+  // simulation.zones and defeat the canary).
+  @action.bound public setSetupChanged(value: boolean) {
+    this.setupChanged = value;
   }
 
   @action.bound public rafCallback(time: number) {

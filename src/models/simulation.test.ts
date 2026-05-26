@@ -226,4 +226,41 @@ describe("SimulationModel", () => {
     expect(sim.engine?.wind.direction).toBe(newUserWindDirection);
     expect(sim.engine?.wind.speed).toBe(bewUserWindSpeed); // model units
   });
+
+  it("restart() preserves setupChanged", async () => {
+    const sim = new SimulationModel({
+      modelWidth: 100000,
+      modelHeight: 100000,
+      gridWidth: 5,
+      sparks: [[50000, 50000]],
+      zoneIndex: [[0]],
+      elevation: [[0]],
+      unburntIslands: [[1]],
+      unburntIslandProbability: 1,
+      riverData: null,
+    });
+    await sim.dataReadyPromise;
+    sim.setSetupChanged(true);
+    sim.restart();
+    expect(sim.setupChanged).toBe(true);
+  });
+
+  it("reload() resets setupChanged to false", async () => {
+    const sim = new SimulationModel({
+      modelWidth: 100000,
+      modelHeight: 100000,
+      gridWidth: 5,
+      sparks: [[50000, 50000]],
+      zoneIndex: [[0]],
+      elevation: [[0]],
+      unburntIslands: [[1]],
+      unburntIslandProbability: 1,
+      riverData: null,
+    });
+    await sim.dataReadyPromise;
+    sim.setSetupChanged(true);
+    sim.reload();
+    await sim.dataReadyPromise;
+    expect(sim.setupChanged).toBe(false);
+  });
 });
