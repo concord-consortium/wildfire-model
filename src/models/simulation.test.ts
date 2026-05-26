@@ -263,4 +263,118 @@ describe("SimulationModel", () => {
     await sim.dataReadyPromise;
     expect(sim.setupChanged).toBe(false);
   });
+
+  describe("simulationEnded", () => {
+    const createSim = () => new SimulationModel({
+      modelWidth: 100000,
+      modelHeight: 100000,
+      gridWidth: 5,
+      sparks: [[50000, 50000]],
+      zoneIndex: [[0]],
+      elevation: [[0]],
+      unburntIslands: [[1]],
+      unburntIslandProbability: 1,
+      riverData: null,
+    });
+
+    it("is false pre-start (simulationStarted=false)", async () => {
+      const sim = createSim();
+      await sim.dataReadyPromise;
+      expect(sim.simulationEnded).toBe(false);
+    });
+
+    it("is false while Running", async () => {
+      const sim = createSim();
+      await sim.dataReadyPromise;
+      sim.start();
+      try {
+        expect(sim.simulationStarted).toBe(true);
+        expect(sim.simulationRunning).toBe(true);
+        expect(sim.simulationEnded).toBe(false);
+      } finally {
+        // start() schedules a real rAF loop (simulation.ts:235). Tests #3-5
+        // below call tick() which flips simulationRunning=false and lets
+        // the loop self-terminate; this test asserts mid-Running and would
+        // otherwise leave the rAF loop scheduling itself across tests.
+        // Stop the sim to flip simulationRunning=false so the next rAF
+        // callback no-ops. Any new test added here that calls start()
+        // without an organic stop/tick path should do the same.
+        sim.stop();
+      }
+    });
+
+    it("is false in user-Pause sub-state (Stop pressed, engine not finished)", async () => {
+      const sim = createSim();
+      await sim.dataReadyPromise;
+      sim.start();
+      sim.stop();
+      // engine kept around, fireDidStop is still false
+      expect(sim.simulationStarted).toBe(true);
+      expect(sim.simulationRunning).toBe(false);
+      expect(sim.engine?.fireDidStop).toBe(false);
+      expect(sim.simulationEnded).toBe(false);
+    });
+
+    it("is true when fire finishes naturally (fireDidStop flips inside tick)", async () => {
+      const sim = createSim();
+      await sim.dataReadyPromise;
+      sim.start();
+      // Drive the supported tick() path that flips both simulationRunning=false
+      // and engine.fireDidStop=true. The real FireEngine.updateFire() unconditionally
+      // resets fireDidStop=true at line 162 then flips it back to false for any
+      // burning cell (line 167) — so a manually-set fireDidStop is overwritten
+      // before tick()'s post-updateFire check reads it. Stub updateFire to a no-op
+      // that preserves the manual flip; tick() then sees fireDidStop===true and
+      // flips simulationRunning=false (simulation.ts:315-316), producing the
+      // simulationEnded=true edge.
+      (sim.engine as any).updateFire = function () { this.fireDidStop = true; };
+      sim.tick(1);
+      expect(sim.simulationEnded).toBe(true);
+    });
+
+    it("is false after Restart (engine nulled, simulationStarted=false)", async () => {
+      const sim = createSim();
+      await sim.dataReadyPromise;
+      sim.start();
+      // Same updateFire stub as above — preserves the manual fireDidStop flip
+      // through tick(), since the real updateFire would otherwise overwrite it.
+      (sim.engine as any).updateFire = function () { this.fireDidStop = true; };
+      sim.tick(1);
+      expect(sim.simulationEnded).toBe(true);
+      sim.restart();
+      expect(sim.engine).toBeNull();
+      expect(sim.simulationStarted).toBe(false);
+      expect(sim.simulationEnded).toBe(false);
+    });
+
+    it("reactivity contract: observers re-fire when simulationEnded flips on natural fire completion", async () => {
+      const { reaction } = await import("mobx");
+      const sim = createSim();
+      await sim.dataReadyPromise;
+      // Do NOT insert awaits between sim.start() and the updateFire stub below.
+      // start() schedules a real rAF callback; in jsdom rAF is async, so the
+      // callback can't fire before this synchronous block completes — but an
+      // await would yield to the rAF callback and could call the real
+      // updateFire. Escape hatch: replace start() with a manual engine +
+      // observable setup that doesn't schedule rAF if an await is unavoidable.
+      sim.start();
+
+      const seen: boolean[] = [];
+      const dispose = reaction(
+        () => sim.simulationEnded,
+        (value) => { seen.push(value); }
+      );
+
+      // Drive the supported tick() path: stub updateFire so the manual
+      // fireDidStop flip survives (real updateFire resets fireDidStop at
+      // fire-engine.ts:162 and recomputes it from cell state), then call
+      // tick() to flip simulationRunning=false. The reaction must observe
+      // the resulting simulationEnded=true.
+      (sim.engine as any).updateFire = function () { this.fireDidStop = true; };
+      sim.tick(1);
+
+      expect(seen).toContain(true);
+      dispose();
+    });
+  });
 });

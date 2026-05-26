@@ -127,6 +127,15 @@ export class SimulationModel {
     }
   }
 
+  // True when simulationStarted && !simulationRunning && engine.fireDidStop.
+  // Reactivity contract: simulationRunning carries the edge — engine?.fireDidStop
+  // is a discriminator read only. The supported tick() path flips both
+  // (simulation.ts:315-317), so the computed re-evaluates when expected. Future
+  // refactorers: do not rely on fireDidStop driving reactivity directly.
+  @computed public get simulationEnded() {
+    return this.simulationStarted && !this.simulationRunning && !!this.engine?.fireDidStop;
+  }
+
   public getZoneBurnPercentage(zoneIdx: number) {
     const burnedCells = this.engine?.burnedCellsInZone[zoneIdx] || 0;
     return burnedCells / this.totalCellCountByZone[zoneIdx];

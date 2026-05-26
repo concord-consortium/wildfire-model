@@ -92,6 +92,12 @@ export class FireEngine {
   public neighborsDist: number;
   public fireSurvivalProbability: number;
   public endOfLowIntensityFire = false;
+  // Read via `simulation.simulationEnded` for reactivity. Direct reads on
+  // this field do not participate in MobX observation — see the
+  // reactivity-contract comment on `simulation.simulationEnded` in
+  // simulation.ts. The one existing direct-reader (app.tsx:61-64) pairs
+  // this read with a `simulationRunning` read inside a MobX `reaction`
+  // dependency function; that pairing is load-bearing for reactivity.
   public fireDidStop = false;
   public day = 0;
   public burnedCellsInZone: {[key: number]: number} = {};
