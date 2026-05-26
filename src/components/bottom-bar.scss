@@ -163,6 +163,26 @@ $overflowHeight: 11px;
       fill: #797979;
     }
   }
+
+  &:disabled {
+    // Match Zeplin spec: text + icon at 0.35 opacity, background at full
+    // opacity. Targets the inner span (the JSX explicitly wraps content in
+    // <span><Icon/> Label</span> at bottom-bar.tsx).
+    //
+    // MUI-version-coupled: today (MUI v5 with `disableRipple={true}`) MUI
+    // injects no other span child. A future MUI major-version upgrade that
+    // re-introduces a wrapper span (precedent: v4→v5 removed
+    // `.MuiButton-label`) would shift `> span` to match the MUI wrapper —
+    // verify in DevTools on any MUI major upgrade.
+    > span {
+      opacity: 0.35;
+    }
+    filter: grayscale(1);
+    // Prevent the hover/active glow from re-amplifying contrast while disabled.
+    &:hover svg, &:active svg {
+      box-shadow: none;
+    }
+  }
 }
 
 @media (max-width: 960px) {

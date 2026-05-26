@@ -32,7 +32,30 @@
   }
 
   &.disabled {
-    opacity: 0.5 !important;
+    // Selector keys off the project's `.disabled` className (added by
+    // icon-button.tsx:17 conditionally on the `disabled` prop), NOT the HTML
+    // `disabled` attribute. If that conditional is ever removed in favor of
+    // MUI's `disabled` prop alone (which sets the HTML attribute and the
+    // `.Mui-disabled` class), migrate this selector to `&:disabled` or
+    // `&.Mui-disabled` in the same commit — otherwise the visual fade
+    // silently disappears (Jest doesn't compute CSS; the Cypress state
+    // machine spec asserts `.should("be.disabled")` on the HTML attribute,
+    // not opacity).
+    //
+    // `> span` targets the explicit content wrapper rendered by
+    // icon-button.tsx:23-27. MUI-version-coupled: today (MUI v5 with
+    // `disableRipple={true}`) MUI injects no other span child, so `> span`
+    // matches our content wrapper. A future MUI major-version upgrade that
+    // re-introduces a wrapper span (precedent: v4→v5 removed
+    // `.MuiButton-label`) would shift `> span` to match the MUI wrapper —
+    // verify in DevTools on any MUI major upgrade.
+    //
+    // Zeplin spec: text + icon at 0.35 opacity, background at full opacity.
+    // !important retained defensively against future MUI rules on
+    // `.Mui-disabled`.
+    > span {
+      opacity: 0.35 !important;
+    }
     filter: grayscale(1);
   }
 }
