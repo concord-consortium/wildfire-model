@@ -101,7 +101,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   public render() {
     const { simulation } = this.stores;
     return (
-      <div className={css.bottomBar}>
+      <div className={`${css.bottomBar} ${!simulation.config.showBurnIndex ? css.fisHidden : ""}`}>
         <div className={css.leftContainer}>
           <CCLogo className={css.logo} />
           <CCLogoSmall className={css.logoSmall} />

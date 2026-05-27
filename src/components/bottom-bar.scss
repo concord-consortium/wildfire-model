@@ -102,6 +102,20 @@ $overflowHeight: 11px;
     width: 140px;
   }
 
+  // FIS-hidden layout: when the Fire Intensity Scale widgetGroup is not
+  // rendered, center the controls cluster horizontally between the CC
+  // logo (leftContainer) and the Fullscreen toggle (rightContainer).
+  // Uses `margin: 0 auto` rather than bare `margin: auto`: under
+  // `display: flex` the bare form also applies vertical auto-margins
+  // which can shift the cluster off-axis depending on .bottomBar's
+  // align-items. The `0` vertical margins keep the cluster's vertical
+  // placement unchanged.
+  &.fisHidden {
+    .mainContainer {
+      margin: 0 auto;
+    }
+  }
+
   .label {
     font-size: 14px;
     font-weight: bold;
