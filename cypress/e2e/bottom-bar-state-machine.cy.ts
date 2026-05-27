@@ -65,6 +65,22 @@ const expectButtonStates = (states: {
   cy.get("[data-testid='helitack-button']").should(states.helitack ? "not.be.disabled" : "be.disabled");
 };
 
+// MUI Slider's hidden range input is covered by the thumb span, so cy.click /
+// cy.trigger fail actionability. And `.invoke("val", ...)` writes the value via
+// jQuery, which React's input-tracker treats as a same-value no-op so onChange
+// never fires. The standard recipe: call the native HTMLInputElement value
+// setter (which React's tracker respects), then dispatch a real "input" event.
+// React maps native "input" to its synthetic onChange for range inputs.
+const setDroughtSlider = (value: number) => {
+  cy.get("[data-testid='drought-slider'] input").then(($input) => {
+    const setter = Object.getOwnPropertyDescriptor(
+      window.HTMLInputElement.prototype, "value"
+    )!.set!;
+    setter.call($input[0], String(value));
+    $input[0].dispatchEvent(new Event("input", { bubbles: true }));
+  });
+};
+
 describe("Bottom-bar state machine (WM-24)", () => {
   beforeEach(() => {
     cy.visit(APP_URL);
@@ -86,9 +102,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     cy.get("[data-testid='terrain-button']").click();
     cy.get("[data-testid='terrain-header']").should("be.visible");
     // Wizard starts at panel 1 (zone-edit) for plainsTwoZone.
-    cy.get("[data-testid='drought-slider'] input")
-      .invoke("val", "3")
-      .trigger("change");
+    setDroughtSlider(3);
     // Walk to wind panel, click Create.
     cy.contains("button", /next/i).click();
     cy.contains("button", /create/i).click();
@@ -154,9 +168,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
   it("state 7 (AfterReload from SetupChanged): identical to Default for plainsTwoZone", () => {
     // Reach SetupChanged
     cy.get("[data-testid='terrain-button']").click();
-    cy.get("[data-testid='drought-slider'] input")
-      .invoke("val", "3")
-      .trigger("change");
+    setDroughtSlider(3);
     cy.contains("button", /next/i).click();
     cy.contains("button", /create/i).click();
     // Now Reload
