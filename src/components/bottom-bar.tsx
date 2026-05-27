@@ -117,7 +117,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               onClick={this.handleTerrain}
             />
           </div>
-          <div className={`${css.widgetGroup} ${css.placeSpark}`}>
+          <div className={css.widgetGroup}>
             <div className={css.sparksCount}>{ simulation.remainingSparks }</div>
             <IconButton
               icon={<SparkIcon />}
@@ -148,7 +148,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               <span><RestartIcon/> Restart</span>
             </Button>
           </div>
-          <div className={`${css.widgetGroup} ${css.startStop}`}>
+          <div className={css.widgetGroup}>
             <Button
               onClick={this.handleStart}
               disabled={!simulation.startEnabled}
@@ -160,7 +160,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
             </Button>
           </div>
 
-          <div className={`${css.widgetGroup}`}>
+          <div className={`${css.widgetGroup} ${css.fireLineHelitack}`}>
             <IconButton
               icon={<FireLineIcon />}
               highlightIcon={<FireLineHighlightIcon />}
@@ -169,8 +169,6 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               dataTest="fireline-button"
               onClick={this.handleFireLine}
             />
-          </div>
-          <div className={`${css.widgetGroup} ${css.helitack}`}>
             <IconButton
               icon={<HelitackIcon />}
               highlightIcon={<HelitackHighlightIcon />}
@@ -182,7 +180,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           </div>
           {
             simulation.config.showBurnIndex &&
-            <div className={css.widgetGroup}>
+            <div className={`${css.widgetGroup} ${css.fireIntensityScale}`}>
               <div className={css.label}>Fire Intensity Scale</div>
               <FireIntensityScale />
             </div>

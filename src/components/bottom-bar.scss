@@ -76,19 +76,30 @@ $overflowHeight: 11px;
     background: $hoverColor;
   }
 
-  .placeSpark {
-    margin-right: 0;
-  }
-
   .reloadRestart {
     white-space: nowrap;
   }
 
-  .startStop {
-    margin-left: -$bottomBarWidgetGroupSpacing;
+  // Shared outer container wrapping Fireline + Helitack as one widgetGroup
+  // pair (mirrors the existing Reload+Restart pattern). Constrains each
+  // inner MUI Button to 65px so the container shrink-wraps to 130px content
+  // = 132px Border w. with the 1px widgetGroup border on each side. The
+  // `button` tag selector is used rather than `.iconButton` because
+  // `.iconButton` is defined in icon-button.scss and gets hashed per-file
+  // by CSS modules. Writing `.iconButton` here would compile to a
+  // different, non-existent class. Mirrors the cross-module pattern at
+  // `.terrainButton button svg` above.
+  .fireLineHelitack {
+    button {
+      width: 65px;
+    }
   }
-  .helitack{
-    margin-left: -$bottomBarWidgetGroupSpacing;
+
+  // Width-locking modifier on the Fire Intensity Scale widgetGroup so the
+  // bar's right edge sits at the layout-table-specified Border w. of 142px
+  // (140 content + 2 border).
+  .fireIntensityScale {
+    width: 140px;
   }
 
   .label {
