@@ -21,17 +21,15 @@ These rulesets have defined categories/expressions in [src/hazbot/rule-sets/](..
 | 33 | 3 | 3 | mountainTwoZone | [33.md](33.md) | http://localhost:8080/?preset=mountainTwoZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=false&severeDroughtAvailable=false&hazbotRules=33&hazbotSidebar=true |
 | 34 | 3 | 4 | shrubThreeZone | [34.md](34.md) | http://localhost:8080/?preset=shrubThreeZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=true&severeDroughtAvailable=false&hazbotRules=34&hazbotSidebar=true |
 | 35 | 3 | 5 | mountainTwoZone | [35.md](35.md) | http://localhost:8080/?preset=mountainTwoZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=true&severeDroughtAvailable=false&hazbotRules=35&hazbotSidebar=true |
+| 42 | 4 | 2 | defaultTwoZone | [42.md](42.md) | http://localhost:8080/?preset=defaultTwoZone&windSpeed=2&windDirection=270.5&helitackAvailable=false&fireLineAvailable=false&severeDroughtAvailable=false&showBurnIndex=false&hazbotRules=42&hazbotSidebar=true |
+| 45 | 4 | 5 | townsThreeZone | [45.md](45.md) | http://localhost:8080/?preset=townsThreeZone&windSpeed=4&windDirection=100&sparks=[[50000,40000],[50000,40000],[50000,40000]]&severeDroughtAvailable=false&showBurnIndex=false&hazbotRules=45&hazbotSidebar=true |
+| 47 | 4 | 7 | dryTownsThreeZone | [47.md](47.md) | http://localhost:8080/?preset=dryTownsThreeZone&sparks=[[35000,31000],[35000,31000],[35000,31000]]&windSpeed=6&windDirection=265&severeDroughtAvailable=false&hazbotRules=47&hazbotSidebar=true |
+| 54 | 5 | 4 | fiveTownsThreeZone | [54.md](54.md) | http://localhost:8080/?preset=fiveTownsThreeZone&severeDroughtAvailable&windSpeed=2&windDirection=165&showBurnIndex=true&hazbotRules=54&hazbotSidebar=true |
 
-## Placeholder tabs (not yet defined)
+## Placeholder tabs
 
-These tabs exist in the sequence but are excluded from the rule-set extractor ([scripts/extract-impl.js EXCLUDED_TABS](../../scripts/extract-impl.js)) because their Google Sheet entries are empty/TBD. URLs are listed here so they're ready to wire up once defined.
-
-| Tab | Activity | Page | Preset | Validation Doc | Test URL (no `hazbotRules` until defined) |
-|-----|----------|------|--------|----------------|-------------------------------------------|
-| 43 | 4 | 3 | defaultTwoZone | — | http://localhost:8080/?preset=defaultTwoZone&windSpeed=2&windDirection=270.5&helitackAvailable=false&fireLineAvailable=false&severeDroughtAvailable=false&showBurnIndex=false&hazbotSidebar=true |
-| 45 | 4 | 5 | townsThreeZone | — | http://localhost:8080/?preset=townsThreeZone&windSpeed=4&windDirection=100&sparks=[[50000,40000],[50000,40000],[50000,40000]]&severeDroughtAvailable=false&showBurnIndex=false&hazbotSidebar=true |
-| 47 | 4 | 7 | dryTownsThreeZone | — | http://localhost:8080/?preset=dryTownsThreeZone&sparks=[[35000,31000],[35000,31000],[35000,31000]]&windSpeed=6&windDirection=265&severeDroughtAvailable=false&hazbotSidebar=true |
-| 54 | 5 | 4 | fiveTownsThreeZone | — | http://localhost:8080/?preset=fiveTownsThreeZone&severeDroughtAvailable&windSpeed=2&windDirection=165&showBurnIndex=true&hazbotSidebar=true |
+(none — all 11 rule-set tabs are extracted as of WM-18; `EXCLUDED_TABS` in
+[scripts/extract-impl.js](../../scripts/extract-impl.js) is empty.)
 
 ## Notes
 
@@ -73,8 +71,10 @@ seq.activities.forEach((act, ai) => {
   });
 });
 
-// Loadable rulesets have a defined rule-set module + playbook. Placeholders do not.
-const EXCLUDED = new Set(["43", "45", "47", "54"]);
+// Loadable rulesets have a defined rule-set module + playbook. Placeholders
+// do not. As of WM-18, no tabs are excluded — leave the set empty unless a
+// future workbook revision introduces empty/TBD tabs.
+const EXCLUDED = new Set([]);
 const loadable = rows.filter(r => !EXCLUDED.has(r.tabId));
 const placeholders = rows.filter(r => EXCLUDED.has(r.tabId));
 
@@ -90,7 +90,7 @@ console.log(placeholders.map(renderPlaceholder).join("\n"));
 '
 ```
 
-The `EXCLUDED` set must match [`EXCLUDED_TABS` in scripts/extract-impl.js](../../scripts/extract-impl.js). If a placeholder tab gains a rule-set module, remove it from `EXCLUDED` here (and add its playbook link to the loadable section).
+The `EXCLUDED` set must match [`EXCLUDED_TABS` in scripts/extract-impl.js](../../scripts/extract-impl.js) — both are empty as of WM-18. If a future workbook revision introduces empty/TBD tabs, add their ids to both sets.
 
 ## Testing all rulesets via Playwright MCP
 
@@ -137,27 +137,40 @@ Multiple categories can match simultaneously — the engine picks the **highest-
 - **`TwoSparks` requires exactly length 2.** With 3 sparks, `TwoSparks = false` → in ruleset 25 this still allows Cat 4–6 to evaluate because they only require `OneSparkPerZone`, but Cat 2 (`NOT TwoSparks`) will also be ✓ — relying on highest-match semantics to pick the real winner.
 - **`GraphOpen` is sticky per reading.** Opening the graph after a run doesn't retroactively flip the flag — toggle the graph *before* clicking Start.
 - **Categories with `WITH`** (e.g. `ranSimulation WITH OneSparkPerZone …`) iterate across *all* readings — once true on any reading, the clause stays true even after subsequent runs change conditions. Use **Reload** + page navigation to fully clear.
-- **Stubbed sim-props always return `false`** — currently `SparksAtTopAndBottom` and `sawIntenseFire`. Categories that require them be `true` (e.g. ruleset 25 Cat 6, ruleset 34 Cat 5) are **unreachable** until implemented.
+- **Stubbed impls always return `false`** — currently `SparksAtTopAndBottom` (sim-prop, → WM-15) and `Helitack` / `usedHelitack` (sim-prop + factor variable, → WM-28). Categories that require them be `true` in a top-level AND are **unreachable** until implemented (e.g. ruleset 25 Cat 5/6, ruleset 45 Cat 4); categories that reference a stub inside an `OR` / `NOT` are **stub-degraded** (e.g. tabs 45/47/54 Cat 3 over-match helitack-only runs).
 - **Engine change-detection defaults are config-derived (WM-27).** The `set*` factor variables compare each `SimulationStarted` reading against defaults derived from the resolved simulation config (preset + URL params), not a per-rule-set `defaults` object. There is no longer a `defaults: {}` / `missing-defaults` load failure — every rule-set loads regardless of the source sheet. If a `set*` variable misfires, check that the activity URL selects the intended `preset` (the dev sidebar's **Diagnostics** panel shows the requested preset and whether it was recognized).
 - **Set-valued factor variables accumulate across the whole session.** `uniqueWindValuesUsed` / `uniqueNonZeroWindValuesUsed` fold over every `SimulationStarted` reading in `engine.readings`, not just the most recent one. Validating ruleset 24 Cat 4 (`NOT (uniqueWindValuesUsed.size > 1) AND uniqueNonZeroWindValuesUsed.size > 0`) requires a **full page reload before** the wind-non-zero run, not just Restart — otherwise a leftover zero-wind reading from a Cat 2/3 run inflates `uniqueWindValuesUsed.size` to 2 and the match jumps straight to Cat 5.
 
-### Current validation status (snapshot — 2026-05-21, post-WM-27)
+### Current validation status (snapshot — 2026-05-22, post-WM-18)
 
-Walked via Playwright MCP after WM-27 made engine defaults config-derived. All
-seven rule-sets load with no defaults-attributable error; every no-change run
-correctly yields `setAnyVar` / `setAnyZoneVar` = false (config-derived defaults
-match the unchanged `SimulationStarted` reading), and every change flips the
-relevant `set*` variable. The dev-sidebar **Diagnostics** panel showed
-`Requested preset: <name> (match)` for all seven.
+WM-18 re-extracted all 11 rule-sets from the 2026-05-22 workbook, added new
+factor-variable / sim-prop impls (`CorrectZoneSetup`, `UniformZoneSettings`,
+`triedAllVegetations`, `usedFireline`, `Fireline`, `DefaultVars`,
+`DefaultVegetations`, `SevereDroughts`), and stubbed `Helitack` / `usedHelitack`
+pending WM-28. R9 per-category Jest coverage now validates every reachable
+category for all 11 rule-sets, and the new `rule-sets/index.test.ts` R5 load
+gate asserts zero `missing-impl` / `parse-error` and the expected
+`stub-warning` distribution. The post-WM-18 dev sidebar shows
+`APP_RULES_VERSION = 2` and the new factor variables / sim-props are
+populated; a representative Playwright-MCP walk against tab 23 confirmed the
+Cat 1 → Cat 2 transition after a default-only run (sparks placed via
+`window.test.placeSparkInZone(0)/(1)` + Start). A full Playwright walk of all
+11 playbooks is deferred — WM-28 owns the helitack-dependent walk for tabs
+45/47/54, and the Jest R9 coverage already validates each reachable category
+end to end through the engine.
 
-| Ruleset | Preset | Result |
-|---------|--------|--------|
-| 23 | plainsTwoZone | 5/5 categories ✓ |
-| 24 | plainsTwoZone | 5/5 categories ✓ |
-| 25 | shrubThreeZone | Loads + classifies ✓ (Cat 1–2 walked; no `set*` vars — WM-27-neutral; Cat 6 unreachable — `SparksAtTopAndBottom` stub) |
-| 32 | threeGreenZonePlains | Loads ✓ (was blocked pre-WM-27) — Cat 1–3 ✓, Cat 5 ✓; Cat 6 success state needs an exact 3-spark setup |
-| 33 | mountainTwoZone | 5/5 categories ✓ (was blocked pre-WM-27) |
-| 34 | shrubThreeZone | Loads ✓ (was blocked pre-WM-27) — Cat 1–4 ✓; Cat 5 unreachable — `sawIntenseFire` stub |
-| 35 | mountainTwoZone | Loads ✓ (was blocked pre-WM-27) — Cat 1–3 ✓ and Cat 7 success ✓; Cat 4–6 are intermediate sim-prop combinations |
+| Ruleset | Preset | R9 Jest coverage | Stub effects (per WM-18) |
+|---------|--------|------------------|--------------------------|
+| 23 | plainsTwoZone | cats 1–5 ✓ | none |
+| 24 | plainsTwoZone | cats 1–5 ✓ | none |
+| 25 | shrubThreeZone | cats 1–4 ✓ | cats 5 & 6 stub-gated (`SparksAtTopAndBottom` → WM-15) |
+| 32 | threeGreenZonePlains | cats 1–6 ✓ | none |
+| 33 | mountainTwoZone | cats 1–6 ✓ | none |
+| 34 | shrubThreeZone | cats 1–4 ✓ | none — `sawIntenseFire` was dropped in WM-18; cat 4 now uses `triedAllVegetations` |
+| 35 | mountainTwoZone | cats 1, 3–7 ✓ | cat 2 unreachable (shadowed by cat 3 — sheet-quality issue, see [TBD.md §4](../../src/hazbot/TBD.md)) |
+| 42 | defaultTwoZone | cats 1–3 ✓ | none |
+| 45 | townsThreeZone | cats 1–3 ✓ | cat 4 stub-gated (`Helitack` → WM-28); cat 3 stub-degraded (`NOT (usedFireline AND usedHelitack)` collapses to TRUE — over-matches fireline+helitack runs) |
+| 47 | dryTownsThreeZone | cats 1–5 ✓ | cat 3 stub-degraded (`NOT (Fireline OR Helitack)` → `NOT Fireline` — over-matches helitack-only runs); cats 4/5 helitack arm dead, fireline arm reachable |
+| 54 | fiveTownsThreeZone | cats 1–4 ✓ | cat 3 stub-degraded (same as 47); cat 4 helitack arm dead, fireline arm reachable |
 
-Re-run this validation pass whenever rule-sets are regenerated from the source sheet or when stubs in [src/hazbot/wildfire/sim-props.ts](../../src/hazbot/wildfire/sim-props.ts) / [factor-variable-stubs.ts](../../src/hazbot/wildfire/factor-variable-stubs.ts) are filled in.
+Re-run this validation pass whenever rule-sets are regenerated from the source sheet, when stubs in [src/hazbot/wildfire/sim-props.ts](../../src/hazbot/wildfire/sim-props.ts) / [factor-variable-stubs.ts](../../src/hazbot/wildfire/factor-variable-stubs.ts) are filled in, or when WM-28 lands helitack run-window detection (which re-validates tabs 45/47/54).

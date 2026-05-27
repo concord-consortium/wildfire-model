@@ -1,5 +1,8 @@
 import { SimPropImpl } from "../engine";
 import { WildfireDefaults, WildfireReading } from "./types";
+import {
+  TerrainType, terrainLabels, Vegetation, vegetationLabels, DroughtLevel, droughtLabels,
+} from "../../types";
 
 // Sim-props are bridge-side TS predicates evaluated against a single Reading
 // bound by WITH (per Req 5 / Req 12).
@@ -93,6 +96,137 @@ const SparksAtTopAndBottom: SimPropImpl<WildfireReading, WildfireDefaults> = {
   evaluate: () => false,
 };
 
+// Per tab 23's sheet definition (CorrectZoneSetup, verified via dump-xlsx.js,
+// tab 23): zone 1 = Foothills / Grass / No Drought; zone 2 = Foothills / Grass /
+// Mild Drought or Medium Drought. The per-zone *enum choice* is the
+// sheet-authored constant — this impl is NOT regenerated on re-extraction (see
+// the CorrectZoneSetup Technical Note in requirements.md), so its unit test
+// cites the sheet definition as the fixture source of truth (R6). The label
+// *strings* are not sheet constants: each enum member is resolved through
+// terrainLabels / vegetationLabels / droughtLabels (src/types.ts) — the same
+// maps the SimulationStarted payload uses — so a future relabeling tracks
+// automatically rather than silently desyncing (per self-review CA-4). The
+// `[z1, z2] = zones` destructuring is positional: `reading.zones` is in
+// `config.zones` tuple order and is never reordered at runtime, so slots 0 / 1
+// are the sheet's "zone 1" / "zone 2" — see the zone-array-order Technical Note
+// in requirements.md (per external-review item ER-2).
+const CorrectZoneSetup: SimPropImpl<WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  evaluate: (reading) => {
+    const zones = reading.zones;
+    if (!zones || zones.length !== 2) return false;
+    const [z1, z2] = zones;
+    const zone1Ok = z1.terrainType === terrainLabels[TerrainType.Foothills] &&
+      z1.vegetation === vegetationLabels[Vegetation.Grass] &&
+      z1.droughtLevel === droughtLabels[DroughtLevel.NoDrought];
+    const zone2Ok = z2.terrainType === terrainLabels[TerrainType.Foothills] &&
+      z2.vegetation === vegetationLabels[Vegetation.Grass] &&
+      (z2.droughtLevel === droughtLabels[DroughtLevel.MildDrought] ||
+        z2.droughtLevel === droughtLabels[DroughtLevel.MediumDrought]);
+    return zone1Ok && zone2Ok;
+  },
+};
+
+// Per tab 25's sheet definition: all zones share vegetation AND droughtLevel.
+// terrainType is uniform by design on this activity, so it is not checked.
+const UniformZoneSettings: SimPropImpl<WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  evaluate: (reading) => {
+    const zones = reading.zones;
+    if (!zones || zones.length === 0) return false;
+    const vegs = zones.map((z) => z.vegetation);
+    const droughts = zones.map((z) => z.droughtLevel);
+    // Fail closed on undefined — symmetric with the Uniform* props already here.
+    if (vegs.some((v) => v === undefined) || droughts.some((d) => d === undefined)) return false;
+    return new Set(vegs).size === 1 && new Set(droughts).size === 1;
+  },
+};
+
+// Per the sheet (tabs 45/47/54): this run drew a fire line. A fire line needs
+// two endpoints, so the SimulationStarted snapshot carries >= 2 markers.
+const Fireline: SimPropImpl<WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  evaluate: (reading) => (reading.fireLineMarkers?.length ?? 0) >= 2,
+};
+
+// Per the sheet (tabs 45/47): all adjustable variables (vegetation, drought,
+// wind) are at default. Wind is matched with tolerance — +/-2 magnitude,
+// +/-20 degrees angle — because the wind UI is a continuous control. The
+// tolerances are sheet-authored constants; this impl is NOT regenerated on
+// re-extraction, so its unit test cites the sheet definition (R6).
+const WIND_MAGNITUDE_TOLERANCE = 2;
+const WIND_ANGLE_TOLERANCE_DEG = 20;
+const DefaultVars: SimPropImpl<WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  evaluate: (reading, defaults) => {
+    const zones = reading.zones;
+    const defaultZones = defaults?.zones;
+    // Fail closed on a zone-count mismatch. reading.zones is simulation.zones
+    // truncated to config.zonesCount; deriveWildfireDefaults() (WM-27) emits one
+    // entry per *populated* config.zones slot independent of zonesCount, so
+    // defaultZones can be longer than reading.zones. The zones.every() below
+    // iterates reading.zones only — without this guard a too-long defaultZones
+    // tail goes unchecked and the prop can pass while ignoring a default zone.
+    if (!zones || zones.length === 0 || !defaultZones ||
+        zones.length !== defaultZones.length || !reading.wind || !defaults?.wind) return false;
+    const zonesAtDefault = zones.every((z, i) => {
+      const def = defaultZones[i];
+      return def !== undefined &&
+        z.vegetation === def.vegetation && z.droughtLevel === def.droughtLevel;
+    });
+    if (!zonesAtDefault) return false;
+    const magnitudeOk =
+      Math.abs(reading.wind.speed - defaults.wind.speed) <= WIND_MAGNITUDE_TOLERANCE;
+    // Circular angle difference — fold the wrap so 350 vs 10 reads as 20.
+    const rawDelta = Math.abs(reading.wind.direction - defaults.wind.direction) % 360;
+    const angleDelta = Math.min(rawDelta, 360 - rawDelta);
+    return magnitudeOk && angleDelta <= WIND_ANGLE_TOLERANCE_DEG;
+  },
+};
+
+// Per the sheet (tab 54): every zone's vegetation is at its config-sourced
+// default. Compares against the WM-27 deriveWildfireDefaults() output — the
+// config is the source of truth, so no hard-coded sheet constant (per CA-3).
+const DefaultVegetations: SimPropImpl<WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  evaluate: (reading, defaults) => {
+    const zones = reading.zones;
+    const defaultZones = defaults?.zones;
+    // Fail closed on a zone-count mismatch — see the DefaultVars guard comment.
+    if (!zones || !defaultZones || zones.length === 0 ||
+        zones.length !== defaultZones.length) return false;
+    return zones.every((z, i) => {
+      const def = defaultZones[i];
+      return def !== undefined && z.vegetation === def.vegetation;
+    });
+  },
+};
+
+// Per the sheet (tab 54): every zone is at Severe Drought. Compares against
+// droughtLabels[DroughtLevel.SevereDrought] (src/types.ts) — the enum label is
+// the source of truth, so no hard-coded sheet constant (per CA-3). The
+// SimulationStarted payload sets zones[].droughtLevel = droughtLabels[…]
+// (src/components/bottom-bar.tsx), so this matches the payload by construction.
+const SevereDroughts: SimPropImpl<WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  evaluate: (reading) => {
+    const zones = reading.zones;
+    if (!zones || zones.length === 0) return false;
+    return zones.every((z) => z.droughtLevel === droughtLabels[DroughtLevel.SevereDrought]);
+  },
+};
+
+// Stub — deferred to WM-28 ("Hazbot: Helitack run-window detection"). In-run
+// helitack correlation needs an engine-substrate change out of WM-18 scope
+// (see the Helitack Technical Notes in requirements.md). Kept as a stub so
+// tabs 45/47/54 load. A false stub leaves tab 45 Cat 4 unreachable and degrades
+// tabs 47/54 Cat 3-5 / tab 45 Cat 3 — documented in localhost-urls.md.
+const Helitack: SimPropImpl<WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  isStub: true,
+  evaluate: () => false,
+};
+
 export const simProps: Record<string, SimPropImpl<WildfireReading, WildfireDefaults>> = {
   OneSparkPerZone,
   UniqueVegetationPerZone,
@@ -102,4 +236,11 @@ export const simProps: Record<string, SimPropImpl<WildfireReading, WildfireDefau
   TwoSparks,
   GraphOpen,
   SparksAtTopAndBottom,
+  CorrectZoneSetup,
+  UniformZoneSettings,
+  Fireline,
+  DefaultVars,
+  DefaultVegetations,
+  SevereDroughts,
+  Helitack,
 };

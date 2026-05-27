@@ -3,7 +3,9 @@
 
 const TS_HEADER = "// AUTO-GENERATED — DO NOT EDIT — re-run scripts/extract-hazbot-sheets.js\n\n";
 const MD_HEADER = "> **AUTO-GENERATED — DO NOT EDIT — re-run `scripts/extract-hazbot-sheets.js`**\n\n";
-const EXCLUDED_TABS = ["43", "45", "47", "54"];
+// All 11 rule-set tabs are now extracted (WM-18 R1). README / SIMINIT are
+// auto-skipped — parseTab() returns null for any tab with no category block.
+const EXCLUDED_TABS = [];
 
 function extractFromSheets(sheets) {
   const tabs = [];
@@ -62,6 +64,26 @@ function parseTab(sheetName, rows) {
     if (idCell === undefined || idCell === "") continue;
     const id = parseInt(String(idCell), 10);
     if (isNaN(id)) continue;
+
+    // Per R1a / Q3: feedback-mechanism rows (README: category id >= 100) carry
+    // no parseable DSL — their pseudocode cell is `-- no pseudo code --`. They
+    // are dropped so a re-extract does not emit an unparseable `expression`
+    // (which would fail the whole rule-set to load with a parse-error).
+    const rawExpr = String(row[colIdx.expression] ?? "");
+    const hasNoPseudoCodeMarker = /--\s*no pseudo code\s*--/i.test(rawExpr);
+    // The id and the marker should agree; warn if not, so an authoring
+    // misnumbering (a feedback row numbered < 100, or a sim-use row numbered
+    // >= 100) surfaces at extraction rather than as a load crash or a silently
+    // dropped category.
+    if ((id >= 100) !== hasNoPseudoCodeMarker) {
+      console.warn(
+        `[extract] tab ${sheetName} category ${id}: category id ` +
+        `(${id >= 100 ? ">= 100" : "< 100"}) and the "-- no pseudo code --" ` +
+        `marker disagree — check the sheet's category numbering.`,
+      );
+    }
+    if (id >= 100) continue;
+
     const cat = {
       id,
       studentAction: String(row[colIdx.studentAction] ?? ""),

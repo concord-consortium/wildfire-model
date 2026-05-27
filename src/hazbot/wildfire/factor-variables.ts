@@ -1,6 +1,7 @@
 import { FactorVariableImpl } from "../engine";
 import { WildfireDefaults, WildfireReading, WildfireZone } from "./types";
-import { sawIntenseFire } from "./factor-variable-stubs";
+import { usedHelitack } from "./factor-variable-stubs";
+import { vegetationLabels } from "../../types";
 
 // Helpers for value extraction.
 function simulationStartedReadings(readings: WildfireReading[]): WildfireReading[] {
@@ -159,6 +160,36 @@ const simulationRuns: FactorVariableImpl<WildfireReading[], WildfireReading, Wil
   },
 };
 
+// Per the sheet (tab 34): across all runs the union of zone vegetation covers
+// every Vegetation enum value. Folds the run-union against vegetationLabels
+// (src/types.ts) — the enum is the source of truth, so no sheet constant (CA-3).
+const triedAllVegetations: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  compute: (readings) => {
+    const witnesses = simulationStartedReadings(readings);
+    const seen = new Set<string>();
+    for (const r of witnesses) {
+      for (const z of r.zones ?? []) {
+        if (z.vegetation !== undefined) seen.add(z.vegetation);
+      }
+    }
+    const value = Object.values(vegetationLabels).every((v) => seen.has(v));
+    return { value, witnesses };
+  },
+};
+
+// Per the sheet (tab 45): some run drew a fire line. True if any
+// SimulationStarted reading carries >= 2 fire-line markers.
+const usedFireline: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  compute: (readings) => {
+    const witnesses = simulationStartedReadings(readings).filter(
+      (r) => (r.fireLineMarkers?.length ?? 0) >= 2,
+    );
+    return { value: witnesses.length > 0, witnesses };
+  },
+};
+
 // Stub factor variables (per Req 6) imported from `./factor-variable-stubs`
 // at the top of this file.
 export const factorVariables: Record<string, FactorVariableImpl<unknown, WildfireReading, WildfireDefaults>> = {
@@ -173,7 +204,9 @@ export const factorVariables: Record<string, FactorVariableImpl<unknown, Wildfir
   uniqueWindValuesUsed,
   uniqueNonZeroWindValuesUsed,
   simulationRuns,
-  sawIntenseFire,
+  triedAllVegetations,
+  usedFireline,
+  usedHelitack,
 };
 
 // Helpers ===

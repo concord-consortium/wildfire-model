@@ -20,6 +20,17 @@ describe("wildfire translate", () => {
     expect(result.reading.zones).toEqual([{ index: 0, terrainType: "Plains" }]);
   });
 
+  it("carries fireLineMarkers from the SimulationStarted payload", () => {
+    const result = translate(
+      ev("SimulationStarted", {
+        data: { fireLineMarkers: [{ x: 0.1, y: 0.2, elevation: 5 }, { x: 0.3, y: 0.2, elevation: 6 }] },
+      }),
+      "s",
+    );
+    if (result.kind !== "trigger") throw new Error("expected trigger");
+    expect(result.reading.fireLineMarkers).toHaveLength(2);
+  });
+
   it("maps SimulationEnded to a trigger Reading carrying outcome", () => {
     const result = translate(ev("SimulationEnded", { data: { outcome: { burned: 50 } } }), "s");
     expect(result.kind).toBe("trigger");

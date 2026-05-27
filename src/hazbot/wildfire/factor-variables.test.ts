@@ -1,5 +1,6 @@
 import { factorVariables } from "./factor-variables";
 import { WildfireDefaults, WildfireReading } from "./types";
+import { vegetationLabels } from "../../types";
 
 function mkRead(triggeredBy: string, opts: Partial<WildfireReading> = {}): WildfireReading {
   return { triggeredBy, sessionId: "test", at: 0, temporalHistory: [], ...opts };
@@ -112,10 +113,53 @@ describe("wildfire factor variables", () => {
     });
   });
 
-  describe("sawIntenseFire (stub)", () => {
-    it("is flagged isStub: true and returns false", () => {
-      expect(factorVariables.sawIntenseFire.isStub).toBe(true);
-      expect(factorVariables.sawIntenseFire.compute([], {}).value).toBe(false);
+  describe("triedAllVegetations", () => {
+    // Per tab 34 sheet (R15): across all runs the union of zone vegetation must
+    // cover every Vegetation enum value.
+    const allVegs = Object.values(vegetationLabels);
+    it("true when runs collectively cover every Vegetation value", () => {
+      const r1 = mkRead("SimulationStarted", { zones: [{ vegetation: allVegs[0] }, { vegetation: allVegs[1] }] });
+      const r2 = mkRead("SimulationStarted", { zones: [{ vegetation: allVegs[2] }, { vegetation: allVegs[3] }] });
+      expect(factorVariables.triedAllVegetations.compute([r1, r2], {}).value).toBe(true);
+    });
+    it("false when some Vegetation value was never used", () => {
+      const r1 = mkRead("SimulationStarted", { zones: [{ vegetation: allVegs[0] }, { vegetation: allVegs[1] }] });
+      expect(factorVariables.triedAllVegetations.compute([r1], {}).value).toBe(false);
+    });
+    it("false with no readings", () => {
+      expect(factorVariables.triedAllVegetations.compute([], {}).value).toBe(false);
+    });
+  });
+
+  describe("usedFireline", () => {
+    // Per tab 45 sheet (R9): some run drew a fire line (fireLineMarkers length
+    // >= 2). The Fire Line tool is disabled until a run starts, so the first
+    // run's snapshot is always empty and a drawn line shows up only in a later
+    // SimulationStarted reading (R6a) — exercised here as a multi-run sequence.
+    it("true when a later run carries >= 2 fire-line markers", () => {
+      const early = mkRead("SimulationStarted", { fireLineMarkers: [] });
+      const later = mkRead("SimulationStarted", {
+        fireLineMarkers: [{ x: 0.1, y: 0.2 }, { x: 0.3, y: 0.2 }],
+      });
+      const r = factorVariables.usedFireline.compute([early, later], {});
+      expect(r.value).toBe(true);
+      expect(r.witnesses).toHaveLength(1);
+    });
+    it("false when no run drew a fire line", () => {
+      const a = mkRead("SimulationStarted", { fireLineMarkers: [] });
+      const b = mkRead("SimulationStarted", {});
+      expect(factorVariables.usedFireline.compute([a, b], {}).value).toBe(false);
+    });
+    it("false for a half-placed line (one marker)", () => {
+      const a = mkRead("SimulationStarted", { fireLineMarkers: [{ x: 0.1, y: 0.2 }] });
+      expect(factorVariables.usedFireline.compute([a], {}).value).toBe(false);
+    });
+  });
+
+  describe("usedHelitack (stub)", () => {
+    it("is flagged isStub: true and computes to false", () => {
+      expect(factorVariables.usedHelitack.isStub).toBe(true);
+      expect(factorVariables.usedHelitack.compute([], {}).value).toBe(false);
     });
   });
 

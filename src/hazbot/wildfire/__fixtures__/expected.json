@@ -2,7 +2,7 @@
   "readings": [
     {
       "triggeredBy": "SimulationStarted",
-      "sessionId": "x2LJ_BT0cMgV",
+      "sessionId": "2_536NuMXBF9",
       "at": 1001,
       "temporalHistory": [
         {
@@ -39,7 +39,7 @@
     },
     {
       "triggeredBy": "SimulationEnded",
-      "sessionId": "x2LJ_BT0cMgV",
+      "sessionId": "2_536NuMXBF9",
       "at": 1002,
       "temporalHistory": [
         {
@@ -59,7 +59,7 @@
     },
     {
       "triggeredBy": "SimulationStarted",
-      "sessionId": "x2LJ_BT0cMgV",
+      "sessionId": "2_536NuMXBF9",
       "at": 1004,
       "temporalHistory": [
         {
@@ -102,7 +102,7 @@
     },
     {
       "triggeredBy": "SimulationEnded",
-      "sessionId": "x2LJ_BT0cMgV",
+      "sessionId": "2_536NuMXBF9",
       "at": 1006,
       "temporalHistory": [
         {
@@ -122,7 +122,7 @@
     },
     {
       "triggeredBy": "SimulationStarted",
-      "sessionId": "x2LJ_BT0cMgV",
+      "sessionId": "2_536NuMXBF9",
       "at": 1008,
       "temporalHistory": [
         {
@@ -171,7 +171,7 @@
     },
     {
       "triggeredBy": "SimulationEnded",
-      "sessionId": "x2LJ_BT0cMgV",
+      "sessionId": "2_536NuMXBF9",
       "at": 1011,
       "temporalHistory": [
         {
@@ -191,7 +191,7 @@
     },
     {
       "triggeredBy": "SimulationStarted",
-      "sessionId": "x2LJ_BT0cMgV",
+      "sessionId": "2_536NuMXBF9",
       "at": 1013,
       "temporalHistory": [
         {
@@ -228,7 +228,7 @@
     },
     {
       "triggeredBy": "SimulationEnded",
-      "sessionId": "x2LJ_BT0cMgV",
+      "sessionId": "2_536NuMXBF9",
       "at": 1014,
       "temporalHistory": [
         {
@@ -252,7 +252,6 @@
     4,
     4,
     4,
-    5,
     4,
     4,
     4,
@@ -261,7 +260,8 @@
     4,
     4,
     4,
-    5,
-    5
+    4,
+    4,
+    4
   ]
 }

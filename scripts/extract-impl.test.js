@@ -31,7 +31,9 @@ const SYNTHETIC_SHEETS = [
     ],
   },
   {
-    sheet: "43", // excluded
+    // No longer in EXCLUDED_TABS (WM-18 R1 emptied it). parseTab() returns null
+    // for this tab — it has no category block — so it still lands in skippedTabs.
+    sheet: "43",
     data: [["empty"]],
   },
 ];
@@ -76,6 +78,44 @@ describe("parseTab — categories", () => {
   it("returns null when the rule-row block isn't present", () => {
     const parsed = parseTab("xx", [["nothing here"]]);
     expect(parsed).toBeNull();
+  });
+});
+
+describe("parseTab — feedback-mechanism (id >= 100) rows (R1a)", () => {
+  it("drops a category row with id >= 100", () => {
+    const sheet = [
+      ["#", "Student Action", "Hazbot Feedback", "Visual Feedback", "Pseudocode for Rules"],
+      [1, "Ran it", "Good!", "", "ranSimulation"],
+      [100, "Re-clicked Hazbot", "Answer the questions!", "", "-- no pseudo code --\nfeedback mechanism"],
+    ];
+    const parsed = parseTab("xx", sheet);
+    expect(parsed.categories).toHaveLength(1);
+    expect(parsed.categories[0].id).toBe(1);
+  });
+
+  it("warns when a sim-use expression is mistakenly numbered >= 100", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    // id >= 100 but the cell carries real DSL (no -- no pseudo code -- marker).
+    parseTab("xx", [
+      ["#", "Student Action", "Hazbot Feedback", "Visual Feedback", "Pseudocode for Rules"],
+      [100, "Ran it", "Good!", "", "ranSimulation"],
+    ]);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("disagree"));
+    warn.mockRestore();
+  });
+
+  it("warns when a feedback row (-- no pseudo code --) is misnumbered below 100", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    // id < 100 but the cell IS a -- no pseudo code -- marker. The row is NOT
+    // dropped (drop criterion is strictly id >= 100) — it is emitted as a
+    // normal category; the warning is the safety net that flags the
+    // misnumbering to the author.
+    parseTab("xx", [
+      ["#", "Student Action", "Hazbot Feedback", "Visual Feedback", "Pseudocode for Rules"],
+      [99, "Re-clicked Hazbot", "Answer the questions!", "", "-- no pseudo code --\nfeedback mechanism"],
+    ]);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("disagree"));
+    warn.mockRestore();
   });
 });
 
