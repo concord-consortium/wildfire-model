@@ -18,9 +18,19 @@
     opacity: 0;
   }
 
-  &:hover {
-    .iconButtonHighlightSvg {
-      opacity: 1;
+  // Guard with the project's .disabled className convention (see the
+  // &.disabled block below and icon-button.tsx:17) rather than
+  // :disabled, so disabled icon-on-top buttons skip hover/active visuals.
+  &:not(.disabled) {
+    &:hover {
+      .iconButtonHighlightSvg {
+        opacity: 0.5;
+      }
+    }
+    &:active {
+      .iconButtonHighlightSvg {
+        opacity: 1;
+      }
     }
   }
 
