@@ -90,12 +90,17 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     if (screenfull?.isEnabled) {
       document.addEventListener(screenfull.raw.fullscreenchange, this.fullscreenChange);
     }
+    // Register the instance ref outside the screenfull guard so headless
+    // browsers (where screenfull is gated off) still get the test hook
+    // wired for the Playwright fullscreen-variant walkthrough.
+    (window as any).test.__bottomBarRef = this;
   }
 
   public componentWillUnmount() {
     if (screenfull?.isEnabled) {
       document.removeEventListener(screenfull.raw.fullscreenchange, this.fullscreenChange);
     }
+    (window as any).test.__bottomBarRef = null;
   }
 
   public render() {

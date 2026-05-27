@@ -137,11 +137,19 @@ $overflowHeight: 11px;
   }
 
   .fullscreenIcon {
-    margin-right: 5px;
-    margin-top: 5px;
-    height: 50px;
-    width: 50px;
-    background-size: 100%;
+    // 62 x 64 hit-target with the 42 x 42 icon centered inside, per the
+    // Zeplin spec. The container's right edge aligns with the bar's
+    // right content edge (margin-right: 0). margin-top: 6 vertically
+    // centers the 64 px container in the 75 px bar (11 px slack splits
+    // as 6 above + 5 below; closer of the two integer values to the
+    // mathematical center of 5.5, within the spec's +/-1 px tolerance).
+    margin-right: 0;
+    margin-top: 6px;
+    height: 64px;
+    width: 62px;
+    background-size: 42px 42px;
+    background-repeat: no-repeat;
+    background-position: center;
     cursor: pointer;
     background-image: url("../assets/fullscreen.svg");
     &:hover {
