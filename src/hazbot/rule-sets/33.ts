@@ -98,5 +98,4 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
       details: "One zone must be set to vegetation \"Forest\" whiel the other zone must be set to \"Forest with Suppression\".",
     }
   ],
-  defaults: {},
 };

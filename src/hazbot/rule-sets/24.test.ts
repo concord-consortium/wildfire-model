@@ -26,24 +26,24 @@ function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
 
 describe("ruleSet 24 — per-rule-set five-shape sweep", () => {
   it("(a) state matching no category — empty readings → cat 1 matches", () => {
-    const e = makeWildfireEngine(ruleSet24);
+    const e = makeWildfireEngine(ruleSet24, { zones: defaultZones, wind: { speed: 0, direction: 0 } });
     expect(matchAgainst(ruleSet24, e, [])).toBe(1);
   });
 
   it("(b) state matching exactly one category — ran sim with all defaults → cat 2", () => {
-    const e = makeWildfireEngine(ruleSet24);
+    const e = makeWildfireEngine(ruleSet24, { zones: defaultZones, wind: { speed: 0, direction: 0 } });
     expect(matchAgainst(ruleSet24, e, [startReading()])).toBe(2);
   });
 
   it("(c) multi-true with highest selected — two distinct non-zero wind readings → cat 5 wins", () => {
-    const e = makeWildfireEngine(ruleSet24);
+    const e = makeWildfireEngine(ruleSet24, { zones: defaultZones, wind: { speed: 0, direction: 0 } });
     const r1 = startReading({ wind: { speed: 5, direction: 0 } });
     const r2 = startReading({ at: 200, wind: { speed: 10, direction: 90 } });
     expect(matchAgainst(ruleSet24, e, [r1, r2])).toBe(5);
   });
 
   it("(d) monotonicity — once cat 4 matches, a duplicate wind reading leaves the floor at 4 (size still 1)", () => {
-    const e = makeWildfireEngine(ruleSet24);
+    const e = makeWildfireEngine(ruleSet24, { zones: defaultZones, wind: { speed: 0, direction: 0 } });
     const r1 = startReading({ wind: { speed: 5, direction: 0 } });
     expect(matchAgainst(ruleSet24, e, [r1])).toBe(4);
     const r2 = startReading({ at: 200, wind: { speed: 5, direction: 0 } }); // same wind value

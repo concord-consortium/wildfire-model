@@ -1,4 +1,5 @@
 import { ZoneOptions } from "./models/zone";
+import presets from "./presets";
 import { DroughtLevel, Vegetation, TerrainType } from "./types";
 
 interface TownOptions {
@@ -225,4 +226,24 @@ export const getUrlConfig: () => IUrlConfig = () => {
   return urlConfig as IUrlConfig;
 };
 
+// Resolves the full simulation config the model actually loads: the shallow
+// merge Object.assign(getDefaultConfig(), preset, getUrlConfig()) — base
+// defaults, overlaid with the selected preset, overlaid with URL-param
+// overrides. The preset is resolved from the URL as
+// presets[getUrlConfig().preset || getDefaultConfig().preset].
+//
+// `explicitPreset`, when supplied, substitutes ONLY the preset slot of the
+// merge (callers that inject a config — e.g. the SimulationModel constructions
+// in simulation.test.ts). The base and URL layers are always applied; there is
+// no "compose two arbitrary partials" mode. The merge is intentionally shallow:
+// each top-level key (including the `zones` tuple) is taken wholesale from the
+// highest-priority source that defines it.
+export const getResolvedConfig: (explicitPreset?: Partial<ISimulationConfig>) => IUrlConfig =
+  (explicitPreset) => {
+    const base = getDefaultConfig();
+    const urlConfig = getUrlConfig();
+    const preset = explicitPreset
+      ?? presets[urlConfig.preset || base.preset];
+    return Object.assign(base, preset, urlConfig);
+  };
 

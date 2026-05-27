@@ -1,6 +1,6 @@
 # Hazbot Update Workflow
 
-This doc walks through the round-trip when Sam edits the Hazbot Feedback Tables sheet — the rule sets that drive the analysis engine. Use it when filling in TBD defaults for tabs 32–35, when categories or expressions change in an existing tab, or when a new factor variable / sim-prop is referenced.
+This doc walks through the round-trip when Sam edits the Hazbot Feedback Tables sheet — the rule sets that drive the analysis engine. Use it when categories or expressions change in an existing tab, or when a new factor variable / sim-prop is referenced.
 
 ## Prerequisites
 
@@ -23,28 +23,16 @@ This regenerates:
 
 Each generated file starts with `// AUTO-GENERATED — DO NOT EDIT — re-run scripts/extract-hazbot-sheets.js`. Manual edits will be overwritten on the next run; PR review should flag any.
 
+> **Note — the committed rule-set modules are intentionally not a clean regenerate (WM-27).**
+> WM-27 removed the per-rule-set `defaults` field by a surgical hand-edit, leaving every other line of `src/hazbot/rule-sets/*.ts` at its older-spreadsheet revision. Regenerating the modules before WM-18 lands will reintroduce unrelated `details`/wording drift from the newer spreadsheet. WM-18 owns reconciling the modules with a clean regenerate; until then, avoid committing a full re-extract of the rule-set modules.
+
 ## 2. Inspect the generated diff
 
 ```sh
 git diff src/hazbot/rule-sets/ src/hazbot/dsl-grammar.md
 ```
 
-What to expect under three common scenarios:
-
-### Defaults filled for previously-blocked tabs (32–35)
-
-The previously-empty `defaults` object (`defaults: {}`) becomes populated, e.g.:
-
-```ts
-defaults: {
-  "zones": [
-    { "terrainType": "Plains", "vegetation": "Shrub", "droughtLevel": "Mild Drought" },
-    ...
-  ]
-}
-```
-
-Engine load-time validation should now succeed for the tab. Proceed to step 4 (run tests).
+What to expect under two common scenarios:
 
 ### Categories or expressions changed
 
@@ -75,20 +63,12 @@ If a previously-blocked tab is now loadable, **add a new per-rule-set test file*
 
 If `npm test` surfaces engine load failures (the new rule set fails to construct cleanly), use these recipes:
 
-### `missing-defaults` error
-
-The factor variable's `requiredDefaults` paths don't all resolve on `ruleSet.defaults`.
-
-- **Most common cause**: the sheet's Details column says "TBD" or the parser couldn't extract the default values.
-- **Fix at source**: edit the Google Sheet to add the missing default, re-export, re-extract.
-- **Fix in extraction script**: if the sheet has the data but the script doesn't recognize the wording, extend `mergeDefaults` / `parsePerZoneDefault` / `parseWindDefaults` in `scripts/extract-impl.js` and add a fixture test in `scripts/extract-impl.test.js`.
-
 ### `missing-impl` error
 
 A category expression references a factor variable or sim-prop name with no matching impl.
 
 - **Hand-author the impl** in `src/hazbot/wildfire/factor-variables.ts` (lowercase identifier) or `src/hazbot/wildfire/sim-props.ts` (UpperCamelCase identifier).
-- Declare `requiredDefaults` if the impl reads `defaults` fields, and `ambientStateKeys` if it reads ambient state from a trigger event's payload.
+- A `set*`-style impl receives the config-derived defaults as the `compute()` / `evaluate()` `defaults` parameter — there is no declaration to add (WM-27 removed `requiredDefaults`).
 - Set `isStub: true` ONLY if the impl genuinely can't be implemented yet (e.g., requires authoring a new algorithm). Stubs return their `defaultValue` and emit a `stub-warning` at load.
 - Add unit tests in the corresponding `*.test.ts` file.
 
@@ -177,7 +157,6 @@ Group these in one PR:
 ## When things go wrong
 
 - **Extraction script fails or skips tabs**: the sheet headers may have changed. Inspect the column-matchers in `scripts/extract-impl.js` (`mapRuleColumnIndices`, `mapFactorVarColumnIndices`) and extend the patterns. Add a fixture test in `scripts/extract-impl.test.js`.
-- **All tabs blocked-on-defaults after re-extract**: the Details-column wording may have changed. Inspect `mergeDefaults` / `parsePerZoneDefault` / `parseWindDefaults` regexes.
 - **Tests pass but sidebar shows wrong matched category**: the `factor-variables.ts` impl logic may not match what the sheet's Details prose describes. Cross-reference the impl against the factor-variable Definition column.
 
 ## Reference

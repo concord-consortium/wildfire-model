@@ -34,6 +34,10 @@ jest.mock("../hazbot/wildfire", () => ({
   getAnalysisEngine: () => mockGetEngine(),
   APP_RULES_VERSION: 1,
   buildAnalysisEngineActivatedPayload: jest.fn(),
+  getRequestedPresetInfo: jest.fn(),
+  // Defaults to undefined → no diagnostics; buildPresetDiagnostics's own logic
+  // is covered directly in engine-singleton.test.ts.
+  buildPresetDiagnostics: jest.fn(),
 }));
 
 // AppComponent re-reads `getUrlConfig()` on every render, so per-test mock updates

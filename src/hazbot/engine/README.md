@@ -19,7 +19,7 @@ Host-app-agnostic rule-matching engine. Today it lives in-tree under
   "API baseline note" in
   [specs/WM-10-hazbot-analysis-engine/implementation.md](../../../specs/WM-10-hazbot-analysis-engine/implementation.md)
   covers field-by-field versioning rules for `FactorVariableImpl` /
-  `SimPropImpl` / `RuleSet.defaults`.
+  `SimPropImpl`.
 - **Full requirements** —
   [specs/WM-10-hazbot-analysis-engine/requirements.md](../../../specs/WM-10-hazbot-analysis-engine/requirements.md).
 - **Wildfire bridge** as a worked example —

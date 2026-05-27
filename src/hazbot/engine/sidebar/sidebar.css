@@ -162,3 +162,18 @@
   padding-top: 6px;
   border-top: 1px dashed var(--hazbot-border);
 }
+
+/* Visually-hidden text equivalent — readable by screen readers, off-screen for
+   sighted users. Used to announce the match/no-match state that the leaf
+   colour/decoration styling alone does not convey. */
+.hazbot-sidebar-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

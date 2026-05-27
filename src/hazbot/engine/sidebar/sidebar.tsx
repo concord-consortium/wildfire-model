@@ -12,15 +12,25 @@ function formatTimestamp(at: number): string {
   return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${String(d.getMilliseconds()).padStart(3, "0")}`;
 }
 
+// A host-supplied diagnostic line. `status` drives the substrate's existing
+// match/no-match leaf styling; omit it for a neutral line.
+export interface SidebarDiagnostic {
+  label: string;
+  value: string;
+  status?: "match" | "no-match";
+}
+
 export interface SidebarProps {
   // Required: the host app's name for this analysis engine instance. The substrate
   // is generic across host apps (wildfire passes "Hazbot"; a future host might pass
   // its own name) — making this required forces every consumer to label the sidebar
   // explicitly rather than inheriting an opinionated default.
   title: string;
+  // Optional host-supplied diagnostic lines, rendered in a section under the header.
+  diagnostics?: SidebarDiagnostic[];
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ title }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ title, diagnostics }) => {
   const { engine, appRulesVersion, factorVariableValues, simPropValues, matchedCategory, perCategoryTruth } = useAnalysisEngine();
   const ruleSetId = engine.ruleSet?.id ?? engine.requestedRuleSetId ?? "(none)";
 
@@ -35,6 +45,35 @@ export const Sidebar: React.FC<SidebarProps> = ({ title }) => {
           ruleset {ruleSetId} · {ENGINE_VERSION} / {appRulesVersion}
         </span>
       </header>
+
+      {/* Intentionally NOT gated on engine.ruleSet (unlike the panels below) — a
+          requested-preset mis-binding is worth surfacing even with no rule-set
+          (e.g. ?hazbotSidebar=true&preset=… with absent/invalid hazbotRules).
+          Do not "correct" this to the {engine.ruleSet && …} pattern. */}
+      {diagnostics && diagnostics.length > 0 && (
+        <div className="hazbot-sidebar-section">
+          <div className="hazbot-sidebar-section-title">Diagnostics</div>
+          {diagnostics.map((d, i) => {
+            const valueClass = d.status === "match" ? "hazbot-sidebar-leaf-true"
+              : d.status === "no-match" ? "hazbot-sidebar-leaf-false"
+                : undefined;
+            return (
+              // `${d.label}-${i}` — `label` is host-supplied free text with no
+              // uniqueness contract; composite key matches the ErrorRow / ReadingRow
+              // convention for non-unique lists in this file.
+              <div key={`${d.label}-${i}`} className="hazbot-sidebar-entry">
+                <strong>{d.label}:</strong>{" "}
+                <span className={valueClass}>{d.value}</span>
+                {d.status && (
+                  <span className="hazbot-sidebar-visually-hidden">
+                    {d.status === "match" ? " (match)" : " (no match)"}
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <ErrorsPanel errors={engine.errors} readings={engine.readings} />
 

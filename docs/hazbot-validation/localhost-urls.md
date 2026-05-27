@@ -138,19 +138,26 @@ Multiple categories can match simultaneously — the engine picks the **highest-
 - **`GraphOpen` is sticky per reading.** Opening the graph after a run doesn't retroactively flip the flag — toggle the graph *before* clicking Start.
 - **Categories with `WITH`** (e.g. `ranSimulation WITH OneSparkPerZone …`) iterate across *all* readings — once true on any reading, the clause stays true even after subsequent runs change conditions. Use **Reload** + page navigation to fully clear.
 - **Stubbed sim-props always return `false`** — currently `SparksAtTopAndBottom` and `sawIntenseFire`. Categories that require them be `true` (e.g. ruleset 25 Cat 6, ruleset 34 Cat 5) are **unreachable** until implemented.
-- **Empty `defaults: {}`** in rule-set modules blocks engine load entirely — the sidebar shows `Missing defaults: <id> · <var> reads defaults path …`. Currently affects rulesets 32–35. Defaults must be filled into the source Google Sheet, then re-extracted via [scripts/extract-hazbot-sheets.js](../../scripts/extract-hazbot-sheets.js).
+- **Engine change-detection defaults are config-derived (WM-27).** The `set*` factor variables compare each `SimulationStarted` reading against defaults derived from the resolved simulation config (preset + URL params), not a per-rule-set `defaults` object. There is no longer a `defaults: {}` / `missing-defaults` load failure — every rule-set loads regardless of the source sheet. If a `set*` variable misfires, check that the activity URL selects the intended `preset` (the dev sidebar's **Diagnostics** panel shows the requested preset and whether it was recognized).
 - **Set-valued factor variables accumulate across the whole session.** `uniqueWindValuesUsed` / `uniqueNonZeroWindValuesUsed` fold over every `SimulationStarted` reading in `engine.readings`, not just the most recent one. Validating ruleset 24 Cat 4 (`NOT (uniqueWindValuesUsed.size > 1) AND uniqueNonZeroWindValuesUsed.size > 0`) requires a **full page reload before** the wind-non-zero run, not just Restart — otherwise a leftover zero-wind reading from a Cat 2/3 run inflates `uniqueWindValuesUsed.size` to 2 and the match jumps straight to Cat 5.
 
-### Current validation status (snapshot — 2026-05-11)
+### Current validation status (snapshot — 2026-05-21, post-WM-27)
 
-| Ruleset | Result |
-|---------|--------|
-| 23 | 5/5 categories ✓ |
-| 24 | 5/5 categories ✓ |
-| 25 | 5/6 ✓ — Cat 6 unreachable (`SparksAtTopAndBottom` stub) |
-| 32 | Blocked — `defaults: {}` (TBD in source sheet) |
-| 33 | Blocked — `defaults: {}` (TBD in source sheet) |
-| 34 | Blocked — `defaults: {}` + `sawIntenseFire` stub |
-| 35 | Blocked — `defaults: {}` (TBD in source sheet) |
+Walked via Playwright MCP after WM-27 made engine defaults config-derived. All
+seven rule-sets load with no defaults-attributable error; every no-change run
+correctly yields `setAnyVar` / `setAnyZoneVar` = false (config-derived defaults
+match the unchanged `SimulationStarted` reading), and every change flips the
+relevant `set*` variable. The dev-sidebar **Diagnostics** panel showed
+`Requested preset: <name> (match)` for all seven.
+
+| Ruleset | Preset | Result |
+|---------|--------|--------|
+| 23 | plainsTwoZone | 5/5 categories ✓ |
+| 24 | plainsTwoZone | 5/5 categories ✓ |
+| 25 | shrubThreeZone | Loads + classifies ✓ (Cat 1–2 walked; no `set*` vars — WM-27-neutral; Cat 6 unreachable — `SparksAtTopAndBottom` stub) |
+| 32 | threeGreenZonePlains | Loads ✓ (was blocked pre-WM-27) — Cat 1–3 ✓, Cat 5 ✓; Cat 6 success state needs an exact 3-spark setup |
+| 33 | mountainTwoZone | 5/5 categories ✓ (was blocked pre-WM-27) |
+| 34 | shrubThreeZone | Loads ✓ (was blocked pre-WM-27) — Cat 1–4 ✓; Cat 5 unreachable — `sawIntenseFire` stub |
+| 35 | mountainTwoZone | Loads ✓ (was blocked pre-WM-27) — Cat 1–3 ✓ and Cat 7 success ✓; Cat 4–6 are intermediate sim-prop combinations |
 
 Re-run this validation pass whenever rule-sets are regenerated from the source sheet or when stubs in [src/hazbot/wildfire/sim-props.ts](../../src/hazbot/wildfire/sim-props.ts) / [factor-variable-stubs.ts](../../src/hazbot/wildfire/factor-variable-stubs.ts) are filled in.

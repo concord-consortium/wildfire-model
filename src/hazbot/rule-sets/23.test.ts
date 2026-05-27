@@ -32,18 +32,18 @@ describe("ruleSet 23 — per-rule-set five-shape sweep (AC: per-rule-set five-sh
     // With zero readings, ranSimulation is false → cat 1 matches.
     // True "no category matches" is hard for tab 23 because cat 1 catches the empty state.
     // The closest "matches no useful work category" is the bare empty-readings case.
-    const e = makeWildfireEngine(ruleSet23);
+    const e = makeWildfireEngine(ruleSet23, { zones: defaultZones, wind: { speed: 0, direction: 0 } });
     expect(matchAgainst(ruleSet23, e, [])).toBe(1);
   });
 
   it("(b) state matching exactly one category — ran sim with all defaults → cat 2", () => {
-    const e = makeWildfireEngine(ruleSet23);
+    const e = makeWildfireEngine(ruleSet23, { zones: defaultZones, wind: { speed: 0, direction: 0 } });
     const r = startReading();
     expect(matchAgainst(ruleSet23, e, [r])).toBe(2);
   });
 
   it("(c) multi-true with highest selected — drought changed + spark per zone → cat 5 wins (highest)", () => {
-    const e = makeWildfireEngine(ruleSet23);
+    const e = makeWildfireEngine(ruleSet23, { zones: defaultZones, wind: { speed: 0, direction: 0 } });
     const r = startReading({
       zones: [
         { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Severe Drought" },
@@ -55,7 +55,7 @@ describe("ruleSet 23 — per-rule-set five-shape sweep (AC: per-rule-set five-sh
   });
 
   it("(d) monotonicity sequence — once cat 4 matches, a later non-matching reading leaves the floor at 4", () => {
-    const e = makeWildfireEngine(ruleSet23);
+    const e = makeWildfireEngine(ruleSet23, { zones: defaultZones, wind: { speed: 0, direction: 0 } });
     // Reading 0: ran sim with drought changed + sparks NOT per-zone → cat 4 matches.
     const r0 = startReading({
       zones: [

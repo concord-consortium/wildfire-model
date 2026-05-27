@@ -1,4 +1,7 @@
-import { getAnalysisEngine, buildAnalysisEngineActivatedPayload, APP_RULES_VERSION } from "./index";
+import {
+  getAnalysisEngine, buildAnalysisEngineActivatedPayload, APP_RULES_VERSION,
+  getRequestedPresetInfo, buildPresetDiagnostics,
+} from "./index";
 import { _resetAnalysisEngineForTests } from "./engine-singleton";
 import { ENGINE_VERSION } from "../engine";
 
@@ -59,6 +62,39 @@ describe("getAnalysisEngine", () => {
   });
 });
 
+describe("getAnalysisEngine — config-derived defaults wiring (per WM-27)", () => {
+  it("threads deriveWildfireDefaults(getResolvedConfig()) onto engine.defaults for a known preset", () => {
+    setUrl("?hazbotRules=23&preset=plainsTwoZone");
+    const e = getAnalysisEngine();
+    if (!e) throw new Error("expected engine");
+    // Explicit WildfireDefaults literal (not re-derived) so the test catches a
+    // wrong derivation as well as broken wiring. plainsTwoZone is Plains/Shrub/1
+    // ×2; the base config carries wind 0/0.
+    expect(e.defaults).toEqual({
+      zones: [
+        { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Mild Drought" },
+        { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Mild Drought" },
+      ],
+      wind: { speed: 0, direction: 0 },
+    });
+  });
+});
+
+describe("getAnalysisEngine — rule-sets 32–35 load with no defaults-attributable error (Req 8)", () => {
+  // Replaces the removed negative `missing-defaults` assertions: with the
+  // failure mode gone, 32–35 must now load cleanly. Also guards against any
+  // other load-failure path silently re-blocking them.
+  for (const id of ["32", "33", "34", "35"]) {
+    it(`rule-set ${id} loads: isActive with no load-failure error`, () => {
+      setUrl(`?hazbotRules=${id}`);
+      const e = getAnalysisEngine();
+      if (!e) throw new Error("expected engine");
+      expect(e.isActive).toBe(true);
+      expect(e.errors.filter((err) => err.kind === "load-failure")).toEqual([]);
+    });
+  }
+});
+
 describe("getAnalysisEngine — EngineConstructionError catch path", () => {
   // The wildfire rulesets don't currently trigger R7 construction errors; we
   // inject a malformed `temporalVariables` via jest.isolateModules so the
@@ -102,6 +138,46 @@ describe("getAnalysisEngine — EngineConstructionError catch path", () => {
   });
 });
 
+describe("getRequestedPresetInfo (per WM-27 Requirement 13)", () => {
+  it("returns { recognized: true } for a known preset", () => {
+    setUrl("?preset=plainsTwoZone");
+    expect(getRequestedPresetInfo()).toEqual({ preset: "plainsTwoZone", recognized: true });
+  });
+
+  it("returns { recognized: false } for an unrecognized preset name", () => {
+    setUrl("?preset=bogusPresetName");
+    expect(getRequestedPresetInfo()).toEqual({ preset: "bogusPresetName", recognized: false });
+  });
+
+  it("returns undefined when the URL has no preset param", () => {
+    setUrl("?hazbotRules=23");
+    expect(getRequestedPresetInfo()).toBeUndefined();
+  });
+
+  it("does not treat an Object.prototype member name as a recognized preset", () => {
+    setUrl("?preset=constructor");
+    expect(getRequestedPresetInfo()).toEqual({ preset: "constructor", recognized: false });
+  });
+});
+
+describe("buildPresetDiagnostics (per WM-27 Requirement 13)", () => {
+  it("maps a recognized preset to a match diagnostic with the bare preset name", () => {
+    expect(buildPresetDiagnostics({ preset: "plainsTwoZone", recognized: true })).toEqual([
+      { label: "Requested preset", value: "plainsTwoZone", status: "match" },
+    ]);
+  });
+
+  it("maps an unrecognized preset to a no-match diagnostic with the (unrecognized preset) cue", () => {
+    expect(buildPresetDiagnostics({ preset: "bogus", recognized: false })).toEqual([
+      { label: "Requested preset", value: "bogus (unrecognized preset)", status: "no-match" },
+    ]);
+  });
+
+  it("returns undefined when there is no requested preset", () => {
+    expect(buildPresetDiagnostics(undefined)).toBeUndefined();
+  });
+});
+
 describe("buildAnalysisEngineActivatedPayload (per Req 20)", () => {
   it("includes engineVersion + appRulesVersion + ruleSetId; no sessionId", () => {
     const payload = buildAnalysisEngineActivatedPayload("23");
@@ -111,6 +187,23 @@ describe("buildAnalysisEngineActivatedPayload (per Req 20)", () => {
       ruleSetId: "23",
     });
     expect(payload).not.toHaveProperty("sessionId");
+  });
+
+  it("carries preset + presetRecognized only when given preset info", () => {
+    const payload = buildAnalysisEngineActivatedPayload("23", { preset: "plainsTwoZone", recognized: true });
+    expect(payload).toEqual({
+      engineVersion: ENGINE_VERSION,
+      appRulesVersion: APP_RULES_VERSION,
+      ruleSetId: "23",
+      preset: "plainsTwoZone",
+      presetRecognized: true,
+    });
+  });
+
+  it("records an unrecognized preset name verbatim with presetRecognized false", () => {
+    const payload = buildAnalysisEngineActivatedPayload("23", { preset: "bogus", recognized: false });
+    expect(payload.preset).toBe("bogus");
+    expect(payload.presetRecognized).toBe(false);
   });
 
   it("APP_RULES_VERSION is a positive integer", () => {

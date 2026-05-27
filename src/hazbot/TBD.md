@@ -14,30 +14,16 @@ matched feedback, two new algorithms, more rule-sets).
 
 ---
 
-## 1. Rule-sets blocked on missing defaults
+## 1. Rule-sets blocked on missing defaults — RESOLVED (WM-27)
 
-Each rule-set module declares `requiredDefaults` paths on the factor-variable
-impls it references (e.g. `zones[*].droughtLevel`, `wind.speed`). When a path
-doesn't resolve against `RuleSet.defaults`, the engine emits a `missing-defaults`
-load failure and refuses to load the rule-set. Today rule-sets 32–35 all ship
-with `defaults: {}` and are blocked. The defaults exist as "TBD" or
-unparseable strings in the Wildfire Hazbot Feedback Tables sheet's Details
-column.
-
-| Ruleset | Status | Missing defaults | Notes |
-|---------|--------|------------------|-------|
-| [32.ts](rule-sets/32.ts) | Blocked | `zones[*].vegetation`, `zones[*].droughtLevel` | Source sheet Details column says "TBD (activity revision)". |
-| [33.ts](rule-sets/33.ts) | Blocked | `zones[*].terrainType`, `zones[*].vegetation`, `zones[*].droughtLevel`, `wind.speed`, `wind.direction` | All zone vars + wind defaults are "TBD" in source. |
-| [34.ts](rule-sets/34.ts) | Blocked | Inherits 33's set ("All other factor variables… same as 33"). | Also needs the `sawIntenseFire` stub filled — see §2. |
-| [35.ts](rule-sets/35.ts) | Blocked | Inherits 33's set. | |
-
-**To resolve:** edit the Wildfire Hazbot Feedback Tables Google Sheet so the
-Details column carries concrete defaults for each zone (and wind, for 33), then
-re-run `node scripts/extract-hazbot-sheets.js` per
-[docs/hazbot-update-workflow.md](../../docs/hazbot-update-workflow.md). If the
-sheet already has the data but the extractor doesn't recognize the wording,
-extend `mergeDefaults` / `parsePerZoneDefault` / `parseWindDefaults` in
-`scripts/extract-impl.js` and add a fixture test.
+Rule-sets 32–35 were previously blocked: each declared `requiredDefaults` paths
+that didn't resolve against a hand-extracted `RuleSet.defaults`, producing a
+`missing-defaults` load failure. WM-27 removed that mechanism entirely — the
+engine now derives its change-detection defaults from the resolved simulation
+config (preset + URL params), the same initial state the simulation loads, so
+defaults are always complete and 32–35 load. There is no longer a
+`missing-defaults` failure mode, a `RuleSet.defaults` field, or a
+`requiredDefaults` declaration to fill in.
 
 ---
 
@@ -188,10 +174,6 @@ top of the substrate, not part of WM-10.
   ([engine/types.ts:41](engine/types.ts#L41)) and authored in rule-sets
   23–25; not surfaced anywhere yet. The substrate's responsibility is just
   carrying it through — host app needs to display it.
-- **Per-reading defaults override.** Defaults are currently a single
-  `RuleSet.defaults`. If a future activity wants per-preset defaults (e.g.
-  zone count differs and the "default vegetation" differs per zone-count),
-  the engine has no story for that.
 - **Persistence.** Engine state is in-memory only — page reload clears
   readings + factor variables. Documented in [CLAUDE.md](../../CLAUDE.md)
   "Restart vs Reload behavior." Fine for the current feature, but a future
@@ -271,7 +253,6 @@ NEW PACKAGE (e.g. @concord-consortium/analysis-engine)
 │   ├── safely-evaluate-impl.ts
 │   ├── find-last.ts
 │   ├── walk-references.ts
-│   ├── validate-defaults.ts
 │   ├── session-id.ts
 │   ├── index.ts                  ← unchanged public API
 │   └── *.test.ts                 ← move tests + Jest config
@@ -380,8 +361,6 @@ a natural time to do them:
 
 ### 8.4 What extraction does **not** unblock
 
-- Filling in TBD defaults — that's a sheet-content task, independent of
-  packaging.
 - Filling in the two stubbed impls — those are wildfire-bridge code, not
   substrate code. They stay in `src/hazbot/wildfire/` regardless.
 - Building the student-facing UI — that's a host-app feature.
