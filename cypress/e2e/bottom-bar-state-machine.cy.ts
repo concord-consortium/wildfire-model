@@ -7,10 +7,11 @@
 // regressions, and build-tooling failures that the React-Testing-Library
 // tests in bottom-bar.test.tsx can't.
 //
-// Does NOT cover visual styling regressions (opacity, grayscale) — that's
-// the job of the Step 6 unit tests, which assert the .Mui-disabled rules
-// directly. A future Zeplin-driven visual-regression pass would close that
-// gap; deliberately out of scope here.
+// Does NOT cover visual styling regressions (opacity, grayscale). Those rules
+// live in src/components/icon-button.scss (`&:disabled, &.Mui-disabled`) and
+// are currently verified by manual browser inspection against the Zeplin spec
+// — there is no automated assertion of the rendered styles. A future
+// Zeplin-driven visual-regression pass would close that gap.
 //
 // Uses inline `cy.get("[data-testid='...']")` selectors rather than the
 // BottomBar helper class so each `it` block reads top-to-bottom without

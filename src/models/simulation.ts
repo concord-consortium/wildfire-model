@@ -129,9 +129,10 @@ export class SimulationModel {
 
   // True when simulationStarted && !simulationRunning && engine.fireDidStop.
   // Reactivity contract: simulationRunning carries the edge — engine?.fireDidStop
-  // is a discriminator read only. The supported tick() path flips both
-  // (simulation.ts:315-317), so the computed re-evaluates when expected. Future
-  // refactorers: do not rely on fireDidStop driving reactivity directly.
+  // is a discriminator read only. The supported tick() path sets
+  // simulationRunning = false when engine.fireDidStop becomes true, so the
+  // computed re-evaluates when expected. Future refactorers: do not rely on
+  // fireDidStop driving reactivity directly.
   @computed public get simulationEnded() {
     return this.simulationStarted && !this.simulationRunning && !!this.engine?.fireDidStop;
   }
