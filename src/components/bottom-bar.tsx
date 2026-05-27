@@ -165,7 +165,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               icon={<FireLineIcon />}
               highlightIcon={<FireLineHighlightIcon />}
               disabled={!this.fireLineEnabled}
-              buttonText="Fire Line"
+              buttonText="Fireline"
               dataTest="fireline-button"
               onClick={this.handleFireLine}
             />
