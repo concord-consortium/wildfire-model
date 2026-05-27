@@ -1524,3 +1524,80 @@ this spec and in the requirements spec is bare anchor text for same-
 file refs.
 
 ---
+
+## Implementation discoveries (Step 6 verification feedback)
+
+Discoveries surfaced while running the new `bottom-bar-visuals.cy.ts`
+Cypress spec against the actual rendering. Each item required a code
+change beyond the original Step 3 / Step 6 scope; all are documented
+here for future readers who would otherwise wonder why the
+implementation diverges from the spec's earlier minimal-change tone.
+
+### Pill buttons need explicit width 60, not just min-width 60
+
+**Discovery**: Reload / Restart / Start render at 64 px each, not the
+spec's 60 px, because MUI v5's `.MuiButton-root` default sets
+`min-width: 64px` via emotion. Emotion injects after our static SCSS,
+so the cascade order makes MUI's 64 win over our `.playbackButton
+{ min-width: 60px }`. Verified by Cypress: Reload+Restart inner
+bounding box rendered at 128 (= 64 + 64) instead of 120 (= 60 + 60).
+
+**Fix applied**: Added `width: 60px` (alongside the existing
+`min-width: 60px`) to `.playbackButton` at
+[bottom-bar.scss](../../src/components/bottom-bar.scss). The explicit
+`width` lands at the same specificity as MUI's emotion class but our
+fixed value pins the rendered width regardless of which rule's
+`min-width` ultimately applies.
+
+### Spark needs an explicit widgetGroup width
+
+**Discovery**: Spark renders at 66 px (= 64 inner + 2 border) instead
+of the spec's 62 px (= 60 + 2). Cause is a circular-sizing dependency:
+`.iconButton { width: 100%; min-width: 60px }` asks for 100% of the
+parent widgetGroup, but the widgetGroup has no explicit width and so
+shrink-wraps to content; the browser's resolution falls back to MUI's
+intrinsic `.MuiButton-root { min-width: 64px }` default. Setup avoids
+this because `.terrainButton` sets an explicit `width: 82px` on its
+widgetGroup. Pill buttons avoid it because `.playbackButton` has no
+`width: 100%`.
+
+**Fix applied**: Re-introduced the `.placeSpark` class slot (the
+margin-right override was already deleted in Step 3) with
+`width: 60px` and re-added `${css.placeSpark}` to the Spark
+widgetGroup JSX. Same pattern as `.terrainButton` and
+`.fireIntensityScale`.
+
+### Inter-widget margin needs to be 9 px, not 10 px
+
+**Discovery**: The default `.widgetGroup { margin-right: 10px;
+margin-left: -1px }` produces a 9 px outer-to-outer visible gap (10
+margin-right + -1 margin-left from the next widget = 9 net). The
+spec's table specifies 8 px visible (with 10 px content-edge gap).
+Verified by Cypress: Setup -> Spark gap rendered at 9 px.
+
+**Fix applied**: Changed `$bottomBarWidgetGroupSpacing` in
+[common.scss](../../src/components/common.scss) from `10px` to
+`9px` with a comment explaining the interaction with the paired
+`margin-left: -1px`. Net rendered outer-to-outer gap = 9 - 1 = 8 px.
+The negative margin-left is preserved unchanged for its
+border-continuity rendering role.
+
+### Cypress paired-width assertion: measure the widgetGroup, not the inner bounding box
+
+**Discovery**: The original Step 6 skeleton used `Math.max(a.right,
+b.right) - Math.min(a.left, b.left)` on inner button rects and
+asserted 122 / 132. Under Option 1 (single shared widgetGroup, the
+chosen mechanism) both buttons climb to the same widgetGroup
+ancestor, and their inner bounding-box gives the content width (120 /
+130), not the Border w. (122 / 132). The skeleton's claim that "this
+returns 122 / 132 for both shared-border structural options" was
+wrong for Option 1.
+
+**Fix applied**: Replaced the inner-rect bounding-box assertion with
+a `widgetRect("reload-button").width === 122` /
+`widgetRect("fireline-button").width === 132` read. The `widgetRect`
+helper pivots to `.closest('[class*="widgetGroup"]')`, which is the
+shared widgetGroup for both buttons in a pair, and the returned
+outer rect includes the 1 px widgetGroup border on each side.
+
+---

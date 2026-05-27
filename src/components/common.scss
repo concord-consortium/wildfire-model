@@ -5,7 +5,11 @@ $bottomBarBorderStyle: $bottomBarBorderWidth solid #797979;
 $bottomBarTopPadding: 7px;
 $bottomBarBorderRadius: 10px;
 
-$bottomBarWidgetGroupSpacing: 10px;
+// Margin-right value applied to .widgetGroup. With the paired -1px
+// margin-left (border-continuity trick at bottom-bar.scss), the net
+// outer-to-outer visible gap between adjacent widgets is 9 - 1 = 8 px,
+// matching the spec's "8 px visible / 10 px content-edge gap".
+$bottomBarWidgetGroupSpacing: 9px;
 
 $hoverColor: #dfdfdf;
 

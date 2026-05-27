@@ -122,7 +122,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               onClick={this.handleTerrain}
             />
           </div>
-          <div className={css.widgetGroup}>
+          <div className={`${css.widgetGroup} ${css.placeSpark}`}>
             <div className={css.sparksCount}>{ simulation.remainingSparks }</div>
             <IconButton
               icon={<SparkIcon />}
