@@ -7,7 +7,7 @@
   justify-content: center;
 
   .barsContainer {
-    width: 80px;
+    width: 88px;
     height: 15px;
     margin: 4px 0;
     border-radius: 3px;
@@ -43,7 +43,7 @@
     font-size: 14px;
     display: flex;
     flex-direction: row;
-    justify-content: space-around;
+    justify-content: space-between;
     // nudge the labels to align the the bottom bar baseline
     position: relative;
     top: -3px;

@@ -230,6 +230,8 @@ $overflowHeight: 11px;
   height: 100%;
   color: #434343;
   font-weight: bold;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
 
@@ -241,10 +243,10 @@ $overflowHeight: 11px;
   }
 
   &:first-child {
-    border-top-left-radius: 10px;
+    border-top-left-radius: 10px !important;
   }
   &:last-child {
-    border-top-right-radius: 10px;
+    border-top-right-radius: 10px !important;
   }
   svg {
     background: white;
