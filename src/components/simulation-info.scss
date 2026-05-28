@@ -51,13 +51,19 @@
       background-color: $zone3Orange;
     }
     .icon {
-      width: 28px;
-      height: 28px;
+      width: 30px;
+      height: 30px;
       padding-right: 8px;
-      display: inline-block;
+      display: flex;
+      align-items: flex-end;
+      // Vegetation SVGs ship with both a gray and a white outline rect
+      // at the same position; use only the white one here.
+      svg rect[stroke="#797979"] {
+        display: none;
+      }
       &.droughtIcon {
         width: 22px;
-        height: 20px;
+        height: 30px;
       }
     }
     .zoneText {
@@ -71,6 +77,8 @@
         font-weight: bold;
         font-size: 14px;
         text-align: center;
+        position: relative;
+        top: -1px;
       }
 
       .terrain {
@@ -95,14 +103,14 @@
 }
 
   .windContainer {
-    width: 90px;
-    height: 118px;
+    box-sizing: border-box;
+    width: 97px;
+    height: 126px;
     position: fixed;
-    top: 70px + $topBarHeight;
+    top: 67px + $topBarHeight;
     left: 10px;
     background: #fff;
     border-radius: 4px;
-    border: solid 1px $controlGray;
     text-align: center;
     color: $controlText;
     z-index: 2;
@@ -113,22 +121,20 @@
 
     .windHeader {
       font-family: Lato;
-      font-size: 12px;
+      font-size: 14px;
       font-weight: bold;
-      padding: 4px;
+      padding-top: 6px;
     }
     .windText {
       font-family: 'Roboto Condensed';
-      font-size: 11px;
+      font-size: 14px;
       font-weight: normal;
-      width: 60px;
-      margin: auto;
+      width: 68px;
+      margin: 5px auto 0;
     }
     .windDial {
-      transform: scale(0.7);
-      transform-origin: left;
-      filter: grayscale(1);
-      margin-left: 6px;
+      margin: 2px auto 0;
+      width: 59px;
     }
   }
 }

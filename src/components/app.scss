@@ -38,6 +38,18 @@
   }
 }
 
+.topLine {
+  position: fixed;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: red;
+  z-index: 99999;
+  pointer-events: none;
+}
+.topLineUpper { top: $topBarHeight + 19px; }
+.topLineLower { top: $topBarHeight + 47px; }
+
 .modelInfo {
   text-align: left;
   position: absolute;
@@ -50,20 +62,19 @@
 }
 
 .timeDisplay{
-  width: 82px;
-  height: 34px;
+  box-sizing: border-box;
+  width: 97px;
+  height: 47px;
   position: fixed;
   top: $topBarHeight + 10px;
   left: 10px;
   background: white;
   border-radius: 4px;
-  border: solid 1px $controlGray;
   text-align: center;
   color: $controlText;
   z-index: 2;
   font-family: Lato;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: bold;
-  padding: 4px;
-  padding-top: 8px;
+  padding-top: 6px;
 }
