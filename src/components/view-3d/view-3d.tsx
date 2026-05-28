@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useRef } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import React, { useEffect, useMemo, useRef } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls , PerspectiveCamera } from "@react-three/drei";
-import { Provider } from "mobx-react";
+import { observer, Provider } from "mobx-react";
 import { useStores } from "../../use-stores";
 import { DEFAULT_UP, PLANE_WIDTH, planeHeight } from "./helpers";
 import { Terrain } from "./terrain";
@@ -11,6 +11,7 @@ import { FireLineMarkersContainer } from "./fire-line-marker";
 import { TownMarkersContainer } from "./town-marker";
 import { log } from "../../log";
 import Shutterbug from "shutterbug";
+import { cameraDebugStore } from "./camera-debug-store";
 
 // This needs to be a separate component, as useThree depends on context provided by <Canvas> component.
 const ShutterbugSupport = () => {
@@ -25,12 +26,136 @@ const ShutterbugSupport = () => {
   return null;
 };
 
-export const View3d = () => {
+// Fits the terrain bounding box into the viewport on mount by preserving the
+// designer-chosen look-angle (direction from target to camera) and adjusting
+// only the camera distance. Keeps a fixed % margin around the terrain so the
+// composition reads the same on a wide Chromebook screen as on a narrower
+// embedded viewport. Runs only once at mount per the WM-8 design call.
+const TERRAIN_FIT_MARGIN = 1.05;
+// Estimated max terrain elevation in world units (heightmap scaled by
+// PLANE_WIDTH / modelWidth → heightmapMaxElevation * scale). Used as headroom
+// when fitting so peaks don't get clipped at extreme viewports.
+const TERRAIN_FIT_Z_HEADROOM = 0.05;
+// Design FOV. Must match the value the PerspectiveCamera ends up rendering at.
+// Hardcoded rather than read from `camera.fov` because the fitter effect runs
+// before drei's PerspectiveCamera has applied its fov prop (the r3f Canvas
+// default is 75, not our 33).
+const CAMERA_FIT_FOV_DEG = 33;
+
+const CameraFitter = ({ targetPos, designPos }: {
+  targetPos: [number, number, number];
+  designPos: [number, number, number];
+}) => {
+  const { camera, size, controls } = useThree();
+  const simulation = useStores().simulation;
+  const fittedRef = useRef(false);
+  // Runs every frame but short-circuits after the first successful fit. We
+  // need to wait for OrbitControls to be mounted (so we can call its
+  // update() and have it re-derive its internal spherical from the new
+  // camera position); a useEffect could fire before that.
+  useFrame(() => {
+    if (fittedRef.current) return;
+    // Duck-type instead of `instanceof THREE.PerspectiveCamera` because drei
+    // bundles its own Three.js instance.
+    if (typeof (camera as { fov?: number }).fov !== "number") return;
+    if (!controls) return;
+
+    const target = new THREE.Vector3(...targetPos);
+    const designCamera = new THREE.Vector3(...designPos);
+    const offsetDir = new THREE.Vector3().subVectors(designCamera, target).normalize();
+    const lookDir = offsetDir.clone().negate();
+
+    const w = PLANE_WIDTH;
+    const h = planeHeight(simulation);
+    const elev = TERRAIN_FIT_Z_HEADROOM;
+    const corners: THREE.Vector3[] = [];
+    for (const x of [0, w]) {
+      for (const y of [0, h]) {
+        for (const z of [0, elev]) {
+          corners.push(new THREE.Vector3(x, y, z));
+        }
+      }
+    }
+
+    const worldUp = new THREE.Vector3(DEFAULT_UP[0], DEFAULT_UP[1], DEFAULT_UP[2]);
+    const right = new THREE.Vector3().crossVectors(lookDir, worldUp).normalize();
+    const screenUp = new THREE.Vector3().crossVectors(right, lookDir).normalize();
+
+    let maxRight = 0;
+    let maxUp = 0;
+    for (const c of corners) {
+      const off = new THREE.Vector3().subVectors(c, target);
+      maxRight = Math.max(maxRight, Math.abs(off.dot(right)));
+      maxUp = Math.max(maxUp, Math.abs(off.dot(screenUp)));
+    }
+
+    const fovV = THREE.MathUtils.degToRad(CAMERA_FIT_FOV_DEG);
+    const aspect = size.width / size.height;
+    const tanHalfV = Math.tan(fovV / 2);
+    const distH = (maxUp / tanHalfV) * TERRAIN_FIT_MARGIN;
+    const distW = (maxRight / (aspect * tanHalfV)) * TERRAIN_FIT_MARGIN;
+    // The designer-chosen distance is what the camera should sit at when the
+    // viewport aspect is "design-friendly" (i.e. wide enough that the terrain
+    // already fits with comfortable margins). Only pull farther back when the
+    // current aspect is narrower than that and the terrain would otherwise
+    // overflow the viewport edges.
+    const designDistance = new THREE.Vector3().subVectors(designCamera, target).length();
+    const distance = Math.max(designDistance, distH, distW);
+
+    camera.position.copy(target).addScaledVector(offsetDir, distance);
+    camera.updateProjectionMatrix();
+    // Re-sync OrbitControls' internal spherical so it doesn't snap back to
+    // its captured-at-mount position on the next frame.
+    (controls as unknown as { update?: () => void }).update?.();
+    fittedRef.current = true;
+  });
+  return null;
+};
+
+// Pushes the live camera position + OrbitControls target into cameraDebugStore
+// each frame so the top-bar camera-settings panel can display them. Also
+// exposes the camera + controls on window.debugCamera so a designer or test
+// harness can imperatively set a pose without dispatching pointer events.
+const CameraDebugTracker = () => {
+  const { camera, controls } = useThree();
+  useEffect(() => {
+    (window as unknown as { debugCamera?: unknown }).debugCamera = { camera, controls };
+    return () => {
+      delete (window as unknown as { debugCamera?: unknown }).debugCamera;
+    };
+  }, [camera, controls]);
+  useFrame(() => {
+    const t = (controls as unknown as { target?: THREE.Vector3 })?.target;
+    if (!t) return;
+    const { x: px, y: py, z: pz } = camera.position;
+    const sp = cameraDebugStore.position;
+    const st = cameraDebugStore.target;
+    if (sp[0] !== px || sp[1] !== py || sp[2] !== pz || st[0] !== t.x || st[1] !== t.y || st[2] !== t.z) {
+      cameraDebugStore.setPose([px, py, pz], [t.x, t.y, t.z]);
+    }
+  });
+  return null;
+};
+
+export const View3d = observer(function View3d() {
   const stores = useStores();
   const simulation = stores.simulation;
   const ui = stores.ui;
-  const cameraPos: [number, number, number] = [PLANE_WIDTH * 0.5, planeHeight(simulation) * -1.5, PLANE_WIDTH * 1.5];
+  // Memoize so drei's PerspectiveCamera and OrbitControls don't see a "new"
+  // array literal each re-render and re-apply position/target, which would
+  // overwrite the CameraFitter's mount-time fit.
+  const ph = planeHeight(simulation);
+  const cameraPos = useMemo<[number, number, number]>(
+    () => [PLANE_WIDTH * 0.5, ph * -0.9, PLANE_WIDTH * 1.0], [ph]
+  );
+  const targetPos = useMemo<[number, number, number]>(
+    () => [PLANE_WIDTH * 0.5, ph * 0.3, 0.1], [ph]
+  );
   const terrainRef = useRef<THREE.Mesh>(null);
+  const cameraSettingsEnabled = simulation.config.cameraSettings;
+  // When the cameraSettings dev panel is active, the panel's FOV slider drives
+  // the camera's FOV; otherwise the camera uses the default 33.
+  const fov = cameraSettingsEnabled ? cameraDebugStore.fov : 33;
 
   return (
     /* eslint-disable react/no-unknown-property */
@@ -51,12 +176,17 @@ export const View3d = () => {
       {/* Why do we need to setup provider again? No idea. It seems that components inside Canvas don't have
           access to MobX stores anymore. */}
       <Provider stores={stores}>
-        <PerspectiveCamera makeDefault={true} fov={33} position={cameraPos} up={DEFAULT_UP}/>
+        {/* Position is intentionally NOT passed: CameraFitter owns it (otherwise
+            drei would re-apply the prop on subsequent renders and clobber the fit). */}
+        <PerspectiveCamera makeDefault={true} fov={fov} up={DEFAULT_UP}/>
+        <CameraFitter targetPos={targetPos} designPos={cameraPos}/>
+        {cameraSettingsEnabled && <CameraDebugTracker/>}
         <OrbitControls
-          target={[PLANE_WIDTH * 0.5, planeHeight(simulation) * 0.5, 0.2]}
+          makeDefault={true}
+          target={targetPos}
           enableDamping={true}
           enableRotate={!ui.dragging} // disable rotation when something is being dragged
-          enablePan={false}
+          enablePan={cameraSettingsEnabled}
           rotateSpeed={0.5}
           zoomSpeed={0.5}
           minDistance={0.8}
@@ -75,4 +205,4 @@ export const View3d = () => {
     </Canvas>
     /* eslint-enable react/no-unknown-property */
   );
-};
+});

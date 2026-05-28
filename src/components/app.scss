@@ -28,7 +28,6 @@
   overflow-x: hidden;
   width: $rightPanelContainerWidth + $tabWidth;
   height: calc(100% - #{$bottomBarHeight + $bottomBarBorderWidth + $topBarHeight});
-  min-height: 551px;
   position: fixed;
   top: $topBarHeight;
   right: 0;

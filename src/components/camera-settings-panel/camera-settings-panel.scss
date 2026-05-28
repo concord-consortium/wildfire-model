@@ -1,0 +1,58 @@
+.panel {
+  position: fixed;
+  top: 5px;
+  left: 5px;
+  right: 5px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.96);
+  border: 1px solid #c0c0c0;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 12px;
+  font-family: monospace;
+  font-size: 12px;
+  color: #222;
+}
+
+.value {
+  white-space: nowrap;
+}
+
+.fov {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  input[type="range"] {
+    width: 120px;
+  }
+}
+
+.fovNumber {
+  width: 48px;
+  font-family: monospace;
+  font-size: 12px;
+}
+
+.center,
+.copy {
+  padding: 4px 12px;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 12px;
+  border: 1px solid #888;
+  border-radius: 3px;
+  background: #f5f5f5;
+
+  &:hover {
+    background: #e8e8e8;
+  }
+}
+
+.center {
+  margin-left: auto;
+}

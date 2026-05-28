@@ -102,6 +102,12 @@ export interface ISimulationConfig {
   // Useful for aligning the vegetation/drought icons against the
   // "Zone N" / terrain-name text. Enable via ?topLines=true.
   topLines: boolean;
+  // Developer/designer tool: when true, renders a small readout in the top
+  // bar showing live camera position, target, and FOV — plus a copy button
+  // that yields ready-to-paste source lines for view-3d.tsx. Lets the
+  // designer/PI orbit the model in-browser and report back the values they
+  // want. Enable via ?cameraSettings=true.
+  cameraSettings: boolean;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -179,7 +185,8 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   hazbotRules: undefined,
   hazbotSidebar: false,
   bottomBarBaseline: false,
-  topLines: false
+  topLines: false,
+  cameraSettings: false
 });
 
 const getURLParam = (name: string) => {
