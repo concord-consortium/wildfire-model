@@ -59,21 +59,31 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     return css.fullscreenIcon + (this.state.fullscreen ? ` ${css.fullscreen}` : "");
   }
 
-  get sparkBtnDisabled() {
+  get sparkEnabled() {
     const { simulation, ui } = this.stores;
-    return ui.interaction === Interaction.PlaceSpark || !simulation.canAddSpark || simulation.simulationStarted;
+    return !simulation.simulationStarted
+      && simulation.canAddSpark
+      && ui.interaction !== Interaction.PlaceSpark;
   }
 
-  get fireLineBtnDisabled() {
+  get fireLineEnabled() {
     const { simulation, ui } = this.stores;
-    return ui.interaction === Interaction.DrawFireLine || !simulation.canAddFireLineMarker ||
-      !simulation.simulationStarted;
+    // canAddFireLineMarker already gates on config.fireLineAvailable + cooldown
+    // + 2-marker capacity (see simulation.ts:109-117).
+    return simulation.simulationStarted
+      && !simulation.simulationEnded
+      && simulation.canAddFireLineMarker
+      && ui.interaction !== Interaction.DrawFireLine;
   }
 
-  get helitackBtnDisabled() {
+  get helitackEnabled() {
     const { simulation, ui } = this.stores;
-    return ui.interaction === Interaction.Helitack || !simulation.canUseHelitack ||
-      !simulation.simulationStarted;
+    // canUseHelitack already gates on config.helitackAvailable + cooldown
+    // (see simulation.ts:119-127).
+    return simulation.simulationStarted
+      && !simulation.simulationEnded
+      && simulation.canUseHelitack
+      && ui.interaction !== Interaction.Helitack;
   }
 
   public componentDidMount() {
@@ -90,7 +100,6 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   public render() {
     const { simulation } = this.stores;
-    const uiDisabled = simulation.simulationStarted;
     return (
       <div className={css.bottomBar}>
         <div className={css.leftContainer}>
@@ -102,7 +111,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
             <IconButton
               icon={simulation.zonesCount < 3 ? <TerrainIcon /> : <TerrainThreeIcon />}
               highlightIcon={simulation.zonesCount < 3 ? <TerrainHighlightIcon /> : <TerrainThreeHighlightIcon />}
-              disabled={uiDisabled}
+              disabled={!simulation.setupEnabled}
               buttonText="Setup"
               dataTest="terrain-button"
               onClick={this.handleTerrain}
@@ -113,7 +122,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
             <IconButton
               icon={<SparkIcon />}
               highlightIcon={<SparkHighlight />}
-              disabled={this.sparkBtnDisabled}
+              disabled={!this.sparkEnabled}
               buttonText="Spark"
               dataTest="spark-button"
               onClick={this.placeSpark}
@@ -124,6 +133,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               className={css.playbackButton}
               data-testid="reload-button"
               onClick={this.handleReload}
+              disabled={!simulation.reloadEnabled}
               disableRipple={true}
             >
               <span><ReloadIcon/> Reload</span>
@@ -132,6 +142,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               className={css.playbackButton}
               data-testid="restart-button"
               onClick={this.handleRestart}
+              disabled={!simulation.restartEnabled}
               disableRipple={true}
             >
               <span><RestartIcon/> Restart</span>
@@ -140,7 +151,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           <div className={`${css.widgetGroup} ${css.startStop}`}>
             <Button
               onClick={this.handleStart}
-              disabled={!simulation.ready}
+              disabled={!simulation.startEnabled}
               className={css.playbackButton}
               data-testid="start-button"
               disableRipple={true}
@@ -153,7 +164,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
             <IconButton
               icon={<FireLineIcon />}
               highlightIcon={<FireLineHighlightIcon />}
-              disabled={this.fireLineBtnDisabled}
+              disabled={!this.fireLineEnabled}
               buttonText="Fire Line"
               dataTest="fireline-button"
               onClick={this.handleFireLine}
@@ -163,7 +174,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
             <IconButton
               icon={<HelitackIcon />}
               highlightIcon={<HelitackHighlightIcon />}
-              disabled={this.helitackBtnDisabled}
+              disabled={!this.helitackEnabled}
               buttonText="Helitack"
               dataTest="helitack-button"
               onClick={this.handleHelitack}
@@ -252,7 +263,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   };
 
   public handleRestart = () => {
-    const { simulation } = this.stores;
+    const { simulation, ui } = this.stores;
     if (simulation.simulationStarted) {
       simulation.simulationEndedLogged = true;
       log("SimulationEnded", {
@@ -261,12 +272,13 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       });
     }
     this.stores.chartStore.reset();
+    ui.interaction = null;
     simulation.restart();
     log("SimulationRestarted");
   };
 
   public handleReload = () => {
-    const { simulation } = this.stores;
+    const { simulation, ui } = this.stores;
     if (simulation.simulationStarted) {
       simulation.simulationEndedLogged = true;
       log("SimulationEnded", {
@@ -275,6 +287,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       });
     }
     this.stores.chartStore.reset();
+    ui.interaction = null;
     simulation.reload();
     log("SimulationReloaded");
   };

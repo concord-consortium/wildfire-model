@@ -62,6 +62,7 @@ export class SimulationModel {
   @observable public cellsStateFlag = 0;
   @observable public cellsElevationFlag = 0;
   @observable public simulationEndedLogged = false;
+  @observable public setupChanged = false;
 
   constructor(presetConfig?: Partial<ISimulationConfig>) {
     makeObservable(this);
@@ -124,6 +125,32 @@ export class SimulationModel {
       // Helitack has waiting period before it can be used subsequent times
       return this.time - this.lastHelitackTimestamp > this.config.helitackDelay;
     }
+  }
+
+  // True when simulationStarted && !simulationRunning && engine.fireDidStop.
+  // Reactivity contract: simulationRunning carries the edge — engine?.fireDidStop
+  // is a discriminator read only. The supported tick() path sets
+  // simulationRunning = false when engine.fireDidStop becomes true, so the
+  // computed re-evaluates when expected. Future refactorers: do not rely on
+  // fireDidStop driving reactivity directly.
+  @computed public get simulationEnded() {
+    return this.simulationStarted && !this.simulationRunning && !!this.engine?.fireDidStop;
+  }
+
+  @computed public get setupEnabled() {
+    return !this.simulationStarted;
+  }
+
+  @computed public get startEnabled() {
+    return this.ready && !this.simulationEnded;
+  }
+
+  @computed public get reloadEnabled() {
+    return this.setupChanged || this.sparks.length > 0;
+  }
+
+  @computed public get restartEnabled() {
+    return this.simulationStarted;
   }
 
   public getZoneBurnPercentage(zoneIdx: number) {
@@ -268,9 +295,20 @@ export class SimulationModel {
 
   @action.bound public reload() {
     this.restart();
+    this.setupChanged = false;
     // Reset user-controlled properties too.
     this.setInputParamsFromConfig();
     this.populateCellsData();
+  }
+
+  // Symmetric setter with three call sites: applyAndClose (terrain-panel.tsx)
+  // passes true to record a user customization; reload() writes the field
+  // directly as part of a larger reset that also clears sparks/engine/cells,
+  // bypassing the setter; the case (h) snapshot-refresh test passes false to
+  // reset the flag mid-test without going through reload() (which would wipe
+  // simulation.zones and defeat the canary).
+  @action.bound public setSetupChanged(value: boolean) {
+    this.setupChanged = value;
   }
 
   @action.bound public rafCallback(time: number) {

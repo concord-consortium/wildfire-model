@@ -163,6 +163,35 @@ $overflowHeight: 11px;
       fill: #797979;
     }
   }
+
+  &:disabled {
+    // Per Zeplin spec: grayscale + content faded to 0.35, button background
+    // unchanged.
+    //
+    // MUI's own `:disabled` rule (emotion-generated for MUI Button) applies
+    // `opacity: 0.25` to the whole button — without the `opacity: 1`
+    // override below, that 0.25 compounds with our content's
+    // `> span { opacity }` (0.25 × 0.35 ≈ 0.09), rendering icons nearly
+    // invisible against the near-white bottom bar. The `!important` is
+    // needed because MUI's emotion class is more specific.
+    opacity: 1 !important;
+    // Targets the inner span (the JSX explicitly wraps content in
+    // <span><Icon/> Label</span> at bottom-bar.tsx).
+    //
+    // MUI-version-coupled: today (MUI v5 with `disableRipple={true}`) MUI
+    // injects no other span child. A future MUI major-version upgrade that
+    // re-introduces a wrapper span (precedent: v4→v5 removed
+    // `.MuiButton-label`) would shift `> span` to match the MUI wrapper —
+    // verify in DevTools on any MUI major upgrade.
+    > span {
+      opacity: 0.35;
+    }
+    filter: grayscale(1);
+    // Prevent the hover/active glow from re-amplifying contrast while disabled.
+    &:hover svg, &:active svg {
+      box-shadow: none;
+    }
+  }
 }
 
 @media (max-width: 960px) {

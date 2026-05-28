@@ -56,6 +56,11 @@ describe("Log events", () => {
 
     it("fires with reason 'SimulationReloaded' before reload", async () => {
       jest.spyOn(stores.simulation, "reload");
+      // Under the new reloadEnabled = setupChanged || sparks.length > 0 rule,
+      // simulationStarted alone leaves Reload disabled and userEvent.click
+      // would no-op. Add a spark so Reload is enabled (mirrors the test-4
+      // fixture pattern below).
+      stores.simulation.sparks.push(new Vector2(50000, 50000));
       stores.simulation.simulationStarted = true;
       render(
         <Provider stores={stores}>
@@ -139,21 +144,12 @@ describe("Log events", () => {
       expect(stores.simulation.simulationEndedLogged).toBe(true);
     });
 
-    it("does NOT fire SimulationEnded on restart when simulation was never started", async () => {
-      jest.spyOn(stores.simulation, "restart");
-      render(
-        <Provider stores={stores}>
-          <BottomBar />
-        </Provider>
-      );
-      await userEvent.click(screen.getByTestId("restart-button"));
-
-      const endedCalls = mockLog.mock.calls.filter(
-        (call: unknown[]) => call[0] === "SimulationEnded"
-      );
-      expect(endedCalls).toHaveLength(0);
-      expect(stores.simulation.simulationEndedLogged).toBe(false);
-    });
+    // (Removed: "does NOT fire SimulationEnded on restart when simulation was
+    // never started" — under the new restartEnabled=simulationStarted rule the
+    // Restart button is disabled in Default, userEvent.click is a no-op
+    // against `<button disabled>`, and both assertions trivially hold. The
+    // bottom-bar.test.tsx state-1 matrix already asserts Restart-disabled in
+    // Default at the matrix level.)
   });
 
   describe("SimulationEnded - natural end (ByItself)", () => {
