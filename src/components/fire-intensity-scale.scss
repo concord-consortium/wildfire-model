@@ -14,7 +14,7 @@
     border: solid 1px $controlGray;
     display: flex;
     flex-direction: row;
-    // nudge the bar up to align between the top of
+    // nudge the bar up 2 px so it sits visually centered between the title and labels
     position: relative;
     top: -2px;
   }
@@ -44,7 +44,7 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    // nudge the labels to align the the bottom bar baseline
+    // nudge the labels to align with the bottom-bar baseline
     position: relative;
     top: -3px;
   }
