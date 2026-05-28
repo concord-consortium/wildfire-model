@@ -57,16 +57,24 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     widgetRect("fireline-button").should((r) => expect(r.width).to.eq(132));
   });
 
-  it("renders 8 px visible gaps at every non-paired adjacency", () => {
-    // 8 px visible outer-to-outer = 9 px widgetGroup margin-right minus
-    // the 1 px margin-left from the next widget. Read each widget's
-    // closest-widgetGroup rect into a buffer, then assert the
-    // next.left - prev.right delta for every non-paired adjacency.
-    // pair-leader testids: reload-button climbs to the Reload+Restart
-    // shared widgetGroup; fireline-button climbs to the
+  it("renders the correct visible gap at every non-paired adjacency", () => {
+    // Read each widget's closest-widgetGroup rect into a buffer, then
+    // assert the next.left - prev.right delta for every non-paired
+    // adjacency. pair-leader testids: reload-button climbs to the
+    // Reload+Restart shared widgetGroup; fireline-button climbs to the
     // Fireline+Helitack shared widgetGroup. So the rects[] order is:
     //   0: Setup, 1: Spark, 2: Reload+Restart pair, 3: Start,
     //   4: Fireline+Helitack pair, 5: FIS.
+    //
+    // Two gap values are expected:
+    //   8 px (default): 9 px widgetGroup margin-right minus the next
+    //     widget's 1 px margin-left.
+    //   -1 px (abutting): the Spark widgetGroup and the Reload+Restart
+    //     widgetGroup carry margin-right:0 so the next widget's -1 px
+    //     margin-left pulls the bubbles into a 1 px border overlap.
+    //     This produces the "two bubbles touching at the side" look
+    //     specified by the designer for Spark <-> Reload pair and
+    //     Restart <-> Start.
     const rects: { left: number; right: number }[] = [];
     const ids = [
       "terrain-button", "spark-button", "reload-button",
@@ -77,8 +85,8 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     );
     cy.then(() => {
       expect(rects[1].left - rects[0].right, "Setup -> Spark").to.eq(8);
-      expect(rects[2].left - rects[1].right, "Spark -> Reload pair").to.eq(8);
-      expect(rects[3].left - rects[2].right, "Restart -> Start").to.eq(8);
+      expect(rects[2].left - rects[1].right, "Spark -> Reload pair (abuts)").to.eq(-1);
+      expect(rects[3].left - rects[2].right, "Restart -> Start (abuts)").to.eq(-1);
       expect(rects[4].left - rects[3].right, "Start -> Fireline pair").to.eq(8);
       expect(rects[5].left - rects[4].right, "Helitack -> FIS").to.eq(8);
     });
@@ -110,12 +118,15 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     cy.get('[data-testid="fireline-button"]').should("contain.text", "Fireline");
   });
 
-  it("renders the fullscreen container at 62 x 64 with 42 x 42 centered background", () => {
+  it("renders the fullscreen container at 62 x 62 with 42 x 42 centered background", () => {
     cy.get('[title="Toggle Fullscreen"]').then(($el) => {
       const rect = $el[0].getBoundingClientRect();
       const cs = getComputedStyle($el[0]);
       expect(rect.width, "container width").to.eq(62);
-      expect(rect.height, "container height").to.eq(64);
+      // 62 (was 64) so the square container can sit flush with the bar's
+      // bottom edge while keeping the 42 px icon at 10 px visual padding
+      // from both the right and bottom edges of the bar (per designer).
+      expect(rect.height, "container height").to.eq(62);
       expect(cs.backgroundSize, "background-size").to.eq("42px 42px");
       expect(cs.backgroundRepeat, "background-repeat").to.eq("no-repeat");
       expect(cs.backgroundPosition, "background-position").to.eq("50% 50%");
