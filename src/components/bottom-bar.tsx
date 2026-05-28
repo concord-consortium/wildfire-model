@@ -168,7 +168,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
             </Button>
           </div>
 
-          <div className={`${css.widgetGroup} ${css.fireLineHelitack}`}>
+          <div className={`${css.widgetGroup} ${css.fireLineButton}`}>
             <IconButton
               icon={<FireLineIcon />}
               highlightIcon={<FireLineHighlightIcon />}
@@ -177,6 +177,8 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               dataTest="fireline-button"
               onClick={this.handleFireLine}
             />
+          </div>
+          <div className={`${css.widgetGroup} ${css.helitackButton}`}>
             <IconButton
               icon={<HelitackIcon />}
               highlightIcon={<HelitackHighlightIcon />}

@@ -110,19 +110,24 @@ $overflowHeight: 11px;
     margin-right: 0;
   }
 
-  // Shared outer container wrapping Fireline + Helitack as one widgetGroup
-  // pair (mirrors the existing Reload+Restart pattern). Constrains each
-  // inner MUI Button to 65px so the container shrink-wraps to 130px content
-  // = 132px Border w. with the 1px widgetGroup border on each side. The
-  // `button` tag selector is used rather than `.iconButton` because
-  // `.iconButton` is defined in icon-button.scss and gets hashed per-file
-  // by CSS modules. Writing `.iconButton` here would compile to a
-  // different, non-existent class. Mirrors the cross-module pattern at
-  // `.terrainButton button svg` above.
-  .fireLineHelitack {
+  // Fireline and Helitack each get their own widgetGroup so each has a
+  // rounded bubble top, per designer ("two bubbles that abut, not one
+  // shared bubble"). Each inner MUI Button is locked to 65px so the
+  // widgetGroup shrink-wraps to 67px (65 content + 1px border each
+  // side). The `button` tag selector is used rather than `.iconButton`
+  // because `.iconButton` is defined in icon-button.scss and gets
+  // hashed per-file by CSS modules. Mirrors the cross-module pattern
+  // at `.terrainButton button svg` above.
+  .fireLineButton, .helitackButton {
     button {
       width: 65px;
     }
+  }
+  // Designer: Fireline bubble abuts the Helitack bubble (no gap). Same
+  // trick as .placeSpark / .reloadRestart — zero the right margin and
+  // the next group's -1px left margin pulls it flush.
+  .fireLineButton {
+    margin-right: 0;
   }
 
   // Width-locking modifier on the Fire Intensity Scale widgetGroup so the
