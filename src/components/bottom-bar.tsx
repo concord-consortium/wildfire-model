@@ -107,6 +107,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     const { simulation } = this.stores;
     return (
       <div className={`${css.bottomBar} ${!simulation.config.showBurnIndex ? css.fisHidden : ""}`}>
+        {simulation.config.bottomBarBaseline && <div className={css.bottomBarBaseline} />}
         <div className={css.leftContainer}>
           <CCLogo className={css.logo} />
           <CCLogoSmall className={css.logoSmall} />
@@ -141,7 +142,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               disabled={!simulation.reloadEnabled}
               disableRipple={true}
             >
-              <span><ReloadIcon/> Reload</span>
+              <span><ReloadIcon/><span className={css.playbackButtonLabel}>Reload</span></span>
             </Button>
             <Button
               className={css.playbackButton}
@@ -150,7 +151,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               disabled={!simulation.restartEnabled}
               disableRipple={true}
             >
-              <span><RestartIcon/> Restart</span>
+              <span><RestartIcon/><span className={css.playbackButtonLabel}>Restart</span></span>
             </Button>
           </div>
           <div className={css.widgetGroup}>
@@ -161,7 +162,9 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               data-testid="start-button"
               disableRipple={true}
             >
-              { simulation.simulationRunning ? <span><PauseIcon/> Stop</span> : <span><StartIcon /> Start</span> }
+              { simulation.simulationRunning
+                ? <span><PauseIcon/><span className={css.playbackButtonLabel}>Stop</span></span>
+                : <span><StartIcon /><span className={css.playbackButtonLabel}>Start</span></span> }
             </Button>
           </div>
 

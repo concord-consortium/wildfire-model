@@ -100,10 +100,14 @@ $overflowHeight: 11px;
       min-width: 60px;
       width: 60px;
     }
+    // Spark bubble abuts the Reload bubble (no gap)
+    margin-right: 0;
   }
 
   .reloadRestart {
     white-space: nowrap;
+    // Start bubble abuts the Reload/Restart bubble (no gap)
+    margin-right: 0;
   }
 
   // Shared outer container wrapping Fireline + Helitack as one widgetGroup
@@ -146,6 +150,9 @@ $overflowHeight: 11px;
     font-size: 14px;
     font-weight: bold;
     padding: 4px 6px 3px 6px;
+    // push the "Fire Intensity Scale" title 2px down from the
+    // bubble's rounded top edge.
+    margin-top: 2px;
     // Center the "Fire Intensity Scale" title above the centered bars
     // and Low/High labels below it. Without this the title is left-
     // aligned within the 140 px widget content area while the bars
@@ -168,15 +175,13 @@ $overflowHeight: 11px;
   }
 
   .fullscreenIcon {
-    // 62 x 64 hit-target with the 42 x 42 icon centered inside, per the
-    // Zeplin spec. The container's right edge aligns with the bar's
-    // right content edge (margin-right: 0). margin-top: 6 vertically
-    // centers the 64 px container in the 75 px bar (11 px slack splits
-    // as 6 above + 5 below; closer of the two integer values to the
-    // mathematical center of 5.5, within the spec's +/-1 px tolerance).
+    // 62 x 62 square hit-target with the 42 x 42 icon centered. margin-top:1
+    // sits the container so the icon's visual bottom aligns with the
+    // icon-label baseline. Previous 64-tall + margin-top:6 overflowed
+    // the 65 px bar by 5 px.
     margin-right: 0;
-    margin-top: 6px;
-    height: 64px;
+    margin-top: 1px;
+    height: 62px;
     width: 62px;
     background-size: 42px 42px;
     background-repeat: no-repeat;
@@ -193,6 +198,18 @@ $overflowHeight: 11px;
       }
     }
   }
+}
+
+// Mirrors `.iconButtonText` in icon-button.scss so playback labels (Reload /
+// Restart / Start / Stop) share the same baseline as Setup / Spark / Fireline /
+// Helitack. Wrapped in a span by bottom-bar.tsx so it can be positioned
+// independently of the inline-flow text node it used to be.
+.playbackButtonLabel {
+  position: absolute;
+  top: 45px;
+  left: 0;
+  width: 100%;
+  text-align: center;
 }
 
 .playbackButton {
@@ -226,11 +243,22 @@ $overflowHeight: 11px;
   }
   svg {
     background: white;
+    // Absolute positioning (mirroring icon-button.scss) so the label below
+    // can also be absolutely positioned at top:45 without flex recentering
+    // the icon. Playback labels should be at the same baseline as the
+    // IconButton labels (Setup/Spark/Fireline/Helitack). top:14 keeps the
+    // 30px circle at the same y-position it occupied under the previous
+    // flex-centered layout (icon bottom at ~44, leaving ~4px clearance
+    // above the label at top:45).
+    position: absolute;
+    top: 14px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
     display: block;
     height: 30px;
     width: 30px;
     border-radius: 15px;
-    margin: $bottomBarTopPadding auto 0 auto;
     path {
       fill: #797979;
     }
@@ -264,6 +292,22 @@ $overflowHeight: 11px;
       box-shadow: none;
     }
   }
+}
+
+// Designer/developer alignment aid. Renders only when ?bottomBarBaseline=true
+// (see config.ts). 1px red line across the viewport, positioned at the
+// icon-label baseline (visible bottom of the "Setup" / "Spark" / etc.
+// glyphs). 12px from viewport bottom = label-box bottom (11px above bar
+// bottom) minus 1px line-box descent slack, the value measured live.
+.bottomBarBaseline {
+  position: fixed;
+  bottom: 12px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: red;
+  z-index: 99999;
+  pointer-events: none;
 }
 
 @media (max-width: 960px) {

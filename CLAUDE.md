@@ -42,6 +42,7 @@ The app reads config from the query string. For Hazbot validation runs, combine 
 | `severeDroughtAvailable=false` | Cap drought slider at Medium |
 | `showBurnIndex=false` | Hide burn-index UI |
 | `forestWithSuppressionAvailable=false` | Disable forest-with-suppression option |
+| `bottomBarBaseline=true` | Overlay a 1px red line across the viewport at the bottom-bar icon-label baseline (alignment aid for bottom-bar work) |
 
 A full URL for ruleset 23 validation:
 ```
