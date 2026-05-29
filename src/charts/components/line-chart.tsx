@@ -38,6 +38,11 @@ const legendPlugin = {
       if (!ds) {
         return;
       }
+      // skip the key line for datasets hidden via the legend, so it matches the
+      // struck-through label and the hidden plot line
+      if (!chart.isDatasetVisible(i)) {
+        return;
+      }
       const y = box.top + box.height / 2;
       ctx.save();
       ctx.strokeStyle = ds.borderColor;
