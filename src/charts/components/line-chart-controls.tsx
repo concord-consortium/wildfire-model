@@ -1,10 +1,10 @@
 import * as React from "react";
 import { observer } from "mobx-react";
 import { ChartDataModel} from "../models/chart-data";
-import { baseColors } from "../models/chart-data-set";
 import Slider from "rc-slider";
 import { BaseComponent } from "../../components/base";
 import { log } from "../../log";
+import SliderThumb from "../../assets/slider-thumb-small.svg";
 
 import css from "./line-chart-controls.sass";
 import "rc-slider/assets/index.css";
@@ -52,11 +52,14 @@ export class LineChartControls extends BaseComponent<IChartControlProps, IChartC
     const timelineVisible = chartData.maxPoints && chartData.maxPoints > 0 &&
       chartData.pointCount > chartData.maxPoints;
 
-    const trackStyle = { backgroundColor: baseColors.chartColor5, height: 2 };
+    const trackStyle = { backgroundColor: "#949494", height: 1.5 };
+    // render the 28px asset at 33.6px so its 20px circle scales to the Zeplin 24px thumb
     const handleStyle = {
-      borderColor: baseColors.controlGray
+      width: 33.6,
+      height: 33.6,
+      marginTop: -16
     };
-    const railStyle = { backgroundColor: baseColors.controlGray, height: 2 };
+    const railStyle = { backgroundColor: "#434343", height: 1.5 };
     const toggleShowAllOrRecent = () => {
       if (chartData) {
         if (!chartData.maxPoints || chartData.maxPoints > -1) {
@@ -91,6 +94,9 @@ export class LineChartControls extends BaseComponent<IChartControlProps, IChartC
               trackStyle={trackStyle}
               handleStyle={handleStyle}
               railStyle={railStyle}
+              handleRender={(origin: any) =>
+                React.cloneElement(origin, {}, <SliderThumb width={33.6} height={33.6} style={{ display: "block" }} />)
+              }
               onChange={this.handleDragChange}
               min={scrubberMin}
               max={scrubberMax}

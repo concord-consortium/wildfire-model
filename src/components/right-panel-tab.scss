@@ -21,9 +21,9 @@
 
     .tabImage {
       position: absolute;
-      width: 60px;
+      width: 69px;
       height: 44px;
-      border-radius: 6px;
+      border-radius: 5px;
       border-top-right-radius: 0;
       border-bottom-right-radius: 0;
       top: $tabPadding;
@@ -33,14 +33,17 @@
       background-color: #fff;
       cursor: pointer;
       &:hover {
-        opacity: 0.75;
+        background-color: #aaffc2;
+      }
+      &:active {
+        background-color: #66e98b;
       }
     }
     .tabContent {
       position: relative;
       width: 64px;
-      top: 11px;
-      left: $tabPadding;
+      top: 13px;
+      left: $tabPadding + 2px;
       height: 30px;
       font-size: 14px;
       font-weight: bold;

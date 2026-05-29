@@ -9,6 +9,55 @@ import { hexToRGBValue } from "../utils";
 import { LineChartControls } from "./line-chart-controls";
 import { BaseComponent } from "../../components/base";
 
+const LEGEND_LINE_LENGTH = 25;
+
+// beforeDraw: Chart.js centers the legend within the (asymmetric) layout-padding box, shifting it
+//   off-center — override the legend box to span the full canvas so it centers over the panel.
+// afterDraw: the built-in "line" point style is capped at fontSize (getBoxWidth clamp), so the key
+//   line can't exceed ~20px. The legend items suppress the default symbol (transparent fill,
+//   lineWidth 0) and reserve space via boxWidth; here we draw the key line at the full length.
+const legendPlugin = {
+  beforeDraw(chart: any) {
+    const legend = chart.legend;
+    if (legend) {
+      legend.left = 0;
+      legend.width = chart.width;
+      if (legend.minSize) {
+        legend.minSize.width = chart.width;
+      }
+    }
+  },
+  afterDraw(chart: any) {
+    const legend = chart.legend;
+    if (!legend || !legend.legendHitBoxes) {
+      return;
+    }
+    const ctx = chart.ctx;
+    legend.legendHitBoxes.forEach((box: any, i: number) => {
+      const ds = chart.data.datasets[i];
+      if (!ds) {
+        return;
+      }
+      // skip the key line for datasets hidden via the legend, so it matches the
+      // struck-through label and the hidden plot line
+      if (!chart.isDatasetVisible(i)) {
+        return;
+      }
+      const y = box.top + box.height / 2;
+      ctx.save();
+      ctx.strokeStyle = ds.borderColor;
+      ctx.lineWidth = 4;
+      ctx.lineCap = "butt";
+      ctx.setLineDash(ds.borderDash || []);
+      ctx.beginPath();
+      ctx.moveTo(box.left, y);
+      ctx.lineTo(box.left + LEGEND_LINE_LENGTH, y);
+      ctx.stroke();
+      ctx.restore();
+    });
+  }
+};
+
 interface ILineProps {
   chartFont?: string;
   width?: number;
@@ -34,6 +83,12 @@ const defaultOptions: ChartOptions = {
   },
   animation: {
     duration: 0
+  },
+  layout: {
+    padding: {
+      left: 3,
+      right: 19
+    }
   },
   title: {
     display: true,
@@ -158,10 +213,8 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
     const chartDisplay = lineData(chart);
     const minMaxValues = chart.minMaxAll;
     const options: ChartOptions = { ...defaultOptions, title: {
-        display: (chart.name && chart.name.length > 0),
-        text: chart.name,
-        fontFamily: chartFont,
-        fontSize: 15
+        // title is rendered as HTML below so it can be centered over the panel, not the plot area
+        display: false
       },
       scales: {
         yAxes: [{
@@ -170,12 +223,24 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
             min: minMaxValues.minA2,
             max: minMaxValues.maxA2,
             fontFamily: chartFont,
+            fontSize: 14,
+            fontColor: "#434343",
+            padding: 1,
             userCallback: axisLabelA2Function
           },
           scaleLabel: {
             display: !!chart.axisLabelA2,
             labelString: chart.axisLabelA2,
-            fontFamily: chartFont
+            fontFamily: chartFont,
+            fontSize: 14,
+            fontStyle: "500",
+            fontColor: "#434343",
+            padding: { top: 4, bottom: 3 }
+          },
+          gridLines: {
+            color: "#dfdfdf",
+            zeroLineColor: "#797979",
+            drawBorder: true
           }
         }],
         xAxes: [{
@@ -188,12 +253,22 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
             minRotation: chart.dataLabelRotation,
             maxRotation: chart.dataLabelRotation,
             fontFamily: chartFont,
+            fontSize: 14,
+            fontColor: "#434343",
             userCallback: axisLabelA1Function
           },
           scaleLabel: {
             display: !!chart.axisLabelA1,
             labelString: chart.axisLabelA1,
-            fontFamily: chartFont
+            fontFamily: chartFont,
+            fontSize: 14,
+            fontStyle: "500",
+            fontColor: "#434343"
+          },
+          gridLines: {
+            color: "#dfdfdf",
+            zeroLineColor: "#797979",
+            drawBorder: true
           }
         }]
       },
@@ -201,8 +276,31 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
         display: true,
         position: "bottom",
         labels: {
-          fontFamily: chartFont
+          // key line is drawn by legendPlugin.afterDraw; suppress the built-in symbol and reserve
+          // its width via boxWidth so the label sits past the drawn line
+          fontFamily: chartFont,
+          fontSize: 14,
+          fontStyle: "normal",
+          fontColor: "#434343",
+          boxWidth: 24,
+          padding: 14,
+          generateLabels: (c: any) => c.data.datasets.map((ds: any, i: number) => ({
+            text: ds.label,
+            fillStyle: "transparent",
+            lineWidth: 0,
+            hidden: !c.isDatasetVisible(i),
+            datasetIndex: i
+          }))
         }
+      },
+      tooltips: {
+        backgroundColor: "rgba(0, 0, 0, 0.8)",
+        titleFontFamily: chartFont,
+        titleFontSize: 14,
+        bodyFontFamily: chartFont,
+        bodyFontSize: 14,
+        cornerRadius: 0,
+        displayColors: true
       },
       annotation: {
         drawTime: "afterDraw",
@@ -219,10 +317,25 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
         height={h}
         width={w}
         redraw={true}
-        plugins={[ChartAnnotation]}
+        plugins={[ChartAnnotation, legendPlugin]}
       />;
     return (
       <div className="line-chart-container">
+        {chart.name && chart.name.length > 0 &&
+          <div
+            className="line-chart-title"
+            style={{
+              textAlign: "center",
+              fontFamily: chartFont,
+              fontWeight: 500,
+              fontSize: 16,
+              color: "#434343",
+              padding: "2px 0 8px"
+            }}
+          >
+            {chart.name}
+          </div>
+        }
         <div className="line-chart-container" data-testid="line-chart">
           {graph}
         </div>
