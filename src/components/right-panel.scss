@@ -59,7 +59,6 @@
       bottom: 0;
       top: 0;
       right: 0;
-      min-height: 618px;
       height: 100%;
 
       .tabContent {
@@ -69,7 +68,6 @@
         top: 0;
         right: 0;
         width: $rightPanelInnerWidth;
-        min-height: 618px;
         background-color: $tabContents;
         margin-right: 0;
         margin-left: auto;

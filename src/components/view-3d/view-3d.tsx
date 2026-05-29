@@ -3,7 +3,7 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls , PerspectiveCamera } from "@react-three/drei";
 import { observer, Provider } from "mobx-react";
 import { useStores } from "../../use-stores";
-import { DEFAULT_UP, PLANE_WIDTH, planeHeight } from "./helpers";
+import { DEFAULT_UP, ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
 import { Terrain } from "./terrain";
 import { SparksContainer } from "./spark";
 import * as THREE from "three";
@@ -26,16 +26,12 @@ const ShutterbugSupport = () => {
   return null;
 };
 
-// Fits the terrain bounding box into the viewport on mount by preserving the
+// Fits the terrain bounding box into the viewport by preserving the
 // designer-chosen look-angle (direction from target to camera) and adjusting
 // only the camera distance. Keeps a fixed % margin around the terrain so the
 // composition reads the same on a wide Chromebook screen as on a narrower
-// embedded viewport. Runs only once at mount per the WM-8 design call.
+// embedded viewport. Re-fits whenever the viewport size or design pose changes.
 const TERRAIN_FIT_MARGIN = 1.05;
-// Estimated max terrain elevation in world units (heightmap scaled by
-// PLANE_WIDTH / modelWidth → heightmapMaxElevation * scale). Used as headroom
-// when fitting so peaks don't get clipped at extreme viewports.
-const TERRAIN_FIT_Z_HEADROOM = 0.05;
 // Design FOV. Must match the value the PerspectiveCamera ends up rendering at.
 // Hardcoded rather than read from `camera.fov` because the fitter effect runs
 // before drei's PerspectiveCamera has applied its fov prop (the r3f Canvas
@@ -49,7 +45,14 @@ const CameraFitter = ({ targetPos, designPos }: {
   const { camera, size, controls } = useThree();
   const simulation = useStores().simulation;
   const fittedRef = useRef(false);
-  // Runs every frame but short-circuits after the first successful fit. We
+  // Clear the guard whenever the viewport size or design pose changes so the
+  // next frame recalculates the distance. Without this the camera would stay
+  // at the stale fit after a browser/embed resize and could reintroduce the
+  // narrow-viewport clipping the fitter exists to prevent.
+  useEffect(() => {
+    fittedRef.current = false;
+  }, [size.width, size.height, targetPos, designPos]);
+  // Runs every frame but short-circuits after the latest successful fit. We
   // need to wait for OrbitControls to be mounted (so we can call its
   // update() and have it re-derive its internal spherical from the new
   // camera position); a useEffect could fire before that.
@@ -67,7 +70,10 @@ const CameraFitter = ({ targetPos, designPos }: {
 
     const w = PLANE_WIDTH;
     const h = planeHeight(simulation);
-    const elev = TERRAIN_FIT_Z_HEADROOM;
+    // Max terrain elevation in world units, matching the terrain geometry
+    // (cell.elevation * ftToViewUnit). Using the actual scale rather than a
+    // fixed guess keeps tall peaks from clipping at narrow viewports.
+    const elev = simulation.config.heightmapMaxElevation * ftToViewUnit(simulation);
     const corners: THREE.Vector3[] = [];
     for (const x of [0, w]) {
       for (const y of [0, h]) {
