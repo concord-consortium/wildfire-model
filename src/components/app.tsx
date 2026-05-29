@@ -10,6 +10,7 @@ import { useStores } from "../use-stores";
 import { TopBar } from "./top-bar/top-bar";
 import { AboutDialogContent } from "./top-bar/about-dialog-content";
 import { ShareDialogContent } from "./top-bar/share-dialog-content";
+import { CameraSettingsPanel } from "./camera-settings-panel/camera-settings-panel";
 import { LogMonitor } from "@concord-consortium/log-monitor";
 import { getUrlConfig } from "../config";
 import { log } from "../log";
@@ -89,6 +90,7 @@ export const AppComponent = observer(function WrappedComponent() {
       onMouseLeave={handleMouseLeave}
     >
       <TopBar projectName="Wildfire Explorer" aboutContent={<AboutDialogContent />} shareContent={<ShareDialogContent />} />
+      {config.cameraSettings && <CameraSettingsPanel />}
       { showModelScale &&
         <div className={css.modelInfo}>
           <div>Model Dimensions: { config.modelWidth } ft x { config.modelHeight } ft</div>
