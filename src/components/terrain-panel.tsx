@@ -13,6 +13,7 @@ import { log } from "../log";
 import { useStores } from "../use-stores";
 import { ZonesCountSelector } from "./zones-count-selector";
 import { ISetupSnapshot, captureSimulationSnapshot, setupSnapshotDiffers } from "./setup-snapshot";
+import CloseIcon from "../assets/setup-close.svg";
 
 import css from "./terrain-panel.scss";
 import { Zone } from "../models/zone";
@@ -22,9 +23,9 @@ const cssClasses = [css.zone1, css.zone2, css.zone3];
 
 const panelClasses = [css.panel0, css.panel1, css.panel2];
 const panelInstructions = [
-  "Select the number of zones in your model",
-  "Adjust variables in each zone",
-  "Set initial wind direction and speed"
+  <>Select the <b>number of zones</b> in your model</>,
+  <>Adjust conditions in <b>each zone</b></>,
+  <>Set initial <b>wind direction</b> and <b>wind speed</b></>
 ];
 
 interface IProps extends IBaseProps { }
@@ -234,7 +235,9 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
       {
         ui.showTerrainUI &&
         <div className={`${css.background} ${cssClasses[selectedZone]} ${panelClasses[currentPanel]}`}>
-          <div className={css.closeButton} data-testid="terrain-panel-close" onClick={handleClose}>X</div>
+          <div className={css.closeButton} data-testid="terrain-panel-close" onClick={handleClose}>
+            <CloseIcon className={css.closeIcon} />
+          </div>
           <div className={css.header} data-testid="terrain-header">Setup</div>
           <div className={css.instructions}>
             <span className={css.setupStepIcon}>{firstPanel === 0 ? currentPanel + 1 : currentPanel}</span>
@@ -331,7 +334,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
                 <Button className={css.continueButton} onClick={showPreviousPanel}>
                   Previous
                 </Button>
-                <Button className={css.continueButton} onClick={applyAndClose}>
+                <Button className={`${css.continueButton} ${css.createButton}`} onClick={applyAndClose}>
                   Create
                 </Button>
               </div>

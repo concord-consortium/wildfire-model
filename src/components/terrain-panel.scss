@@ -1,7 +1,8 @@
 @import "common.scss";
 
 .terrain {
-  $width: 288px;
+  // $width / height are the content box; +10px padding +2px border => 320x465 outer (Zeplin "Setup Control back")
+  $width: 308px;
   $padding: 5px;
   position: absolute;
   top: 65px;
@@ -11,9 +12,9 @@
   left: 50%;
   margin-left: calc(-1 * ($width + 2 * $padding) / 2);
   width: $width;
-  height: 476px;
+  height: 453px;
   border-radius: 10px;
-  border: 1px solid silver;
+  border: 1px solid $controlGray;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.5);
 
   background: rgba(255, 255, 255, 1);
@@ -54,18 +55,27 @@
 
   .closeButton {
     position: absolute;
+    cursor: pointer;
     top: 5px;
     right: 5px;
-    width: 20px;
-    height: 20px;
-    border-radius: 6px;
-    text-align: center;
-    line-height: 1.2em;
+    width: 24px;
+    height: 24px;
+    border-radius: 5px;
     color: $controlGray;
-    font-weight: 800;
+
+    .closeIcon {
+      display: block;
+      width: 24px;
+      height: 24px;
+    }
 
     &:hover {
-      background-color: $controlGrayLight1
+      background-color: $controlGrayLight1;
+    }
+
+    &:active {
+      background-color: #757575;
+      color: #ffffff;
     }
   }
 
@@ -84,24 +94,26 @@
     margin-bottom: 10px;
     width: 100%;
     text-align: left;
+    font-family: Lato;
     font-style: italic;
     color: $controlText;
-    font-size: 13px;
+    font-size: 14px;
 
     .setupStepIcon {
       display: inline-block;
-      border-radius: 9px;
-      width: 18px;
-      height: 18px;
-      font-size: 13px;
-      font-weight: bold;
+      border-radius: 10px;
+      width: 20px;
+      height: 20px;
+      font-family: 'Roboto Condensed';
+      font-size: 14px;
+      font-weight: 700;
       font-stretch: condensed;
       font-style: normal;
-      line-height: normal;
+      line-height: 20px;
       letter-spacing: normal;
       text-align: center;
       color: #ffffff;
-      background-color: $controlGray;
+      background-color: #595959; // Zeplin "Step back"; not a palette token
       margin-left: 9px;
       margin-right: 7px;
     }
@@ -171,12 +183,39 @@
     bottom: 13px;
 
     .continueButton {
+      cursor: pointer;
       border: 1px solid $controlGray;
       border-radius: 5px;
       background-color: #ffffff;
-      width: 78px;
-      height: 27px;
+      width: 76px;
+      height: 28px;
+      font-family: Lato;
       font-size: 14px;
+      font-weight: 700;
+      text-transform: none;
+      color: $controlText;
+
+      &:hover {
+        background-color: $controlGrayLight1;
+      }
+
+      &:active {
+        background-color: #757575;
+        color: #ffffff;
+      }
+    }
+
+    .createButton {
+      background-color: #aaffc2;
+
+      &:hover {
+        background-color: #66e98b;
+      }
+
+      &:active {
+        background-color: #008927;
+        color: #ffffff;
+      }
     }
 
     .continueButton+.continueButton {

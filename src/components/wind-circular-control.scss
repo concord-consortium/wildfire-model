@@ -59,21 +59,28 @@
     }
   }
 
-  .key {
+  .windDirectionKey,
+  .windSpeedKey {
     position: absolute;
-    top: 50px;
-    left: 20px;
-    width: 56px;
-    height: 45px;
+    width: fit-content;
+    padding: 2px 5px;
     font-family: Lato;
-    font-size: 12px;
-    font-weight: bold;
-    font-stretch: normal;
-    font-style: normal;
-    line-height: 1.25;
-    letter-spacing: normal;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: normal;
     text-align: center;
     color: $controlText;
+    background-color: #ffffff;
+  }
+
+  .windDirectionKey {
+    top: 50px;
+    left: 8px;
+  }
+
+  .windSpeedKey {
+    top: 8px;
+    right: 8px;
   }
 
   .windText {
@@ -101,7 +108,12 @@
 
     .markLabel {
       font-family: 'Roboto Condensed';
-      font-size: 10px;
+      font-size: 10px; // TODO: 13px once the wind-speed slider is widened in the wind-control layout pass
+      color: $controlText;
+
+      &:global(.MuiSlider-markLabelActive) {
+        font-weight: 500;
+      }
     }
 
     .rail {
@@ -123,6 +135,7 @@
       height: 14px;
       background-image: url("../assets/slider-horizontal.svg");
       box-shadow: none;
+      cursor: grab;
 
       &:hover {
         box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
@@ -130,6 +143,7 @@
 
       &:active, &:global(.Mui-active), &:global(.Mui-focusVisible) {
         box-shadow: 0 0 0 3px rgba(255, 255, 255, 1);
+        cursor: grabbing;
       }
     }
   }
