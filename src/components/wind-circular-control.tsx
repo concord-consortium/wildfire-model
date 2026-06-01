@@ -69,28 +69,28 @@ export const WindCircularControl: React.FC<IProps> = ({ speed, direction, onSpee
         />
       </div>
 
-      <div className={css.windDirectionKey}>Wind Direction</div>
+      <div className={css.windDirectionKey}>{"Wind\nDirection"}</div>
       <div className={css.windSpeedKey}>Wind Speed</div>
       <div className={css.windText}>
         {`${Math.round(scaledWind)} MPH from the ${degToCompass(direction)}`}
-        <div className={css.windSliderControls} data-testid="wind-speed-slider">
-          <Slider
-            classes={{
-              rail: css.rail,
-              mark: css.mark,
-              thumb: css.thumb,
-              markLabel: css.markLabel
-            }}
-            min={0}
-            max={30}
-            value={scaledWind}
-            step={1}
-            track={false}
-            marks={speedMarks}
-            onChange={handleSpeedChange}
-            onChangeCommitted={handleSpeedChangeCommitted}
-          />
-        </div>
+      </div>
+      <div className={css.windSliderControls} data-testid="wind-speed-slider">
+        <Slider
+          classes={{
+            rail: css.rail,
+            mark: css.mark,
+            thumb: css.thumb,
+            markLabel: css.markLabel
+          }}
+          min={0}
+          max={30}
+          value={scaledWind}
+          step={1}
+          track={false}
+          marks={speedMarks}
+          onChange={handleSpeedChange}
+          onChangeCommitted={handleSpeedChangeCommitted}
+        />
       </div>
     </div>
   );

@@ -1,16 +1,20 @@
 @import "common.scss";
 
+// Layout matches the Zeplin "Adjust Wind" panel: the Wind Direction label sits
+// to the left of the compass dial; the Wind Speed label, MPH readout, and speed
+// slider stack on the right. Offsets are panel-relative (container is the full
+// 308px content width; the dial control is the vertical anchor at top:0).
 .windContainer {
   width: 100%;
-  height: 100%;
+  height: 144px;
   position: relative;
-  margin-top: 10px;
 
   .controlContainer {
-    margin-left: auto;
-    margin-right: auto;
-    width: 144px;
-    height: 144px;
+    position: absolute;
+    left: 52px;
+    top: 0;
+    width: 143px;
+    height: 143px;
 
     .windSymbolContainer {
       width: 142px;
@@ -24,37 +28,6 @@
         position: absolute;
         left: 58px;
         bottom: 0px;
-      }
-    }
-
-    .dialContainer {
-      width: 72px;
-      height: 72px;
-      top: 25%;
-      left: 25%;
-      background-repeat: no-repeat;
-      background-position: center;
-      position: relative;
-
-      .dial {
-        position: absolute;
-        left: 0px;
-        width: 100%;
-        height: 100%;
-      }
-
-      .arrow {
-        position: absolute;
-        left: 0px;
-        width: 100%;
-        height: 100%;
-      }
-
-      .windCircularControl {
-        position: absolute;
-        left: 0px;
-        width: 100%;
-        height: 100%;
       }
     }
   }
@@ -74,23 +47,23 @@
   }
 
   .windDirectionKey {
-    top: 50px;
-    left: 8px;
+    left: 7px;
+    top: 5px;
+    white-space: pre-line; // renders the "Wind\nDirection" two-line label
   }
 
   .windSpeedKey {
-    top: 8px;
-    right: 8px;
+    left: 202px;
+    top: 27px;
   }
 
   .windText {
     position: absolute;
-    top: 30px;
-    right: 30px;
-    width: 41px;
-    height: 42px;
+    left: 214px;
+    top: 53px;
+    width: 62px;
     font-family: 'Roboto Condensed';
-    font-size: 12px;
+    font-size: 13px;
     font-weight: normal;
     font-stretch: condensed;
     font-style: normal;
@@ -101,14 +74,14 @@
   }
 
   .windSliderControls {
-    margin-left: auto;
-    margin-right: auto;
-    font-size: 0.8em;
-    width: 90%;
+    position: absolute;
+    left: 199px;
+    top: 84px;
+    width: 92px;
 
     .markLabel {
       font-family: 'Roboto Condensed';
-      font-size: 10px; // TODO: 13px once the wind-speed slider is widened in the wind-control layout pass
+      font-size: 13px;
       color: $controlText;
 
       &:global(.MuiSlider-markLabelActive) {
