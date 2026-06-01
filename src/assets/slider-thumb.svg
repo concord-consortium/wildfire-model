@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="32px" height="32px" viewBox="0 0 32 32" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>Slider Thumb</title>
+    <g id="Slider-Thumb" stroke="none" fill="none" fill-rule="evenodd" stroke-width="1">
+        <g>
+            <path d="M15.9998,4.0003 C22.627217,4.0003 27.9998,9.372883 27.9998,16.0003 C27.9998,22.627717 22.627217,28.0003 15.9998,28.0003 C9.372383,28.0003 3.9998,22.627717 3.9998,16.0003 C3.9998,9.372883 9.372383,4.0003 15.9998,4.0003 Z" id="Outer" fill="#797979" fill-rule="nonzero"></path>
+            <path d="M15.9998,5.5003 C10.2008101,5.5003 5.4998,10.2013101 5.4998,16.0003 C5.4998,21.7992899 10.2008101,26.5003 15.9998,26.5003 C21.7987899,26.5003 26.4998,21.7992899 26.4998,16.0003 C26.4998,10.2013101 21.7987899,5.5003 15.9998,5.5003 Z" id="Oval" fill="#FFFFFF" fill-rule="nonzero"></path>
+            <polygon id="Down" fill="#C9C9C9" points="15.9998 24.4003 21.9998 17.8003 9.9998 17.8003"></polygon>
+            <polygon id="Up" fill="#C9C9C9" points="15.9998 7.6003 9.9998 14.2003 21.9998 14.2003"></polygon>
+        </g>
+    </g>
+</svg>

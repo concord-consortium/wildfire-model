@@ -5,7 +5,8 @@
 
   .terrainSelectorHeader {
     width: fit-content;
-    margin: 6px auto 0;
+    margin: 0 auto; // label sits at the tile bottom (Zeplin); radio row below carries the gap
+
     padding: 2px 5px;
     font-family: Lato;
     font-size: 14px;
@@ -17,8 +18,7 @@
 
   .terrainSelector {
     width: 100%;
-    margin-left: auto;
-    margin-right: auto;
+    margin: 6px auto 0; // gap between the "Terrain Type" label and the radio row
     display: flex;
     flex-wrap: nowrap;
     flex-direction: row !important;

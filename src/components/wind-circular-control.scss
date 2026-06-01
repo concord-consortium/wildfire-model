@@ -104,9 +104,14 @@
     }
 
     .thumb {
-      width: 14px;
-      height: 14px;
-      background-image: url("../assets/slider-horizontal.svg");
+      // 28px asset drawn at 140% so its inset ring fills the element (halo padding
+      // clipped). 20px matches the Zeplin wind-speed ring and the veg/drought thumbs.
+      width: 20px;
+      height: 20px;
+      background-image: url("../assets/slider-thumb-small.svg");
+      background-size: 140%;
+      background-position: center;
+      background-repeat: no-repeat;
       box-shadow: none;
       cursor: grab;
 

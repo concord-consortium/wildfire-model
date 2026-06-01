@@ -241,7 +241,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
           <div className={css.header} data-testid="terrain-header">Setup</div>
           <div className={css.instructions}>
             <span className={css.setupStepIcon}>{firstPanel === 0 ? currentPanel + 1 : currentPanel}</span>
-            { panelInstructions[currentPanel] }
+            <span className={css.instructionsText}>{ panelInstructions[currentPanel] }</span>
           </div>
           {
             currentPanel === 0 &&

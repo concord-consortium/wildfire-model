@@ -8,6 +8,7 @@
 
   .header {
     width: fit-content;
+    margin-left: 27px; // align the label over its slider column (Zeplin: veg/drought headers indented, not at panel edge)
     padding: 2px 5px;
     font-size: 14px;
     font-family: Lato;
@@ -20,14 +21,14 @@
   .sliderContainer {
     position: relative;
     margin-top: 26px;
-    height: 100px;
+    height: 114px;
   }
 
   .sliderIcons {
     position: absolute;
     margin-top: 10px;
     left: 20px;
-    height: 104px;
+    height: 114px;
     width: 28px;
 
     .sliderIcon {
@@ -69,7 +70,7 @@
   }
 
   .slider {
-    height: 103px;
+    height: 114px; // Zeplin rail span (Forest->Grass = 114), so the marks don't compress
     margin-left: 35px;
 
     .rail {
@@ -101,9 +102,15 @@
     }
 
     .thumb {
+      // 32px asset drawn at 133% so its inset ring fills the element (halo padding
+      // clipped). Sized to 20px: the Zeplin 24px ring reads oversized against our
+      // more-compressed 4-tick rail, so we use the slightly smaller ring.
       width: 20px;
       height: 20px;
-      background-image: url("../assets/slider-vertical.svg");
+      background-image: url("../assets/slider-thumb.svg");
+      background-size: 133.33%;
+      background-position: center;
+      background-repeat: no-repeat;
       box-shadow: none;
       cursor: grab;
 
