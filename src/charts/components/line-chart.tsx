@@ -58,6 +58,27 @@ const legendPlugin = {
   }
 };
 
+// Chart.js 2.9 draws the axis border (drawBorder) using gridLines.color, so the y-axis line would
+// share the light gridline color and can't be darkened independently. Draw the dark gray y-axis
+// line ourselves over the left edge of the plot area to match the x-axis zeroLine (#797979).
+const yAxisLinePlugin = {
+  afterDraw(chart: any) {
+    const area = chart.chartArea;
+    if (!area) {
+      return;
+    }
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.strokeStyle = "#797979";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(area.left, area.top);
+    ctx.lineTo(area.left, area.bottom);
+    ctx.stroke();
+    ctx.restore();
+  }
+};
+
 interface ILineProps {
   chartFont?: string;
   width?: number;
@@ -156,6 +177,10 @@ const lineData = (chartData: ChartDataModel) => {
         // borderColor is the color of the line
         dset.borderColor = hexToRGBValue(d.color, 1);
         dset.pointBorderColor = hexToRGBValue(d.color, 1);
+        // pointBackgroundColor defaults to a per-index array cycling through ChartColors; without
+        // this override the tooltip swatch (displayColors) picks a different fill per hovered point
+        // on the same line. Pin it to the line color so every point on the line matches.
+        dset.pointBackgroundColor = hexToRGBValue(d.color, 1);
         dset.pointHoverBackgroundColor = hexToRGBValue(d.color, 1);
         dset.pointHoverBorderColor = hexToRGBValue(d.color, 1);
       }
@@ -235,7 +260,8 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
             fontSize: 14,
             fontStyle: "500",
             fontColor: "#434343",
-            padding: { top: 4, bottom: 3 }
+            // top padding shifts the rotated y-axis label right (toward the plot)
+            padding: { top: 9, bottom: 3 }
           },
           gridLines: {
             color: "#dfdfdf",
@@ -317,7 +343,7 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
         height={h}
         width={w}
         redraw={true}
-        plugins={[ChartAnnotation, legendPlugin]}
+        plugins={[ChartAnnotation, legendPlugin, yAxisLinePlugin]}
       />;
     return (
       <div className="line-chart-container">
