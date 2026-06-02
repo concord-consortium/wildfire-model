@@ -9,7 +9,7 @@ export const ruleSet24: RuleSet<WildfireDefaults> = {
     {
       id: 1,
       studentAction: "Did not run the simulation. A.k.a. Click button (before they do anything else)",
-      feedback: `Hazbot: Hello, again! I will analyze your model after you run it! Scroll up and follow the instructions at the top of the page!
+      feedback: `Hazbot: Hello, again! I will analyze your model after you run it. Scroll up and follow the instructions at the top of the page!
 [Okay]`,
       visualFeedback: "",
       expression: "NOT ranSimulation",
@@ -26,14 +26,15 @@ export const ruleSet24: RuleSet<WildfireDefaults> = {
       arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 4)
 2. Hazbot: Now click the Setup button. (Step 2 of 4)
 3. Hazbot: Click the Next button. (Step 3 of 4)
-4. Change the Wind Direction and Speed. Then run the model again. (Step 4 of 4)
+4. Change the Wind Direction and Wind Speed. Then run the model again. (Step 4 of 4)
 [Got it!]`,
       expression: "uniqueNonZeroWindValuesUsed.size == 0 AND NOT setAnyZoneVar AND ranSimulation",
     },
     {
       id: 3,
       studentAction: "Ran the simulation with zone setups changed but without wind speed or wind direction changed.",
-      feedback: "Hazbot: Let’s focus on wind. You can change the wind in the model Setup! [Show me]",
+      feedback: `Hazbot: Let’s focus on wind. You can change the wind in the model Setup!
+[Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Next button on the Setup panel outlined; coach mark points to Next button
@@ -41,14 +42,15 @@ export const ruleSet24: RuleSet<WildfireDefaults> = {
       arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 4)
 2. Hazbot: Now click the Setup button. (Step 2 of 4)
 3. Hazbot: Click the Next button. (Step 3 of 4)
-4. Change the Wind Direction and Speed. Then run the model again. (Step 4 of 4)
+4. Change the Wind Direction and Wind Speed. Then run the model again. (Step 4 of 4)
 [Got it!]`,
       expression: "uniqueNonZeroWindValuesUsed.size == 0 AND setAnyZoneVar",
     },
     {
       id: 4,
       studentAction: "Ran the simulation once with a different wind speed or a direction",
-      feedback: "Hazbot: Keep going! Setup the model with different wind settings to compare!",
+      feedback: `Hazbot: Keep going! Set up the model with different wind settings to compare!
+[Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Next button on the Setup panel outlined; coach mark points to Next button
@@ -56,7 +58,7 @@ export const ruleSet24: RuleSet<WildfireDefaults> = {
       arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 4)
 2. Hazbot: Now click the Setup button. (Step 2 of 4)
 3. Hazbot: Click the Next button. (Step 3 of 4)
-4. Change the Wind Direction and Speed. Then run the model again. (Step 4 of 4)
+4. Change the Wind Direction and Wind Speed. Then run the model again. (Step 4 of 4)
 [Got it!]`,
       expression: "NOT (uniqueWindValuesUsed.size > 1) AND uniqueNonZeroWindValuesUsed.size > 0",
     },

@@ -17,10 +17,12 @@ export const ruleSet42: RuleSet<WildfireDefaults> = {
     {
       id: 2,
       studentAction: "Ran the simulation with a changed vegetation type, drought, or wind.",
-      feedback: "Hazbot: Let’s run the model using the original settings!",
-      visualFeedback: "1. Reload button outlined; coach mark points to Reload button",
+      feedback: `Hazbot: Let’s run the model using the original settings!
+[Show me]`,
+      visualFeedback: `1. Reload button outlined; coach mark points to Reload button
+2. Start button outlined; coach mark points to Start button`,
       arrowText: `1. Hazbot: First, Reload your model. (Step 1 of 2)
-2. Hazbot: Click to start to run the model! (Step 2 of 2)
+2. Hazbot: Click to Start to run the model! (Step 2 of 2)
 [Got it!]`,
       expression: "setAnyVar",
     },
@@ -28,7 +30,8 @@ export const ruleSet42: RuleSet<WildfireDefaults> = {
       id: 3,
       studentAction: `Ran the simulation 
 without changed variables.`,
-      feedback: "Hazbot: Great job! You’re ready to answer the questions below.",
+      feedback: `Hazbot: Great job! You’re ready to answer the questions below.
+[Hooray!]`,
       visualFeedback: "Confetti animation or subtle celebratory visual",
       expression: "ranSimulation AND NOT setAnyVar",
     }

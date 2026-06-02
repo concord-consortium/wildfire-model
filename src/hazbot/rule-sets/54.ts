@@ -32,16 +32,18 @@ export const ruleSet54: RuleSet<WildfireDefaults> = {
       id: 3,
       studentAction: "Ran with original vegetation setting and severe drought across all three zones but without fireline or helitack",
       feedback: "Hazbot: Try using firelines and helitacks to contain the fire! [Show me]",
-      visualFeedback: "1. Helitack and firelines buttons outlined; coach mark points to buttons",
-      arrowText: `1. Hazbot: Make sure you try both firelines and helitacks. (Step 1 of 2)
-2. Hazbot: Click to start to run the model! (Step 2 of 2)
+      visualFeedback: `1. Restart button outlined; coach mark points to Restart button
+2. Fireline and Helitack buttons outlined (both are disabled) and Start button outlined; coach mark points to Fireline/Helitack buttons`,
+      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 2)
+2. Hazbot: Add both a Fireline and a Helitack while the model is running. Click Start to begin! (Step 2 of 2)
 [Got it!]`,
       expression: "ranSimulation WITH DefaultVegetations AND SevereDroughts AND NOT (Fireline OR Helitack)",
     },
     {
       id: 4,
       studentAction: "Ran with original vegetation setting and severe drought across all three zones and with at least one fireline or helitack in one or more trials",
-      feedback: "Hazbot: Great job on this investigation! Keep working through the activity!",
+      feedback: `Hazbot: Great job on this investigation! Keep working through the activity!
+[Hooray!]`,
       visualFeedback: "Confetti animation or subtle celebratory visual",
       expression: "ranSimulation WITH DefaultVegetations AND SevereDroughts AND (Fireline OR Helitack)",
     }

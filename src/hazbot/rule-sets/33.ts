@@ -31,7 +31,8 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
     {
       id: 3,
       studentAction: "Ran the simulation with other zone setup variables changed but without assigning forest with and without suppression",
-      feedback: "Hazbot: Don't forget to compare the two types of forest. I can help![Show me]",
+      feedback: `Hazbot: Don't forget to compare the two types of forest. I can help!
+[Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
@@ -44,18 +45,22 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
     {
       id: 4,
       studentAction: "Ran the simulation with zones with forest and forest w/ suppression, and a spark not placed in each zone",
-      feedback: "Hazbot: I do not see a spark in each zone. Let’s put one in each so you can compare wildfire spread.[Show me]",
-      visualFeedback: "1. Spark button outlined; coach mark points to spark button",
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
-2. Hazbot: Now make sure there is a Spark in each zone. (Step 2 of 3)
-3. Hazbot: Run the model again. (Step 3 of 3)
+      feedback: `Hazbot: I do not see a spark in each zone. Let’s put one in each so you can compare wildfire spread.
+[Show me]`,
+      visualFeedback: `1. Restart button outlined; coach mark points to Restart button
+2. Coach mark (no pointer) centered top
+     - If 2 sparks were placed, do not outline the Spark button.
+     - If only one spark was placed, then the Spark button is outlined.`,
+      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 2)
+2. Hazbot: Now make sure there is a spark in each zone. Then run the model again. (Step 2 of 2)
 [Got it!]`,
       expression: "ranSimulation WITH ForestWAWOSuppression AND NOT OneSparkPerZone",
     },
     {
       id: 5,
       studentAction: "Ran the simulation with zones with forest and forest w/ suppression, a spark placed in each zone, but different drought between the zones",
-      feedback: "Hazbot: To compare forest types, make sure the drought level is the same in each zone![Show me]",
+      feedback: `Hazbot: To compare forest types, make sure the drought level is the same in each zone!
+[Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
@@ -68,7 +73,8 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
     {
       id: 6,
       studentAction: "Ran the simulation with zones with forest and forest w/ suppression, a spark in each zone, and same drought",
-      feedback: "Hazbot: Great job! You’re ready to answer the questions below.[Show me]",
+      feedback: `Hazbot: Great job! You’re ready to answer the questions below.
+[Hooray!]`,
       visualFeedback: "Confetti animation or subtle celebratory visual",
       expression: "ranSimulation WITH ForestWAWOSuppression AND OneSparkPerZone AND UniformDroughtLevels",
     }
