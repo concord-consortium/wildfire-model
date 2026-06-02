@@ -234,10 +234,16 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
       {
         ui.showTerrainUI &&
         <div className={`${css.background} ${cssClasses[selectedZone]} ${panelClasses[currentPanel]}`}>
-          <div className={css.closeButton} data-testid="terrain-panel-close" onClick={handleClose}>
+          <button
+            type="button"
+            className={css.closeButton}
+            data-testid="terrain-panel-close"
+            aria-label="Close setup"
+            onClick={handleClose}
+          >
             <CloseIcon className={css.closeIcon} />
-          </div>
-          <div className={css.header} data-testid="terrain-header">Setup</div>
+          </button>
+          <div className={css.header} data-testid="terrain-header"><span>Setup</span></div>
           <div className={css.instructions}>
             <span className={css.setupStepIcon}>{firstPanel === 0 ? currentPanel + 1 : currentPanel}</span>
             <span className={css.instructionsText}>{ panelInstructions[currentPanel] }</span>

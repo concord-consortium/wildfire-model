@@ -26,11 +26,6 @@
     left: 0px;
     width: 100%;
     height: 100%;
-    cursor: grab;
-
-    &:active{
-      cursor: grabbing;
-    }
   }
 
   // Interactive (onChange/onChangeEnd provided, i.e. the setup panel): the face
@@ -39,6 +34,14 @@
   &.interactive{
     .dial :global(.windDialOutline){ fill: #2997ff; }
     .arrow :global(.windArrowBody){ fill: #2997ff; }
+
+    .windCircularControl{
+      cursor: grab;
+
+      &:active{
+        cursor: grabbing;
+      }
+    }
 
     // outer white ring hidden at rest; soft 50% white (Zeplin #ffffff80) on
     // hover and while dragging. Covers both the SVG #Highlight ring and the
