@@ -52,7 +52,7 @@ export const VegetationSelector = ({ vegetation, terrainType, onChange, onChange
 
   return (
     <div className={`${css.selector} ${css.vegetation}`}>
-      <div className={css.header}>Vegetation Type</div>
+      <div className={`${css.header} ${css.vegetation}`}>Vegetation Type</div>
       <div className={css.sliderContainer}>
         <div className={css.sliderIcons}>
           {

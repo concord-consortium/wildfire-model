@@ -90,8 +90,8 @@
   }
 
   .instructions {
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 8px;
+    margin-bottom: 6px;
     width: 100%;
     text-align: left;
     font-family: Lato;
@@ -102,8 +102,6 @@
     .setupStepIcon {
       display: inline-block;
       position: relative;
-      left: -2px;
-      top: -2px;
       border-radius: 10px;
       width: 20px;
       height: 20px;
@@ -117,15 +115,10 @@
       text-align: center;
       color: #ffffff;
       background-color: #595959; // Zeplin "Step back"; not a palette token
-      margin-left: 9px;
+      margin-left: 7px;
       margin-right: 7px;
     }
 
-    .instructionsText {
-      position: relative;
-      left: -2px;
-      top: -2px;
-    }
   }
 
   .widgetGroup {
@@ -133,9 +126,6 @@
   }
 
   .zones {
-    position: relative;
-    top: -5px; // nudge the zone tiles up
-    left: 8px; // shift the zone tiles right
     padding-left: 18px;
     padding-right: 18px;
     font-size: 0.7em;
@@ -153,28 +143,31 @@
   }
 
   .terrainTypeLabels {
-    width: 100%;
     display: flex;
+    padding-left: 9px;
+    padding-right: 9px;
 
     .terrainTypeLabel {
       width: 100%;
       flex-grow: 1;
-      padding-left: 4px;
-      padding-right: 4px;
       text-align: center;
-      font-size: 10px;
+      font-size: 13px;
     }
   }
 
   .terrainProperties {
-    width: 100%;
     display: flex;
     color: $controlText;
     height: 70px;
+    margin-top: -16px;
+    margin-left: 22px;
+    margin-right: 22px;
   }
 
   .selectors {
-    margin-top: 10px;
+    margin-top: 20px; // move the veg/drought controls down 10px (radios above + absolute Next button unaffected)
+    margin-left: 7px;
+    margin-right: 20px;
     height: 169px;
     display: flex;
     flex-direction: row;
@@ -190,9 +183,11 @@
   .buttonContainer {
     position: absolute;
     width: 100%;
+    box-sizing: border-box;
+    padding-right: 10px; // shift the centered button(s) 5px left
     margin-left: auto;
-    margin-right: aut0;
-    bottom: 13px;
+    margin-right: auto;
+    bottom: 12px; // 1px lower
 
     .continueButton {
       cursor: pointer;
@@ -231,7 +226,7 @@
     }
 
     .continueButton+.continueButton {
-      margin-left: 20px;
+      margin-left: 15px;
     }
   }
 

@@ -17,7 +17,6 @@ import CloseIcon from "../assets/setup-close.svg";
 
 import css from "./terrain-panel.scss";
 import { Zone } from "../models/zone";
-import { set } from "mobx";
 
 const cssClasses = [css.zone1, css.zone2, css.zone3];
 
@@ -319,7 +318,9 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
           {
             currentPanel === 2 &&
             <div className={css.panel}>
-              <div className={css.terrainTypeLabels}>{renderZoneTerrainTypeLabels()}</div>
+              <div className={css.terrainSelector}>
+                <div className={css.terrainTypeLabels}>{renderZoneTerrainTypeLabels()}</div>
+              </div>
               <div className={css.terrainProperties}>{renderTerrainProperties()}</div>
               <div className={css.wind}>
                 <WindCircularControl

@@ -19,7 +19,7 @@ export const DroughtSelector = ({ droughtLevel, onChange, onChangeCommitted, dis
   const maxLabelIdx = labels.length - 1;
 
   return <div className={`${css.selector} ${css.drought} ${disabled ? css.disabled : ""}`}>
-    <div className={css.header}>Drought Index</div>
+    <div className={`${css.header} ${css.drought}`}>Drought Index</div>
     <div className={css.sliderContainer}>
       <div className={css.sliderIcons}>
         {

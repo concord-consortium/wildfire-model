@@ -1,9 +1,5 @@
 @import "common.scss";
 
-// Layout matches the Zeplin "Adjust Wind" panel: the Wind Direction label sits
-// to the left of the compass dial; the Wind Speed label, MPH readout, and speed
-// slider stack on the right. Offsets are panel-relative (container is the full
-// 308px content width; the dial control is the vertical anchor at top:0).
 .windContainer {
   width: 100%;
   height: 144px;
@@ -12,7 +8,7 @@
   .controlContainer {
     position: absolute;
     left: 52px;
-    top: 0;
+    top: 8px;
     width: 143px;
     height: 143px;
 
@@ -43,12 +39,13 @@
     line-height: normal;
     text-align: center;
     color: $controlText;
-    background-color: #ffffff;
+    border-radius: 4px; // Zeplin "Label back" slight rounding
+    background-color: rgba(255, 255, 255, 0.75); // 75% white fill; text stays fully opaque
   }
 
   .windDirectionKey {
     left: 7px;
-    top: 5px;
+    top: 15px;
     white-space: pre-line; // renders the "Wind\nDirection" two-line label
   }
 
@@ -104,10 +101,8 @@
     }
 
     .thumb {
-      // 28px asset drawn at 140% so its inset ring fills the element (halo padding
-      // clipped). 20px matches the Zeplin wind-speed ring and the veg/drought thumbs.
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       background-image: url("../assets/slider-thumb-small.svg");
       background-size: 140%;
       background-position: center;

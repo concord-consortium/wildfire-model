@@ -7,15 +7,23 @@
   }
 
   .header {
-    width: fit-content;
-    margin-left: 27px; // align the label over its slider column (Zeplin: veg/drought headers indented, not at panel edge)
     padding: 2px 5px;
     font-size: 14px;
     font-family: Lato;
     font-weight: bold;
     line-height: normal;
     color: $controlText;
-    background-color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.75); // 75% white fill; text stays fully opaque
+    border-radius: 4px;
+
+    &.vegetation {
+      margin-left: 16px;
+      width: 108px;
+    }
+    &.drought {
+      margin-left: 24px;
+      width: 98px;
+    }
   }
 
   .sliderContainer {
@@ -89,12 +97,13 @@
 
     .markLabel {
       font-size: 13px;
-      width: 44px;
+      width: 32px;
       font-family: 'Roboto Condensed';
       color: $controlText;
       min-height: 20px;
       white-space: normal;
       line-height: normal;
+      text-align: left;
 
       &:global(.MuiSlider-markLabelActive) {
         font-weight: 500;
@@ -102,11 +111,8 @@
     }
 
     .thumb {
-      // 32px asset drawn at 133% so its inset ring fills the element (halo padding
-      // clipped). Sized to 20px: the Zeplin 24px ring reads oversized against our
-      // more-compressed 4-tick rail, so we use the slightly smaller ring.
-      width: 20px;
-      height: 20px;
+      width: 24px;
+      height: 24px;
       background-image: url("../assets/slider-thumb.svg");
       background-size: 133.33%;
       background-position: center;

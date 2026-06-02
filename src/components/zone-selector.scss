@@ -1,7 +1,7 @@
 @import "common.scss";
 
 .zone{
-  flex-grow: 1;
+  flex: 0 0 auto; // fixed-width tiles, centered as a group (don't stretch to fill)
   /* flex options for children */
   display: flex;
   flex-direction: column;
@@ -9,9 +9,13 @@
   align-items: center;
   font-family: Lato;
   height: 108px;
-  margin: auto;
   padding: 4px 0; // no horizontal padding so adjacent zone tiles touch
   cursor: pointer;
+
+  &.twoZone{ width: 128px; }   // Zeplin: 120px terrain image + 4px white frame each side
+  &.threeZone{ width: 88px; }  // Zeplin: 80px terrain image + 4px white frame each side
+
+  & + &{ margin-left: -4px; }  // overlap the shared 4px frames so the pair meets in a single white band (Zeplin)
 
   &:hover{
     .terrainPreview{
@@ -26,6 +30,11 @@
       border: solid 4px #ffffff;
       .terrainImage {
         opacity: 100%;
+      }
+      .zoneLabelBorder{
+        padding: 4px;             // 4px white frame around the pill, selected zone only (Zeplin "Label Highlight")
+        background-color: #ffffff;
+        border-radius: 8px;
       }
     }
   }
@@ -96,15 +105,19 @@
 
     .zoneLabelBorder{
       position: absolute;
-      top: 0;
+      top: 7px;
       left: 50%;
-      transform: translate(-50%, -50%); // straddle the tile's top edge per Zeplin
+      transform: translate(-50%, -50%); // straddle a point 7px below the tile's top edge per Zeplin
       z-index: 2;
     }
 
     .zoneLabel{
-      display: inline-block;
-      padding: 3px 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      width: 59px;              // Zeplin "Label back" 59x24
+      height: 24px;
       font-family: Lato;
       font-size: 14px;
       font-weight: 700;
@@ -112,11 +125,16 @@
       white-space: nowrap;
       color: $controlText;
       border-radius: 4px;
+      border: 1px solid #797979; // Zeplin: 1px inside border on the pill
       background-color: #ffffff;
 
       &.zone1{ background-color: #ffd8fa; }
       &.zone2{ background-color: #d6ecff; }
       &.zone3{ background-color: #ffe8cd; }
+    }
+
+    .noZoneLabelBorder {
+      border: none !important;
     }
 
     .zoneOption{

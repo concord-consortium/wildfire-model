@@ -5,41 +5,51 @@
 
   .terrainSelectorHeader {
     width: fit-content;
-    margin: 0 auto; // label sits at the tile bottom (Zeplin); radio row below carries the gap
+    margin: 4px auto 0; // nudge the label down; the radio row's reduced margin-top keeps the radios put
 
     padding: 2px 5px;
+    border-radius: 4px; // Zeplin "Label back" slight rounding
     font-family: Lato;
     font-size: 14px;
     font-weight: 700;
     line-height: normal;
     color: $controlText;
-    background-color: #ffffff;
+    background-color: rgba(255, 255, 255, 0.75); // 75% white fill; text stays fully opaque
   }
 
   .terrainSelector {
     width: 100%;
-    margin: 6px auto 0; // gap between the "Terrain Type" label and the radio row
+    box-sizing: border-box;
+    padding-left: 20px; // shift the centered group ~10px right without changing the container width
+    margin: 1px auto 0; // small gap below the label; raising the radio row leaves the label in place
     display: flex;
     flex-wrap: nowrap;
     flex-direction: row !important;
+    column-gap: 8px; // extra space between each radio+label group (on top of MUI's default margins)
     justify-content: center;
     text-align: center;
     height: 28px;
 
     .terrainOption {
-      flex-grow: 1;
-      cursor: pointer;
+      cursor: pointer; // natural width (no flex-grow) so the row packs narrower instead of spreading full-width
 
       span {
-        font-size: 14px !important;
+        font-size: 13px !important; // Zeplin: Roboto Condensed 13/400 #434343 (was 14)
         font-family: 'Roboto Condensed';
+        font-weight: 400;
         color: $controlText;
       }
 
+      // selected terrain label is weight 500 (Zeplin), like the slider markLabel emphasis
+      :global(.Mui-checked) + span {
+        font-weight: 500;
+      }
+
       .radio {
+        padding: 4px; // tighten the gap between the circle and its label (was MUI default 9px)
         svg {
-          width: 22px;
-          height: 22px;
+          width: 24px; // Zeplin "Radio Button" group is 24x24
+          height: 24px;
         }
       }
     }
