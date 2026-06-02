@@ -27,7 +27,7 @@ context("Test First Page In Terrain Setup", () => {
       terrain.getPrevButton().should("not.exist")
       terrain.getNextButton().should("be.visible").click();
       terrain.getStepIcon().should("exist").and("contain", "2");
-      terrain.getInstructions().should("exist").and("contain", "Adjust variables in each zone");
+      terrain.getInstructions().should("exist").and("contain", "Adjust conditions in each zone");
       terrain.getAllZones().should("have.length", "3");
       terrain.getNextButton().should("be.visible").click();
       terrain.getCreateButton().should("exist").and("be.visible").click();
@@ -72,7 +72,7 @@ context("Test First Page In Terrain Setup Not displayed for URL param ?zonesCoun
       terrain.getTerrainSetupComponent().should("be.visible");
       terrain.getZoneCountSelector().should("not.exist");
       terrain.getStepIcon().should("exist").and("contain", "1");
-      terrain.getInstructions().should("exist").and("contain", "Adjust variables in each zone");
+      terrain.getInstructions().should("exist").and("contain", "Adjust conditions in each zone");
       terrain.getAllZones().should("have.length", "2");
     });
   });
@@ -90,7 +90,7 @@ context("Test First Page In Terrain Setup Not displayed for URL param ?zonesCoun
       terrain.getTerrainSetupComponent().should("be.visible");
       terrain.getZoneCountSelector().should("not.exist");
       terrain.getStepIcon().should("exist").and("contain", "1");
-      terrain.getInstructions().should("exist").and("contain", "Adjust variables in each zone");
+      terrain.getInstructions().should("exist").and("contain", "Adjust conditions in each zone");
       terrain.getAllZones().should("have.length", "3");
     });
   });
