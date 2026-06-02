@@ -104,19 +104,20 @@ Items where the source data should be corrected before the next re-extract:
   paired-reading primitive in the DSL today (see §6). Either downgrade the
   sheet's spec to single-reading, or extend the DSL.
 - **Typos that don't currently break anything but should be fixed at
-  source**: `"SimualtionStarted"` (rule-sets/23.ts:101), `"neecessarily"`
-  (multiple), `"whiel"` (33.ts:98), `"magitude"` / `"magnituide"` (24.ts,
-  33.ts) — these are in Details prose only, not parsed by the engine, but
-  they survive re-extracts.
-- **Tab 35 Cat 2 is unreachable (shadowed by Cat 3).** Cat 2 is
-  `ranSimulation AND NOT setAnyVar` and Cat 3 is
-  `ranSimulation WITH NOT ForestWAWOSuppression`. Any default run that
-  satisfies Cat 2 also lacks the forest-w/wo-suppression pairing, so it
-  satisfies Cat 3 — and Cat 3 > Cat 2 wins. Tab 33's analogous Cat 3
-  carries a `setAnyVar AND` guard that prevents the same shadowing; tab 35's
-  does not. The faithful extraction is committed (the extraction matches the
-  sheet); the fix is a sheet-side edit to add the missing `setAnyVar AND`
-  guard. Flagged here per WM-18 R11a.
+  source.** As of the 2026-06-02 re-extract, `"SimualtionStarted"` and
+  `"whiel"` have been corrected at source and no longer appear. Still
+  outstanding: `"neecessarily"` (multiple — 23/24/32/35/42.ts) and
+  `"magitude"` / `"magnituide"` (24/33/34/35/42.ts). These are in Details
+  prose only, not parsed by the engine, but they survive re-extracts.
+- **Tab 35 Cat 2 shadowing — RESOLVED (2026-06-02 workbook).** Cat 2 is
+  `ranSimulation AND NOT setAnyVar`; Cat 3 was previously
+  `ranSimulation WITH NOT ForestWAWOSuppression`, which any default run
+  satisfying Cat 2 also satisfied — and Cat 3 > Cat 2 won, leaving Cat 2
+  unreachable. The 2026-06-02 sheet adds the predicted `setAnyVar AND` guard
+  (Cat 3 is now `setAnyVar AND ranSimulation WITH NOT ForestWAWOSuppression`),
+  matching tab 33's analogous Cat 3. A default run (NOT setAnyVar) no longer
+  satisfies Cat 3, so Cat 2 is reachable again. Fixed at source per WM-18
+  R11a; carried in by the re-extract.
 
 ---
 

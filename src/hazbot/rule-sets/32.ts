@@ -31,7 +31,8 @@ export const ruleSet32: RuleSet<WildfireDefaults> = {
     {
       id: 3,
       studentAction: "Ran the simulation with drought changed but without three different vegetation types assigned (one per zone)",
-      feedback: "Hazbot: Hmm, I don’t see all vegetation types. Let’s set the zones to grass, shrub, and forest! [Show me]",
+      feedback: `Hazbot: Hmm, I don’t see all vegetation types. Let’s set the zones to grass, shrub, and forest!
+[Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
@@ -44,31 +45,34 @@ export const ruleSet32: RuleSet<WildfireDefaults> = {
     {
       id: 4,
       studentAction: "Ran the simulation with 3 different vegetation types assigned (one in each zone) and different drought levels between zones",
-      feedback: "Hazbot: To compare vegetation, make sure the drought level is the same for each zone!",
+      feedback: `Hazbot: To compare vegetation, make sure the drought level is the same for each zone!
+[Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
 2. Hazbot: Now click the Setup button. (Step 2 of 3)
-3. Hazbot: Click each zone and make sure the drought is the same. Then run the model again. (Step 3 of 3)
+3. Hazbot: Click each zone and make sure the drought level is the same. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation WITH UniqueVegetationPerZone AND NOT UniformDroughtLevels",
     },
     {
       id: 5,
       studentAction: "Ran the simulation with 3 different vegetations (one in each zone), same drought, but without one spark in each zone)",
-      feedback: "Hazbot: I don’t see any sparks. Add one spark in each zone so you can compare wildfire spread!",
-      visualFeedback: "1. Spark button outlined; coach mark points to spark button",
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
-2. Hazbot: Now make sure there is a Spark in each zone. (Step 2 of 3)
-3. Hazbot: Run the model again. (Step 3 of 3)
+      feedback: `Hazbot: I don’t see three sparks. Add one spark in each zone so you can compare wildfire spread!
+[Show me]`,
+      visualFeedback: `1. Restart button outlined; coach mark points to Restart button
+2. Spark button outlined; coach mark points to spark button`,
+      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 2)
+2. Hazbot: Now make sure there is a Spark in each zone. Then run the model again. (Step 2 of 2)
 [Got it!]`,
       expression: "ranSimulation WITH UniqueVegetationPerZone AND NOT OneSparkPerZone",
     },
     {
       id: 6,
       studentAction: "Ran the simulation with 3 different vegetations (one in each zone), same drought, and one spark in each zone",
-      feedback: "Hazbot: Great job comparing three types of vegetation! You’re ready to answer the questions below.",
+      feedback: `Hazbot: Great job comparing three types of vegetation! You’re ready to answer the questions below.
+[Hooray!]`,
       visualFeedback: "Confetti animation or subtle celebratory visual",
       expression: "ranSimulation WITH UniqueVegetationPerZone AND UniformDroughtLevels AND OneSparkPerZone",
     }

@@ -16,7 +16,7 @@ These rulesets have defined categories/expressions in [src/hazbot/rule-sets/](..
 |-----|----------|------|--------|----------------|----------|
 | 23 | 2 | 3 | plainsTwoZone | [23.md](23.md) | http://localhost:8080/?preset=plainsTwoZone&helitackAvailable=false&fireLineAvailable=false&severeDroughtAvailable=false&showBurnIndex=false&forestWithSuppressionAvailable=false&hazbotRules=23&hazbotSidebar=true |
 | 24 | 2 | 4 | plainsTwoZone | [24.md](24.md) | http://localhost:8080/?preset=plainsTwoZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=false&severeDroughtAvailable=false&forestWithSuppressionAvailable=false&hazbotRules=24&hazbotSidebar=true |
-| 25 | 2 | 5 | shrubThreeZone | [25.md](25.md) | http://localhost:8080/?preset=shrubThreeZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=false&severeDroughtAvailable=false&forestWithSuppressionAvailable=false&hazbotRules=25&hazbotSidebar=true |
+| 25 | 2 | 5 | mountainTwoZone | [25.md](25.md) | http://localhost:8080/?preset=mountainTwoZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=false&severeDroughtAvailable=false&forestWithSuppressionAvailable=false&hazbotRules=25&hazbotSidebar=true |
 | 32 | 3 | 2 | threeGreenZonePlains | [32.md](32.md) | http://localhost:8080/?preset=threeGreenZonePlains&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=false&severeDroughtAvailable=false&hazbotRules=32&hazbotSidebar=true |
 | 33 | 3 | 3 | mountainTwoZone | [33.md](33.md) | http://localhost:8080/?preset=mountainTwoZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=false&severeDroughtAvailable=false&hazbotRules=33&hazbotSidebar=true |
 | 34 | 3 | 4 | shrubThreeZone | [34.md](34.md) | http://localhost:8080/?preset=shrubThreeZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=true&severeDroughtAvailable=false&hazbotRules=34&hazbotSidebar=true |
@@ -163,11 +163,11 @@ end to end through the engine.
 |---------|--------|------------------|--------------------------|
 | 23 | plainsTwoZone | cats 1–5 ✓ | none |
 | 24 | plainsTwoZone | cats 1–5 ✓ | none |
-| 25 | shrubThreeZone | cats 1–4 ✓ | cats 5 & 6 stub-gated (`SparksAtTopAndBottom` → WM-15) |
+| 25 | mountainTwoZone | cats 1–4 ✓ | cats 5 & 6 stub-gated (`SparksAtTopAndBottom` → WM-15) |
 | 32 | threeGreenZonePlains | cats 1–6 ✓ | none |
 | 33 | mountainTwoZone | cats 1–6 ✓ | none |
 | 34 | shrubThreeZone | cats 1–4 ✓ | none — `sawIntenseFire` was dropped in WM-18; cat 4 now uses `triedAllVegetations` |
-| 35 | mountainTwoZone | cats 1, 3–7 ✓ | cat 2 unreachable (shadowed by cat 3 — sheet-quality issue, see [TBD.md §4](../../src/hazbot/TBD.md)) |
+| 35 | mountainTwoZone | cats 1–7 ✓ | none — cat 3 gained a `setAnyVar AND` guard in the 2026-06-02 sheet, so cat 2 is reachable again (see [TBD.md §4](../../src/hazbot/TBD.md)) |
 | 42 | defaultTwoZone | cats 1–3 ✓ | none |
 | 45 | townsThreeZone | cats 1–3 ✓ | cat 4 stub-gated (`Helitack` → WM-28); cat 3 stub-degraded (`NOT (usedFireline AND usedHelitack)` collapses to TRUE — over-matches fireline+helitack runs) |
 | 47 | dryTownsThreeZone | cats 1–5 ✓ | cat 3 stub-degraded (`NOT (Fireline OR Helitack)` → `NOT Fireline` — over-matches helitack-only runs); cats 4/5 helitack arm dead, fireline arm reachable |
