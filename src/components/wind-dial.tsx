@@ -28,8 +28,10 @@ export const WindDial = ({ windDirection, onChange, onChangeEnd }: IProps) => {
   const onChangeConvertedValue = (circularInputVal: number) => onChange?.(circularInputValToAngle(circularInputVal));
   const onChangeEndConvertedValue = (circularInputVal: number) => onChangeEnd?.(circularInputValToAngle(circularInputVal));
 
+  const interactive = !!(onChange || onChangeEnd);
+
   return (
-    <div className={css.dialContainer}>
+    <div className={`${css.dialContainer} ${interactive ? css.interactive : ""}`}>
       <WindDialImage className={css.dial} />
       <WindArrow className={css.arrow} style={{ transform: `rotate(${windDirection + 180}deg)` }} />
       <CircularInput
