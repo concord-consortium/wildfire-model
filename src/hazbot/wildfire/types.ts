@@ -21,6 +21,16 @@ export interface WildfireReading extends BaseReading {
   heightmapMaxElevation?: number;
   // Outcome data from end-of-run triggers; opaque to current rule sets.
   outcome?: unknown;
+  // Set true by the Helitack translate modifier when a helitack is dropped during
+  // this run (only on SimulationStarted readings whose window is still open). Read
+  // by the Helitack sim-prop and usedHelitack factor variable. Mirrors how Fireline
+  // reads fireLineMarkers — tool *use*, not effectiveness (requirements.md R1).
+  helitack?: boolean;
+  // Set true by the no-op run terminators (Restart / Reload / TopBarReload) to
+  // close this run's helitack window, so a between-runs helitack after a no-op
+  // terminator is not attributed to the prior run (requirements.md R2, Technical
+  // Notes "Not all run terminators currently produce readings").
+  runWindowClosed?: boolean;
 }
 
 // One endpoint of a fire line drawn during a run. Matches the SimulationStarted
