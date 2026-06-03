@@ -134,8 +134,8 @@ describe("BottomBar state machine (Requirements 1-7)", () => {
   });
 
   // State 1: Default — Enabled: Setup, Spark. Disabled: Reload, Restart,
-  // Start, Fire Line, Helitack.
-  it("state 1 (Default): Setup + Spark enabled; Reload/Restart/Start/Fire Line/Helitack disabled", () => {
+  // Start, Fireline, Helitack.
+  it("state 1 (Default): Setup + Spark enabled; Reload/Restart/Start/Fireline/Helitack disabled", () => {
     seedState(stores, 1);
     render(<Provider stores={stores}><BottomBar /></Provider>);
     expectButtonState("terrain-button", true);
@@ -173,10 +173,10 @@ describe("BottomBar state machine (Requirements 1-7)", () => {
     expectButtonState("helitack-button", false);
   });
 
-  // State 4: Running — Restart, Start/Stop, Fire Line, Helitack enabled;
+  // State 4: Running — Restart, Start/Stop, Fireline, Helitack enabled;
   // Setup, Spark disabled
   // eslint-disable-next-line max-len
-  it("state 4 (Running): Setup/Spark disabled; Restart/Start/Fire Line/Helitack enabled; Reload enabled; label is 'Stop'", () => {
+  it("state 4 (Running): Setup/Spark disabled; Restart/Start/Fireline/Helitack enabled; Reload enabled; label is 'Stop'", () => {
     seedState(stores, 4);
     render(<Provider stores={stores}><BottomBar /></Provider>);
     expectButtonState("terrain-button", false);
@@ -191,9 +191,9 @@ describe("BottomBar state machine (Requirements 1-7)", () => {
     expect(screen.getByTestId("start-button")).toHaveTextContent("Stop");
   });
 
-  // State 5: Ended — Start, Fire Line, Helitack disabled; Restart, Reload enabled
+  // State 5: Ended — Start, Fireline, Helitack disabled; Restart, Reload enabled
   // eslint-disable-next-line max-len
-  it("state 5 (Ended): Start/Fire Line/Helitack disabled; Restart/Reload enabled; Setup/Spark disabled", () => {
+  it("state 5 (Ended): Start/Fireline/Helitack disabled; Restart/Reload enabled; Setup/Spark disabled", () => {
     seedState(stores, 5);
     render(<Provider stores={stores}><BottomBar /></Provider>);
     expectButtonState("terrain-button", false);
@@ -207,7 +207,7 @@ describe("BottomBar state machine (Requirements 1-7)", () => {
 
   // State 6: Restarted — Setup, Spark, Start, Reload enabled; Restart disabled
   // eslint-disable-next-line max-len
-  it("state 6 (Restarted): Setup/Spark/Start/Reload enabled; Restart disabled; Fire Line/Helitack disabled", () => {
+  it("state 6 (Restarted): Setup/Spark/Start/Reload enabled; Restart disabled; Fireline/Helitack disabled", () => {
     seedState(stores, 6);
     render(<Provider stores={stores}><BottomBar /></Provider>);
     expectButtonState("terrain-button", true);
@@ -315,7 +315,7 @@ describe("BottomBar edge cases", () => {
   });
 
   describe("authoring gate", () => {
-    it("Fire Line disabled in Running when fireLineAvailable=false", () => {
+    it("Fireline disabled in Running when fireLineAvailable=false", () => {
       stores.simulation.config.fireLineAvailable = false;
       stores.simulation.sparks.push(new Vector2(50000, 50000));
       stores.simulation.simulationStarted = true;

@@ -93,6 +93,11 @@ export interface ISimulationConfig {
   // hazbotSidebar: developer/researcher tool — mounts the substrate's debug sidebar.
   hazbotRules?: string | number;
   hazbotSidebar: boolean;
+  // Developer/designer tool: when true, overlays a 1px red line across the
+  // viewport at the bottom-bar icon-label baseline (Setup / Spark / etc.).
+  // Useful for verifying alignment of new bottom-bar elements against the
+  // label baseline. Enable via ?bottomBarBaseline=true.
+  bottomBarBaseline: boolean;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -168,7 +173,8 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   newWindSpeed: undefined,
   logMonitor: false,
   hazbotRules: undefined,
-  hazbotSidebar: false
+  hazbotSidebar: false,
+  bottomBarBaseline: false
 });
 
 const getURLParam = (name: string) => {
