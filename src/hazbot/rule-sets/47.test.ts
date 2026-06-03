@@ -9,15 +9,18 @@ import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/typ
 //   4: NOT ranSimulation WITH DefaultVars AND NOT (Fireline OR Helitack) AND ranSimulation WITH DefaultVars AND (Fireline OR Helitack)
 //   5: ranSimulation WITH DefaultVars AND NOT (Fireline OR Helitack) AND ranSimulation WITH DefaultVars AND (Fireline OR Helitack)
 //
-// Helitack is a stub (evaluates false → WM-28). It appears only inside
-// `(Fireline OR Helitack)` / `NOT (...)`, never in a top-level AND, so NO
-// category is stub-gated — cats 1-5 all stay reachable via the fire-line path.
-// The helitack effects are STUB-DEGRADED, documented here, not pinned by a test:
-//  - Cat 3 (`NOT (Fireline OR Helitack)` → `NOT Fireline`) over-matches a
-//    helitack-only run as a plain run.
-//  - The helitack arm of cats 4/5 (`Fireline OR Helitack` → `Fireline`) is
-//    dead; cats 4/5 stay reachable via fireline. WM-28 owns re-validation.
-// No stub-gated category — the (e) shape is N/A.
+// Helitack is a real impl (WM-28). It appears only inside `(Fireline OR
+// Helitack)` / `NOT (...)`, never in a top-level AND, so no category is
+// stub-gated. The existing sweep/coverage below reaches cats 4/5 via the
+// fireline disjunct; the "helitack reachability" block drives the now-live
+// helitack disjunct via a helitack-only run (`{ helitack: true }`, no
+// fireLineMarkers):
+//  - Cat 3 (`NOT (Fireline OR Helitack)`) no longer over-matches a helitack-only
+//    run — it now lands at the cat 4/5 arm instead.
+//  - The helitack arm of cats 4/5 (`Fireline OR Helitack`) is live: Cat 4
+//    (`NOT X AND Y`, helitack-only run with no prior clean-baseline run) and
+//    Cat 5 (`X AND Y`, helitack-only run plus a clean-baseline run) each via
+//    their distinct histories.
 
 // SIMINIT defaults for tab 47: 3 zones (Mountains/Forest/Mild Drought,
 // Foothills/Shrub/Medium Drought, Plains/Shrub/Medium Drought), wind 30 / 265.
@@ -43,6 +46,8 @@ function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
 }
 const defaultNoFireline = () => startReading();
 const defaultWithFireline = (at = 200) => startReading({ at, fireLineMarkers: fireLine });
+// A helitack-only run (no fireline) — exercises the now-live Helitack disjunct.
+const defaultWithHelitack = (at = 200) => startReading({ at, helitack: true });
 
 describe("ruleSet 47 — per-rule-set behavior sweep", () => {
   it("(a) empty readings → cat 1 (NOT ranSimulation)", () => {
@@ -76,4 +81,23 @@ describe("ruleSet 47 — R9 per-category coverage", () => {
     expect(matchAgainst(ruleSet47, e(), [defaultWithFireline()])).toBe(4));
   it("cat 5 — a plain default run and a default fireline run", () =>
     expect(matchAgainst(ruleSet47, e(), [defaultNoFireline(), defaultWithFireline()])).toBe(5));
+});
+
+describe("ruleSet 47 — helitack-arm reachability (WM-28)", () => {
+  // Drives the `(Fireline OR Helitack)` arm via the Helitack disjunct — a
+  // helitack-only run, distinct from the fireline coverage above. Cat 4 and Cat 5
+  // are mutually exclusive and require different histories (clean-baseline absent
+  // vs present).
+  const e = () => makeWildfireEngine(ruleSet47, defaults);
+  it("cat 4 — a helitack-only run with no prior clean-baseline run (NOT X AND Y)", () => {
+    expect(matchAgainst(ruleSet47, e(), [defaultWithHelitack(100)])).toBe(4);
+  });
+  it("cat 5 — a clean-baseline run plus a helitack-only run (X AND Y)", () => {
+    expect(matchAgainst(ruleSet47, e(), [defaultNoFireline(), defaultWithHelitack()])).toBe(5);
+  });
+  it("cat 3 no longer over-matches — a helitack-only run is not classified cat 3", () => {
+    // Under the stub a helitack-only run satisfied NOT (Fireline OR Helitack) and
+    // landed at cat 3; with the real Helitack impl it moves to the cat 4 arm.
+    expect(matchAgainst(ruleSet47, e(), [defaultWithHelitack(100)])).not.toBe(3);
+  });
 });
