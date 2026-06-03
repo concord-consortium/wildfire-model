@@ -386,8 +386,16 @@ Emit the production `Helitack` payload after the drop.
 **Files affected**:
 - `src/models/stores.ts` — augment `placeHelitackInZone` (`:75-78`).
 - `CLAUDE.md` — update the helper's description (paired doc; also covered in R9).
+- `src/components/app.test.tsx` — **(added during implementation)** the new
+  top-level `import { log } from "../log"` in `stores.ts` makes this test's
+  line-4 `import { createStores }` pull in `log.ts`, whose module-level
+  `getUrlConfig()` now fires *before* the test's `mockUrlConfig` const is
+  initialized (jest hoists `jest.mock` above the imports but not the const), so
+  the config mock threw `mockUrlConfig is not a function` at import time. Made the
+  config-mock's `getUrlConfig` fall back to a safe default until `mockUrlConfig`
+  exists. This was an unanticipated test-ordering coupling, not a logic change.
 
-**Estimated diff size**: ~12 lines
+**Estimated diff size**: ~12 lines (+ a small app.test.tsx mock-ordering fix)
 
 `placeHelitackInZone` gains the production log emission, matching the pointer path
 (`src/components/view-3d/use-helitack-interaction.ts:18`): normalized `{ x, y }`
