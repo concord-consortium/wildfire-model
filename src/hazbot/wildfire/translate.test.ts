@@ -31,6 +31,28 @@ describe("wildfire translate", () => {
     expect(result.reading.fireLineMarkers).toHaveLength(2);
   });
 
+  it("forwards elevationRange and heightmapMaxElevation from the SimulationStarted payload (R9)", () => {
+    const result = translate(
+      ev("SimulationStarted", {
+        data: { elevationRange: { min: 100, max: 9000 }, heightmapMaxElevation: 20000 },
+      }),
+      "s",
+    );
+    if (result.kind !== "trigger") throw new Error("expected trigger");
+    expect(result.reading.elevationRange).toEqual({ min: 100, max: 9000 });
+    expect(result.reading.heightmapMaxElevation).toBe(20000);
+  });
+
+  it("does not carry elevation fields on SimulationEnded / SimulationStopped (R9)", () => {
+    const ended = translate(ev("SimulationEnded", { data: { outcome: {} } }), "s");
+    const stopped = translate(ev("SimulationStopped"), "s");
+    if (ended.kind !== "trigger" || stopped.kind !== "trigger") throw new Error("expected triggers");
+    expect(ended.reading.elevationRange).toBeUndefined();
+    expect(ended.reading.heightmapMaxElevation).toBeUndefined();
+    expect(stopped.reading.elevationRange).toBeUndefined();
+    expect(stopped.reading.heightmapMaxElevation).toBeUndefined();
+  });
+
   it("maps SimulationEnded to a trigger Reading carrying outcome", () => {
     const result = translate(ev("SimulationEnded", { data: { outcome: { burned: 50 } } }), "s");
     expect(result.kind).toBe("trigger");
