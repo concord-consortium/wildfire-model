@@ -534,3 +534,74 @@ describe("Engine — initialErrors suppression contract", () => {
     expect(e.isActive).toBe(false);
   });
 });
+
+describe("Engine — modifier translate result", () => {
+  // A translate that pushes a reading on "START" and dispatches a modifier on "MOD".
+  // The modifier records a flag on the current last reading and returns whether it
+  // mutated, exercising the substrate's single-notify-iff-mutated contract.
+  function makeModifierEngine(
+    apply: (lastReading: TestReading | undefined) => boolean,
+  ): Engine<TestReading, TestDefaults> {
+    return new Engine<TestReading, TestDefaults>({
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: makeImpl() },
+      simProps: {},
+      translate: (event, sessionId) => {
+        if (event.name === "START") {
+          return { kind: "trigger", reading: { triggeredBy: "START", at: event.at, sessionId, temporalHistory: [] } };
+        }
+        if (event.name === "MOD") {
+          return { kind: "modifier", apply };
+        }
+        return { kind: "no-op" };
+      },
+      runStartTriggers: ["START"],
+    });
+  }
+
+  it("apply mutates lastReading and returns true → mutation visible and exactly one notify", () => {
+    const e = makeModifierEngine((lastReading) => {
+      if (!lastReading) return false;
+      lastReading.payload = { ...(lastReading.payload ?? {}), flagged: true };
+      return true;
+    });
+    e.consume({ name: "START", at: 1 });
+    const notify = jest.fn();
+    e.subscribe(notify);
+    e.consume({ name: "MOD", at: 2 });
+    expect(e.readings[e.readings.length - 1].payload).toEqual({ flagged: true });
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
+  it("apply returns false → no notify", () => {
+    const e = makeModifierEngine(() => false);
+    e.consume({ name: "START", at: 1 });
+    const notify = jest.fn();
+    e.subscribe(notify);
+    e.consume({ name: "MOD", at: 2 });
+    expect(notify).not.toHaveBeenCalled();
+  });
+
+  it("modifier dispatched with no readings → apply receives undefined and does not throw", () => {
+    let received: TestReading | undefined | "unset" = "unset";
+    const e = makeModifierEngine((lastReading) => {
+      received = lastReading;
+      return false;
+    });
+    expect(() => e.consume({ name: "MOD", at: 1 })).not.toThrow();
+    expect(received).toBeUndefined();
+    expect(e.readings).toHaveLength(0);
+  });
+
+  it("modifier pushes no new reading (length unchanged)", () => {
+    const e = makeModifierEngine((lastReading) => {
+      if (!lastReading) return false;
+      lastReading.payload = { flagged: true };
+      return true;
+    });
+    e.consume({ name: "START", at: 1 });
+    expect(e.readings).toHaveLength(1);
+    e.consume({ name: "MOD", at: 2 });
+    expect(e.readings).toHaveLength(1);
+  });
+});
