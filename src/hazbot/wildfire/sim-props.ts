@@ -270,15 +270,12 @@ const SevereDroughts: SimPropImpl<WildfireReading, WildfireDefaults> = {
   },
 };
 
-// Stub — deferred to WM-28 ("Hazbot: Helitack run-window detection"). In-run
-// helitack correlation needs an engine-substrate change out of WM-18 scope
-// (see the Helitack Technical Notes in requirements.md). Kept as a stub so
-// tabs 45/47/54 load. A false stub leaves tab 45 Cat 4 unreachable and degrades
-// tabs 47/54 Cat 3-5 / tab 45 Cat 3 — documented in localhost-urls.md.
+// Per the sheet (tabs 45/47/54): this run dropped a helitack. The translate
+// modifier records it on the run-start reading; effectiveness is not measured
+// (requirements.md R1), mirroring Fireline above.
 const Helitack: SimPropImpl<WildfireReading, WildfireDefaults> = {
   defaultValue: false,
-  isStub: true,
-  evaluate: () => false,
+  evaluate: (reading) => reading.helitack === true,
 };
 
 export const simProps: Record<string, SimPropImpl<WildfireReading, WildfireDefaults>> = {

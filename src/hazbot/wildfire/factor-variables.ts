@@ -1,6 +1,5 @@
 import { FactorVariableImpl } from "../engine";
 import { WildfireDefaults, WildfireReading, WildfireZone } from "./types";
-import { usedHelitack } from "./factor-variable-stubs";
 import { vegetationLabels } from "../../types";
 
 // Helpers for value extraction.
@@ -190,8 +189,16 @@ const usedFireline: FactorVariableImpl<boolean, WildfireReading, WildfireDefault
   },
 };
 
-// Stub factor variables (per Req 6) imported from `./factor-variable-stubs`
-// at the top of this file.
+// Per the sheet (tab 45): some run dropped a helitack. True if any
+// SimulationStarted reading is flagged in-run (requirements.md R4).
+const usedHelitack: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  compute: (readings) => {
+    const witnesses = simulationStartedReadings(readings).filter((r) => r.helitack === true);
+    return { value: witnesses.length > 0, witnesses };
+  },
+};
+
 export const factorVariables: Record<string, FactorVariableImpl<unknown, WildfireReading, WildfireDefaults>> = {
   ranSimulation,
   setDroughtLevel,

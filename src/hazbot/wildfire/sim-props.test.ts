@@ -406,9 +406,14 @@ describe("wildfire sim-props", () => {
     });
   });
 
-  describe("Helitack (stub)", () => {
-    it("is flagged isStub: true and returns false", () => {
-      expect(simProps.Helitack.isStub).toBe(true);
+  describe("Helitack", () => {
+    it("true on a reading flagged helitack: true", () => {
+      expect(simProps.Helitack.evaluate(mkRead({ helitack: true }), {})).toBe(true);
+    });
+    it("false when helitack is false", () => {
+      expect(simProps.Helitack.evaluate(mkRead({ helitack: false }), {})).toBe(false);
+    });
+    it("false when the helitack field is absent", () => {
       expect(simProps.Helitack.evaluate(mkRead(), {})).toBe(false);
     });
   });
