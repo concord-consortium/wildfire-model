@@ -29,30 +29,15 @@ defaults are always complete and 32–35 load. There is no longer a
 
 ## 2. Stubbed factor variables / sim-props
 
-Three referenced impls are flagged `isStub: true` — they return `defaultValue`
+Two referenced impls are flagged `isStub: true` — they return `defaultValue`
 and surface a `stub-warning` at load. A category whose expression depends on a
 stub in a top-level AND is **unreachable**; a category that references a stub
 inside an `OR` / `NOT` is **stub-degraded** (a reachable category misclassifies
 a sub-population). See WM-18 for the per-tab effect of the Helitack stub.
 
-### `SparksAtTopAndBottom` — [wildfire/sim-props.ts:90](wildfire/sim-props.ts#L90)
-
-- **Used by:** ruleset 25 Cat 6 (success category).
-- **Effect of stub:** ruleset 25 caps at Cat 5; the celebratory "ready to
-  answer" feedback never fires.
-- **What's needed:** an algorithm that decides whether two sparks sit
-  near/at a ridge line and a valley line for the active topography. Per the
-  sheet's Details column: "needs to be written based on the topography map
-  used and the x, y, elevation values… One way would be to pre-trace the
-  ridge lines and the valley lines and determine if the spark locations are
-  close enough to them (this work never done before; Alert: new algorithm
-  coding required here)."
-- **Inputs already available:** `WildfireSpark` carries `x`, `y`, `zoneIdx`,
-  `elevation` (see [wildfire/types.ts:22](wildfire/types.ts#L22)).
-- **Open design questions:**
-  - Per-preset pre-computation vs runtime ridge detection? (Preset-driven
-    seems simpler — `mountainTwoZone` etc. only have a handful of presets.)
-  - What's "close enough"? Distance threshold or relative-elevation rule?
+(`SparksAtTopAndBottom` was implemented in WM-15 — ruleset 25 now reaches its
+Cat 6 success state — so it is no longer a stub and has been removed from this
+list.)
 
 ### `Helitack` (sim-prop) / `usedHelitack` (factor variable) — [wildfire/sim-props.ts](wildfire/sim-props.ts), [wildfire/factor-variable-stubs.ts](wildfire/factor-variable-stubs.ts)
 

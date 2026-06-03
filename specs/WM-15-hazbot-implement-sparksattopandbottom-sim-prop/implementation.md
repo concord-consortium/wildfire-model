@@ -352,6 +352,11 @@ unit test with the full R4 sweep.
 **Files affected**:
 - `src/hazbot/wildfire/sim-props.ts` — real predicate + named constants.
 - `src/hazbot/wildfire/sim-props.test.ts` — replace the stub test with the R4 sweep.
+- `src/hazbot/rule-sets/index.test.ts` — the rule-sets load gate asserts an
+  `expectedStubWarnings` map per rule-set; removing the stub means ruleset 25 no
+  longer emits a `SparksAtTopAndBottom` stub-warning, so its entry drops to `[]`
+  (and the header comment's "five stub-warning entries" count becomes "four").
+  Required consequence of R1 (added during implementation, 2026-06-03).
 
 **Estimated diff size**: ~120 lines (incl. tests).
 
@@ -639,6 +644,12 @@ programmatic `matchedCategory()` hook ships — OQ-E).
 - `docs/hazbot-validation/25.md` — regenerated (do not hand-edit).
 - `docs/hazbot-validation/localhost-urls.md` — preset fix at [line 19](../../docs/hazbot-validation/localhost-urls.md#L19) and [line 166](../../docs/hazbot-validation/localhost-urls.md#L166); **plus** un-stub the `SparksAtTopAndBottom` references the index still carries (Finding 2): the stubbed-impls note at [line 140](../../docs/hazbot-validation/localhost-urls.md#L140) and the ruleset-25 status wording at [line 166](../../docs/hazbot-validation/localhost-urls.md#L166).
 - `CLAUDE.md` — record the validated `mountainTwoZoneFixedTerrain` spark coordinates in the Playwright section (R11b).
+- `src/hazbot/TBD.md` — §2 "Stubbed factor variables / sim-props" still listed
+  `SparksAtTopAndBottom` and counted "Three referenced impls"; remove the
+  `SparksAtTopAndBottom` subsection and drop the count to "Two" (the same
+  un-stub cleanup as Finding 2, applied to the engine's tech-debt tracker).
+  Added during implementation (2026-06-03) for consistency with the
+  localhost-urls.md cleanup.
 
 **Estimated diff size**: ~25 lines hand-edited + regenerated playbook.
 
