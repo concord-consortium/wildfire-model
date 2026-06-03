@@ -164,6 +164,86 @@ export class SimulationModel {
     return this.cells[getGridIndexForLocation(gridX, gridY, this.config.gridWidth)];
   }
 
+  // Reproduces EXACTLY the cells fillTerrainEdges zeros to baseElevation: 0 in
+  // populateCellsData — bug-for-bug, not true geometric edges. The `y ===
+  // this.gridHeight` clause is a preserved off-by-one: the loop runs `y < gridHeight`,
+  // so it is never true and the bottom grid row is intentionally NOT zeroed (and
+  // therefore NOT excluded from the elevation range). Do NOT "fix" it to
+  // `gridHeight - 1` — that would start zeroing the bottom row and silently shift the
+  // SimulationStarted payload elevation range (see WM-15 OQ-B; range verified
+  // byte-identical with and without the off-by-one on mountainTwoZoneFixedTerrain).
+  // Extracted so the payload can exclude precisely these cells when computing the
+  // range — a value-based or flag-based filter cannot distinguish them from real
+  // 0-ft cells or real unburnt islands (requirements.md R3).
+  public isTerrainEdge(x: number, y: number) {
+    return !!this.config.fillTerrainEdges &&
+      (x === 0 || x === this.gridWidth - 1 || y === 0 || y === this.gridHeight);
+  }
+
+  // min/max of cell.baseElevation across interior cells (rivers and unburnt
+  // islands included — they carry real topography; only the artificial
+  // fillTerrainEdges perimeter is excluded). Returns null when no cell has a
+  // finite baseElevation (e.g. a preset with no elevation source) so the
+  // payload omits elevationRange and the predicate fails closed (R3).
+  public get baseElevationRange(): { min: number; max: number } | null {
+    let min = Infinity, max = -Infinity;
+    for (const cell of this.cells) {
+      if (this.isTerrainEdge(cell.x, cell.y)) continue;
+      const e = cell.baseElevation;
+      if (!Number.isFinite(e)) continue;
+      if (e < min) min = e;
+      if (e > max) max = e;
+    }
+    return min === Infinity ? null : { min, max };
+  }
+
+  // Topography-dependent SimulationStarted payload data, extracted from
+  // bottom-bar.handleStart so it is unit-testable in isolation (WM-15 R9).
+  // The per-SPARK elevation read uses baseElevation (immutable topography), NOT
+  // cell.elevation — the latter subtracts FIRE_LINE_DEPTH for dug cells (cell.ts:59-64),
+  // which would skew the topographic basis the Hazbot predicate normalizes against
+  // (R3 / WM-15). Fire-line markers keep cell.elevation (unchanged from the original):
+  // only the spark basis is required, and the predicate never reads markers.
+  // Return type declares elevationRange OPTIONAL (rather than letting TS infer a
+  // presence-discriminated union), so the bottom-bar consumer's
+  // `if (startData.elevationRange)` access typechecks regardless of the range branch.
+  public buildStartReadingData(): {
+    sparks: Array<{ x: number; y: number; elevation?: number; zoneIdx?: number }>;
+    fireLineMarkers: Array<{ x: number; y: number; elevation?: number }>;
+    elevationRange?: { min: number; max: number };
+  } {
+    const { config } = this;
+    const cellFor = (x: number, y: number) => this.cells.length > 0 ? this.cellAt(x, y) : null;
+    const sparks = this.sparks.map((s) => {
+      const cell = cellFor(s.x, s.y);
+      // Fail closed on a spark that landed on a fillTerrainEdges perimeter cell:
+      // those carry an artificial baseElevation 0 that is EXCLUDED from
+      // baseElevationRange, so reporting it would normalize below the interior
+      // range (negative → counts as "bottom") and let an edge spark stand in for a
+      // real valley (requirements.md R3). addSpark() does not reject edge cells, so
+      // exclude the elevation here; one undefined elevation trips the predicate's
+      // fail-closed guard. Range exclusion and spark exclusion now use the SAME
+      // isTerrainEdge predicate, so they cannot diverge.
+      const onEdge = cell ? this.isTerrainEdge(cell.x, cell.y) : false;
+      return {
+        x: s.x / config.modelWidth,
+        y: s.y / config.modelHeight,
+        // spark basis: immutable topography (R3); undefined on an excluded edge cell.
+        elevation: onEdge ? undefined : cell?.baseElevation,
+        zoneIdx: cell?.zoneIdx
+      };
+    });
+    const fireLineMarkers = this.fireLineMarkers.map((fl) => {
+      const cell = cellFor(fl.x, fl.y);
+      // Unchanged from the original: markers keep the dynamic cell.elevation.
+      return { x: fl.x / config.modelWidth, y: fl.y / config.modelHeight, elevation: cell?.elevation };
+    });
+    const range = this.baseElevationRange;
+    // Spread the optional field so the result always has the {sparks, fireLineMarkers,
+    // elevationRange?} shape — no inferred union for the consumer to narrow.
+    return { sparks, fireLineMarkers, ...(range ? { elevationRange: range } : {}) };
+  }
+
   @action.bound public setInputParamsFromConfig() {
     const config = this.config;
     this.zones = config.zones.map(options => new Zone(options));
@@ -213,8 +293,7 @@ export class SimulationModel {
           const zi = zoneIndex ? zoneIndex[index] : 0;
           const isRiver = river && river[index] > 0;
           // When fillTerrainEdge is set to true, edges are set to elevation 0.
-          const isEdge = config.fillTerrainEdges &&
-            (x === 0 || x === this.gridWidth - 1 || y === 0 || y === this.gridHeight);
+          const isEdge = this.isTerrainEdge(x, y);
           // Also, edges and their neighboring cells need to be marked as nonburnable to avoid fire spreading over
           // the terrain edge. Note that in this case two cells need to be marked as nonburnable due to way how
           // rendering code is calculating colors for mesh faces.
