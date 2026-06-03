@@ -139,10 +139,96 @@ describe("wildfire sim-props", () => {
     });
   });
 
-  describe("SparksAtTopAndBottom (stub)", () => {
-    it("is flagged isStub: true and returns false", () => {
-      expect(simProps.SparksAtTopAndBottom.isStub).toBe(true);
-      expect(simProps.SparksAtTopAndBottom.evaluate(mkRead(), {})).toBe(false);
+  describe("SparksAtTopAndBottom (R4)", () => {
+    // Default fixture: a real mountain span at the default heightmap max, so the
+    // minimum-span floor (5% × 20000 = 1000 ft) is comfortably cleared.
+    const range = { min: 0, max: 10000 };
+    const max = 20000;
+    const sparksAt = (e1: number, e2: number) =>
+      [{ x: 0, y: 0, elevation: e1 }, { x: 1, y: 0, elevation: e2 }];
+    const read = (e1: number, e2: number, over: Partial<WildfireReading> = {}) =>
+      mkRead({ sparks: sparksAt(e1, e2), elevationRange: range, heightmapMaxElevation: max, ...over });
+
+    // true class: one spark top quartile, one bottom quartile (order-independent).
+    it("true when one spark is near the top and the other near the bottom", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read(9000, 500), {})).toBe(true);
+      expect(simProps.SparksAtTopAndBottom.evaluate(read(500, 9000), {})).toBe(true); // reversed
+    });
+
+    // R3 false sub-cases.
+    it("false when both sparks are at similar (mid) elevation", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read(5000, 5200), {})).toBe(false);
+    });
+    it("false when both sparks are near the top", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read(8000, 9500), {})).toBe(false);
+    });
+    it("false when both sparks are near the bottom", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read(200, 1500), {})).toBe(false);
+    });
+
+    // Boundary values: exactly 0.75 / 0.25 are inclusive (>= / <=).
+    it("true exactly at the 0.75 / 0.25 boundaries (inclusive)", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read(7500, 2500), {})).toBe(true);
+    });
+    it("false just inside the boundaries (0.74 / 0.26)", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read(7400, 2600), {})).toBe(false);
+    });
+
+    // Minimum-span floor: 5% × 20000 = 1000 ft.
+    it("false on flat / below-minimum-span terrain", () => {
+      const flat = { min: 4000, max: 4400 }; // span 400 < 1000
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        read(4400, 4000, { elevationRange: flat }), {})).toBe(false);
+    });
+    it("false exactly at the minimum-span floor (span == 1000)", () => {
+      const atFloor = { min: 0, max: 1000 }; // span 1000, at-or-below → false
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        read(1000, 0, { elevationRange: atFloor }), {})).toBe(false);
+    });
+    it("true just above the minimum-span floor with a real top/bottom", () => {
+      const aboveFloor = { min: 0, max: 1001 }; // span 1001 > 1000
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        read(1001, 0, { elevationRange: aboveFloor }), {})).toBe(true);
+    });
+
+    // Fail-closed guards (OQ-3 A / R3).
+    it("false when a spark elevation is undefined", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        mkRead({ sparks: [{ x: 0, y: 0, elevation: undefined }, { x: 1, y: 0, elevation: 500 }],
+          elevationRange: range, heightmapMaxElevation: max }), {})).toBe(false);
+    });
+    it("false when elevationRange is undefined", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        mkRead({ sparks: sparksAt(9000, 500), heightmapMaxElevation: max }), {})).toBe(false);
+    });
+    it("false when heightmapMaxElevation is undefined", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        mkRead({ sparks: sparksAt(9000, 500), elevationRange: range }), {})).toBe(false);
+    });
+    it("false when spark count is not two", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        mkRead({ sparks: [{ x: 0, y: 0, elevation: 9000 }], elevationRange: range, heightmapMaxElevation: max }), {})).toBe(false);
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        mkRead({ sparks: [...sparksAt(9000, 500), { x: 2, y: 0, elevation: 100 }], elevationRange: range, heightmapMaxElevation: max }), {})).toBe(false);
+    });
+    // Defense-in-depth (Finding 1): a spark elevation outside [min, max] — e.g. the
+    // artificial 0 of an excluded fillTerrainEdges cell, below range.min=0 here — is
+    // rejected rather than normalized to a spurious top/bottom.
+    it("false when a spark elevation is below the range minimum (excluded-edge zero)", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        mkRead({ sparks: sparksAt(9000, -50), elevationRange: range, heightmapMaxElevation: max }), {})).toBe(false);
+    });
+    it("false when a spark elevation is above the range maximum", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        mkRead({ sparks: sparksAt(10500, 500), elevationRange: range, heightmapMaxElevation: max }), {})).toBe(false);
+    });
+    it("false when a spark elevation is non-finite (NaN / Infinity)", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        mkRead({ sparks: sparksAt(NaN, 500), elevationRange: range, heightmapMaxElevation: max }), {})).toBe(false);
+      // Infinity must fail closed too — the title claims it and a NaN-only guard
+      // (e.g. Number.isNaN instead of !Number.isFinite) would otherwise slip past (R3).
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        mkRead({ sparks: sparksAt(Infinity, 500), elevationRange: range, heightmapMaxElevation: max }), {})).toBe(false);
     });
   });
 

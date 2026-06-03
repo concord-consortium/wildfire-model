@@ -20,11 +20,12 @@ import { makeWildfireEngine } from "./test-helpers";
 //
 // Stub-warning distribution: the engine emits one stub-warning per *referenced*
 // stub per rule-set engine. Helitack is referenced by 45/47/54, usedHelitack by
-// 45, SparksAtTopAndBottom by 25 — five stub-warning entries in total.
+// 45 — four stub-warning entries in total. SparksAtTopAndBottom (ruleset 25) was
+// implemented in WM-15, so ruleset 25 no longer emits a stub-warning.
 const expectedStubWarnings: Record<string, string[]> = {
   "23": [],
   "24": [],
-  "25": ["SparksAtTopAndBottom"],
+  "25": [],
   "32": [],
   "33": [],
   "34": [],
