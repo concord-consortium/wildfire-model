@@ -137,7 +137,7 @@ Multiple categories can match simultaneously — the engine picks the **highest-
 - **`TwoSparks` requires exactly length 2.** With 3 sparks, `TwoSparks = false` → in ruleset 25 this still allows Cat 4–6 to evaluate because they only require `OneSparkPerZone`, but Cat 2 (`NOT TwoSparks`) will also be ✓ — relying on highest-match semantics to pick the real winner.
 - **`GraphOpen` is sticky per reading.** Opening the graph after a run doesn't retroactively flip the flag — toggle the graph *before* clicking Start.
 - **Categories with `WITH`** (e.g. `ranSimulation WITH OneSparkPerZone …`) iterate across *all* readings — once true on any reading, the clause stays true even after subsequent runs change conditions. Use **Reload** + page navigation to fully clear.
-- **Stubbed impls always return `false`** — currently `Helitack` / `usedHelitack` (sim-prop + factor variable, → WM-28). Categories that require them be `true` in a top-level AND are **unreachable** until implemented (e.g. ruleset 45 Cat 4); categories that reference a stub inside an `OR` / `NOT` are **stub-degraded** (e.g. tabs 45/47/54 Cat 3 over-match helitack-only runs).
+- **Helitack run-window detection is live (WM-28).** `Helitack` (sim-prop) and `usedHelitack` (factor variable) read an in-run helitack recorded on the run-start reading by a translate modifier. There are no remaining Hazbot impl stubs. Drive helitack drops in a walk with `window.test.placeHelitackInZone(zoneIdx)`, which now emits the engine-visible `Helitack` event (the spark / fireline helpers stay mutate-only because their classification reads the `SimulationStarted` snapshot).
 - **Engine change-detection defaults are config-derived (WM-27).** The `set*` factor variables compare each `SimulationStarted` reading against defaults derived from the resolved simulation config (preset + URL params), not a per-rule-set `defaults` object. There is no longer a `defaults: {}` / `missing-defaults` load failure — every rule-set loads regardless of the source sheet. If a `set*` variable misfires, check that the activity URL selects the intended `preset` (the dev sidebar's **Diagnostics** panel shows the requested preset and whether it was recognized).
 - **Set-valued factor variables accumulate across the whole session.** `uniqueWindValuesUsed` / `uniqueNonZeroWindValuesUsed` fold over every `SimulationStarted` reading in `engine.readings`, not just the most recent one. Validating ruleset 24 Cat 4 (`NOT (uniqueWindValuesUsed.size > 1) AND uniqueNonZeroWindValuesUsed.size > 0`) requires a **full page reload before** the wind-non-zero run, not just Restart — otherwise a leftover zero-wind reading from a Cat 2/3 run inflates `uniqueWindValuesUsed.size` to 2 and the match jumps straight to Cat 5.
 
@@ -154,10 +154,14 @@ gate asserts zero `missing-impl` / `parse-error` and the expected
 `APP_RULES_VERSION = 2` and the new factor variables / sim-props are
 populated; a representative Playwright-MCP walk against tab 23 confirmed the
 Cat 1 → Cat 2 transition after a default-only run (sparks placed via
-`window.test.placeSparkInZone(0)/(1)` + Start). A full Playwright walk of all
-11 playbooks is deferred — WM-28 owns the helitack-dependent walk for tabs
-45/47/54, and the Jest R9 coverage already validates each reachable category
-end to end through the engine.
+`window.test.placeSparkInZone(0)/(1)` + Start). The Jest R9 coverage validates
+each reachable category end to end through the engine.
+
+**WM-28 update (2026-06-03):** helitack run-window detection landed.
+`Helitack` / `usedHelitack` are implemented (no remaining stubs), and tabs
+45/47/54 were re-validated via a Playwright MCP walk (helitack drops driven by
+`window.test.placeHelitackInZone`); see the WM-28 PR description for the per-tab
+walk summary. The stub-effects column below now reads "none" for every row.
 
 | Ruleset | Preset | R9 Jest coverage | Stub effects (per WM-18) |
 |---------|--------|------------------|--------------------------|
@@ -169,8 +173,8 @@ end to end through the engine.
 | 34 | shrubThreeZone | cats 1–4 ✓ | none — `sawIntenseFire` was dropped in WM-18; cat 4 now uses `triedAllVegetations` |
 | 35 | mountainTwoZone | cats 1–7 ✓ | none — cat 3 gained a `setAnyVar AND` guard in the 2026-06-02 sheet, so cat 2 is reachable again (see [TBD.md §4](../../src/hazbot/TBD.md)) |
 | 42 | defaultTwoZone | cats 1–3 ✓ | none |
-| 45 | townsThreeZone | cats 1–3 ✓ | cat 4 stub-gated (`Helitack` → WM-28); cat 3 stub-degraded (`NOT (usedFireline AND usedHelitack)` collapses to TRUE — over-matches fireline+helitack runs) |
-| 47 | dryTownsThreeZone | cats 1–5 ✓ | cat 3 stub-degraded (`NOT (Fireline OR Helitack)` → `NOT Fireline` — over-matches helitack-only runs); cats 4/5 helitack arm dead, fireline arm reachable |
-| 54 | fiveTownsThreeZone | cats 1–4 ✓ | cat 3 stub-degraded (same as 47); cat 4 helitack arm dead, fireline arm reachable |
+| 45 | townsThreeZone | cats 1–4 ✓ | none (`Helitack` / `usedHelitack` implemented, WM-28): cat 4 reachable (same-run or across-trials), cat 3 no longer over-matches fireline+helitack runs |
+| 47 | dryTownsThreeZone | cats 1–5 ✓ | none (WM-28): helitack arm of cats 4/5 live; cat 3 no longer over-matches helitack-only runs |
+| 54 | fiveTownsThreeZone | cats 1–4 ✓ | none (WM-28): helitack arm of cat 4 live (gated on `DefaultVegetations AND SevereDroughts`); cat 3 no longer over-matches helitack-only runs |
 
-Re-run this validation pass whenever rule-sets are regenerated from the source sheet, when stubs in [src/hazbot/wildfire/sim-props.ts](../../src/hazbot/wildfire/sim-props.ts) / [factor-variable-stubs.ts](../../src/hazbot/wildfire/factor-variable-stubs.ts) are filled in, or when WM-28 lands helitack run-window detection (which re-validates tabs 45/47/54).
+Re-run this validation pass whenever rule-sets are regenerated from the source sheet, or when an impl in [src/hazbot/wildfire/sim-props.ts](../../src/hazbot/wildfire/sim-props.ts) / [factor-variables.ts](../../src/hazbot/wildfire/factor-variables.ts) changes. (WM-28 has landed helitack run-window detection and re-validated tabs 45/47/54; there are no remaining Hazbot impl stubs.)
