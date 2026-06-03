@@ -292,7 +292,7 @@ export class SimulationModel {
           const index = getGridIndexForLocation(x, y, this.gridWidth);
           const zi = zoneIndex ? zoneIndex[index] : 0;
           const isRiver = river && river[index] > 0;
-          // When fillTerrainEdge is set to true, edges are set to elevation 0.
+          // When fillTerrainEdges is set to true, edges are set to elevation 0.
           const isEdge = this.isTerrainEdge(x, y);
           // Also, edges and their neighboring cells need to be marked as nonburnable to avoid fire spreading over
           // the terrain edge. Note that in this case two cells need to be marked as nonburnable due to way how
