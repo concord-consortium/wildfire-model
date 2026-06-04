@@ -1,6 +1,7 @@
 import { FactorVariableImpl } from "../engine";
 import { WildfireDefaults, WildfireReading, WildfireZone } from "./types";
 import { vegetationLabels } from "../../types";
+import { canonicalRunReadings } from "./canonical-runs";
 
 // Helpers for value extraction.
 function simulationStartedReadings(readings: WildfireReading[]): WildfireReading[] {
@@ -151,10 +152,14 @@ const uniqueNonZeroWindValuesUsed: FactorVariableImpl<Set<string>, WildfireReadi
   },
 };
 
+// One entry per *canonical* run: pause/resume cycles (SimulationStopped →
+// SimulationStarted with no reset between) collapse into a single run, so a
+// student who pauses to draw a fire line and resumes is not counted as having
+// run the model twice. See canonical-runs.ts for the run-boundary model.
 const simulationRuns: FactorVariableImpl<WildfireReading[], WildfireReading, WildfireDefaults> = {
   defaultValue: [],
   compute: (readings) => {
-    const witnesses = simulationStartedReadings(readings);
+    const witnesses = canonicalRunReadings(readings);
     return { value: witnesses, witnesses };
   },
 };

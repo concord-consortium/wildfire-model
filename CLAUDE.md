@@ -28,6 +28,10 @@ Project-specific notes for working in this repo. Conventions, gotchas, and tools
 
 When validating Hazbot rulesets interactively (e.g. walking a playbook in `docs/hazbot-validation/`), use the Playwright MCP browser against a running dev server. A few things make this much smoother:
 
+### Browser already in use at session start
+
+If the first `browser_navigate` (or any Playwright MCP call) fails with `Browser is already in use for .../mcp-chrome-*, use --isolated`, an **orphaned Chrome from a previous session is holding the profile lock** and the MCP server can't attach. Don't kill it yourself — **ask the user to close the already-open Playwright/Chrome window**, then retry the navigation. Once they close it the lock clears and navigation succeeds.
+
 ### Useful URL params
 
 The app reads config from the query string. For Hazbot validation runs, combine these:
@@ -132,6 +136,7 @@ When testing categories that require fresh spark placement (e.g. Category 4 → 
 - **Canvas `browser_click` lands at center**, which for two-zone presets sits on the zone-0/zone-1 boundary. Don't expect it to consistently land in a specific zone — use `window.test.placeSparkInZone(zoneIdx)`
 - **Factor variables don't reset on page reload either** if you have hot-reload state preserved — fully navigate to the URL again to start clean
 - **Trivial-input rejection**: some rulesets (e.g. 23) fail closed on degenerate setups (single zone, single spark). If a category that "should" fire doesn't, check the ruleset for a guard
+- **Run-gated buttons need their own evaluate tick.** The **Fire Line** and **Helitack** buttons only enable on the React render *after* Start commits (`simulationRunning` flips). Clicking Start and then Fire Line in the *same* `browser_evaluate` makes the Fire Line click a no-op against the stale (still-disabled) DOM, so no pause/`SimulationStopped` fires. Do one UI action per evaluate call (Start in one tick, Fire Line in the next) so React re-renders the enabled state between them. Same applies to any button whose `disabled` flips on a state change you just triggered
 
 ### Screenshot artifacts
 
