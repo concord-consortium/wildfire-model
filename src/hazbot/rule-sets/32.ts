@@ -88,13 +88,13 @@ export const ruleSet32: RuleSet<WildfireDefaults> = {
       name: "setVegetation",
       definition: "There is at least one \"SimulationStarted\" event for which the vegetation type was set distinct from the default value for any zone.",
       logEvents: ["SimulationStarted->zones.<i>.vegetation"],
-      details: "Vegetation is set per zone, in the zones data.  For the default values, read the \"SIMINIT\" sheet.  If true, then neecessarily ranSimulation=true.",
+      details: "Vegetation is set per zone, in the zones data.  For the default values, read the \"SIMINIT\" sheet.  If true, then necessarily ranSimulation=true.",
     },
     {
       name: "setDroughtLevel",
       definition: "There is at least one \"SimulationStarted\" event for which the drought level was set distinct from the default value for any zone.",
       logEvents: ["SimulationStarted->zones.<i>.droughtLevel"],
-      details: "Drought level is set per zone, in the zones data.  For the default values, read the \"SIMINIT\" sheet.  If true, then neecessarily ranSimulation=true.",
+      details: "Drought level is set per zone, in the zones data.  For the default values, read the \"SIMINIT\" sheet.  If true, then necessarily ranSimulation=true.",
     },
     {
       name: "setAnyZoneVar",

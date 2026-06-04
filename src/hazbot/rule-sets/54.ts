@@ -26,7 +26,7 @@ export const ruleSet54: RuleSet<WildfireDefaults> = {
 2. Hazbot: Now click the Setup button. (Step 2 of 3)
 3. Hazbot: Change the drought in each zone to severe! Then run the model again. (Step 3 of 3)
 [Got it!]`,
-      expression: "ranSimulation WITH NOT DefaultVegetations AND NOT SevereDroughts",
+      expression: "ranSimulation WITH NOT DefaultVegetations OR NOT SevereDroughts",
     },
     {
       id: 3,
@@ -52,14 +52,14 @@ export const ruleSet54: RuleSet<WildfireDefaults> = {
     {
       name: "ranSimulation",
       definition: "At least one \"SimulationStarted\" event was recorded.",
-      logEvents: ["SimulationStarted", "SimulationStopped", "SImulationRestarted", "SimulationReloaded", "TopBarReloadButtonClicked", "SimulationEnded"],
-      details: "Each simulation run is started by 'SimulationStarted', and how it ends is determined by various events listed here.  It is necessary for this activity to monitor the end of the simulation as well as the beginning, since turning on a sim prop (\"Helitack\") relies on knowing that a simulation is in progress.",
+      logEvents: ["SimulationStarted", "SimulationStopped", "SimulationRestarted", "SimulationReloaded", "TopBarReloadButtonClicked", "SimulationEnded"],
+      details: "Each simulation run is started by 'SimulationStarted', and how it is paused, is resumed, and ends is determined by various events listed here.  It is necessary for this activity to monitor the end of the simulation as well as the beginning, since turning on a sim prop (\"Helitack\") relies on knowing that a simulation is in progress, and fireline installment events occur during a simulation pause.  A \"resuming SimulationStarted\" event is one that was preceded by a SimulationStopped and then started again (SimulationStarted) without being reset/ended (SimulationEnded, SimulationRestarted, SiumulationReloaded, TopBarReloadeButtonClicked; or the simulation being restarted by an embedding unit (such as an \"Activity Player\")) in between.  All other \"SimulationStarted\" events are \"non-resuming\".",
     },
     {
       name: "Fireline",
       definition: "Sim prop for whether any firelines were set up for the simulation run.",
       logEvents: ["SimulationStarted->fireLineMarkers"],
-      details: "If there were any firelines set up for the simulation run, then the value of \"fireLineMarkers\" should be an array of length 2 (or more?).  If there were no firelines set up, then the value of \"fireLineMarkers\" would be an empty array.",
+      details: "If there were any firelines set up for the simulation run, then the value of \"fireLineMarkers\" should be an array of length 2 (or more?).  If there were no firelines set up, then the value of \"fireLineMarkers\" would be an empty array.   Here, both resuming and non-resuming \"SimulationStarted\" events must be examined, with the non-resuming SimulationStarted event marking a true start of a simulation run, to which this sim prop should apply as an initial value (non-resuming) and an updated value (resuming).",
     },
     {
       name: "Helitack",
@@ -71,13 +71,13 @@ export const ruleSet54: RuleSet<WildfireDefaults> = {
       name: "DefaultVegetations",
       definition: "Sim prop for whether all variables were held at default values.",
       logEvents: ["SimulationStarted->zones.<i>.vegetation"],
-      details: "The values of vegetation for all three zones must be equal to their default values (see the \"SIMINIT\" sheet) for this sim prop to be true.",
+      details: "The values of vegetation for all three zones must be equal to their default values (see the \"SIMINIT\" sheet) for this sim prop to be true.  Here, only non-resuming SimulationStarted events need be considered as resuming Simulation events do not change vegetations.",
     },
     {
       name: "SevereDroughts",
       definition: "Sim prop for whether the drought levels for all zones were set to severe.",
       logEvents: ["SimulationStarted->zones.<i>.droughtLevel"],
-      details: "The values of droughtLevel for all three zones must be set to \"Severe Drought\".",
+      details: "The values of droughtLevel for all three zones must be set to \"Severe Drought\".  Here, only non-resuming SimulationStarted events need be considered as resuming Simulation events do not change drought levels.",
     }
   ],
 };
