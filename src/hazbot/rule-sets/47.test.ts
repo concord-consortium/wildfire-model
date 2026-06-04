@@ -1,5 +1,6 @@
 import { ruleSet47 } from "./47";
 import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
+import { factorVariables } from "../wildfire/factor-variables";
 import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/types";
 
 // Tab 47 categories (regenerated from the 2026-05-22 sheet; Cat 100 dropped):
@@ -99,5 +100,43 @@ describe("ruleSet 47 — helitack-arm reachability (WM-28)", () => {
     // Under the stub a helitack-only run satisfied NOT (Fireline OR Helitack) and
     // landed at cat 3; with the real Helitack impl it moves to the cat 4 arm.
     expect(matchAgainst(ruleSet47, e(), [defaultWithHelitack(100)])).not.toBe(3);
+  });
+});
+
+describe("ruleSet 47 — a paused run is one canonical run, not two (WM-28)", () => {
+  // Sam's "Validation and more thoughts" pt.1 / live report: start a clean
+  // default run, pause almost immediately (the Fire Line button emits
+  // SimulationStopped), draw a fire line while paused, then resume. The raw log
+  // holds two SimulationStarted readings — the initial one (no fire line) and the
+  // resume (the fire line rides in on its payload) — but they are ONE run.
+  //
+  // `ranSimulation` (the `WITH` temporal anchor every category binds against) now
+  // reads through `runReadings`, so the pause/resume folds to a single merged
+  // representative carrying the fire line. Before that, the pre-fire-line half
+  // masqueraded as a "clean" run, so the single run satisfied BOTH of cat 5's arms
+  // (`ran WITH DefaultVars AND NOT (Fireline OR Helitack)` AND `ran WITH
+  // DefaultVars AND (Fireline OR Helitack)`) — arms that describe two distinct
+  // runs and cannot both be true of one. It must land cat 4 (used a tool, no prior
+  // clean run), the same as an unpaused first-run-with-a-tool.
+  const e = () => makeWildfireEngine(ruleSet47, defaults);
+  const stopped = (at: number) => mkReading("SimulationStopped", at);
+
+  it("start → pause → draw fire line → resume = one run → cat 4, not cat 5", () => {
+    const readings = [
+      startReading({ at: 100 }),                             // initial start, no fire line
+      stopped(150),                                          // Fire Line button pauses the run
+      startReading({ at: 200, fireLineMarkers: fireLine }), // resume carries the fire line
+    ];
+    expect(matchAgainst(ruleSet47, e(), readings)).toBe(4);
+  });
+
+  it("the same paused run counts as a single run (simulationRuns folds)", () => {
+    const readings = [
+      startReading({ at: 100 }),
+      stopped(150),
+      startReading({ at: 200, fireLineMarkers: fireLine }),
+    ];
+    const runs = factorVariables.simulationRuns.compute(readings, defaults).value as WildfireReading[];
+    expect(runs).toHaveLength(1);
   });
 });
