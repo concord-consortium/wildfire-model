@@ -7,7 +7,12 @@ export interface WildfireReading extends BaseReading {
   zones?: WildfireZone[];
   sparks?: WildfireSpark[];
   fireLineMarkers?: WildfireFireLineMarker[];
-  wind?: { speed: number; direction: number };
+  // speed/direction are in the model's internal units (the SimulationStarted
+  // snapshot logs simulation.wind.speed, not the MPH shown on the dial).
+  // scaleFactor (config.windScaleFactor) converts internal speed to MPH:
+  // mph = speed / scaleFactor. DefaultVars applies it so its tolerance is in
+  // user-facing MPH; without it the tolerance silently scales with the preset.
+  wind?: { speed: number; direction: number; scaleFactor?: number };
   // Immutable-topography elevation extrema of the grid (min/max of
   // cell.baseElevation), computed at the SimulationStarted payload site and
   // forwarded by translate(). Used by SparksAtTopAndBottom to normalize each
