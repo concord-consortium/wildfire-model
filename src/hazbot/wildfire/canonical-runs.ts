@@ -75,7 +75,10 @@ export function canonicalRunReadings(readings: WildfireReading[]): WildfireReadi
 // merged forward — the fuller fireLineMarkers snapshot wins and helitack ORs to
 // true — so a fire line drawn while paused or a helitack dropped after resuming
 // is attributed to the single canonical run. Returns a shallow clone so the
-// input readings array is never mutated.
+// input readings array is never mutated; the clone keeps `base.at`, so the sidebar
+// can still resolve a stable "Matched on reading #N" index for the folded run by
+// timestamp even though the clone is not an element of engine.readings (see
+// readingIndexOf in engine/evaluator.ts).
 function foldResume(base: WildfireReading, resume: WildfireReading): WildfireReading {
   const baseMarkers = base.fireLineMarkers?.length ?? 0;
   const resumeMarkers = resume.fireLineMarkers?.length ?? 0;
