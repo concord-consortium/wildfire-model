@@ -16,7 +16,7 @@ These rulesets have defined categories/expressions in [src/hazbot/rule-sets/](..
 |-----|----------|------|--------|----------------|----------|
 | 23 | 2 | 3 | plainsTwoZone | [23.md](23.md) | http://localhost:8080/?preset=plainsTwoZone&helitackAvailable=false&fireLineAvailable=false&severeDroughtAvailable=false&showBurnIndex=false&forestWithSuppressionAvailable=false&hazbotRules=23&hazbotSidebar=true |
 | 24 | 2 | 4 | plainsTwoZone | [24.md](24.md) | http://localhost:8080/?preset=plainsTwoZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=false&severeDroughtAvailable=false&forestWithSuppressionAvailable=false&hazbotRules=24&hazbotSidebar=true |
-| 25 | 2 | 5 | mountainTwoZone | [25.md](25.md) | http://localhost:8080/?preset=mountainTwoZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=false&severeDroughtAvailable=false&forestWithSuppressionAvailable=false&hazbotRules=25&hazbotSidebar=true |
+| 25 | 2 | 5 | mountainTwoZoneFixedTerrain | [25.md](25.md) | http://localhost:8080/?preset=mountainTwoZoneFixedTerrain&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=false&severeDroughtAvailable=false&forestWithSuppressionAvailable=false&hazbotRules=25&hazbotSidebar=true |
 | 32 | 3 | 2 | threeGreenZonePlains | [32.md](32.md) | http://localhost:8080/?preset=threeGreenZonePlains&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=false&severeDroughtAvailable=false&hazbotRules=32&hazbotSidebar=true |
 | 33 | 3 | 3 | mountainTwoZone | [33.md](33.md) | http://localhost:8080/?preset=mountainTwoZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=false&severeDroughtAvailable=false&hazbotRules=33&hazbotSidebar=true |
 | 34 | 3 | 4 | shrubThreeZone | [34.md](34.md) | http://localhost:8080/?preset=shrubThreeZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=true&severeDroughtAvailable=false&hazbotRules=34&hazbotSidebar=true |
@@ -137,7 +137,7 @@ Multiple categories can match simultaneously — the engine picks the **highest-
 - **`TwoSparks` requires exactly length 2.** With 3 sparks, `TwoSparks = false` → in ruleset 25 this still allows Cat 4–6 to evaluate because they only require `OneSparkPerZone`, but Cat 2 (`NOT TwoSparks`) will also be ✓ — relying on highest-match semantics to pick the real winner.
 - **`GraphOpen` is sticky per reading.** Opening the graph after a run doesn't retroactively flip the flag — toggle the graph *before* clicking Start.
 - **Categories with `WITH`** (e.g. `ranSimulation WITH OneSparkPerZone …`) iterate across *all* readings — once true on any reading, the clause stays true even after subsequent runs change conditions. Use **Reload** + page navigation to fully clear.
-- **Stubbed impls always return `false`** — currently `SparksAtTopAndBottom` (sim-prop, → WM-15) and `Helitack` / `usedHelitack` (sim-prop + factor variable, → WM-28). Categories that require them be `true` in a top-level AND are **unreachable** until implemented (e.g. ruleset 25 Cat 5/6, ruleset 45 Cat 4); categories that reference a stub inside an `OR` / `NOT` are **stub-degraded** (e.g. tabs 45/47/54 Cat 3 over-match helitack-only runs).
+- **Stubbed impls always return `false`** — currently `Helitack` / `usedHelitack` (sim-prop + factor variable, → WM-28). Categories that require them be `true` in a top-level AND are **unreachable** until implemented (e.g. ruleset 45 Cat 4); categories that reference a stub inside an `OR` / `NOT` are **stub-degraded** (e.g. tabs 45/47/54 Cat 3 over-match helitack-only runs).
 - **Engine change-detection defaults are config-derived (WM-27).** The `set*` factor variables compare each `SimulationStarted` reading against defaults derived from the resolved simulation config (preset + URL params), not a per-rule-set `defaults` object. There is no longer a `defaults: {}` / `missing-defaults` load failure — every rule-set loads regardless of the source sheet. If a `set*` variable misfires, check that the activity URL selects the intended `preset` (the dev sidebar's **Diagnostics** panel shows the requested preset and whether it was recognized).
 - **Set-valued factor variables accumulate across the whole session.** `uniqueWindValuesUsed` / `uniqueNonZeroWindValuesUsed` fold over every `SimulationStarted` reading in `engine.readings`, not just the most recent one. Validating ruleset 24 Cat 4 (`NOT (uniqueWindValuesUsed.size > 1) AND uniqueNonZeroWindValuesUsed.size > 0`) requires a **full page reload before** the wind-non-zero run, not just Restart — otherwise a leftover zero-wind reading from a Cat 2/3 run inflates `uniqueWindValuesUsed.size` to 2 and the match jumps straight to Cat 5.
 
@@ -163,7 +163,7 @@ end to end through the engine.
 |---------|--------|------------------|--------------------------|
 | 23 | plainsTwoZone | cats 1–5 ✓ | none |
 | 24 | plainsTwoZone | cats 1–5 ✓ | none |
-| 25 | mountainTwoZone | cats 1–4 ✓ | cats 5 & 6 stub-gated (`SparksAtTopAndBottom` → WM-15) |
+| 25 | mountainTwoZoneFixedTerrain | cats 1–6 ✓ | none |
 | 32 | threeGreenZonePlains | cats 1–6 ✓ | none |
 | 33 | mountainTwoZone | cats 1–6 ✓ | none |
 | 34 | shrubThreeZone | cats 1–4 ✓ | none — `sawIntenseFire` was dropped in WM-18; cat 4 now uses `triedAllVegetations` |

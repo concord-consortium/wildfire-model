@@ -31,6 +31,26 @@ describe("wildfire translate", () => {
     expect(result.reading.fireLineMarkers).toHaveLength(2);
   });
 
+  it("forwards heightmapMaxElevation and tpiMarginFraction from the SimulationStarted payload", () => {
+    const result = translate(
+      ev("SimulationStarted", { data: { heightmapMaxElevation: 20000, tpiMarginFraction: 0.025 } }),
+      "s",
+    );
+    if (result.kind !== "trigger") throw new Error("expected trigger");
+    expect(result.reading.heightmapMaxElevation).toBe(20000);
+    expect(result.reading.tpiMarginFraction).toBe(0.025);
+  });
+
+  it("does not carry the TPI margin fields on SimulationEnded / SimulationStopped", () => {
+    const ended = translate(ev("SimulationEnded", { data: { outcome: {} } }), "s");
+    const stopped = translate(ev("SimulationStopped"), "s");
+    if (ended.kind !== "trigger" || stopped.kind !== "trigger") throw new Error("expected triggers");
+    expect(ended.reading.heightmapMaxElevation).toBeUndefined();
+    expect(ended.reading.tpiMarginFraction).toBeUndefined();
+    expect(stopped.reading.heightmapMaxElevation).toBeUndefined();
+    expect(stopped.reading.tpiMarginFraction).toBeUndefined();
+  });
+
   it("maps SimulationEnded to a trigger Reading carrying outcome", () => {
     const result = translate(ev("SimulationEnded", { data: { outcome: { burned: 50 } } }), "s");
     expect(result.kind).toBe("trigger");

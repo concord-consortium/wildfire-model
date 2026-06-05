@@ -139,10 +139,94 @@ describe("wildfire sim-props", () => {
     });
   });
 
-  describe("SparksAtTopAndBottom (stub)", () => {
-    it("is flagged isStub: true and returns false", () => {
-      expect(simProps.SparksAtTopAndBottom.isStub).toBe(true);
-      expect(simProps.SparksAtTopAndBottom.evaluate(mkRead(), {})).toBe(false);
+  describe("SparksAtTopAndBottom (localized multi-scale TPI)", () => {
+    // The predicate now classifies each spark from its multi-scale TPI array (one
+    // entry per band): a spark whose MEAN TPI sits >= margin above its surroundings
+    // is "top", >= margin below is "bottom". margin = tpiMarginFraction ×
+    // heightmapMaxElevation. With no tpiMarginFraction on the reading, the predicate
+    // falls back to the 0.02 default, so at the default max (20000) the margin is
+    // 400 ft. Boundary/override tests below pin tpiMarginFraction explicitly.
+    const max = 20000; // default-fraction margin = 0.02 * 20000 = 400
+    // Canonical ridge / valley signatures: positive at every scale (above the
+    // surrounding terrain) vs negative at every scale (below it).
+    const ridge = [3000, 2000, 1500];   // mean 2166 -> top
+    const valley = [-3000, -2000, -1500]; // mean -2166 -> bottom
+    const sparksTpi = (t1: Array<number | null>, t2: Array<number | null>) =>
+      [{ x: 0, y: 0, tpi: t1 }, { x: 1, y: 0, tpi: t2 }];
+    const read = (t1: Array<number | null>, t2: Array<number | null>, over: Partial<WildfireReading> = {}) =>
+      mkRead({ sparks: sparksTpi(t1, t2), heightmapMaxElevation: max, ...over });
+
+    // true class: one spark on a ridge, the other in a valley (order-independent).
+    it("true when one spark is on a ridge (TPI > 0) and the other in a valley (TPI < 0)", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read(ridge, valley), {})).toBe(true);
+      expect(simProps.SparksAtTopAndBottom.evaluate(read(valley, ridge), {})).toBe(true); // reversed
+    });
+
+    // false sub-cases — both sparks land in the same topographic position.
+    it("false when both sparks are at similar (mid-slope, ~0 TPI) positions", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read([200, -100, 50], [-150, 100, 0]), {})).toBe(false);
+    });
+    it("false when both sparks are on a ridge", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read(ridge, [2500, 1800, 1200]), {})).toBe(false);
+    });
+    it("false when both sparks are in a valley", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read(valley, [-2500, -1800, -1200]), {})).toBe(false);
+    });
+
+    // Margin boundary at the default fraction (0.02 × 20000 = 400): mean exactly
+    // at +/- margin is inclusive (>= / <=).
+    it("true with mean TPI exactly at the default +/- margin (inclusive)", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read([400, 400, 400], [-400, -400, -400]), {})).toBe(true);
+    });
+    it("false just inside the default margin (mean +/- 399)", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read([399, 399, 399], [-399, -399, -399]), {})).toBe(false);
+    });
+
+    // tpiMarginFraction on the reading overrides the default. The same sparks that
+    // pass at the 0.02 default (mean +/- 600 vs 400) fail at 0.05 (margin 1000).
+    it("respects tpiMarginFraction from the reading (raising it can flip true -> false)", () => {
+      const pair = (over: Partial<WildfireReading>) =>
+        simProps.SparksAtTopAndBottom.evaluate(read([600, 600, 600], [-600, -600, -600], over), {});
+      expect(pair({})).toBe(true);                          // default 0.02 -> margin 400, |600| clears
+      expect(pair({ tpiMarginFraction: 0.05 })).toBe(false); // margin 1000, |600| does not clear
+      expect(pair({ tpiMarginFraction: 0.01 })).toBe(true);  // margin 200, clears easily
+    });
+
+    // Flat terrain: TPI collapses to ~0 at every scale -> neither -> false. This
+    // replaces the old global minimum-span floor.
+    it("false on flat terrain (TPI ~ 0 everywhere)", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read([0, 0, 0], [0, 0, 0]), {})).toBe(false);
+    });
+
+    // `null` bands (no usable cell, e.g. near the map edge) are ignored; the mean
+    // is taken over the populated bands only.
+    it("ignores null bands and classifies from the populated ones", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read([null, 2000, null], [null, -2000, null]), {})).toBe(true);
+    });
+
+    // Fail-closed guards (OQ-3 A).
+    it("false when a spark's tpi array is undefined (excluded-edge spark)", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        mkRead({ sparks: [{ x: 0, y: 0, tpi: undefined }, { x: 1, y: 0, tpi: valley }],
+          heightmapMaxElevation: max }), {})).toBe(false);
+    });
+    it("false when a spark's tpi array has no finite entry (all null)", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read([null, null, null], valley), {})).toBe(false);
+    });
+    it("false when heightmapMaxElevation is undefined", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        mkRead({ sparks: sparksTpi(ridge, valley) }), {})).toBe(false);
+    });
+    it("false when spark count is not two", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        mkRead({ sparks: [{ x: 0, y: 0, tpi: ridge }], heightmapMaxElevation: max }), {})).toBe(false);
+      expect(simProps.SparksAtTopAndBottom.evaluate(
+        mkRead({ sparks: [...sparksTpi(ridge, valley), { x: 2, y: 0, tpi: valley }], heightmapMaxElevation: max }), {})).toBe(false);
+    });
+    it("false when a tpi entry is non-finite (NaN / Infinity is ignored, not counted)", () => {
+      // NaN/Infinity entries are filtered out; a spark left with no finite band
+      // fails closed to "neither".
+      expect(simProps.SparksAtTopAndBottom.evaluate(read([NaN, Infinity], valley), {})).toBe(false);
     });
   });
 
