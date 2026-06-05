@@ -23,13 +23,23 @@ export const ZonesCountSelector = ({ zonesCount, onChange }: IProps) => (
         className={css.labelContainer}
         control={<Radio color="default" className={css.radio} />}
         value={3}
-        label={<span className={css.label}>3 <div className={css.image}><ThreeZones /></div></span>}
+        label={
+          <span className={`${css.label} ${zonesCount === 3 ? css.selected : ""}`}>
+            <span className={css.number}>3</span>
+            <div className={css.image}><ThreeZones /></div>
+          </span>
+        }
       />
       <FormControlLabel
         className={css.labelContainer}
         control={<Radio color="default" className={css.radio} />}
         value={2}
-        label={<span className={css.label}>2 <div className={css.image}><TwoZones /></div></span>}
+        label={
+          <span className={`${css.label} ${zonesCount === 2 ? css.selected : ""}`}>
+            <span className={css.number}>2</span>
+            <div className={css.image}><TwoZones /></div>
+          </span>
+        }
       />
     </RadioGroup>
   </div>

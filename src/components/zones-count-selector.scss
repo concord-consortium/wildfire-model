@@ -6,6 +6,45 @@
     height: 22px;
   }
 
+  .radio,
+  .radio.Mui-checked {
+    color: $controlGray;   // #797979 ring + selected dot
+  }
+
+  .radio {
+    padding: 4px;          // tighten gap between radio and label (MUI default is 9px)
+  }
+
+  // White interior backing behind the ring (Radio Button Back, #fff)
+  .radio::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 16px;
+    height: 16px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background-color: #fff;
+    pointer-events: none;
+  }
+
+  // Hover anywhere on the option (radio, number, or image) shows the radio's
+  // selection dot at 50% opacity (#79797980). MUI draws nothing inside an
+  // unchecked radio, so render the preview dot ourselves.
+  .labelContainer:hover .radio:not(.Mui-checked)::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 11px;
+    height: 11px;
+    transform: translate(-50%, -50%);
+    border-radius: 50%;
+    background-color: rgba(121, 121, 121, 0.5);   // #79797980
+    pointer-events: none;
+  }
+
   .labelContainer {
     margin: 10px auto;
     cursor: pointer;
@@ -15,13 +54,30 @@
       flex-direction: row;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
+      font-size: 13px;            // Zeplin: 13px (was 11)
+      font-weight: 400;
       font-family: 'Roboto Condensed';
       color: $controlText;
+
+      .number {
+        width: 7px;               // fixed box; digit is 7px at both 400 & 500 → no left/right shift
+        margin: 0 12px 0 6px;     // Zeplin: 5px from the radio, 10px to the image
+        text-align: center;
+      }
+
+      &.selected .number {
+        font-weight: 500;         // "bold when selected" = Zeplin Medium 500
+      }
+
+      // Selected: image shows its full white outline at 100% (Setup Highlight)
+      &.selected .image {
+        box-shadow: 0 0 0 4px #fff;
+      }
     }
 
     .image {
-      margin-left: 10px;
+      // 10px gap to the image now lives on .number's margin-right (Zeplin)
+      margin-left: 0;
 
       // Existing asset has padding, so a bit of relative positioning to hide it.
       width: 54px;
@@ -36,8 +92,9 @@
       }
     }
 
+    // Hover only when not already selected — a selected option has no hover state
     &:hover {
-      .image {
+      .label:not(.selected) .image {
         box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5);
       }
     }
