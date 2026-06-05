@@ -90,63 +90,64 @@ const GraphOpen: SimPropImpl<WildfireReading, WildfireDefaults> = {
 };
 
 // SparksAtTopAndBottom (tab 25, WM-15): true when one spark sits near the top of
-// the active topography and the other near the bottom. Topography-aware by
-// normalized elevation (OQ-1 Option B), not visual ridge/valley geometry
-// (OQ-1 Option C declined). The predicate sees only the two sparks plus the
-// elevationRange / heightmapMaxElevation carried on the SimulationStarted
-// reading (see the Payload-assembly Technical Note) — never config or the cell
-// grid. Self-contained fail-closed guards, matching OneSparkPerZone / TwoSparks
-// (OQ-3 Option A). Distinct-zone placement is intentionally NOT checked here; it
-// is composed in via OneSparkPerZone in every ruleset-25 category that ANDs this.
+// the active topography and the other near the bottom. LOCALIZED via a
+// multi-scale Topographic Position Index (TPI) rather than a single global
+// elevation range: each spark carries a `tpi` array (one entry per concentric
+// band, computed by SimulationModel.tpiForSpark at the SimulationStarted payload
+// site) where a negative value means the spark is below its surroundings (valley)
+// at that scale and a positive value means above them (ridge/peak). The predicate
+// sees only the two sparks (each with their tpi array) plus heightmapMaxElevation
+// and tpiMarginFraction (which together set the decision margin) — never config or
+// the cell grid. Self-contained fail-closed guards, matching OneSparkPerZone /
+// TwoSparks (OQ-3 Option A). Distinct-zone placement is intentionally NOT checked
+// here; it is composed in via OneSparkPerZone in every ruleset-25 category that ANDs this.
 
-// Tuning constants are module-private to sim-props.ts: the predicate is the only
-// consumer (the deterministic Playwright walk uses documented coordinates, not a
-// placement helper — OQ-D / OQ-E), so there is no second consumer to keep in
-// lockstep. "Near the top" = normalized elevation in the top 25% of the range
-// (>= 0.75); "near the bottom" = bottom 25% (<= 0.25). 25% is a deliberately
-// generous default (PI guidance: > 10%, << 50%, may need tuning once seen in
-// action); tuning against real student data is out of scope (requirements.md
-// Out of Scope).
-const TOP_BOTTOM_TOLERANCE = 0.25;
-const HIGH_THRESHOLD = 1 - TOP_BOTTOM_TOLERANCE; // 0.75
-const LOW_THRESHOLD = TOP_BOTTOM_TOLERANCE;      // 0.25
-// Flat-terrain floor: a run is disqualified unless the elevation span exceeds
-// MIN_SPAN_FRACTION of the per-preset heightmap max. At the default max (20000)
-// this is a 1000 ft floor: above heightmap quantization noise, well below real
-// mountain relief (requirements.md R3). Tunable; tuning is out of scope.
-const MIN_SPAN_FRACTION = 0.05;
+// A spark is classified "top" when its mean TPI rises at least
+// (tpiMarginFraction × heightmapMaxElevation) ABOVE its surroundings, and "bottom"
+// when it sits at least that far below. tpiMarginFraction rides on the reading
+// (config.tpiMarginFraction, URL-tunable via ?tpiMarginFraction=...); this constant
+// is only the fallback when the reading omits it. At the default 0.025 × 20000 the
+// margin is 500 ft: above heightmap quantization noise, well below real mountain
+// relief — so flat terrain (TPI ~ 0 everywhere) never qualifies, replacing the old
+// global minimum-span floor. 0.025 was chosen by an empirical sweep against local
+// slope-position ground truth (lower margins suppressed the base-of-slope case the
+// activity coaches); see the WM-15 addendum. Tunable; tuning is out of scope.
+const DEFAULT_TPI_MARGIN_FRACTION = 0.025;
+
+type TpiClass = "top" | "bottom" | "neither";
+
+// Aggregate one spark's multi-scale TPI array into a top/bottom/neither verdict.
+// The mean over the populated bands is the spark's overall topographic position;
+// `null` bands (no usable cell, e.g. near the map edge) are ignored. Fails closed
+// to "neither" when the array is missing or has no finite entry.
+const classifyTpi = (tpi: Array<number | null> | undefined, margin: number): TpiClass => {
+  if (!tpi) return "neither";
+  const vals = tpi.filter((v): v is number => Number.isFinite(v as number));
+  if (vals.length === 0) return "neither";
+  const mean = vals.reduce((sum, v) => sum + v, 0) / vals.length;
+  if (mean >= margin) return "top";
+  if (mean <= -margin) return "bottom";
+  return "neither";
+};
 
 const SparksAtTopAndBottom: SimPropImpl<WildfireReading, WildfireDefaults> = {
   defaultValue: false,
   evaluate: (reading) => {
-    const { sparks, elevationRange, heightmapMaxElevation } = reading;
-    // Fail closed: exactly two sparks, both with defined elevation, plus the
-    // two topography fields the normalization and floor need (OQ-3 A / R3).
+    const { sparks, heightmapMaxElevation, tpiMarginFraction } = reading;
+    // Fail closed: exactly two sparks plus the heightmap max the margin scales to.
     if (!sparks || sparks.length !== 2) return false;
-    if (sparks.some((s) => !Number.isFinite(s.elevation))) return false;
-    if (!elevationRange ||
-        !Number.isFinite(elevationRange.min) || !Number.isFinite(elevationRange.max)) return false;
     if (!Number.isFinite(heightmapMaxElevation)) return false;
 
-    const { min, max } = elevationRange;
-    // Defense-in-depth (Finding 1): the payload already omits the elevation of a
-    // spark on an excluded fillTerrainEdges cell (so its artificial 0 can't
-    // normalize below the interior range), but reject any spark whose elevation
-    // falls outside [min, max] here too — a below-range value would normalize < 0
-    // (a spurious "bottom") and an above-range value > 1 (a spurious "top"). This
-    // keeps the predicate self-consistent regardless of how the payload was built.
-    if (sparks.some((s) => (s.elevation as number) < min || (s.elevation as number) > max)) return false;
-
-    const span = max - min;
-    // Flat / degenerate terrain never counts (R3). At or below the floor there
-    // is no meaningful top/bottom; this also guards the divide-by-zero below.
-    const minSpan = MIN_SPAN_FRACTION * (heightmapMaxElevation as number);
-    if (span <= minSpan) return false;
-
-    const [a, b] = sparks.map((s) => ((s.elevation as number) - min) / span);
-    const higher = Math.max(a, b);
-    const lower = Math.min(a, b);
-    return higher >= HIGH_THRESHOLD && lower <= LOW_THRESHOLD;
+    // Margin fraction rides on the reading (URL/preset-tunable); fall back to the
+    // module default when a reading omits it (e.g. older fixtures).
+    const fraction = Number.isFinite(tpiMarginFraction)
+      ? (tpiMarginFraction as number) : DEFAULT_TPI_MARGIN_FRACTION;
+    const margin = fraction * (heightmapMaxElevation as number);
+    const classes = sparks.map((s) => classifyTpi(s.tpi, margin));
+    // Need exactly one spark on top and the other at the bottom. With two sparks,
+    // "includes top AND includes bottom" already implies one of each (and neither
+    // is "neither"), so it also rejects similar / both-top / both-bottom / flat.
+    return classes.includes("top") && classes.includes("bottom");
   },
 };
 

@@ -24,8 +24,8 @@ export function translate(
         sparks: data.sparks,
         fireLineMarkers: data.fireLineMarkers,
         wind: data.wind,
-        elevationRange: data.elevationRange,
         heightmapMaxElevation: data.heightmapMaxElevation,
+        tpiMarginFraction: data.tpiMarginFraction,
       };
       return { kind: "trigger", reading };
     }

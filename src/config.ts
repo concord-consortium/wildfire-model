@@ -41,6 +41,22 @@ export interface ISimulationConfig {
   minCellBurnTime: number;
   // Max elevation of 100% white points in heightmap (image used for elevation data).
   heightmapMaxElevation: number; // ft
+  // Concentric-band outer radii (in cells, ascending) for the multi-scale
+  // Topographic Position Index the Hazbot SparksAtTopAndBottom predicate uses to
+  // localize whether a spark sits in a valley or on a ridge/peak. The array
+  // length is N (the number of bands): band i covers cell distances in
+  // (tpiBands[i-1], tpiBands[i]], band 0 covers (0, tpiBands[0]]. Larger radii
+  // capture coarser landforms. See SimulationModel.tpiForSpark.
+  tpiBands: number[];
+  // Fraction of heightmapMaxElevation a spark's mean TPI must clear to be counted
+  // as top/bottom by the Hazbot SparksAtTopAndBottom predicate (default 0.025 →
+  // 500 ft at the default max). URL/preset-tunable; rides the SimulationStarted
+  // config snapshot so the predicate can read it. See sim-props.ts.
+  tpiMarginFraction: number;
+  // Developer/researcher debug overlay: when true, tints each placed spark's TPI
+  // bands onto the terrain (warm = ridge / positive TPI, cool = valley / negative,
+  // white ~ flat). Enable via ?tpiDebug=true. No effect on logging or rule logic.
+  tpiDebug: boolean;
   // Number of zones that the model is using. Zones are used to keep properties of some area of the model.
   zonesCount?: 2 | 3;
   zones: [ZoneOptions, ZoneOptions, ZoneOptions?];
@@ -124,6 +140,14 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   minCellBurnTime: 200, // minutes
   // This value works well with existing heightmap images.
   heightmapMaxElevation: 20000,
+  // Three concentric bands (0-3, 3-8, 8-15 cells) for the multi-scale TPI used by
+  // the Hazbot SparksAtTopAndBottom predicate. Configurable per preset / URL.
+  tpiBands: [3, 8, 15],
+  // TPI decision margin as a fraction of heightmapMaxElevation (0.025 → 500 ft at
+  // the default max). Tuned empirically; ?tpiMarginFraction= to override.
+  tpiMarginFraction: 0.025,
+  // Off by default; ?tpiDebug=true paints the TPI bands onto the terrain.
+  tpiDebug: false,
   // undefined zones count will make them configurable in Terrain Setup dialog.
   zonesCount: undefined,
   zones: [

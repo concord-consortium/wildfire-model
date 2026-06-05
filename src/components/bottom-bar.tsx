@@ -227,14 +227,13 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       if (typeof config.unburntIslands === "string") configSnapshot.unburntIslands = config.unburntIslands;
       if (typeof config.zoneIndex === "string") configSnapshot.zoneIndex = config.zoneIndex;
 
-      // Runtime state not in config (sparks carry baseElevation; markers keep
-      // cell.elevation; range attached when present). zones / wind / towns stay inline.
-      // heightmapMaxElevation is already in configSnapshot via the generic config
-      // loop above; translate() forwards it to the SparksAtTopAndBottom predicate.
+      // Runtime state not in config (sparks carry their localized TPI; markers keep
+      // cell.elevation). zones / wind / towns stay inline. heightmapMaxElevation and
+      // tpiBands are already in configSnapshot via the generic config loop above;
+      // translate() forwards heightmapMaxElevation to the SparksAtTopAndBottom predicate.
       const startData = simulation.buildStartReadingData();
       configSnapshot.sparks = startData.sparks;
       configSnapshot.fireLineMarkers = startData.fireLineMarkers;
-      if (startData.elevationRange) configSnapshot.elevationRange = startData.elevationRange;
       configSnapshot.zones = simulation.zones.map(z => ({
         vegetation: vegetationLabels[z.vegetation],
         terrainType: terrainLabels[z.terrainType],
