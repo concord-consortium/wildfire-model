@@ -7,7 +7,7 @@ const colorArrayToRGBA = (colorArray: number[]) =>
   `rgba(${colorArray.map((v, idx) => idx < 4 ? Math.round(v * 255) : v).join(",")})`;
 
 export const FireIntensityScale = () => (
-  <div className={css.fireIntensityScale}>
+  <div className={css.fireIntensityScale} data-testid="fire-intensity-scale">
     <div className={css.barsContainer}>
       <div className={css.bar1} style={{backgroundColor: colorArrayToRGBA(BURN_INDEX_LOW) }} />
       <div className={css.bar2} style={{backgroundColor: colorArrayToRGBA(BURN_INDEX_MEDIUM) }} />

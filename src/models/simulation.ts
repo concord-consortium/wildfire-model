@@ -180,68 +180,121 @@ export class SimulationModel {
       (x === 0 || x === this.gridWidth - 1 || y === 0 || y === this.gridHeight);
   }
 
-  // min/max of cell.baseElevation across interior cells (rivers and unburnt
-  // islands included — they carry real topography; only the artificial
-  // fillTerrainEdges perimeter is excluded). Returns null when no cell has a
-  // finite baseElevation (e.g. a preset with no elevation source) so the
-  // payload omits elevationRange and the predicate fails closed (R3).
-  public get baseElevationRange(): { min: number; max: number } | null {
-    let min = Infinity, max = -Infinity;
-    for (const cell of this.cells) {
-      if (this.isTerrainEdge(cell.x, cell.y)) continue;
-      const e = cell.baseElevation;
-      if (!Number.isFinite(e)) continue;
-      if (e < min) min = e;
-      if (e > max) max = e;
+  // Multi-scale Topographic Position Index (TPI) for a spark, used by the Hazbot
+  // SparksAtTopAndBottom predicate to LOCALIZE whether a spark sits in a valley or
+  // on a ridge/peak rather than relying on a single global elevation range. For
+  // each concentric band of cells around the spark, TPI = sparkElevation -
+  // meanBandElevation: negative => the spark is below its neighborhood (valley) at
+  // that scale, positive => above it (ridge/peak) at that scale. The bands are
+  // config.tpiBands (outer radii in cells, ascending); the returned array has one
+  // entry per band, in band order, with `null` for any band that captured no
+  // usable cell (off-grid / all-edge near the map border).
+  //
+  // The neighborhood is scanned ONCE up to the largest band radius and each cell is
+  // bucketed into the first band whose outer radius covers its distance — no
+  // separate pass per band. `x`/`y` are in model feet (same basis as addSpark);
+  // the elevation basis is the immutable cell.baseElevation (NOT the
+  // FIRE_LINE_DEPTH-adjusted cell.elevation getter), and fillTerrainEdges
+  // perimeter cells are excluded via
+  // the same isTerrainEdge predicate so artificial 0-ft edges never skew a band
+  // average. Returns undefined (fail closed) when the grid is empty, tpiBands is
+  // unset, or the spark itself is off-grid / on an edge / non-finite.
+  public tpiForSpark(x: number, y: number): Array<number | null> | undefined {
+    return this.tpiBandsForSpark(x, y)?.tpi;
+  }
+
+  // The single-pass scan behind tpiForSpark, additionally returning the grid
+  // indices of the cells that fell in each band (cellsByBand[i] for band i). The
+  // predicate path (tpiForSpark / buildStartReadingData) ignores cellsByBand; the
+  // tpiDebug terrain overlay uses it to tint each band by its TPI. Sharing one
+  // scan keeps the band membership the overlay draws in lockstep with the band
+  // averages the predicate sees. See tpiForSpark's contract for the fail-closed
+  // cases and the elevation/edge basis.
+  public tpiBandsForSpark(x: number, y: number):
+    { tpi: Array<number | null>; cellsByBand: number[][] } | undefined {
+    const bands = this.config.tpiBands;
+    if (this.cells.length === 0 || !bands || bands.length === 0) return undefined;
+    const center = this.cellAt(x, y);
+    if (!center || this.isTerrainEdge(center.x, center.y)) return undefined;
+    const centerElevation = center.baseElevation;
+    if (!Number.isFinite(centerElevation)) return undefined;
+
+    // Compare squared distances against squared band radii to avoid a per-cell sqrt.
+    const bandsSq = bands.map((r) => r * r);
+    const maxR = bands[bands.length - 1];
+    const maxRSq = bandsSq[bandsSq.length - 1];
+    const sums = bands.map(() => 0);
+    const counts = bands.map(() => 0);
+    const cellsByBand: number[][] = bands.map(() => []);
+
+    // Bound the scan to the grid. tpiBands is URL/preset-tunable, so an oversized
+    // (or non-finite) outer radius would otherwise spin a (2·maxR+1)^2 loop whose
+    // every extra iteration only skips an off-grid cell — at maxR = Infinity it
+    // never terminates. Clamping the per-axis reach to the grid extent leaves the
+    // result identical (off-grid cells are skipped below either way) while keeping
+    // worst-case work bounded by the grid size. A non-finite maxR collapses to NaN
+    // here, so the loop body never runs and the spark fails closed (all-null TPI).
+    const scanR = Math.min(maxR, Math.max(this.gridWidth, this.gridHeight));
+
+    // Single pass over the square neighborhood; the squared-distance test carves the
+    // disk out of the square and assigns each cell to its band.
+    for (let dy = -scanR; dy <= scanR; dy++) {
+      const ny = center.y + dy;
+      if (ny < 0 || ny >= this.gridHeight) continue;
+      for (let dx = -scanR; dx <= scanR; dx++) {
+        if (dx === 0 && dy === 0) continue; // the center is the reference, not a neighbor
+        const nx = center.x + dx;
+        if (nx < 0 || nx >= this.gridWidth) continue;
+        const dSq = dx * dx + dy * dy;
+        if (dSq > maxRSq) continue;
+        // First band whose outer radius covers this distance (bands are ascending).
+        let band = 0;
+        while (dSq > bandsSq[band]) band++;
+        const index = getGridIndexForLocation(nx, ny, this.gridWidth);
+        const cell = this.cells[index];
+        if (!cell || this.isTerrainEdge(cell.x, cell.y)) continue;
+        const e = cell.baseElevation;
+        if (!Number.isFinite(e)) continue;
+        sums[band] += e;
+        counts[band] += 1;
+        cellsByBand[band].push(index);
+      }
     }
-    return min === Infinity ? null : { min, max };
+    const tpi = bands.map((_, i) => (counts[i] > 0 ? centerElevation - sums[i] / counts[i] : null));
+    return { tpi, cellsByBand };
   }
 
   // Topography-dependent SimulationStarted payload data, extracted from
   // bottom-bar.handleStart so it is unit-testable in isolation (WM-15 R9).
-  // The per-SPARK elevation read uses baseElevation (immutable topography), NOT
-  // cell.elevation — the latter subtracts FIRE_LINE_DEPTH for dug cells (cell.ts:59-64),
-  // which would skew the topographic basis the Hazbot predicate normalizes against
-  // (R3 / WM-15). Fire-line markers keep cell.elevation (unchanged from the original):
-  // only the spark basis is required, and the predicate never reads markers.
-  // Return type declares elevationRange OPTIONAL (rather than letting TS infer a
-  // presence-discriminated union), so the bottom-bar consumer's
-  // `if (startData.elevationRange)` access typechecks regardless of the range branch.
+  // Each spark carries its localized multi-scale TPI (tpiForSpark), the basis the
+  // Hazbot SparksAtTopAndBottom predicate uses; it is undefined for a spark on an
+  // excluded fillTerrainEdges perimeter cell (addSpark does not reject edge cells)
+  // so such a spark fails the predicate's closed guard. Fire-line markers keep the
+  // dynamic cell.elevation (unchanged from the original); the predicate never reads
+  // markers.
   public buildStartReadingData(): {
-    sparks: Array<{ x: number; y: number; elevation?: number; zoneIdx?: number }>;
+    sparks: Array<{ x: number; y: number; zoneIdx?: number; tpi?: Array<number | null> }>;
     fireLineMarkers: Array<{ x: number; y: number; elevation?: number }>;
-    elevationRange?: { min: number; max: number };
   } {
     const { config } = this;
     const cellFor = (x: number, y: number) => this.cells.length > 0 ? this.cellAt(x, y) : null;
     const sparks = this.sparks.map((s) => {
       const cell = cellFor(s.x, s.y);
-      // Fail closed on a spark that landed on a fillTerrainEdges perimeter cell:
-      // those carry an artificial baseElevation 0 that is EXCLUDED from
-      // baseElevationRange, so reporting it would normalize below the interior
-      // range (negative → counts as "bottom") and let an edge spark stand in for a
-      // real valley (requirements.md R3). addSpark() does not reject edge cells, so
-      // exclude the elevation here; one undefined elevation trips the predicate's
-      // fail-closed guard. Range exclusion and spark exclusion now use the SAME
-      // isTerrainEdge predicate, so they cannot diverge.
       const onEdge = cell ? this.isTerrainEdge(cell.x, cell.y) : false;
       return {
         x: s.x / config.modelWidth,
         y: s.y / config.modelHeight,
-        // spark basis: immutable topography (R3); undefined on an excluded edge cell.
-        elevation: onEdge ? undefined : cell?.baseElevation,
-        zoneIdx: cell?.zoneIdx
+        zoneIdx: cell?.zoneIdx,
+        // Localized multi-scale TPI for this spark; undefined on an excluded edge
+        // cell so the predicate fails closed.
+        tpi: onEdge ? undefined : this.tpiForSpark(s.x, s.y)
       };
     });
     const fireLineMarkers = this.fireLineMarkers.map((fl) => {
       const cell = cellFor(fl.x, fl.y);
-      // Unchanged from the original: markers keep the dynamic cell.elevation.
       return { x: fl.x / config.modelWidth, y: fl.y / config.modelHeight, elevation: cell?.elevation };
     });
-    const range = this.baseElevationRange;
-    // Spread the optional field so the result always has the {sparks, fireLineMarkers,
-    // elevationRange?} shape — no inferred union for the consumer to narrow.
-    return { sparks, fireLineMarkers, ...(range ? { elevationRange: range } : {}) };
+    return { sparks, fireLineMarkers };
   }
 
   @action.bound public setInputParamsFromConfig() {

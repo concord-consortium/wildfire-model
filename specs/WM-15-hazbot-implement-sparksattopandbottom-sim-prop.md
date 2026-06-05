@@ -19,6 +19,16 @@ separate change.
 
 ## Requirements
 
+> **Superseded mechanism (see Addendum, 2026-06-04).** R2/R3 and OQ-1 below describe
+> the original detection: each spark's elevation normalized against a single global
+> `elevationRange` (top/bottom 25%) plus a minimum-span floor. The shipped
+> implementation replaced this with a **localized multi-scale Topographic Position
+> Index (TPI)** and removed the `elevation` / `elevationRange` / `baseElevationRange`
+> fields. The requirements' *intent* (one spark near the top, one near the bottom;
+> fail closed on flat/degenerate input) still holds; the elevation-normalization
+> *details* do not. Read the [Addendum](#addendum-2026-06-04-branch-wm-28-add-helitack-run-window-detection-localized-multi-scale-tpi)
+> for current behavior.
+
 - **R1.** `SparksAtTopAndBottom` no longer sets `isStub: true`, and its `evaluate`
   implements real detection logic (no longer hard-returns `false`).
 - **R2.** Returns `true` for ruleset 25 Cat 6's intent: one spark near the top
@@ -306,3 +316,81 @@ spark on a zeroed perimeter cell normalized below the interior range and counted
 undefined` for any spark on a cell the **same** `isTerrainEdge` predicate excludes,
 failing closed at the source; (2) the predicate adds finite + in-`[min, max]` guards as
 defense-in-depth; (3) model and predicate tests cover both.
+
+---
+
+## Addendum (2026-06-04, branch `WM-28-add-helitack-run-window-detection`): localized multi-scale TPI
+
+**Why**: Feedback + further research found the global normalized-elevation check
+(OQ-1 Option B above) too coarse. Normalizing each spark against the topography's
+single global `elevationRange` mislabels sparks whose *local* setting differs from
+the whole-map extremes — e.g. a spark on a local rise inside an overall low area,
+or a mid-slope spark that happens to fall in the global top/bottom quartile. The
+detection is now **localized** per spark.
+
+**What changed**:
+- **Detection basis**: replaced the global `elevationRange` normalization with a
+  **multi-scale Topographic Position Index (TPI)**. For each spark, `SimulationModel.tpiForSpark`
+  scans concentric cell bands (config `tpiBands`, default `[3, 8, 15]` cell radii)
+  in a single neighborhood pass and returns one TPI per band, where
+  `TPI = sparkElevation - meanBandElevation` (negative = valley at that scale,
+  positive = ridge/peak). The elevation basis and `isTerrainEdge` exclusion are
+  unchanged (immutable `cell.baseElevation`; perimeter cells excluded). Both sparks
+  are evaluated independently.
+- **Reading payload**: each spark now carries a `tpi: Array<number | null>` (one
+  entry per band; `null` for a band with no usable cell). `SparksAtTopAndBottom`
+  classifies a spark "top"/"bottom" when its **mean** TPI clears `±tpiMarginFraction
+  × heightmapMaxElevation` and returns `true` when one spark is top and the other
+  bottom. Flat terrain (TPI ≈ 0) naturally fails the margin, so the separate global
+  minimum-span floor is gone.
+- **Margin tuning (Playwright sweeps, 2026-06-05)**: the margin fraction was lowered
+  from the initial `0.05` (1000 ft) to the shipped **`0.02`** (400 ft) after empirical
+  sweeps on `mountainTwoZoneFixedTerrain`. Ground truth was each point's elevation
+  percentile within a *local* (fire-relevant, 5–10 k ft) window — matching the
+  pedagogy (a spark at the **base of a slope** climbs faster than it spreads on flat
+  ground), not whole-mountain position.
+  - First pass landed on `0.025`, but live testing showed obvious mountain-bases
+    being missed. Root cause: **mean dilution** — at the foot of a slope the inner
+    rings are locally flat (TPI ≈ 0) while the outer ring correctly sees the mountain
+    above (e.g. −1,448), so the *mean* lands just short of the threshold. ~9% of
+    "base with a ≥3,000 ft climb above" points were missed at `0.025`.
+  - Lowering to `0.02` raises obvious-base detection from ~0.91 to ~0.97 while keeping
+    crest detection ~0.99 and two-mid-slope false-pass < 1% — the latter holds because
+    mid-slope overfire skews to "bottom" (≈13%) not "top" (≈3%), and the activity
+    needs *one of each*. Cell-weighting the bands was tried and **rejected** (same
+    tradeoff curve, no separation gain).
+  - A **strict "all bands agree in sign"** classifier was also considered and
+    **rejected**: it fails on mountains smaller than the outer band's reach (the outer
+    band overshoots the summit into flat ground and flips sign), whereas the mean rule
+    degrades gracefully. Mid-slope sparks on a uniform slope still read "neither" (the
+    core TPI property: terrain above and below cancel).
+- **Debug overlay verdict**: `tpiDebug` tints each spark's rings by the *verdict* the
+  predicate computes (red/blue gradient when it counts as top/bottom, greyscale when
+  "neither") and logs each spark's mean TPI + verdict to the console, so a base spark
+  whose strong outer ring looks blue but whose mean fell short reads as grey rather
+  than misleading blue.
+- **Removed as now-unused** (this branch added them in the original WM-15 work; the
+  localized approach made them dead): the per-spark `elevation` field, the
+  `elevationRange` reading field, the `SimulationModel.baseElevationRange` getter,
+  and their plumbing in `translate()` / `buildStartReadingData()` / `bottom-bar` /
+  `LOGGED-EVENTS.md`. `heightmapMaxElevation` is **kept** (it now scales the TPI
+  margin). R9's `baseElevationRange` / spark-`elevation` / `elevationRange`
+  forwarding tests were removed accordingly and replaced with `tpiForSpark` /
+  `tpi`-payload coverage.
+- **Tuning params**: `tpiBands` and `tpiMarginFraction` (config; URL/preset-tunable
+  via `?tpiBands=[..]` / `?tpiMarginFraction=..`) replace `TOP_BOTTOM_TOLERANCE` /
+  `HIGH_THRESHOLD` / `LOW_THRESHOLD` / `MIN_SPAN_FRACTION`. Both ride the
+  `SimulationStarted` config snapshot; `translate()` forwards `tpiMarginFraction` to
+  the predicate (`tpiBands` is consumed model-side when building each spark's `tpi`).
+  `DEFAULT_TPI_MARGIN_FRACTION` in `sim-props.ts` is only the fallback when a reading
+  omits the field.
+- **Debug overlay**: `?tpiDebug=true` paints each placed spark's TPI bands onto the
+  terrain (warm = ridge / positive TPI, cool = valley / negative, white ≈ flat),
+  normalized to the most extreme band on screen. Shares the single `tpiBandsForSpark`
+  scan so the drawn bands match the predicate's averages. No effect on logging or
+  rule logic.
+
+**Unchanged**: OQ-2 (canonical preset `mountainTwoZoneFixedTerrain`), OQ-3
+(self-contained fail-closed guards; distinct-zone delegated to `OneSparkPerZone`),
+the no-stub-warning guarantee (R6), and that threshold tuning against real student
+data remains out of scope.

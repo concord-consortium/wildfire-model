@@ -417,21 +417,12 @@ describe("SimulationModel", () => {
     });
   });
 
-  // WM-15: the topography-dependent SimulationStarted payload data the
-  // SparksAtTopAndBottom predicate normalizes against. A numeric config.elevation
-  // array routes through populateGrid (pure arithmetic) rather than the canvas/PNG
-  // decode path, so this runs cleanly under jsdom (matching the suite above). The
-  // array values pass through unscaled, so they ARE the per-cell baseElevation.
-  describe("baseElevationRange (R9)", () => {
-    // A 5x5 grid (modelWidth/gridWidth = 20000 ft cells, modelHeight/cellSize = 5
-    // rows). At grid resolution the elevation array interpolates as identity.
-    const variedElevation = [
-      [1000, 2000, 3000, 4000, 5000],
-      [2000, 3000, 4000, 5000, 6000],
-      [3000, 4000, 5000, 6000, 7000],
-      [4000, 5000, 6000, 7000, 8000],
-      [5000, 6000, 7000, 8000, 9000],
-    ];
+  // WM-15: the topography-dependent SimulationStarted payload data the Hazbot
+  // SparksAtTopAndBottom predicate consumes. A numeric config.elevation array routes
+  // through populateGrid (pure arithmetic) rather than the canvas/PNG decode path, so
+  // this runs cleanly under jsdom. The array values pass through unscaled, so they
+  // ARE the per-cell baseElevation.
+  describe("buildStartReadingData (R9)", () => {
     const uniformElevation = [
       [5000, 5000, 5000, 5000, 5000],
       [5000, 5000, 5000, 5000, 5000],
@@ -453,46 +444,21 @@ describe("SimulationModel", () => {
         fillTerrainEdges,
       });
 
-    it("(a) returns min/max of cell.baseElevation across the grid", async () => {
-      const sim = makeSim(variedElevation);
+    it("attaches a per-band tpi array for an interior spark and undefined for an excluded edge spark", async () => {
+      const sim = makeSim(uniformElevation, true); // default tpiBands [3, 8, 15]
       await sim.dataReadyPromise;
-      expect(sim.baseElevationRange).toEqual({ min: 1000, max: 9000 });
-    });
-
-    it("(b) excludes fillTerrainEdges perimeter cells, so the artificial 0 never drags min down", async () => {
-      const sim = makeSim(uniformElevation, true);
-      await sim.dataReadyPromise;
-      // Some cells were zeroed to baseElevation 0 by fillTerrainEdges...
-      expect(sim.cells.some(c => c.baseElevation === 0)).toBe(true);
-      // ...but the range excludes them, so min stays at the real interior value.
-      expect(sim.baseElevationRange).toEqual({ min: 5000, max: 5000 });
-    });
-
-    it("(c) includes rivers / unburnt islands (does NOT filter by isNonburnable)", async () => {
-      const sim = makeSim(variedElevation);
-      await sim.dataReadyPromise;
-      const cell = sim.cellAt(50000, 50000); // interior cell
-      cell.isRiver = true;
-      cell.baseElevation = 12000; // above the natural max of 9000
-      expect(sim.baseElevationRange?.max).toBe(12000);
-    });
-
-    it("(d) returns null when no cell has a finite baseElevation", async () => {
-      const sim = makeSim(variedElevation);
-      await sim.dataReadyPromise;
-      sim.cells = [];
-      expect(sim.baseElevationRange).toBeNull();
+      sim.addSpark(50000, 50000); // interior
+      sim.addSpark(10000, 50000); // grid column 0 → edge, fails closed
+      const data = sim.buildStartReadingData();
+      expect(Array.isArray(data.sparks[0].tpi)).toBe(true);
+      expect(data.sparks[0].tpi).toHaveLength(3); // one entry per band
+      expect(data.sparks[1].tpi).toBeUndefined();
     });
   });
 
-  describe("buildStartReadingData (R9)", () => {
-    const variedElevation = [
-      [1000, 2000, 3000, 4000, 5000],
-      [2000, 3000, 4000, 5000, 6000],
-      [3000, 4000, 5000, 6000, 7000],
-      [4000, 5000, 6000, 7000, 8000],
-      [5000, 6000, 7000, 8000, 9000],
-    ];
+  // Localized multi-scale Topographic Position Index. Two tight bands ([1, 2]
+  // cells) over a 5x5 / 20000 ft-cell grid give exact, hand-checkable averages.
+  describe("tpiForSpark (localized valley/ridge)", () => {
     const uniformElevation = [
       [5000, 5000, 5000, 5000, 5000],
       [5000, 5000, 5000, 5000, 5000],
@@ -500,48 +466,49 @@ describe("SimulationModel", () => {
       [5000, 5000, 5000, 5000, 5000],
       [5000, 5000, 5000, 5000, 5000],
     ];
-    const makeSim = (elevation: number[][], fillTerrainEdges = false) =>
+    const makeSim = (fillTerrainEdges = false) =>
       new SimulationModel({
         modelWidth: 100000,
         modelHeight: 100000,
         gridWidth: 5,
         sparks: [],
         zoneIndex: [[0]],
-        elevation,
+        elevation: uniformElevation,
         unburntIslands: [[1]],
         unburntIslandProbability: 1,
         riverData: null,
         fillTerrainEdges,
+        tpiBands: [1, 2],
       });
 
-    it("reads spark elevation from baseElevation, not the FIRE_LINE_DEPTH-reduced cell.elevation", async () => {
-      const sim = makeSim(variedElevation);
+    it("returns positive TPI at every band for a spark above its surroundings (ridge/peak)", async () => {
+      const sim = makeSim();
       await sim.dataReadyPromise;
-      const cell = sim.cellAt(50000, 50000);
-      cell.baseElevation = 7000;
-      cell.isFireLine = true; // cell.elevation now 7000 - FIRE_LINE_DEPTH (2000) = 5000
-      expect(cell.elevation).toBe(5000);
-      sim.addSpark(50000, 50000);
-      const data = sim.buildStartReadingData();
-      expect(data.sparks[0].elevation).toBe(7000); // baseElevation, NOT 5000
+      sim.cellAt(50000, 50000).baseElevation = 8000; // center peak; neighbors stay 5000
+      // band 0 = the four orthogonal neighbors (dist 1), band 1 = the diagonals
+      // (√2) plus the dist-2 cells — all at 5000, so TPI = 8000 - 5000 = 3000.
+      expect(sim.tpiForSpark(50000, 50000)).toEqual([3000, 3000]);
     });
 
-    it("attaches elevationRange when available, omits it when baseElevationRange is null", async () => {
-      const sim = makeSim(variedElevation);
+    it("returns negative TPI at every band for a spark below its surroundings (valley)", async () => {
+      const sim = makeSim();
       await sim.dataReadyPromise;
-      expect(sim.buildStartReadingData().elevationRange).toEqual({ min: 1000, max: 9000 });
+      sim.cellAt(50000, 50000).baseElevation = 2000; // center valley
+      expect(sim.tpiForSpark(50000, 50000)).toEqual([-3000, -3000]);
+    });
+
+    it("fails closed (undefined) for a spark on an excluded fillTerrainEdges cell", async () => {
+      const sim = makeSim(true);
+      await sim.dataReadyPromise;
+      expect(sim.isTerrainEdge(sim.cellAt(10000, 50000).x, sim.cellAt(10000, 50000).y)).toBe(true);
+      expect(sim.tpiForSpark(10000, 50000)).toBeUndefined();
+    });
+
+    it("fails closed (undefined) when the grid is empty", async () => {
+      const sim = makeSim();
+      await sim.dataReadyPromise;
       sim.cells = [];
-      expect(sim.buildStartReadingData().elevationRange).toBeUndefined();
-    });
-
-    it("reports elevation: undefined for a spark on an excluded fillTerrainEdges cell (R3 fail-closed)", async () => {
-      const sim = makeSim(uniformElevation, true);
-      await sim.dataReadyPromise;
-      const cell = sim.cellAt(10000, 50000); // grid column 0 → isTerrainEdge true
-      expect(sim.isTerrainEdge(cell.x, cell.y)).toBe(true);
-      expect(cell.baseElevation).toBe(0); // artificial edge zero
-      sim.addSpark(10000, 50000);
-      expect(sim.buildStartReadingData().sparks[0].elevation).toBeUndefined();
+      expect(sim.tpiForSpark(50000, 50000)).toBeUndefined();
     });
   });
 });

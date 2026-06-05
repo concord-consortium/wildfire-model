@@ -13,17 +13,15 @@ export interface WildfireReading extends BaseReading {
   // mph = speed / scaleFactor. DefaultVars applies it so its tolerance is in
   // user-facing MPH; without it the tolerance silently scales with the preset.
   wind?: { speed: number; direction: number; scaleFactor?: number };
-  // Immutable-topography elevation extrema of the grid (min/max of
-  // cell.baseElevation), computed at the SimulationStarted payload site and
-  // forwarded by translate(). Used by SparksAtTopAndBottom to normalize each
-  // spark's elevation. Excludes only the fillTerrainEdges perimeter cells; see
-  // requirements.md R3 "Exact exclusion rule".
-  elevationRange?: { min: number; max: number };
   // Per-preset heightmap max (config.heightmapMaxElevation; default 20000, some
-  // presets override to 3000/10000). Carried so the predicate can derive the
-  // flat-terrain minimum-span floor (R3) — config is not reachable from a
-  // sim-prop. Rides along in the config snapshot; translate() forwards it.
+  // presets override to 3000/10000). Carried so SparksAtTopAndBottom can scale its
+  // TPI decision margin to the preset — config is not reachable from a sim-prop.
+  // Rides along in the config snapshot; translate() forwards it.
   heightmapMaxElevation?: number;
+  // Fraction of heightmapMaxElevation a spark's mean TPI must clear to count as
+  // top/bottom (config.tpiMarginFraction, default 0.02, URL-tunable). Carried so
+  // SparksAtTopAndBottom can set its decision margin; translate() forwards it.
+  tpiMarginFraction?: number;
   // Outcome data from end-of-run triggers; opaque to current rule sets.
   outcome?: unknown;
   // Set true by the Helitack translate modifier when a helitack is dropped during
@@ -60,7 +58,13 @@ export interface WildfireSpark {
   // Matches the LARA payload field — see src/components/bottom-bar.tsx
   // SimulationStarted call site (`zoneIdx: cell?.zoneIdx`).
   zoneIdx?: number;
-  elevation?: number;
+  // Multi-scale Topographic Position Index for this spark, one entry per
+  // config.tpiBands concentric band (in band order); `null` for a band that
+  // captured no usable cell. Negative => valley at that scale, positive =>
+  // ridge/peak. Computed at the SimulationStarted payload site by
+  // SimulationModel.tpiForSpark and used by SparksAtTopAndBottom to localize the
+  // spark instead of normalizing against a single global elevation range.
+  tpi?: Array<number | null>;
 }
 
 // Wildfire-specific defaults. All fields optional at the type level so the

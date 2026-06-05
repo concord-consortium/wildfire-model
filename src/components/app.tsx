@@ -95,6 +95,8 @@ export const AppComponent = observer(function WrappedComponent() {
           <div>Highest Point Possible: {config.heightmapMaxElevation} ft</div>
         </div>
       }
+      {config.topLines && <div className={`${css.topLine} ${css.topLineUpper}`} />}
+      {config.topLines && <div className={`${css.topLine} ${css.topLineLower}`} />}
       <div className={css.timeDisplay}>
         {timeInDays} {timeInDays === 1 ? "day" : "days"} and <br /> {timeHours} {timeHours === 1 ? "hour" : "hours"}
       </div>

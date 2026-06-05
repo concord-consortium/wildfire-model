@@ -88,6 +88,17 @@ const createTestHelpers = (simulation: SimulationModel) => {
         elevation: cell.elevation,
       });
     },
-    zoneBounds
+    zoneBounds,
+    // Slot populated by BottomBar.componentDidMount; typed as `any` to avoid
+    // importing the BottomBar component here, which would cycle via
+    // base.ts -> stores.ts.
+    __bottomBarRef: null as any,
+    // Test-only helper for the Playwright fullscreen-variant walkthrough.
+    // Drives BottomBar.state.fullscreen via the instance ref so the four
+    // icon variants (enter/exit x default/hover) can be exercised without
+    // invoking screenfull (which is gated in headless browsers).
+    setFullscreenIconState(value: boolean) {
+      (window as any).test.__bottomBarRef?.setState({ fullscreen: value });
+    }
   };
 };
