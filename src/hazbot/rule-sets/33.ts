@@ -114,7 +114,7 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
       name: "setWind",
       definition: "There is at least one \"SimulationStarted\" event for which the wind value was set distinct from the default value for any zone.",
       logEvents: ["SimulationStarted->wind.speed", "wind.direction", "wind.scaleFactor"],
-      details: "Wind is set globally (for all zones).  For the default values, read the \"SIMINIT\" sheet.  If the magnitude is 0, then the direction has no effect and must be ignored.  So set the direction to null, if the magnitude is 0.  Here, the \"magnitude\" means the wind speed as displayed in the simulation (like \"10\" as in \"10 MPH\").  In the log data, the magnituide data entails two fields \"wind.speed\" and \"wind.scaleFactor\".  The \"magitude\" is computed as \"wind.speed\" / \"wind.scaleFactor\".",
+      details: "Wind is set globally (for all zones).  For the default values, read the \"SIMINIT\" sheet.  If the magnitude is 0, then the direction has no effect and must be ignored.  So set the direction to null, if the magnitude is 0.  Here, the \"magnitude\" means the wind speed as displayed in the simulation (like \"10\" as in \"10 MPH\").  In the log data, the magnitude data entails two fields \"wind.speed\" and \"wind.scaleFactor\".  The \"magnitude\" is computed as \"wind.speed\" / \"wind.scaleFactor\".",
     },
     {
       name: "setAnyVar",

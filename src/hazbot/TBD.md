@@ -27,38 +27,21 @@ defaults are always complete and 32–35 load. There is no longer a
 
 ---
 
-## 2. Stubbed factor variables / sim-props
+## 2. Stubbed factor variables / sim-props — RESOLVED (WM-15, WM-28)
 
-Two referenced impls are flagged `isStub: true` — they return `defaultValue`
-and surface a `stub-warning` at load. A category whose expression depends on a
-stub in a top-level AND is **unreachable**; a category that references a stub
-inside an `OR` / `NOT` is **stub-degraded** (a reachable category misclassifies
-a sub-population). See WM-18 for the per-tab effect of the Helitack stub.
+There are no remaining `isStub: true` impls; the engine emits no `stub-warning`
+for any of the 11 rule-sets.
 
-(`SparksAtTopAndBottom` was implemented in WM-15 — ruleset 25 now reaches its
-Cat 6 success state — so it is no longer a stub and has been removed from this
-list.)
-
-### `Helitack` (sim-prop) / `usedHelitack` (factor variable) — [wildfire/sim-props.ts](wildfire/sim-props.ts), [wildfire/factor-variable-stubs.ts](wildfire/factor-variable-stubs.ts)
-
-- **Used by:** ruleset 45 Cat 3 (degraded), Cat 4 (gated, unreachable);
-  ruleset 47 Cat 3 (degraded), Cat 4–5 helitack arm (dead but cats stay
-  reachable via fireline); ruleset 54 Cat 3 (degraded), Cat 4 helitack arm
-  (dead but cat 4 reachable via fireline).
-- **Effect of stub:** the helitack progression path on tabs 45/47/54 is
-  unvalidated; the fire-line progression path is unaffected (Fireline /
-  usedFireline are real impls). See the WM-18 spec's Helitack Technical Notes
-  for the per-tab over-match / dead-arm breakdown.
-- **Deferred to [WM-28](https://concord-consortium.atlassian.net/browse/WM-28)
-  ("Hazbot: Helitack run-window detection").** A `Helitack` event can occur
-  inside or outside a simulation run; only an in-run helitack counts. The
-  detail that makes this non-trivial: a sim-prop bound by `WITH` sees only its
-  one `SimulationStarted` witness reading, so "a helitack happened during this
-  run" must be attached to that reading via the temporal-variable mechanism,
-  which collides with the engine's trigger-state-change-overlap construction
-  guard. Resolving it needs an engine-substrate change. WM-28's acceptance
-  criteria include **re-validating tabs 45/47/54** once helitack detection
-  lands, not just adding the impl.
+- `SparksAtTopAndBottom` was implemented in WM-15 (ruleset 25 now reaches its
+  Cat 6 success state).
+- `Helitack` (sim-prop) / `usedHelitack` (factor variable) were implemented in
+  [WM-28](https://concord-consortium.atlassian.net/browse/WM-28) ("Hazbot:
+  Helitack run-window detection"). An in-run helitack is recorded on the
+  run-start reading by a translate `modifier` (a third engine substrate result
+  kind, chosen over reworking the trigger-state-change-overlap guard); the
+  `Helitack` sim-prop reads it per-run and `usedHelitack` aggregates across
+  runs, mirroring `Fireline` / `usedFireline`. Tabs 45/47/54 were re-validated
+  (Jest per-category coverage plus a Playwright MCP walk); see the WM-28 spec.
 
 ---
 
@@ -294,7 +277,7 @@ host-app concerns; they import nothing from the engine substrate today.
    `wildfire-model/package.json`. The boundary already runs through
    `index.ts` — only the wildfire-bridge files (`engine-singleton.ts`,
    `factor-variables.ts`, `sim-props.ts`, `translate.ts`,
-   `factor-variable-stubs.ts`, `types.ts`) need the change.
+   `types.ts`) need the change.
 8. **Update the rule-sets generator's emitted import path.** Each rule-set
    module starts with `import { RuleSet } from "../engine"`. Update
    `scripts/extract-impl.js`'s emit template (and the generated files; or

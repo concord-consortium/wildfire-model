@@ -76,9 +76,9 @@ While all operators may be familiar, WITH may not be.  Here is the definition.
 
 **note:** The prop expression in this case is "UniqueVegetationPerZone AND NOT UniformDroughtLevels".
 
-**c:** ranSimulation WITH UniqueVegetationPerZone AND ranSimnulation WITH NOT UniformDroughtLevels
+**c:** ranSimulation WITH UniqueVegetationPerZone AND ranSimulation WITH NOT UniformDroughtLevels
 
-**parenthesized:** (ranSimulation WITH UniqueVegetationPerZone) AND (ranSimnulation WITH NOT UniformDroughtLevels)
+**parenthesized:** (ranSimulation WITH UniqueVegetationPerZone) AND (ranSimulation WITH NOT UniformDroughtLevels)
 
 **meaning:** There is one simulation run with unique vegetation per zone and there is one simulation with non-uniform drought levels.  And the two runs may be distinct.
 

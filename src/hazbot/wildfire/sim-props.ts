@@ -212,11 +212,19 @@ const Fireline: SimPropImpl<WildfireReading, WildfireDefaults> = {
 };
 
 // Per the sheet (tabs 45/47): all adjustable variables (vegetation, drought,
-// wind) are at default. Wind is matched with tolerance — +/-2 magnitude,
+// wind) are at default. Wind is matched with tolerance — +/-2 MPH magnitude,
 // +/-20 degrees angle — because the wind UI is a continuous control. The
 // tolerances are sheet-authored constants; this impl is NOT regenerated on
 // re-extraction, so its unit test cites the sheet definition (R6).
-const WIND_MAGNITUDE_TOLERANCE = 2;
+//
+// The magnitude tolerance is in MPH (the dial's units), but reading/defaults
+// carry wind.speed in the model's internal units, where mph = speed /
+// scaleFactor (config.windScaleFactor). We convert the delta to MPH before
+// comparing; otherwise the tolerance is effectively divided by scaleFactor
+// (e.g. scaleFactor 0.2 turned +/-2 into +/-10 MPH, so 10..30 MPH all read as
+// default). The angle tolerance needs no conversion — direction is already in
+// degrees with no scale factor.
+const WIND_MAGNITUDE_TOLERANCE_MPH = 2;
 const WIND_ANGLE_TOLERANCE_DEG = 20;
 const DefaultVars: SimPropImpl<WildfireReading, WildfireDefaults> = {
   defaultValue: false,
@@ -237,8 +245,15 @@ const DefaultVars: SimPropImpl<WildfireReading, WildfireDefaults> = {
         z.vegetation === def.vegetation && z.droughtLevel === def.droughtLevel;
     });
     if (!zonesAtDefault) return false;
-    const magnitudeOk =
-      Math.abs(reading.wind.speed - defaults.wind.speed) <= WIND_MAGNITUDE_TOLERANCE;
+    // Compare in MPH so the tolerance is in the dial's units. scaleFactor rides
+    // on the SimulationStarted snapshot; absent (e.g. older readings / unit
+    // tests), fall back to 1 = no conversion. Round each side to the nearest MPH
+    // — the dial only produces integer MPH, and rounding before the subtraction
+    // avoids float dust tipping the exact +/-2 boundary (4.4/0.2 = 2.0000…018).
+    const scaleFactor = reading.wind.scaleFactor ?? 1;
+    const readingMph = Math.round(reading.wind.speed / scaleFactor);
+    const defaultMph = Math.round(defaults.wind.speed / scaleFactor);
+    const magnitudeOk = Math.abs(readingMph - defaultMph) <= WIND_MAGNITUDE_TOLERANCE_MPH;
     // Circular angle difference — fold the wrap so 350 vs 10 reads as 20.
     const rawDelta = Math.abs(reading.wind.direction - defaults.wind.direction) % 360;
     const angleDelta = Math.min(rawDelta, 360 - rawDelta);
@@ -278,15 +293,12 @@ const SevereDroughts: SimPropImpl<WildfireReading, WildfireDefaults> = {
   },
 };
 
-// Stub — deferred to WM-28 ("Hazbot: Helitack run-window detection"). In-run
-// helitack correlation needs an engine-substrate change out of WM-18 scope
-// (see the Helitack Technical Notes in requirements.md). Kept as a stub so
-// tabs 45/47/54 load. A false stub leaves tab 45 Cat 4 unreachable and degrades
-// tabs 47/54 Cat 3-5 / tab 45 Cat 3 — documented in localhost-urls.md.
+// Per the sheet (tabs 45/47/54): this run dropped a helitack. The translate
+// modifier records it on the run-start reading; effectiveness is not measured
+// (requirements.md R1), mirroring Fireline above.
 const Helitack: SimPropImpl<WildfireReading, WildfireDefaults> = {
   defaultValue: false,
-  isStub: true,
-  evaluate: () => false,
+  evaluate: (reading) => reading.helitack === true,
 };
 
 export const simProps: Record<string, SimPropImpl<WildfireReading, WildfireDefaults>> = {

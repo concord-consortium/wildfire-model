@@ -104,19 +104,19 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
       name: "setTerrainType",
       definition: "There is at least one \"SimulationStarted\" event for which the terrain type was set distinct from the default value for any zone.",
       logEvents: ["SimulationStarted->zones.<i>.terrainType"],
-      details: "Terrain type is set per zone, in the zones data.  For the default values, read the \"SIMINIT\" sheet.  <i> means taking the zone index i (the index for the zones data, which is, or must be, an array), 0-based.  So i=0 means zone 1 and i=1 means zone 2.  If true, then neecessarily ranSimulation=true.",
+      details: "Terrain type is set per zone, in the zones data.  For the default values, read the \"SIMINIT\" sheet.  <i> means taking the zone index i (the index for the zones data, which is, or must be, an array), 0-based.  So i=0 means zone 1 and i=1 means zone 2.  If true, then necessarily ranSimulation=true.",
     },
     {
       name: "setVegetation",
       definition: "There is at least one \"SimulationStarted\" event for which the vegetation type was set distinct from the default value for any zone.",
       logEvents: ["SimulationStarted->zones.<i>.vegetation"],
-      details: "Vegetation is set per zone, in the zones data.  For the default values, read the \"SIMINIT\" sheet.  If true, then neecessarily ranSimulation=true.",
+      details: "Vegetation is set per zone, in the zones data.  For the default values, read the \"SIMINIT\" sheet.  If true, then necessarily ranSimulation=true.",
     },
     {
       name: "setDroughtLevel",
       definition: "There is at least one \"SimulationStarted\" event for which the drought level was set distinct from the default value for any zone.",
       logEvents: ["SimulationStarted->zones.<i>.droughtLevel"],
-      details: "Drought level is set per zone, in the zones data.  For the default values, read the \"SIMINIT\" sheet.  If true, then neecessarily ranSimulation=true.",
+      details: "Drought level is set per zone, in the zones data.  For the default values, read the \"SIMINIT\" sheet.  If true, then necessarily ranSimulation=true.",
     },
     {
       name: "setAnyZoneVar",
@@ -128,7 +128,7 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
       name: "setWind",
       definition: "There is at least one \"SimulationStarted\" event for which the wind value was set distinct from the default value for any zone.",
       logEvents: ["SimulationStarted->wind.speed", "wind.direction", "wind.scaleFactor"],
-      details: "Wind is set globally (for all zones).  For the default values, read the \"SIMINIT\" sheet.  If the magnitude is 0, then the direction has no effect and must be ignored.  So set the direction to null, if the magnitude is 0.  Here, the \"magnitude\" means the wind speed as displayed in the simulation (like \"10\" as in \"10 MPH\").  In the log data, the magnituide data entails two fields \"wind.speed\" and \"wind.scaleFactor\".  The \"magitude\" is computed as \"wind.speed\" / \"wind.scaleFactor\".",
+      details: "Wind is set globally (for all zones).  For the default values, read the \"SIMINIT\" sheet.  If the magnitude is 0, then the direction has no effect and must be ignored.  So set the direction to null, if the magnitude is 0.  Here, the \"magnitude\" means the wind speed as displayed in the simulation (like \"10\" as in \"10 MPH\").  In the log data, the magnitude data entails two fields \"wind.speed\" and \"wind.scaleFactor\".  The \"magnitude\" is computed as \"wind.speed\" / \"wind.scaleFactor\".",
     },
     {
       name: "setAnyVar",

@@ -156,9 +156,19 @@ describe("wildfire factor variables", () => {
     });
   });
 
-  describe("usedHelitack (stub)", () => {
-    it("is flagged isStub: true and computes to false", () => {
-      expect(factorVariables.usedHelitack.isStub).toBe(true);
+  describe("usedHelitack", () => {
+    it("true when at least one SimulationStarted reading is flagged helitack: true", () => {
+      const a = mkRead("SimulationStarted", { helitack: true });
+      const b = mkRead("SimulationStarted", {});
+      const result = factorVariables.usedHelitack.compute([a, b], {});
+      expect(result.value).toBe(true);
+      expect(result.witnesses).toEqual([a]);
+    });
+    it("false when no reading is flagged", () => {
+      const a = mkRead("SimulationStarted", {});
+      expect(factorVariables.usedHelitack.compute([a], {}).value).toBe(false);
+    });
+    it("false for zero readings", () => {
       expect(factorVariables.usedHelitack.compute([], {}).value).toBe(false);
     });
   });

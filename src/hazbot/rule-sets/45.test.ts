@@ -8,16 +8,14 @@ import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/typ
 //   3: NOT (usedFireline AND usedHelitack) AND ranSimulation WITH DefaultVars
 //   4: ranSimulation WITH DefaultVars AND Fireline AND ranSimulation WITH DefaultVars AND Helitack
 //
-// Helitack / usedHelitack are stubs (evaluate false → WM-28):
-//  - Cat 4 is STUB-GATED: its `ranSimulation WITH DefaultVars AND Helitack`
-//    conjunct can never be true, so cat 4 is unreachable. Excluded from R9; the
-//    (e) shape asserts a fully-satisfying state never matches it.
-//  - Cat 3 is STUB-DEGRADED: `NOT (usedFireline AND usedHelitack)` collapses to
-//    `NOT (... AND false)` = TRUE, so cat 3 over-matches — a student who used
-//    both a fireline and a helitack also lands at cat 3. WM-28 owns correcting
-//    this; it is documented here, not pinned by a test.
-// The fire-line progression path is fully functional (Fireline / usedFireline
-// are real impls).
+// Helitack / usedHelitack are real impls (WM-28). An in-run helitack is a
+// reading flagged `helitack: true`:
+//  - Cat 4 is reachable. Its two WITH clauses (Fireline / Helitack) each bind
+//    their own SimulationStarted witness, so it fires both same-run (fireline +
+//    helitack on one run) and across-runs (fireline run 1, helitack run 2).
+//  - Cat 3's `NOT (usedFireline AND usedHelitack)` now goes false on a
+//    fireline+helitack history, so a fireline+helitack run lands at Cat 4, not
+//    Cat 3 (no longer over-matches).
 
 // SIMINIT defaults for tab 45: 3 zones Shrub / No Drought (terrains
 // Mountains / Foothills / Plains), wind magnitude 20 / direction 100.
@@ -65,19 +63,38 @@ describe("ruleSet 45 — per-rule-set behavior sweep", () => {
     expect(matchAgainst(ruleSet45, e, [r0])).toBe(3);
     expect(matchAgainst(ruleSet45, e, [r0, startReading({ at: 200 })])).toBe(3);
   });
-  it("(e) stub-gated cat 4 — an all-default run with a fireline never matches cat 4", () => {
+  it("(e) success cat 4 — an all-default run with both a fireline and a helitack → cat 4", () => {
     const e = makeWildfireEngine(ruleSet45, defaults);
-    // DefaultVars + Fireline satisfied; only the Helitack arm is missing.
-    expect(matchAgainst(ruleSet45, e, [startReading({ fireLineMarkers: fireLine })])).not.toBe(4);
+    // DefaultVars + Fireline + Helitack all satisfied on one run.
+    expect(matchAgainst(ruleSet45, e, [startReading({ fireLineMarkers: fireLine, helitack: true })])).toBe(4);
   });
 });
 
 describe("ruleSet 45 — R9 per-category coverage", () => {
-  // Cat 4 is stub-gated (Helitack → WM-28) and excluded.
   const e = () => makeWildfireEngine(ruleSet45, defaults);
   it("cat 1 — no run", () => expect(matchAgainst(ruleSet45, e(), [])).toBe(1));
   it("cat 2 — ran with variables off default", () =>
     expect(matchAgainst(ruleSet45, e(), [startReading({ zones: changedZones })])).toBe(2));
   it("cat 3 — ran with all variables at default", () =>
     expect(matchAgainst(ruleSet45, e(), [startReading()])).toBe(3));
+  it("cat 4 — fireline + helitack in a single run", () =>
+    expect(matchAgainst(ruleSet45, e(), [startReading({ fireLineMarkers: fireLine, helitack: true })])).toBe(4));
+});
+
+describe("ruleSet 45 — helitack reachability (WM-28)", () => {
+  // Same-run Cat 4 (one run with both tools) is covered by the (e) sweep and R9
+  // cat 4 above. This block covers the genuinely-new helitack behaviors: the
+  // across-runs Cat 4 path and Cat 3 no longer over-matching.
+  const e = () => makeWildfireEngine(ruleSet45, defaults);
+  it("cat 4 across-runs — fireline in run 1, helitack in run 2 (each binds its own WITH witness)", () => {
+    const firelineRun = startReading({ fireLineMarkers: fireLine });
+    const helitackRun = startReading({ at: 200, helitack: true });
+    expect(matchAgainst(ruleSet45, e(), [firelineRun, helitackRun])).toBe(4);
+  });
+  it("cat 3 no longer over-matches — a fireline+helitack run is not classified cat 3", () => {
+    // Under the stub this run landed at cat 3 (NOT (usedFireline AND usedHelitack)
+    // collapsed to true); with the real impls usedHelitack flips it off cat 3.
+    const run = startReading({ fireLineMarkers: fireLine, helitack: true });
+    expect(matchAgainst(ruleSet45, e(), [run])).not.toBe(3);
+  });
 });

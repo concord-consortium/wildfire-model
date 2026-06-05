@@ -321,7 +321,9 @@ describe("wildfire sim-props", () => {
 
   describe("DefaultVars", () => {
     // Per tab 45/47 sheet (DefaultVars, R13/R12): all adjustable variables at
-    // default; wind matched with tolerance +/-2 magnitude, +/-20 deg angle.
+    // default; wind matched with tolerance +/-2 MPH magnitude, +/-20 deg angle.
+    // The cases below omit wind.scaleFactor, so it defaults to 1 and the speed
+    // values double as MPH. The scaleFactor sub-block covers the conversion.
     const defaultZones = [
       { vegetation: "Shrub", droughtLevel: "Mild Drought" },
       { vegetation: "Shrub", droughtLevel: "Mild Drought" },
@@ -364,6 +366,31 @@ describe("wildfire sim-props", () => {
       const r = mkRead({ zones: defaultZones, wind: { speed: 10, direction: 90 } });
       expect(simProps.DefaultVars.evaluate(r, {})).toBe(false);
     });
+
+    // Wind speed/direction ride on the snapshot in the model's internal units
+    // (mph = speed / scaleFactor). The +/-2 magnitude tolerance is in MPH, so
+    // the delta must be converted before comparing — otherwise a sub-1
+    // scaleFactor widens the window (the bug: 0.2 turned +/-2 into +/-10 MPH).
+    // These cases use a default internal speed of 4 (= 20 MPH at scaleFactor
+    // 0.2), matching the townsThreeZone preset.
+    describe("with windScaleFactor (delta converted to MPH)", () => {
+      const sfDefaults: WildfireDefaults = { zones: defaultZones, wind: { speed: 4, direction: 90 } };
+      const mkWind = (speed: number) =>
+        mkRead({ zones: defaultZones, wind: { speed, direction: 90, scaleFactor: 0.2 } });
+
+      it("true at +2 MPH (internal 4.4 = 22 MPH)", () => {
+        expect(simProps.DefaultVars.evaluate(mkWind(4.4), sfDefaults)).toBe(true);
+      });
+      it("false at +3 MPH (internal 4.6 = 23 MPH)", () => {
+        expect(simProps.DefaultVars.evaluate(mkWind(4.6), sfDefaults)).toBe(false);
+      });
+      it("false at +10 MPH (internal 6 = 30 MPH) — the pre-fix false positive", () => {
+        expect(simProps.DefaultVars.evaluate(mkWind(6), sfDefaults)).toBe(false);
+      });
+      it("false at -10 MPH (internal 2 = 10 MPH) — the pre-fix false positive", () => {
+        expect(simProps.DefaultVars.evaluate(mkWind(2), sfDefaults)).toBe(false);
+      });
+    });
   });
 
   describe("DefaultVegetations", () => {
@@ -404,9 +431,14 @@ describe("wildfire sim-props", () => {
     });
   });
 
-  describe("Helitack (stub)", () => {
-    it("is flagged isStub: true and returns false", () => {
-      expect(simProps.Helitack.isStub).toBe(true);
+  describe("Helitack", () => {
+    it("true on a reading flagged helitack: true", () => {
+      expect(simProps.Helitack.evaluate(mkRead({ helitack: true }), {})).toBe(true);
+    });
+    it("false when helitack is false", () => {
+      expect(simProps.Helitack.evaluate(mkRead({ helitack: false }), {})).toBe(false);
+    });
+    it("false when the helitack field is absent", () => {
       expect(simProps.Helitack.evaluate(mkRead(), {})).toBe(false);
     });
   });

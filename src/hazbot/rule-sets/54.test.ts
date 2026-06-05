@@ -4,19 +4,20 @@ import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/typ
 
 // Tab 54 categories (regenerated from the 2026-05-22 sheet; Cat 100 dropped):
 //   1: NOT ranSimulation
-//   2: ranSimulation WITH NOT DefaultVegetations AND NOT SevereDroughts
+//   2: ranSimulation WITH NOT DefaultVegetations OR NOT SevereDroughts
 //   3: ranSimulation WITH DefaultVegetations AND SevereDroughts AND NOT (Fireline OR Helitack)
 //   4: ranSimulation WITH DefaultVegetations AND SevereDroughts AND (Fireline OR Helitack)
 //
-// Helitack is a stub (evaluates false → WM-28). It appears only inside
-// `(Fireline OR Helitack)` / `NOT (...)`, never in a top-level AND, so NO
-// category is stub-gated — cats 1-4 all stay reachable via the fire-line path.
-// The helitack effects are STUB-DEGRADED, documented here, not pinned by a test:
-//  - Cat 3 (`NOT (Fireline OR Helitack)` → `NOT Fireline`) over-matches a
-//    helitack-only run as a plain run.
-//  - The helitack arm of cat 4 (`Fireline OR Helitack` → `Fireline`) is dead;
-//    cat 4 stays reachable via fireline. WM-28 owns re-validation.
-// No stub-gated category — the (e) shape is N/A.
+// Helitack is a real impl (WM-28). It appears only inside `(Fireline OR
+// Helitack)` / `NOT (...)`, never in a top-level AND, so no category is
+// stub-gated. The existing sweep/coverage below reaches cat 4 via the fireline
+// disjunct; the "helitack-arm reachability" block drives the now-live helitack
+// disjunct via a helitack-only severe-drought run (`{ helitack: true }`, default
+// vegetation + every zone at Severe Drought, no fireLineMarkers):
+//  - Cat 3 (`NOT (Fireline OR Helitack)`) no longer over-matches a helitack-only
+//    severe-drought run — it now lands at cat 4 instead.
+//  - The helitack arm of cat 4 (`Fireline OR Helitack`, gated on
+//    DefaultVegetations AND SevereDroughts) is live. Tab 54 has no Cat 5.
 
 // SIMINIT defaults for tab 54: 3 zones Shrub / No Drought (terrains
 // Mountains / Foothills / Plains), wind magnitude 10 / direction 165.
@@ -48,6 +49,8 @@ function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
 }
 const severeNoFireline = (at = 100) => startReading({ at, zones: severeZones });
 const severeWithFireline = (at = 200) => startReading({ at, zones: severeZones, fireLineMarkers: fireLine });
+// A helitack-only severe-drought run (no fireline) — exercises the Helitack disjunct.
+const severeWithHelitack = (at = 200) => startReading({ at, zones: severeZones, helitack: true });
 
 describe("ruleSet 54 — per-rule-set behavior sweep", () => {
   it("(a) empty readings → cat 1 (NOT ranSimulation)", () => {
@@ -77,8 +80,29 @@ describe("ruleSet 54 — R9 per-category coverage", () => {
   it("cat 1 — no run", () => expect(matchAgainst(ruleSet54, e(), [])).toBe(1));
   it("cat 2 — ran with vegetation off default and no severe drought", () =>
     expect(matchAgainst(ruleSet54, e(), [startReading({ zones: vegChangedNotSevere })])).toBe(2));
+  // Cat 2's `OR` (was `AND` pre-2026-06-04 sheet): a default-vegetation run with
+  // non-severe drought satisfies NOT SevereDroughts alone, so it now lands at cat 2.
+  // Under the old `AND` this matched no category.
+  it("cat 2 — default vegetation, non-severe drought (OR arm via NOT SevereDroughts)", () =>
+    expect(matchAgainst(ruleSet54, e(), [startReading()])).toBe(2));
   it("cat 3 — default vegetation, severe drought, no fireline", () =>
     expect(matchAgainst(ruleSet54, e(), [severeNoFireline()])).toBe(3));
   it("cat 4 — default vegetation, severe drought, a fireline", () =>
     expect(matchAgainst(ruleSet54, e(), [severeWithFireline()])).toBe(4));
+});
+
+describe("ruleSet 54 — helitack-arm reachability (WM-28)", () => {
+  // Drives the `(Fireline OR Helitack)` arm via the Helitack disjunct — a
+  // helitack-only severe-drought run, distinct from the fireline coverage above.
+  // The arm is gated on DefaultVegetations AND SevereDroughts, so the run must
+  // carry Severe Drought.
+  const e = () => makeWildfireEngine(ruleSet54, defaults);
+  it("cat 4 — default vegetation, severe drought, a helitack (no fireline)", () => {
+    expect(matchAgainst(ruleSet54, e(), [severeWithHelitack(100)])).toBe(4);
+  });
+  it("cat 3 no longer over-matches — a helitack-only severe-drought run is not classified cat 3", () => {
+    // Under the stub this run satisfied NOT (Fireline OR Helitack) and landed at
+    // cat 3; with the real Helitack impl it moves to the cat 4 arm.
+    expect(matchAgainst(ruleSet54, e(), [severeWithHelitack(100)])).not.toBe(3);
+  });
 });
