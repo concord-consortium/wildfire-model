@@ -49,8 +49,8 @@ export interface ISimulationConfig {
   // capture coarser landforms. See SimulationModel.tpiForSpark.
   tpiBands: number[];
   // Fraction of heightmapMaxElevation a spark's mean TPI must clear to be counted
-  // as top/bottom by the Hazbot SparksAtTopAndBottom predicate (default 0.025 →
-  // 500 ft at the default max). URL/preset-tunable; rides the SimulationStarted
+  // as top/bottom by the Hazbot SparksAtTopAndBottom predicate (default 0.02 →
+  // 400 ft at the default max). URL/preset-tunable; rides the SimulationStarted
   // config snapshot so the predicate can read it. See sim-props.ts.
   tpiMarginFraction: number;
   // Developer/researcher debug overlay: when true, tints each placed spark's TPI
@@ -143,9 +143,9 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   // Three concentric bands (0-3, 3-8, 8-15 cells) for the multi-scale TPI used by
   // the Hazbot SparksAtTopAndBottom predicate. Configurable per preset / URL.
   tpiBands: [3, 8, 15],
-  // TPI decision margin as a fraction of heightmapMaxElevation (0.025 → 500 ft at
+  // TPI decision margin as a fraction of heightmapMaxElevation (0.02 → 400 ft at
   // the default max). Tuned empirically; ?tpiMarginFraction= to override.
-  tpiMarginFraction: 0.025,
+  tpiMarginFraction: 0.02,
   // Off by default; ?tpiDebug=true paints the TPI bands onto the terrain.
   tpiDebug: false,
   // undefined zones count will make them configurable in Terrain Setup dialog.

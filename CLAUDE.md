@@ -44,7 +44,7 @@ The app reads config from the query string. For Hazbot validation runs, combine 
 | `forestWithSuppressionAvailable=false` | Disable forest-with-suppression option |
 | `tpiDebug=true` | Paint each placed spark's TPI bands onto the terrain (warm = ridge / +TPI, cool = valley / −TPI). Used to validate `SparksAtTopAndBottom` (ruleset 25) |
 | `tpiBands=[3,8,15]` | Concentric band radii (cells) for the multi-scale TPI; array length = N bands |
-| `tpiMarginFraction=0.025` | Fraction of `heightmapMaxElevation` a spark's mean TPI must clear to count as top/bottom |
+| `tpiMarginFraction=0.02` | Fraction of `heightmapMaxElevation` a spark's mean TPI must clear to count as top/bottom (default 0.02 ≈ 400 ft) |
 
 A full URL for ruleset 23 validation:
 ```

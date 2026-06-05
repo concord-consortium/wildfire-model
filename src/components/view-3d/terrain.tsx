@@ -57,11 +57,33 @@ const tpiBandColor = (n: number) => {
   return [1 - m, 1 - m, 1];               // white → blue
 };
 
+// "neither" verdict: render the bands in greyscale (darker = stronger |TPI|) so a
+// spark whose mean TPI did NOT clear the margin reads as grey, not red/blue —
+// communicating the actual top/bottom/neither verdict, not just raw relief.
+const tpiNeutralColor = (n: number) => {
+  const shade = 1 - 0.6 * Math.abs(n); // white → grey
+  return [shade, shade, shade];
+};
+
+const tpiMean = (tpi: Array<number | null>): number | null => {
+  const v = tpi.filter((t): t is number => t !== null && Number.isFinite(t));
+  return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+};
+
+// Dedupes the per-spark verdict console line so a running sim (which recolors every
+// tick) logs only when the placement/verdict actually changes.
+let lastTpiDebugLog = "";
+
 // Build a cell-grid-index → overlay-color map for every placed spark's TPI bands.
-// Normalized against the largest |TPI| across all sparks' bands so the overlay
-// always has full contrast. Returns an empty map when there is nothing to show.
+// Each spark's bands are tinted by the SAME verdict the SparksAtTopAndBottom
+// predicate computes (mean TPI vs ± margin): red/blue gradient when it counts as
+// top/bottom, greyscale when it's "neither". Band intensity is normalized against
+// the largest |TPI| on screen. Also logs each spark's mean TPI + verdict to the
+// console (deduped) so "blue-ish rings but neither" is explainable while testing.
 const computeTpiDebugColors = (simulation: SimulationModel): Map<number, number[]> => {
   const colors = new Map<number, number[]>();
+  const cfg = simulation.config;
+  const margin = (cfg.tpiMarginFraction ?? 0) * (cfg.heightmapMaxElevation ?? 0);
   const perSpark = simulation.sparks
     .map((s) => simulation.tpiBandsForSpark(s.x, s.y))
     .filter((r): r is { tpi: Array<number | null>; cellsByBand: number[][] } => !!r);
@@ -70,12 +92,27 @@ const computeTpiDebugColors = (simulation: SimulationModel): Map<number, number[
     if (t !== null && Number.isFinite(t)) maxAbs = Math.max(maxAbs, Math.abs(t));
   }));
   if (maxAbs === 0) return colors;
-  perSpark.forEach((r) => r.cellsByBand.forEach((cells, band) => {
-    const t = r.tpi[band];
-    if (t === null || !Number.isFinite(t)) return;
-    const color = tpiBandColor(Math.max(-1, Math.min(1, t / maxAbs)));
-    cells.forEach((index) => colors.set(index, color));
-  }));
+  const logParts: string[] = [];
+  perSpark.forEach((r) => {
+    const mean = tpiMean(r.tpi);
+    const verdict = mean === null ? "neither"
+      : mean >= margin ? "top" : mean <= -margin ? "bottom" : "neither";
+    logParts.push(`mean ${mean === null ? "n/a" : Math.round(mean)} ft → ${verdict} ` +
+      `[${r.tpi.map((t) => (t === null ? "-" : Math.round(t))).join(", ")}]`);
+    r.cellsByBand.forEach((cells, band) => {
+      const t = r.tpi[band];
+      if (t === null || !Number.isFinite(t)) return;
+      const n = Math.max(-1, Math.min(1, t / maxAbs));
+      const color = verdict === "neither" ? tpiNeutralColor(n) : tpiBandColor(n);
+      cells.forEach((index) => colors.set(index, color));
+    });
+  });
+  const key = logParts.join(" | ");
+  if (key && key !== lastTpiDebugLog) {
+    lastTpiDebugLog = key;
+    // eslint-disable-next-line no-console
+    console.log(`[tpiDebug] margin ±${Math.round(margin)} ft | ${key}`);
+  }
   return colors;
 };
 

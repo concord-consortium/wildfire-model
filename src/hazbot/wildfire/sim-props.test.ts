@@ -144,9 +144,9 @@ describe("wildfire sim-props", () => {
     // entry per band): a spark whose MEAN TPI sits >= margin above its surroundings
     // is "top", >= margin below is "bottom". margin = tpiMarginFraction ×
     // heightmapMaxElevation. With no tpiMarginFraction on the reading, the predicate
-    // falls back to the 0.025 default, so at the default max (20000) the margin is
-    // 500 ft. Boundary/override tests below pin tpiMarginFraction explicitly.
-    const max = 20000; // default-fraction margin = 0.025 * 20000 = 500
+    // falls back to the 0.02 default, so at the default max (20000) the margin is
+    // 400 ft. Boundary/override tests below pin tpiMarginFraction explicitly.
+    const max = 20000; // default-fraction margin = 0.02 * 20000 = 400
     // Canonical ridge / valley signatures: positive at every scale (above the
     // surrounding terrain) vs negative at every scale (below it).
     const ridge = [3000, 2000, 1500];   // mean 2166 -> top
@@ -173,21 +173,21 @@ describe("wildfire sim-props", () => {
       expect(simProps.SparksAtTopAndBottom.evaluate(read(valley, [-2500, -1800, -1200]), {})).toBe(false);
     });
 
-    // Margin boundary at the default fraction (0.025 × 20000 = 500): mean exactly
+    // Margin boundary at the default fraction (0.02 × 20000 = 400): mean exactly
     // at +/- margin is inclusive (>= / <=).
     it("true with mean TPI exactly at the default +/- margin (inclusive)", () => {
-      expect(simProps.SparksAtTopAndBottom.evaluate(read([500, 500, 500], [-500, -500, -500]), {})).toBe(true);
+      expect(simProps.SparksAtTopAndBottom.evaluate(read([400, 400, 400], [-400, -400, -400]), {})).toBe(true);
     });
-    it("false just inside the default margin (mean +/- 499)", () => {
-      expect(simProps.SparksAtTopAndBottom.evaluate(read([499, 499, 499], [-499, -499, -499]), {})).toBe(false);
+    it("false just inside the default margin (mean +/- 399)", () => {
+      expect(simProps.SparksAtTopAndBottom.evaluate(read([399, 399, 399], [-399, -399, -399]), {})).toBe(false);
     });
 
     // tpiMarginFraction on the reading overrides the default. The same sparks that
-    // pass at the 0.025 default (mean +/- 600 vs 500) fail at 0.05 (margin 1000).
+    // pass at the 0.02 default (mean +/- 600 vs 400) fail at 0.05 (margin 1000).
     it("respects tpiMarginFraction from the reading (raising it can flip true -> false)", () => {
       const pair = (over: Partial<WildfireReading>) =>
         simProps.SparksAtTopAndBottom.evaluate(read([600, 600, 600], [-600, -600, -600], over), {});
-      expect(pair({})).toBe(true);                          // default 0.025 -> margin 500, |600| clears
+      expect(pair({})).toBe(true);                          // default 0.02 -> margin 400, |600| clears
       expect(pair({ tpiMarginFraction: 0.05 })).toBe(false); // margin 1000, |600| does not clear
       expect(pair({ tpiMarginFraction: 0.01 })).toBe(true);  // margin 200, clears easily
     });

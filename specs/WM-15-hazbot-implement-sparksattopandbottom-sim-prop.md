@@ -333,20 +333,32 @@ detection is now **localized** per spark.
   × heightmapMaxElevation` and returns `true` when one spark is top and the other
   bottom. Flat terrain (TPI ≈ 0) naturally fails the margin, so the separate global
   minimum-span floor is gone.
-- **Margin tuning (Playwright sweep, 2026-06-05)**: the margin fraction was lowered
-  from the initial `0.05` (1000 ft) to **`0.025`** (500 ft) after an empirical sweep
-  on `mountainTwoZoneFixedTerrain`. Ground truth was each point's elevation
+- **Margin tuning (Playwright sweeps, 2026-06-05)**: the margin fraction was lowered
+  from the initial `0.05` (1000 ft) to the shipped **`0.02`** (400 ft) after empirical
+  sweeps on `mountainTwoZoneFixedTerrain`. Ground truth was each point's elevation
   percentile within a *local* (fire-relevant, 5–10 k ft) window — matching the
   pedagogy (a spark at the **base of a slope** climbs faster than it spreads on flat
-  ground), not whole-mountain position. At `0.05` the base-of-slope ("bottom") recall
-  was only ~0.30; at `0.025` it rose to ~0.81 with top recall ~0.99 and a <1% chance
-  of two mid-slope sparks falsely passing. The bands `[3, 8, 15]` were confirmed
-  near-optimal (adding/widening bands didn't help at the matched margin). A
-  **strict "all bands agree in sign"** classifier was considered and **rejected**: it
-  fails on mountains smaller than the outer band's reach (the outer band overshoots
-  the summit into flat ground and flips sign), whereas the mean rule degrades
-  gracefully. Mid-slope sparks correctly read "neither" (the core TPI property: on a
-  uniform slope the terrain above and below cancel).
+  ground), not whole-mountain position.
+  - First pass landed on `0.025`, but live testing showed obvious mountain-bases
+    being missed. Root cause: **mean dilution** — at the foot of a slope the inner
+    rings are locally flat (TPI ≈ 0) while the outer ring correctly sees the mountain
+    above (e.g. −1,448), so the *mean* lands just short of the threshold. ~9% of
+    "base with a ≥3,000 ft climb above" points were missed at `0.025`.
+  - Lowering to `0.02` raises obvious-base detection from ~0.91 to ~0.97 while keeping
+    crest detection ~0.99 and two-mid-slope false-pass < 1% — the latter holds because
+    mid-slope overfire skews to "bottom" (≈13%) not "top" (≈3%), and the activity
+    needs *one of each*. Cell-weighting the bands was tried and **rejected** (same
+    tradeoff curve, no separation gain).
+  - A **strict "all bands agree in sign"** classifier was also considered and
+    **rejected**: it fails on mountains smaller than the outer band's reach (the outer
+    band overshoots the summit into flat ground and flips sign), whereas the mean rule
+    degrades gracefully. Mid-slope sparks on a uniform slope still read "neither" (the
+    core TPI property: terrain above and below cancel).
+- **Debug overlay verdict**: `tpiDebug` tints each spark's rings by the *verdict* the
+  predicate computes (red/blue gradient when it counts as top/bottom, greyscale when
+  "neither") and logs each spark's mean TPI + verdict to the console, so a base spark
+  whose strong outer ring looks blue but whose mean fell short reads as grey rather
+  than misleading blue.
 - **Removed as now-unused** (this branch added them in the original WM-15 work; the
   localized approach made them dead): the per-spark `elevation` field, the
   `elevationRange` reading field, the `SimulationModel.baseElevationRange` getter,

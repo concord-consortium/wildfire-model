@@ -106,13 +106,14 @@ const GraphOpen: SimPropImpl<WildfireReading, WildfireDefaults> = {
 // (tpiMarginFraction × heightmapMaxElevation) ABOVE its surroundings, and "bottom"
 // when it sits at least that far below. tpiMarginFraction rides on the reading
 // (config.tpiMarginFraction, URL-tunable via ?tpiMarginFraction=...); this constant
-// is only the fallback when the reading omits it. At the default 0.025 × 20000 the
-// margin is 500 ft: above heightmap quantization noise, well below real mountain
+// is only the fallback when the reading omits it. At the default 0.02 × 20000 the
+// margin is 400 ft: above heightmap quantization noise, well below real mountain
 // relief — so flat terrain (TPI ~ 0 everywhere) never qualifies, replacing the old
-// global minimum-span floor. 0.025 was chosen by an empirical sweep against local
-// slope-position ground truth (lower margins suppressed the base-of-slope case the
-// activity coaches); see the WM-15 addendum. Tunable; tuning is out of scope.
-const DEFAULT_TPI_MARGIN_FRACTION = 0.025;
+// global minimum-span floor. 0.02 was chosen by an empirical sweep against local
+// slope-position ground truth: it detects ~97% of obvious mountain-bases (vs ~91%
+// at 0.025) while two mid-slope sparks still falsely pass < 1% of the time, because
+// mid-slope overfire skews to "bottom" not "top". See the WM-15 addendum. Tunable.
+const DEFAULT_TPI_MARGIN_FRACTION = 0.02;
 
 type TpiClass = "top" | "bottom" | "neither";
 
