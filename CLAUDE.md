@@ -90,19 +90,21 @@ For everything else (terrain setup dialog, drought sliders, Start/Restart button
 ### Ruleset 25 (`SparksAtTopAndBottom`) validated spark coordinates
 
 For the ruleset-25 Cat 4 → 6 walk on `mountainTwoZoneFixedTerrain`, the success
-endpoint (Cat 6) needs one spark in the **top 25%** of the elevation range and one
-in the **bottom 25%**. `placeSparkInZone` places at the *zone center*, whose
-normalized elevation is not guaranteed to clear those bands, so use these
-documented coordinates instead (validated live against the running app,
-2026-06-03; they are specific to this preset's heightmap — re-derive if it
-changes). Global `baseElevationRange` ≈ `{ min: 1096, max: 19450 }` ft (span
-≈ 18353 ft, clears the 1000 ft minimum-span floor). Zone 1 is the high zone, zone 0
-the low zone, so the robust direction is **top → zone 1, bottom → zone 0**:
+endpoint (Cat 6) needs one spark on a **ridge** (mean multi-scale TPI at least the
+margin *above* its surroundings) and one in a **valley** (mean TPI at least the
+margin *below*). The margin is `tpiMarginFraction × heightmapMaxElevation`
+(default `0.02 × 20000` = 400 ft); see the `SparksAtTopAndBottom` TPI logic in
+[src/hazbot/wildfire/sim-props.ts](src/hazbot/wildfire/sim-props.ts). `placeSparkInZone`
+places at the *zone center*, whose local TPI is not guaranteed to clear the margin,
+so use these documented coordinates instead (validated live against the running app,
+2026-06-03; they are specific to this preset's heightmap — re-derive if it changes).
+Zone 1 is the high zone, zone 0 the low zone, so the robust direction is
+**top → zone 1, bottom → zone 0**:
 
 ```js
 () => {
-  window.sim.addSpark(119000, 38000); // top → zone 1, normalized elevation ≈ 1.00
-  window.sim.addSpark(59000, 3500);   // bottom → zone 0, normalized elevation ≈ 0.00
+  window.sim.addSpark(119000, 38000); // top → zone 1, ridge (mean TPI well above margin)
+  window.sim.addSpark(59000, 3500);   // bottom → zone 0, valley (mean TPI well below margin)
 }
 ```
 

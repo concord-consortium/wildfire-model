@@ -33,10 +33,13 @@ const oneSpark = [{ x: 0, y: 0, zoneIdx: 0 }];
 const twoSparksSameZone = [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 0 }];
 const oneSparkPerZone = [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }];
 
-// Topography fixtures for the cats 4/5/6 readings. heightmapMaxElevation scales
-// the predicate's margin (5% × 20000 = 1000 ft); the ridge / valley TPI arrays
-// clear it, the mid-slope arrays do not.
+// Topography fixtures for the cats 4/5/6 readings. heightmapMaxElevation × the
+// margin fraction scales the predicate's margin (0.02 × 20000 = 400 ft); the
+// ridge / valley TPI arrays clear it, the mid-slope arrays do not. The fraction
+// is pinned on every topoReading (below) so these rule-set tests stay stable if
+// SparksAtTopAndBottom's DEFAULT_TPI_MARGIN_FRACTION is later retuned.
 const HEIGHTMAP_MAX = 20000;
+const TPI_MARGIN_FRACTION = 0.02;
 // One spark per zone: zone 0 on a ridge (positive TPI at every scale), zone 1 in
 // a valley (negative TPI at every scale).
 const sparksTopBottom = [
@@ -55,9 +58,13 @@ function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
   });
 }
 
-// startReading + the topography field the SparksAtTopAndBottom predicate needs.
+// startReading + the topography fields the SparksAtTopAndBottom predicate needs.
+// Both the heightmap max and the margin fraction are pinned (and overridable via
+// opts) so the cat 4/5/6 expectations don't ride on the predicate's module default.
 function topoReading(opts: Partial<WildfireReading> = {}): WildfireReading {
-  return startReading({ heightmapMaxElevation: HEIGHTMAP_MAX, ...opts });
+  return startReading({
+    heightmapMaxElevation: HEIGHTMAP_MAX, tpiMarginFraction: TPI_MARGIN_FRACTION, ...opts,
+  });
 }
 
 describe("ruleSet 25 — per-rule-set behavior sweep", () => {

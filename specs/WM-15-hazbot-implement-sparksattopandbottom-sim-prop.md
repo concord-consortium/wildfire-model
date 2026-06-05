@@ -19,6 +19,16 @@ separate change.
 
 ## Requirements
 
+> **Superseded mechanism (see Addendum, 2026-06-04).** R2/R3 and OQ-1 below describe
+> the original detection: each spark's elevation normalized against a single global
+> `elevationRange` (top/bottom 25%) plus a minimum-span floor. The shipped
+> implementation replaced this with a **localized multi-scale Topographic Position
+> Index (TPI)** and removed the `elevation` / `elevationRange` / `baseElevationRange`
+> fields. The requirements' *intent* (one spark near the top, one near the bottom;
+> fail closed on flat/degenerate input) still holds; the elevation-normalization
+> *details* do not. Read the [Addendum](#addendum-2026-06-04-branch-wm-28-add-helitack-run-window-detection-localized-multi-scale-tpi)
+> for current behavior.
+
 - **R1.** `SparksAtTopAndBottom` no longer sets `isStub: true`, and its `evaluate`
   implements real detection logic (no longer hard-returns `false`).
 - **R2.** Returns `true` for ruleset 25 Cat 6's intent: one spark near the top

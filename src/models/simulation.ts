@@ -227,12 +227,21 @@ export class SimulationModel {
     const counts = bands.map(() => 0);
     const cellsByBand: number[][] = bands.map(() => []);
 
+    // Bound the scan to the grid. tpiBands is URL/preset-tunable, so an oversized
+    // (or non-finite) outer radius would otherwise spin a (2·maxR+1)^2 loop whose
+    // every extra iteration only skips an off-grid cell — at maxR = Infinity it
+    // never terminates. Clamping the per-axis reach to the grid extent leaves the
+    // result identical (off-grid cells are skipped below either way) while keeping
+    // worst-case work bounded by the grid size. A non-finite maxR collapses to NaN
+    // here, so the loop body never runs and the spark fails closed (all-null TPI).
+    const scanR = Math.min(maxR, Math.max(this.gridWidth, this.gridHeight));
+
     // Single pass over the square neighborhood; the squared-distance test carves the
     // disk out of the square and assigns each cell to its band.
-    for (let dy = -maxR; dy <= maxR; dy++) {
+    for (let dy = -scanR; dy <= scanR; dy++) {
       const ny = center.y + dy;
       if (ny < 0 || ny >= this.gridHeight) continue;
-      for (let dx = -maxR; dx <= maxR; dx++) {
+      for (let dx = -scanR; dx <= scanR; dx++) {
         if (dx === 0 && dy === 0) continue; // the center is the reference, not a neighbor
         const nx = center.x + dx;
         if (nx < 0 || nx >= this.gridWidth) continue;

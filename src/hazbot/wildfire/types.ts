@@ -14,7 +14,7 @@ export interface WildfireReading extends BaseReading {
   // Rides along in the config snapshot; translate() forwards it.
   heightmapMaxElevation?: number;
   // Fraction of heightmapMaxElevation a spark's mean TPI must clear to count as
-  // top/bottom (config.tpiMarginFraction, default 0.025, URL-tunable). Carried so
+  // top/bottom (config.tpiMarginFraction, default 0.02, URL-tunable). Carried so
   // SparksAtTopAndBottom can set its decision margin; translate() forwards it.
   tpiMarginFraction?: number;
   // Outcome data from end-of-run triggers; opaque to current rule sets.

@@ -143,6 +143,12 @@ const SparksAtTopAndBottom: SimPropImpl<WildfireReading, WildfireDefaults> = {
     // module default when a reading omits it (e.g. older fixtures).
     const fraction = Number.isFinite(tpiMarginFraction)
       ? (tpiMarginFraction as number) : DEFAULT_TPI_MARGIN_FRACTION;
+    // Fail closed on a degenerate threshold: a non-positive fraction (settable via
+    // ?tpiMarginFraction=0/-…) makes the margin 0/negative, which would count any
+    // faintly-positive mean as "top" (and faintly-negative as "bottom"), so two
+    // mid-slope sparks could falsely pass. Omitted/NaN fractions already fell back
+    // to the positive default above; this only rejects an explicit degenerate value.
+    if (!(fraction > 0)) return false;
     const margin = fraction * (heightmapMaxElevation as number);
     const classes = sparks.map((s) => classifyTpi(s.tpi, margin));
     // Need exactly one spark on top and the other at the bottom. With two sparks,

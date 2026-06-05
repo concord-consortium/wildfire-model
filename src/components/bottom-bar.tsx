@@ -230,7 +230,8 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       // Runtime state not in config (sparks carry their localized TPI; markers keep
       // cell.elevation). zones / wind / towns stay inline. heightmapMaxElevation and
       // tpiBands are already in configSnapshot via the generic config loop above;
-      // translate() forwards heightmapMaxElevation to the SparksAtTopAndBottom predicate.
+      // translate() forwards both heightmapMaxElevation and tpiMarginFraction (which
+      // together set the predicate's decision margin) to SparksAtTopAndBottom.
       const startData = simulation.buildStartReadingData();
       configSnapshot.sparks = startData.sparks;
       configSnapshot.fireLineMarkers = startData.fireLineMarkers;
