@@ -109,6 +109,16 @@ export interface ISimulationConfig {
   // hazbotSidebar: developer/researcher tool — mounts the substrate's debug sidebar.
   hazbotRules?: string | number;
   hazbotSidebar: boolean;
+  // Developer/designer tool: when true, overlays a 1px red line across the
+  // viewport at the bottom-bar icon-label baseline (Setup / Spark / etc.).
+  // Useful for verifying alignment of new bottom-bar elements against the
+  // label baseline. Enable via ?bottomBarBaseline=true.
+  bottomBarBaseline: boolean;
+  // Developer/designer tool: when true, overlays two 1px red lines across
+  // the viewport at the top and bottom of the zone-button label block.
+  // Useful for aligning the vegetation/drought icons against the
+  // "Zone N" / terrain-name text. Enable via ?topLines=true.
+  topLines: boolean;
 }
 
 export interface IUrlConfig extends ISimulationConfig {
@@ -192,7 +202,9 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   newWindSpeed: undefined,
   logMonitor: false,
   hazbotRules: undefined,
-  hazbotSidebar: false
+  hazbotSidebar: false,
+  bottomBarBaseline: false,
+  topLines: false
 });
 
 const getURLParam = (name: string) => {

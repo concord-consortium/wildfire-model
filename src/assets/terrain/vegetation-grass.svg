@@ -1,1 +1,12 @@
-<svg id="grass" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 28"><title>Vegetation Grass</title><g id="grass_back" data-name="grass back"><rect width="28" height="28" style="fill:#fff"/></g><path d="M12.55,28h-.79l3-9.15.71.23ZM7.86,18l-.71-.23L3.76,28h.79Zm5.05,2.85-.71-.23L9.76,28h.79Zm-1.4-1.8-.71-.23L7.76,28h.79Zm-6,0-.71-.23L1.76,28h.79Zm-3,.62L0,27.29V28H.55l2.68-8.07ZM0,23.64l1.7-5.13L1,18.27l-1,3Zm9.23-3.71-.71-.23L5.76,28h.79ZM25.7,18.51,25,18.27,21.76,28h.79Zm1.06,2.85-.71-.24L23.76,28h.79ZM28,23.64V21.26L25.76,28h.79ZM17.86,18l-.71-.23L13.76,28h.79ZM28,27.29l-.24.71H28Zm-8.49-8.21-.71-.23-3,9.15h.79Zm1.56,1.33-.71-.24L17.76,28h.79Zm2.32-.95-.71-.24L19.76,28h.79Z" style="fill:#797979"/></svg>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="28px" height="28px" viewBox="0 0 28 28" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>C1639C85-4AB3-49CA-8A16-CBC29142575E</title>
+    <g id="Grass-ICON" stroke="none" fill="none">
+        <g id="Grass-Icon" stroke-width="1" fill-rule="evenodd" transform="translate(-0.0003, 0)">
+            <polygon id="Back" fill="#FFFFFF" points="0.0003 28 28.0003 28 28.0003 0 0.0003 0"></polygon>
+            <path d="M13.764,28 L14.554,28 L17.86,18.034 L17.149,17.798 L13.764,28 Z M3.764,28 L4.554,28 L7.86,18.034 L7.149,17.798 L3.764,28 Z M21.764,28 L22.553,28 L25.702,18.509 L24.991,18.273 L21.764,28 Z M0,21.258 L0,23.638 L1.701,18.509 L0.99,18.273 L0,21.258 Z M15.764,28 L16.554,28 L19.511,19.085 L18.8,18.849 L15.764,28 Z M11.764,28 L12.554,28 L15.511,19.085 L14.8,18.849 L11.764,28 Z M7.764,28 L8.554,28 L11.511,19.085 L10.8,18.849 L7.764,28 Z M1.764,28 L2.554,28 L5.511,19.085 L4.8,18.849 L1.764,28 Z M19.765,28 L20.554,28 L23.387,19.458 L22.676,19.221 L19.765,28 Z M5.765,28 L6.554,28 L9.23,19.932 L8.519,19.697 L5.765,28 Z M0,27.289 L0,28 L0.554,28 L3.229,19.932 L2.519,19.697 L0,27.289 Z M17.764,28 L18.554,28 L21.073,20.408 L20.362,20.171 L17.764,28 Z M9.764,28 L10.553,28 L12.914,20.882 L12.203,20.645 L9.764,28 Z M23.764,28 L24.553,28 L26.757,21.356 L26.046,21.12 L23.764,28 Z M25.764,28 L26.554,28 L28,23.639 L28,21.26 L25.764,28 Z M27.764,28 L28,28 L28,27.289 L27.764,28 Z" id="Icon" fill="#797979"></path>
+        </g>
+        <rect id="Dark-Outline" class="dark-outline" stroke="#797979" stroke-width="1.5" fill-rule="nonzero" x="0.75" y="0.75" width="26.5" height="26.5"></rect>
+        <rect id="White-Outline" stroke="#FFFFFF" stroke-width="1.5" fill-rule="nonzero" x="0.75" y="0.75" width="26.5" height="26.5"></rect>
+    </g>
+</svg>

@@ -76,25 +76,93 @@ $overflowHeight: 11px;
     background: $hoverColor;
   }
 
+  // Spark gets an explicit content width to force the inner IconButton to
+  // 60 px. Without this, `.iconButton { width: 100%; min-width: 60px }`
+  // creates a circular-sizing dependency with its shrink-wrapping parent;
+  // the browser resolves it to MUI's `.MuiButton-root { min-width: 64px }`
+  // default, rendering the widget at 66 px (64 + 2 border) instead of the
+  // spec's 62 px (60 + 2 border). Same pattern as `.terrainButton`
+  // (width 82) and `.fireIntensityScale` (width 140); pill buttons
+  // (Reload / Restart / Start) avoid this because `.playbackButton` has
+  // no `width: 100%` and so doesn't trigger the circular sizing.
   .placeSpark {
+    width: 60px;
+    // Also constrain the inner MUI Button to 60 so its icon SVG (sized
+    // `width: 100%` via .iconButton's rule) doesn't overflow the 60 px
+    // widgetGroup content area. The tag selector `.placeSpark button`
+    // has specificity 0,1,1 and beats both `.iconButton` (0,1,0) and
+    // MUI's `.MuiButton-root { min-width: 64px }` (0,1,0). Same
+    // cross-module pattern as `.fireLineHelitack button { width: 65px }`.
+    // Both `min-width` and `width` need overriding here: effective
+    // rendered width = max(min-width, width), so leaving MUI's
+    // min-width: 64 in play would clamp the rendered width back to 64.
+    button {
+      min-width: 60px;
+      width: 60px;
+    }
+    // Spark bubble abuts the Reload bubble (no gap)
     margin-right: 0;
   }
 
   .reloadRestart {
     white-space: nowrap;
+    // Start bubble abuts the Reload/Restart bubble (no gap)
+    margin-right: 0;
   }
 
-  .startStop {
-    margin-left: -$bottomBarWidgetGroupSpacing;
+  // Fireline and Helitack each get their own widgetGroup so each has a
+  // rounded bubble top, per designer ("two bubbles that abut, not one
+  // shared bubble"). Each inner MUI Button is locked to 65px so the
+  // widgetGroup shrink-wraps to 67px (65 content + 1px border each
+  // side). The `button` tag selector is used rather than `.iconButton`
+  // because `.iconButton` is defined in icon-button.scss and gets
+  // hashed per-file by CSS modules. Mirrors the cross-module pattern
+  // at `.terrainButton button svg` above.
+  .fireLineButton, .helitackButton {
+    button {
+      width: 65px;
+    }
   }
-  .helitack{
-    margin-left: -$bottomBarWidgetGroupSpacing;
+  // Designer: Fireline bubble abuts the Helitack bubble (no gap). Same
+  // trick as .placeSpark / .reloadRestart — zero the right margin and
+  // the next group's -1px left margin pulls it flush.
+  .fireLineButton {
+    margin-right: 0;
+  }
+
+  // Width-locking modifier on the Fire Intensity Scale widgetGroup so the
+  // bar's right edge sits at the layout-table-specified Border w. of 142px
+  // (140 content + 2 border).
+  .fireIntensityScale {
+    width: 140px;
+  }
+
+  // FIS-hidden layout: when the Fire Intensity Scale widgetGroup is not
+  // rendered, center the controls cluster horizontally between the CC
+  // logo (leftContainer) and the Fullscreen toggle (rightContainer).
+  // Uses `margin: 0 auto` rather than bare `margin: auto`: under
+  // `display: flex` the bare form also applies vertical auto-margins
+  // which can shift the cluster off-axis depending on .bottomBar's
+  // align-items. The `0` vertical margins keep the cluster's vertical
+  // placement unchanged.
+  &.fisHidden {
+    .mainContainer {
+      margin: 0 auto;
+    }
   }
 
   .label {
     font-size: 14px;
     font-weight: bold;
     padding: 4px 6px 3px 6px;
+    // push the "Fire Intensity Scale" title 2px down from the
+    // bubble's rounded top edge.
+    margin-top: 2px;
+    // Center the "Fire Intensity Scale" title above the centered bars
+    // and Low/High labels below it. Without this the title is left-
+    // aligned within the 140 px widget content area while the bars
+    // (80 px) are centered, producing a visually misaligned stack.
+    text-align: center;
   }
 
   .terrainButton{
@@ -112,11 +180,17 @@ $overflowHeight: 11px;
   }
 
   .fullscreenIcon {
-    margin-right: 5px;
-    margin-top: 5px;
-    height: 50px;
-    width: 50px;
-    background-size: 100%;
+    // 62 x 62 square hit-target with the 42 x 42 icon centered. margin-top:1
+    // sits the container so the icon's visual bottom aligns with the
+    // icon-label baseline. Previous 64-tall + margin-top:6 overflowed
+    // the 65 px bar by 5 px.
+    margin-right: 0;
+    margin-top: 1px;
+    height: 62px;
+    width: 62px;
+    background-size: 42px 42px;
+    background-repeat: no-repeat;
+    background-position: center;
     cursor: pointer;
     background-image: url("../assets/fullscreen.svg");
     &:hover {
@@ -131,11 +205,33 @@ $overflowHeight: 11px;
   }
 }
 
+// Mirrors `.iconButtonText` in icon-button.scss so playback labels (Reload /
+// Restart / Start / Stop) share the same baseline as Setup / Spark / Fireline /
+// Helitack. Wrapped in a span by bottom-bar.tsx so it can be positioned
+// independently of the inline-flow text node it used to be.
+.playbackButtonLabel {
+  position: absolute;
+  top: 45px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+}
+
 .playbackButton {
-  min-width: 60px;
+  // Force a fixed 60 px content width. MUI's `.MuiButton-root` default
+  // sets `min-width: 64px` via emotion, which is injected after our
+  // static SCSS and wins on equal-specificity source-order. Without
+  // !important the effective width is max(min-width, width) =
+  // max(64, 60) = 64, and Reload / Restart / Start each render at 66 px
+  // (64 inner + 2 widgetGroup border) instead of the spec's 62 / 122.
+  // Same !important pattern as the disabled-opacity override below.
+  min-width: 60px !important;
+  width: 60px !important;
   height: 100%;
   color: #434343;
   font-weight: bold;
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
   border-bottom-left-radius: 0 !important;
   border-bottom-right-radius: 0 !important;
 
@@ -147,18 +243,29 @@ $overflowHeight: 11px;
   }
 
   &:first-child {
-    border-top-left-radius: 10px;
+    border-top-left-radius: 10px !important;
   }
   &:last-child {
-    border-top-right-radius: 10px;
+    border-top-right-radius: 10px !important;
   }
   svg {
     background: white;
+    // Absolute positioning (mirroring icon-button.scss) so the label below
+    // can also be absolutely positioned at top:45 without flex recentering
+    // the icon. Playback labels should be at the same baseline as the
+    // IconButton labels (Setup/Spark/Fireline/Helitack). top:14 keeps the
+    // 30px circle at the same y-position it occupied under the previous
+    // flex-centered layout (icon bottom at ~44, leaving ~4px clearance
+    // above the label at top:45).
+    position: absolute;
+    top: 14px;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
     display: block;
     height: 30px;
     width: 30px;
     border-radius: 15px;
-    margin: $bottomBarTopPadding auto 0 auto;
     path {
       fill: #797979;
     }
@@ -192,6 +299,22 @@ $overflowHeight: 11px;
       box-shadow: none;
     }
   }
+}
+
+// Designer/developer alignment aid. Renders only when ?bottomBarBaseline=true
+// (see config.ts). 1px red line across the viewport, positioned at the
+// icon-label baseline (visible bottom of the "Setup" / "Spark" / etc.
+// glyphs). 12px from viewport bottom = label-box bottom (11px above bar
+// bottom) minus 1px line-box descent slack, the value measured live.
+.bottomBarBaseline {
+  position: fixed;
+  bottom: 12px;
+  left: 0;
+  width: 100%;
+  height: 1px;
+  background: red;
+  z-index: 99999;
+  pointer-events: none;
 }
 
 @media (max-width: 960px) {

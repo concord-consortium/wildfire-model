@@ -3,9 +3,13 @@ $bottomBarHeight: 65px;
 $bottomBarBorderWidth: 1px;
 $bottomBarBorderStyle: $bottomBarBorderWidth solid #797979;
 $bottomBarTopPadding: 7px;
-$bottomBarBorderRadius: 9px;
+$bottomBarBorderRadius: 10px;
 
-$bottomBarWidgetGroupSpacing: 10px;
+// Margin-right value applied to .widgetGroup. With the paired -1px
+// margin-left (border-continuity trick at bottom-bar.scss), the net
+// outer-to-outer visible gap between adjacent widgets is 9 - 1 = 8 px,
+// matching the spec's "8 px visible / 10 px content-edge gap".
+$bottomBarWidgetGroupSpacing: 9px;
 
 $hoverColor: #dfdfdf;
 
@@ -43,7 +47,7 @@ $helitackRotorGray: #b3b3b3;
 $tabGeoLight: #99cc99;
 $tabHeight: 52px;
 $tabPadding: 4px;
-$tabWidth: 68px;
+$tabWidth: 77px;
 $tabContents: rgba(255, 255, 255, 0.9);
 
 $rightPanelContainerWidth: 315px;
