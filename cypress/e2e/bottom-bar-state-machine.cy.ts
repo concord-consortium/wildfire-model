@@ -123,7 +123,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     });
   });
 
-  it("state 4 (Running): Setup/Spark disabled; Restart/Start/Fire Line/Helitack enabled", () => {
+  it("state 4 (Running): Setup/Spark disabled; Restart/Start/Fireline/Helitack enabled", () => {
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     cy.get("[data-testid='start-button']").click();
     cy.window().its("sim.simulationRunning").should("eq", true);
@@ -134,7 +134,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     });
   });
 
-  it("state 5 (Ended): Start/Fire Line/Helitack disabled; Restart/Reload enabled", () => {
+  it("state 5 (Ended): Start/Fireline/Helitack disabled; Restart/Reload enabled", () => {
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     cy.get("[data-testid='start-button']").click();
     cy.window().then((win: Window) => {
@@ -154,7 +154,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     });
   });
 
-  it("state 6 (Restarted): Setup/Spark/Start/Reload enabled; Restart disabled; Fire Line/Helitack disabled", () => {
+  it("state 6 (Restarted): Setup/Spark/Start/Reload enabled; Restart disabled; Fireline/Helitack disabled", () => {
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     cy.get("[data-testid='start-button']").click();
     cy.get("[data-testid='restart-button']").click();

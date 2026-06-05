@@ -36,7 +36,7 @@ export const WindDial = ({ windDirection, onChange, onChangeEnd }: IProps) => {
       <WindArrow className={css.arrow} style={{ transform: `rotate(${windDirection + 180}deg)` }} />
       <CircularInput
         value={circularInputValue()}
-        radius={35}
+        radius={29}
         className={css.windCircularControl}
         onChange={onChangeConvertedValue}
         onChangeEnd={onChangeEndConvertedValue}

@@ -182,11 +182,9 @@ support sheet inspection and the R11a module↔sheet diff.
 
 ## Not Yet Implemented
 
-- **Helitack / usedHelitack impl** — deferred to **WM-28** ("Hazbot: Helitack
-  run-window detection"). Requires an engine-substrate change (rework the
-  overlap guard or add a translate "modifier" result kind) out of scope for
-  WM-18. WM-28's scope explicitly includes re-validating tabs 45/47/54 once
-  helitack detection lands.
+- **Helitack / usedHelitack impl** — ~~deferred to **WM-28**~~ **DONE (WM-28).**
+  Implemented via a translate "modifier" result kind (the engine-substrate change
+  out of scope for WM-18); tabs 45/47/54 were re-validated. See the WM-28 spec.
 - **SparksAtTopAndBottom algorithm** — deferred to **WM-15** ("Hazbot: Implement
   SparksAtTopAndBottom sim-prop"). Requires ridge/valley detection. Tab 25
   Cats 5 and 6 remain unreachable until WM-15 lands.

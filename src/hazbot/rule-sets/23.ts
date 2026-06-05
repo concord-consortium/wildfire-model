@@ -24,7 +24,7 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
 2. Hazbot: Now click the Setup button. (Step 2 of 3)
-3. Hazbot: Click each zone and change its drought conditions to match the instructions. Then run the model again. (Step 3 of 3)
+3. Hazbot: Click each zone to change its drought conditions to match the instructions. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "NOT setAnyZoneVar AND ranSimulation",
     },
@@ -38,7 +38,8 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
 2. Hazbot: Now click the Setup button. (Step 2 of 3)
-3. Hazbot: Adjust the controls so the zones match the photos. (Step 3 of 3)`,
+3. Hazbot: Adjust the controls so the zones match the photos. (Step 3 of 3)
+[Got it!]`,
       expression: "setAnyZoneVar AND ranSimulation WITH NOT CorrectZoneSetup",
     },
     {
@@ -48,7 +49,8 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Coach mark (no pointer) centered top
-3. Spark button outlined`,
+     - If 2 sparks were placed, do not outline the Spark button.
+     - If only one spark was placed, then the Spark button is outlined.`,
       arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 2)
 2. Hazbot: Place one spark in Zone 1 and one spark in Zone 2, then run the model again. (Step 2 of 2)
 [Got it!]`,
@@ -74,19 +76,19 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
       name: "setTerrainType",
       definition: "There is at least one \"SimulationStarted\" event for which the terrain type was set distinct from the default value for any zone.",
       logEvents: ["SimulationStarted->zones.<i>.terrainType"],
-      details: "Terrain type is set per zone, in the zones data. Default values (see the \"SIMINIT\" sheet) = \"Plains\" (zone 1), \"Plains\" (zone 2).  <i> means taking the zone index i (the index for the zones data, which is, or must be, an array), 0-based.  So i=0 means zone 1 and i=1 means zone 2.  If true, then neecessarily ranSimulation=true.",
+      details: "Terrain type is set per zone, in the zones data. Default values (see the \"SIMINIT\" sheet) = \"Plains\" (zone 1), \"Plains\" (zone 2).  <i> means taking the zone index i (the index for the zones data, which is, or must be, an array), 0-based.  So i=0 means zone 1 and i=1 means zone 2.  If true, then necessarily ranSimulation=true.",
     },
     {
       name: "setVegetation",
       definition: "There is at least one \"SimulationStarted\" event for which the vegetation type was set distinct from the default value for any zone.",
       logEvents: ["SimulationStarted->zones.<i>.vegetation"],
-      details: "Vegetation is set per zone, in the zones data.  For the default values, read the \"SIMINIT\" sheet.  If true, then neecessarily ranSimulation=true.",
+      details: "Vegetation is set per zone, in the zones data.  For the default values, read the \"SIMINIT\" sheet.  If true, then necessarily ranSimulation=true.",
     },
     {
       name: "setDroughtLevel",
       definition: "There is at least one \"SimulationStarted\" event for which the drought level was set distinct from the default value for any zone.",
       logEvents: ["SimulationStarted->zones.<i>.droughtLevel"],
-      details: "Drought level is set per zone, in the zones data.  For the default values, read the \"SIMINIT\" sheet.  If true, then neecessarily ranSimulation=true.",
+      details: "Drought level is set per zone, in the zones data.  For the default values, read the \"SIMINIT\" sheet.  If true, then necessarily ranSimulation=true.",
     },
     {
       name: "setAnyZoneVar",

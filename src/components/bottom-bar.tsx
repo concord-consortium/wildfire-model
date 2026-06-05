@@ -90,18 +90,24 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     if (screenfull?.isEnabled) {
       document.addEventListener(screenfull.raw.fullscreenchange, this.fullscreenChange);
     }
+    // Register the instance ref outside the screenfull guard so headless
+    // browsers (where screenfull is gated off) still get the test hook
+    // wired for the Playwright fullscreen-variant walkthrough.
+    (window as any).test.__bottomBarRef = this;
   }
 
   public componentWillUnmount() {
     if (screenfull?.isEnabled) {
       document.removeEventListener(screenfull.raw.fullscreenchange, this.fullscreenChange);
     }
+    (window as any).test.__bottomBarRef = null;
   }
 
   public render() {
     const { simulation } = this.stores;
     return (
-      <div className={css.bottomBar}>
+      <div className={`${css.bottomBar} ${!simulation.config.showBurnIndex ? css.fisHidden : ""}`}>
+        {simulation.config.bottomBarBaseline && <div className={css.bottomBarBaseline} />}
         <div className={css.leftContainer}>
           <CCLogo className={css.logo} />
           <CCLogoSmall className={css.logoSmall} />
@@ -136,7 +142,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               disabled={!simulation.reloadEnabled}
               disableRipple={true}
             >
-              <span><ReloadIcon/> Reload</span>
+              <span><ReloadIcon/><span className={css.playbackButtonLabel}>Reload</span></span>
             </Button>
             <Button
               className={css.playbackButton}
@@ -145,10 +151,10 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               disabled={!simulation.restartEnabled}
               disableRipple={true}
             >
-              <span><RestartIcon/> Restart</span>
+              <span><RestartIcon/><span className={css.playbackButtonLabel}>Restart</span></span>
             </Button>
           </div>
-          <div className={`${css.widgetGroup} ${css.startStop}`}>
+          <div className={css.widgetGroup}>
             <Button
               onClick={this.handleStart}
               disabled={!simulation.startEnabled}
@@ -156,21 +162,23 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               data-testid="start-button"
               disableRipple={true}
             >
-              { simulation.simulationRunning ? <span><PauseIcon/> Stop</span> : <span><StartIcon /> Start</span> }
+              { simulation.simulationRunning
+                ? <span><PauseIcon/><span className={css.playbackButtonLabel}>Stop</span></span>
+                : <span><StartIcon /><span className={css.playbackButtonLabel}>Start</span></span> }
             </Button>
           </div>
 
-          <div className={`${css.widgetGroup}`}>
+          <div className={`${css.widgetGroup} ${css.fireLineButton}`}>
             <IconButton
               icon={<FireLineIcon />}
               highlightIcon={<FireLineHighlightIcon />}
               disabled={!this.fireLineEnabled}
-              buttonText="Fire Line"
+              buttonText="Fireline"
               dataTest="fireline-button"
               onClick={this.handleFireLine}
             />
           </div>
-          <div className={`${css.widgetGroup} ${css.helitack}`}>
+          <div className={`${css.widgetGroup} ${css.helitackButton}`}>
             <IconButton
               icon={<HelitackIcon />}
               highlightIcon={<HelitackHighlightIcon />}
@@ -182,7 +190,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           </div>
           {
             simulation.config.showBurnIndex &&
-            <div className={css.widgetGroup}>
+            <div className={`${css.widgetGroup} ${css.fireIntensityScale}`}>
               <div className={css.label}>Fire Intensity Scale</div>
               <FireIntensityScale />
             </div>
@@ -227,24 +235,14 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       if (typeof config.unburntIslands === "string") configSnapshot.unburntIslands = config.unburntIslands;
       if (typeof config.zoneIndex === "string") configSnapshot.zoneIndex = config.zoneIndex;
 
-      // Add runtime state not in config
-      configSnapshot.sparks = simulation.sparks.map(s => {
-        const cell = simulation.cells.length > 0 ? simulation.cellAt(s.x, s.y) : null;
-        return {
-          x: s.x / config.modelWidth,
-          y: s.y / config.modelHeight,
-          elevation: cell?.elevation,
-          zoneIdx: cell?.zoneIdx
-        };
-      });
-      configSnapshot.fireLineMarkers = simulation.fireLineMarkers.map(fl => {
-        const cell = simulation.cells.length > 0 ? simulation.cellAt(fl.x, fl.y) : null;
-        return {
-          x: fl.x / config.modelWidth,
-          y: fl.y / config.modelHeight,
-          elevation: cell?.elevation
-        };
-      });
+      // Runtime state not in config (sparks carry their localized TPI; markers keep
+      // cell.elevation). zones / wind / towns stay inline. heightmapMaxElevation and
+      // tpiBands are already in configSnapshot via the generic config loop above;
+      // translate() forwards both heightmapMaxElevation and tpiMarginFraction (which
+      // together set the predicate's decision margin) to SparksAtTopAndBottom.
+      const startData = simulation.buildStartReadingData();
+      configSnapshot.sparks = startData.sparks;
+      configSnapshot.fireLineMarkers = startData.fireLineMarkers;
       configSnapshot.zones = simulation.zones.map(z => ({
         vegetation: vegetationLabels[z.vegetation],
         terrainType: terrainLabels[z.terrainType],

@@ -5,6 +5,7 @@ import { ISimulationConfig } from "../../config";
 import * as THREE from "three";
 import { BufferAttribute } from "three";
 import { SimulationModel } from "../../models/simulation";
+import { getGridIndexForLocation } from "../../models/utils/grid-utils";
 import { ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
 import { observer } from "mobx-react";
 import { useStores } from "../../use-stores";
@@ -47,12 +48,84 @@ const burnIndexColor = (burnIndex: BurnIndex) => {
   return BURN_INDEX_HIGH;
 };
 
+// tpiDebug overlay: map a band's TPI to a diverging color. Positive (ridge) warms
+// toward red, negative (valley) cools toward blue, ~0 (flat) stays white. `n` is
+// the band's TPI normalized to [-1, 1] against the most extreme band on screen.
+const tpiBandColor = (n: number) => {
+  if (n >= 0) return [1, 1 - n, 1 - n];   // white → red
+  const m = -n;
+  return [1 - m, 1 - m, 1];               // white → blue
+};
+
+// "neither" verdict: render the bands in greyscale (darker = stronger |TPI|) so a
+// spark whose mean TPI did NOT clear the margin reads as grey, not red/blue —
+// communicating the actual top/bottom/neither verdict, not just raw relief.
+const tpiNeutralColor = (n: number) => {
+  const shade = 1 - 0.6 * Math.abs(n); // white → grey
+  return [shade, shade, shade];
+};
+
+const tpiMean = (tpi: Array<number | null>): number | null => {
+  const v = tpi.filter((t): t is number => t !== null && Number.isFinite(t));
+  return v.length ? v.reduce((a, b) => a + b, 0) / v.length : null;
+};
+
+// Dedupes the per-spark verdict console line so a running sim (which recolors every
+// tick) logs only when the placement/verdict actually changes.
+let lastTpiDebugLog = "";
+
+// Build a cell-grid-index → overlay-color map for every placed spark's TPI bands.
+// Each spark's bands are tinted by the SAME verdict the SparksAtTopAndBottom
+// predicate computes (mean TPI vs ± margin): red/blue gradient when it counts as
+// top/bottom, greyscale when it's "neither". Band intensity is normalized against
+// the largest |TPI| on screen. Also logs each spark's mean TPI + verdict to the
+// console (deduped) so "blue-ish rings but neither" is explainable while testing.
+const computeTpiDebugColors = (simulation: SimulationModel): Map<number, number[]> => {
+  const colors = new Map<number, number[]>();
+  const cfg = simulation.config;
+  const margin = (cfg.tpiMarginFraction ?? 0) * (cfg.heightmapMaxElevation ?? 0);
+  const perSpark = simulation.sparks
+    .map((s) => simulation.tpiBandsForSpark(s.x, s.y))
+    .filter((r): r is { tpi: Array<number | null>; cellsByBand: number[][] } => !!r);
+  let maxAbs = 0;
+  perSpark.forEach((r) => r.tpi.forEach((t) => {
+    if (t !== null && Number.isFinite(t)) maxAbs = Math.max(maxAbs, Math.abs(t));
+  }));
+  if (maxAbs === 0) return colors;
+  const logParts: string[] = [];
+  perSpark.forEach((r) => {
+    const mean = tpiMean(r.tpi);
+    const verdict = mean === null ? "neither"
+      : mean >= margin ? "top" : mean <= -margin ? "bottom" : "neither";
+    logParts.push(`mean ${mean === null ? "n/a" : Math.round(mean)} ft → ${verdict} ` +
+      `[${r.tpi.map((t) => (t === null ? "-" : Math.round(t))).join(", ")}]`);
+    r.cellsByBand.forEach((cells, band) => {
+      const t = r.tpi[band];
+      if (t === null || !Number.isFinite(t)) return;
+      const n = Math.max(-1, Math.min(1, t / maxAbs));
+      const color = verdict === "neither" ? tpiNeutralColor(n) : tpiBandColor(n);
+      cells.forEach((index) => colors.set(index, color));
+    });
+  });
+  const key = logParts.join(" | ");
+  if (key && key !== lastTpiDebugLog) {
+    lastTpiDebugLog = key;
+    // eslint-disable-next-line no-console
+    console.log(`[tpiDebug] margin ±${Math.round(margin)} ft | ${key}`);
+  }
+  return colors;
+};
+
 const setVertexColor = (
-  colArray: number[], cell: Cell, gridWidth: number, gridHeight: number, config: ISimulationConfig
+  colArray: number[], cell: Cell, gridWidth: number, gridHeight: number, config: ISimulationConfig,
+  debugColors?: Map<number, number[]>
 ) => {
   const idx = vertexIdx(cell, gridWidth, gridHeight) * 4;
+  const debugColor = debugColors?.get(getGridIndexForLocation(cell.x, cell.y, gridWidth));
   let color;
-  if (cell.fireState === FireState.Burning) {
+  if (debugColor) {
+    color = debugColor;
+  } else if (cell.fireState === FireState.Burning) {
     color = config.showBurnIndex ? burnIndexColor(cell.burnIndex) : BURNING_COLOR;
   } else if (cell.fireState === FireState.Burnt) {
     color = cell.isFireSurvivor ? getTerrainColor(cell.droughtLevel) : BURNT_COLOR;
@@ -78,8 +151,9 @@ const setVertexColor = (
 
 const updateColors = (geometry: THREE.PlaneGeometry, simulation: SimulationModel) => {
   const colArray = geometry.attributes.color.array as number[];
+  const debugColors = simulation.config.tpiDebug ? computeTpiDebugColors(simulation) : undefined;
   simulation.cells.forEach(cell => {
-    setVertexColor(colArray, cell, simulation.gridWidth, simulation.gridHeight, simulation.config);
+    setVertexColor(colArray, cell, simulation.gridWidth, simulation.gridHeight, simulation.config, debugColors);
   });
   (geometry.attributes.color as BufferAttribute).needsUpdate = true;
 };
@@ -118,7 +192,8 @@ export const Terrain = observer(forwardRef<THREE.Mesh>(function WrappedComponent
     if (geometryRef.current) {
       updateColors(geometryRef.current, simulation);
     }
-  }, [simulation, simulation.cellsStateFlag]);
+    // simulation.sparks.length retriggers the tpiDebug overlay as sparks are placed.
+  }, [simulation, simulation.cellsStateFlag, simulation.sparks.length]);
 
   const interactions: InteractionHandler[] = [
     usePlaceSparkInteraction(),

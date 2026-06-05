@@ -2,6 +2,7 @@ import { SimulationModel } from "./simulation";
 import { UIModel } from "./ui";
 import { DroughtLevel, TerrainType, Vegetation } from "../types";
 import { ChartStore } from "./chart-store";
+import { log } from "../log";
 
 export interface IStores {
   simulation: SimulationModel;
@@ -76,7 +77,28 @@ const createTestHelpers = (simulation: SimulationModel) => {
       const b = zoneBounds(zoneIdx);
       if (!b) throw new Error(`No cells found for zoneIdx=${zoneIdx}`);
       simulation.setHelitackPoint(b.centerX, b.centerY);
+      // Emit the production Helitack log payload (matching the pointer path in
+      // use-helitack-interaction.ts) so the Hazbot engine sees the drop. Unlike
+      // sparks / fire lines (captured from the SimulationStarted snapshot), helitack
+      // detection is event-based, so mutating the sim alone is not engine-visible.
+      const cell = simulation.cellAt(b.centerX, b.centerY);
+      log("Helitack", {
+        x: b.centerX / simulation.config.modelWidth,
+        y: b.centerY / simulation.config.modelHeight,
+        elevation: cell.elevation,
+      });
     },
-    zoneBounds
+    zoneBounds,
+    // Slot populated by BottomBar.componentDidMount; typed as `any` to avoid
+    // importing the BottomBar component here, which would cycle via
+    // base.ts -> stores.ts.
+    __bottomBarRef: null as any,
+    // Test-only helper for the Playwright fullscreen-variant walkthrough.
+    // Drives BottomBar.state.fullscreen via the instance ref so the four
+    // icon variants (enter/exit x default/hover) can be exercised without
+    // invoking screenfull (which is gated in headless browsers).
+    setFullscreenIconState(value: boolean) {
+      (window as any).test.__bottomBarRef?.setState({ fullscreen: value });
+    }
   };
 };

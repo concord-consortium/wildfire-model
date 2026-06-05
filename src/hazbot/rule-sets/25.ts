@@ -20,7 +20,7 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
       feedback: `Hazbot: I only see 1 spark. Make sure each zone has a spark!
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
-2. Coach mark (no pointer) centered top`,
+2. Spark button outlined; coach mark (no pointer) centered top`,
       arrowText: `1. Hazbot: Restart your model first. (Step 1 of 2)
 2. Hazbot: Place one spark in Zone 1 and one spark in Zone 2, then run the model again. (Step 2 of 2)
 [Got it!]`,
@@ -41,26 +41,34 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
     {
       id: 4,
       studentAction: "Ran the simulation and placed two sparks, but not at the top and bottom of the mountain",
-      feedback: "Hazbot: Make sure to place one spark at the top of a mountain and one at the bottom!",
-      visualFeedback: "Arrows pointing to the top and bottom of a mountain on the visual display (one in each zone)",
+      feedback: `Hazbot: Make sure to place one spark at the bottom of a mountain and one at the top!
+[Show me]`,
+      visualFeedback: `1. Restart button outlined; coach mark points to Restart button
+2. Coach mark (no pointer) with images of the bottom of a mountain and top of a mountain  plus arrows pointing to these, centered top`,
+      arrowText: `1. Hazbot: Restart your model first. (Step 1 of 2)
+2. Hazbot: Place one spark at the bottom of a mountain in one zone and one spark at the top of a mountain in the other zone, then run the model again. (Step 2 of 2)
+[Got it!]`,
       expression: "ranSimulation WITH OneSparkPerZone AND NOT SparksAtTopAndBottom",
     },
     {
       id: 5,
       studentAction: "Ran the simulation with one spark at the top and one at the bottom of the mountain but with different zone setups.",
-      feedback: "Hazbot: Looks like the two zones are different. Make sure they have the same vegetation and drought!",
+      feedback: `Hazbot: Looks like the two zones are different. Make sure they have the same vegetation and drought!
+[Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
 2. Hazbot: Now click the Setup button. (Step 2 of 3)
-3. Hazbot: Make sure the conditions are the same in each zone. (Step 3 of 3)`,
+3. Hazbot: Make sure the conditions are the same in each zone. (Step 3 of 3)
+[Got it!]`,
       expression: "ranSimulation WITH OneSparkPerZone AND SparksAtTopAndBottom AND NOT UniformZoneSettings",
     },
     {
       id: 6,
       studentAction: "Ran the simulation with one spark at the top and one at the bottom of the mountain with the same zone setups.",
-      feedback: "Hazbot: Great job! You’re ready to answer the questions below.",
+      feedback: `Hazbot: Great job! You’re ready to answer the questions below.
+[Hooray!]`,
       visualFeedback: "Confetti animation or subtle celebratory visual",
       expression: "ranSimulation WITH OneSparkPerZone AND SparksAtTopAndBottom AND UniformZoneSettings",
     }

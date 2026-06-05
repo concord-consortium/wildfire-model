@@ -14,7 +14,8 @@ export interface EngineOpts<TReading extends BaseReading, TDefaults = unknown> {
   simProps: Record<string, SimPropImpl<TReading, TDefaults>>;
   translate: (event: ConsumedEvent, sessionId: string) =>
     | { kind: "trigger"; reading: TReading }
-    | { kind: "no-op" };
+    | { kind: "no-op" }
+    | { kind: "modifier"; apply: (lastReading: TReading | undefined) => boolean };
   runStartTriggers?: string[];
   temporalVariables?: Record<string, TemporalVariableImpl<unknown>>;
   initialTemporalValues?: Record<string, unknown>;
@@ -440,6 +441,14 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
         }
         this.readings.push(reading);
         mutated = true;
+        break;
+      }
+      case "modifier": {
+        // The callback mutates lastReading in place (e.g. records an in-run helitack
+        // on the active run-start reading) and returns whether it changed anything,
+        // so the single-notify-iff-mutated contract (R19) is preserved. No reading is
+        // pushed: a modifier annotates the active run, it does not start/end one.
+        if (result.apply(lastReading)) mutated = true;
         break;
       }
       case "no-op":

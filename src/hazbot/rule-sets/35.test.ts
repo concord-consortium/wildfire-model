@@ -2,21 +2,21 @@ import { ruleSet35 } from "./35";
 import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
 import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/types";
 
-// Tab 35 categories (regenerated from the 2026-05-22 sheet; Cat 100 dropped):
+// Tab 35 categories (regenerated from the 2026-06-02 sheet; Cat 100 dropped):
 //   1: NOT ranSimulation
 //   2: ranSimulation AND NOT setAnyVar
-//   3: ranSimulation WITH NOT ForestWAWOSuppression
+//   3: setAnyVar AND ranSimulation WITH NOT ForestWAWOSuppression
 //   4: ranSimulation WITH ForestWAWOSuppression AND NOT UniformDroughtLevels
 //   5: ranSimulation WITH ForestWAWOSuppression AND NOT UniformTerrainTypes
 //   6: ranSimulation WITH ForestWAWOSuppression AND UniformTerrainTypes AND UniformDroughtLevels AND NOT OneSparkPerZone
 //   7: ranSimulation WITH ForestWAWOSuppression AND UniformTerrainTypes AND UniformDroughtLevels AND OneSparkPerZone
 //
-// Cat 2 is UNREACHABLE: cat 3 (`ranSimulation WITH NOT ForestWAWOSuppression`)
-// has no setAnyVar guard, so any default run that satisfies cat 2 also lacks the
-// forest pairing and thus satisfies cat 3 — cat 3 always shadows cat 2. (Tab 33's
-// analogous cat 3 carries a `setAnyVar AND` guard; tab 35's does not.) This is a
-// faithful extraction of a sheet-quality issue, flagged to the sheet author per
-// the WM-18 spec's Out of Scope. Cat 2 is excluded from R9 per-category coverage.
+// Cat 2 is now REACHABLE. The 2026-06-02 sheet added a `setAnyVar AND` guard to
+// cat 3 (was `ranSimulation WITH NOT ForestWAWOSuppression`, now
+// `setAnyVar AND ranSimulation WITH NOT ForestWAWOSuppression`), matching tab 33's
+// analogous cat 3. A default run (NOT setAnyVar) no longer satisfies cat 3, so it
+// falls through to cat 2 — the prior shadowing (flagged per WM-18 R11a) is fixed
+// at source. All seven categories now have R9 per-category coverage.
 // No stub-gated category — the (e) shape is N/A.
 
 // SIMINIT defaults for tab 35: 2 zones Mountains / Shrub / Mild Drought, wind 0/0.
@@ -76,7 +76,8 @@ describe("ruleSet 35 — per-rule-set behavior sweep", () => {
 });
 
 describe("ruleSet 35 — R9 per-category coverage", () => {
-  // Cat 2 is unreachable (shadowed by cat 3 — see the file header) and excluded.
+  // Cat 2 is reachable again now that cat 3 carries a `setAnyVar AND` guard
+  // (see the file header). All seven categories are covered below.
   const e = () => makeWildfireEngine(ruleSet35, defaults);
   it("cat 1 — no run", () => expect(matchAgainst(ruleSet35, e(), [])).toBe(1));
   it("cat 3 — ran without the forest-with/without-suppression pairing", () =>
@@ -89,6 +90,6 @@ describe("ruleSet 35 — R9 per-category coverage", () => {
     expect(matchAgainst(ruleSet35, e(), [startReading({ zones: forestWW })])).toBe(6));
   it("cat 7 — forest pairing, uniform terrain+drought, one spark per zone", () =>
     expect(matchAgainst(ruleSet35, e(), [startReading({ zones: forestWW, sparks: sparksPerZone })])).toBe(7));
-  it("cat 2 is unreachable — an all-default run is shadowed by cat 3", () =>
-    expect(matchAgainst(ruleSet35, e(), [startReading()])).toBe(3));
+  it("cat 2 — an all-default run (no vars set) is no longer shadowed by cat 3", () =>
+    expect(matchAgainst(ruleSet35, e(), [startReading()])).toBe(2));
 });

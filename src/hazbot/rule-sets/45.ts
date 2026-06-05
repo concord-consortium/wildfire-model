@@ -19,9 +19,11 @@ export const ruleSet45: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with a changed vegetation type, drought, or wind.",
       feedback: `Hazbot: Looks like you changed the Setup. Let’s run the model using the original settings!
 [Show me]`,
-      visualFeedback: "1. Reload button outlined; coach mark points to Reload button",
-      arrowText: `Hazbot: Click this button to reset the model.
-Hazbot: Now you can run the model.`,
+      visualFeedback: `1. Reload button outlined; coach mark points to Reload button
+2. Start button outlined; coach mark points to Start button`,
+      arrowText: `1. Hazbot: First, Reload your model. (Step 1 of 2)
+2. Hazbot: Click Start to run the model! (Step 2 of 2)
+[Got it!]`,
       expression: "ranSimulation WITH NOT DefaultVars",
     },
     {
@@ -35,17 +37,20 @@ OR
 with helitacks only 
  
 in a single or multiple trials.`,
-      feedback: "Hazbot: Try using both the firelines and helitacks!",
-      visualFeedback: "1. Helitack and firelines buttons outlined; coach mark points to buttons",
-      arrowText: `1. Hazbot: Make sure you try both firelines and helitacks. (Step 1 of 2)
-2. Hazbot: Click to start to run the model! (Step 2 of 2)
+      feedback: `Hazbot: Try using both the firelines and helitacks!
+[Show me]`,
+      visualFeedback: `1. Restart button outlined; coach mark points to Restart button
+2. Fireline and Helitack buttons outlined (both are disabled) and Start button outlined; coach mark points to Fireline/Helitack buttons`,
+      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 2)
+2. Hazbot: Add both a Fireline and a Helitack while the model is running. Click Start to begin! (Step 2 of 2)
 [Got it!]`,
       expression: "NOT (usedFireline AND usedHelitack) AND ranSimulation WITH DefaultVars",
     },
     {
       id: 4,
       studentAction: "Ran the model with no setup changes and with both firelines and helitacks used in a single or multiple trials.",
-      feedback: "Hazbot: Great job! You’re ready to answer the questions below.",
+      feedback: `Hazbot: Great job! You’re ready to answer the questions below.
+[Hooray!]`,
       visualFeedback: "Confetti animation or subtle celebratory visual",
       expression: "ranSimulation WITH DefaultVars AND Fireline AND ranSimulation WITH DefaultVars AND Helitack",
     }
@@ -54,8 +59,8 @@ in a single or multiple trials.`,
     {
       name: "ranSimulation",
       definition: "At least one \"SimulationStarted\" event was recorded.",
-      logEvents: ["SimulationStarted", "SimulationStopped", "SImulationRestarted", "SimulationReloaded", "TopBarReloadButtonClicked", "SimulationEnded"],
-      details: "Each simulation run is started by 'SimulationStarted', and how it ends is determined by various events listed here.  It is necessary for this activity to monitor the end of the simulation as well as the beginning, since turning on a sim prop (\"Helitack\") relies on knowing that a simulation is in progress.",
+      logEvents: ["SimulationStarted", "SimulationStopped", "SimulationRestarted", "SimulationReloaded", "TopBarReloadButtonClicked", "SimulationEnded"],
+      details: "Each simulation run is started by 'SimulationStarted', and how it is paused, is resumed, and ends is determined by various events listed here.  It is necessary for this activity to monitor the end of the simulation as well as the beginning, since turning on a sim prop (\"Helitack\") relies on knowing that a simulation is in progress, and fireline installation events occur during a simulation pause.  A \"resuming SimulationStarted\" event is one that was preceded by a SimulationStopped and then started again (SimulationStarted) without being reset/ended (SimulationEnded, SimulationRestarted, SimulationReloaded, TopBarReloadButtonClicked; or the simulation being restarted by an embedding unit (such as an \"Activity Player\")) in between.  All other \"SimulationStarted\" events are \"non-resuming\".",
     },
     {
       name: "usedFireline",
@@ -73,7 +78,7 @@ in a single or multiple trials.`,
       name: "Fireline",
       definition: "Sim prop for whether any firelines were set up for the simulation run.",
       logEvents: ["SimulationStarted->fireLineMarkers"],
-      details: "If there were any firelines set up for the simulation run, then the value of \"fireLineMarkers\" should be an array of length 2 (or more?).  If there were no firelines set up, then the value of \"fireLineMarkers\" would be an empty array.",
+      details: "If there were any firelines set up for the simulation run, then the value of \"fireLineMarkers\" should be an array of length 2 (or more?).  If there were no firelines set up, then the value of \"fireLineMarkers\" would be an empty array.   Here, both resuming and non-resuming \"SimulationStarted\" events must be examined, with the non-resuming SimulationStarted event marking a true start of a simulation run, to which this sim prop should apply as an initial value (non-resuming) and an updated value (resuming).",
     },
     {
       name: "Helitack",

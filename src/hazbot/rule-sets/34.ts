@@ -19,7 +19,7 @@ export const ruleSet34: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation(s) with default setup values only",
       feedback: `Hazbot: Looks like you haven’t changed the Setup yet. What conditions do you think will produce a high intensity fire?
 [Show me]`,
-      visualFeedback: `1. Arrow pointing to the Intensity scale.
+      visualFeedback: `0. Arrow pointing to the Intensity scale
 2. Restart button outlined; coach mark points to Restart button
 3. Setup button outlined; coach mark points to Setup button
 4. Setup panel outlined; coach mark points to Setup panel`,
@@ -34,19 +34,21 @@ export const ruleSet34: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation, with drought and wind changed but vegetation unchanged.",
       feedback: `Hazbot: Keep experimenting! What type of vegetation do you think will produce a high intensity fire?
 [Show me]`,
-      visualFeedback: `1. Restart button outlined; coach mark points to Restart button
+      visualFeedback: `0. Arrow pointing to the Intensity scale
+1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
 2. Hazbot: Now click the Setup button. (Step 2 of 3)
-3. Hazbot: Click each zone and change the vegetation. Then run the model again. (Step 3 of 3)
+3. Hazbot: Click each zone and change the vegetation to create a high intensity fire. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "setDroughtLevel AND setWind AND NOT setVegetation",
     },
     {
       id: 4,
       studentAction: "Ran the simulation two or more times, tested all four vegetation types, and changed drought and winds.",
-      feedback: "Hazbot: Great job! You’re ready to answer the questions below.",
+      feedback: `Hazbot: Great job! You’re ready to answer the questions below.
+[Hooray!]`,
       visualFeedback: "Confetti animation or subtle celebratory visual",
       expression: "setDroughtLevel AND setWind AND triedAllVegetations",
     }
@@ -80,7 +82,7 @@ export const ruleSet34: RuleSet<WildfireDefaults> = {
       name: "setWind",
       definition: "There is at least one \"SimulationStarted\" event for which the wind value was set distinct from the default value for any zone.",
       logEvents: ["SimulationStarted->wind.speed", "wind.direction", "wind.scaleFactor"],
-      details: "Wind is set globally (for all zones).  For the default values, read the \"SIMINIT\" sheet.  If the magnitude is 0, then the direction has no effect and must be ignored.  So set the direction to null, if the magnitude is 0.  Here, the \"magnitude\" means the wind speed as displayed in the simulation (like \"10\" as in \"10 MPH\").  In the log data, the magnituide data entails two fields \"wind.speed\" and \"wind.scaleFactor\".  The \"magitude\" is computed as \"wind.speed\" / \"wind.scaleFactor\".",
+      details: "Wind is set globally (for all zones).  For the default values, read the \"SIMINIT\" sheet.  If the magnitude is 0, then the direction has no effect and must be ignored.  So set the direction to null, if the magnitude is 0.  Here, the \"magnitude\" means the wind speed as displayed in the simulation (like \"10\" as in \"10 MPH\").  In the log data, the magnitude data entails two fields \"wind.speed\" and \"wind.scaleFactor\".  The \"magnitude\" is computed as \"wind.speed\" / \"wind.scaleFactor\".",
     },
     {
       name: "setAnyVar",

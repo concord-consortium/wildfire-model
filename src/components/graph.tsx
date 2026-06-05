@@ -6,9 +6,9 @@ import css from "./graph.scss";
 import { Annotation } from "../charts/models/chart-annotation";
 import { DataPoint, ChartDataSet } from "../charts/models/chart-data-set";
 
-const chartColor0 = "#ffb7f5";
-const chartColor1 = "#6badff";
-const chartColor2 = "#ffc085";
+const chartColor0 = "#e85bd4";
+const chartColor1 = "#2b95f0";
+const chartColor2 = "#df7800";
 const borderDash0 = [];
 const borderDash1 = [5, 5];
 const borderDash2 = [10, 5];
@@ -34,7 +34,7 @@ export const Graph = observer(function WrappedComponent() {
         labelPosition: "top",
         labelBackgroundColor: "white",
         fontFamily: "'Roboto Condensed', Lato, arial, sans-serif",
-        fontSize: 10,
+        fontSize: 13,
         labelColor: "#606060",
         thickness: 1,
         dashArray: borderDash1
@@ -53,7 +53,7 @@ export const Graph = observer(function WrappedComponent() {
         labelPosition: "top",
         labelBackgroundColor: "white",
         fontFamily: "'Roboto Condensed', Lato, arial, sans-serif",
-        fontSize: 10,
+        fontSize: 13,
         labelColor: "#606060",
         thickness: 1,
         dashArray: borderDash2

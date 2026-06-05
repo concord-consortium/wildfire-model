@@ -27,53 +27,21 @@ defaults are always complete and 32–35 load. There is no longer a
 
 ---
 
-## 2. Stubbed factor variables / sim-props
+## 2. Stubbed factor variables / sim-props — RESOLVED (WM-15, WM-28)
 
-Three referenced impls are flagged `isStub: true` — they return `defaultValue`
-and surface a `stub-warning` at load. A category whose expression depends on a
-stub in a top-level AND is **unreachable**; a category that references a stub
-inside an `OR` / `NOT` is **stub-degraded** (a reachable category misclassifies
-a sub-population). See WM-18 for the per-tab effect of the Helitack stub.
+There are no remaining `isStub: true` impls; the engine emits no `stub-warning`
+for any of the 11 rule-sets.
 
-### `SparksAtTopAndBottom` — [wildfire/sim-props.ts:90](wildfire/sim-props.ts#L90)
-
-- **Used by:** ruleset 25 Cat 6 (success category).
-- **Effect of stub:** ruleset 25 caps at Cat 5; the celebratory "ready to
-  answer" feedback never fires.
-- **What's needed:** an algorithm that decides whether two sparks sit
-  near/at a ridge line and a valley line for the active topography. Per the
-  sheet's Details column: "needs to be written based on the topography map
-  used and the x, y, elevation values… One way would be to pre-trace the
-  ridge lines and the valley lines and determine if the spark locations are
-  close enough to them (this work never done before; Alert: new algorithm
-  coding required here)."
-- **Inputs already available:** `WildfireSpark` carries `x`, `y`, `zoneIdx`,
-  `elevation` (see [wildfire/types.ts:22](wildfire/types.ts#L22)).
-- **Open design questions:**
-  - Per-preset pre-computation vs runtime ridge detection? (Preset-driven
-    seems simpler — `mountainTwoZone` etc. only have a handful of presets.)
-  - What's "close enough"? Distance threshold or relative-elevation rule?
-
-### `Helitack` (sim-prop) / `usedHelitack` (factor variable) — [wildfire/sim-props.ts](wildfire/sim-props.ts), [wildfire/factor-variable-stubs.ts](wildfire/factor-variable-stubs.ts)
-
-- **Used by:** ruleset 45 Cat 3 (degraded), Cat 4 (gated, unreachable);
-  ruleset 47 Cat 3 (degraded), Cat 4–5 helitack arm (dead but cats stay
-  reachable via fireline); ruleset 54 Cat 3 (degraded), Cat 4 helitack arm
-  (dead but cat 4 reachable via fireline).
-- **Effect of stub:** the helitack progression path on tabs 45/47/54 is
-  unvalidated; the fire-line progression path is unaffected (Fireline /
-  usedFireline are real impls). See the WM-18 spec's Helitack Technical Notes
-  for the per-tab over-match / dead-arm breakdown.
-- **Deferred to [WM-28](https://concord-consortium.atlassian.net/browse/WM-28)
-  ("Hazbot: Helitack run-window detection").** A `Helitack` event can occur
-  inside or outside a simulation run; only an in-run helitack counts. The
-  detail that makes this non-trivial: a sim-prop bound by `WITH` sees only its
-  one `SimulationStarted` witness reading, so "a helitack happened during this
-  run" must be attached to that reading via the temporal-variable mechanism,
-  which collides with the engine's trigger-state-change-overlap construction
-  guard. Resolving it needs an engine-substrate change. WM-28's acceptance
-  criteria include **re-validating tabs 45/47/54** once helitack detection
-  lands, not just adding the impl.
+- `SparksAtTopAndBottom` was implemented in WM-15 (ruleset 25 now reaches its
+  Cat 6 success state).
+- `Helitack` (sim-prop) / `usedHelitack` (factor variable) were implemented in
+  [WM-28](https://concord-consortium.atlassian.net/browse/WM-28) ("Hazbot:
+  Helitack run-window detection"). An in-run helitack is recorded on the
+  run-start reading by a translate `modifier` (a third engine substrate result
+  kind, chosen over reworking the trigger-state-change-overlap guard); the
+  `Helitack` sim-prop reads it per-run and `usedHelitack` aggregates across
+  runs, mirroring `Fireline` / `usedFireline`. Tabs 45/47/54 were re-validated
+  (Jest per-category coverage plus a Playwright MCP walk); see the WM-28 spec.
 
 ---
 
@@ -104,19 +72,20 @@ Items where the source data should be corrected before the next re-extract:
   paired-reading primitive in the DSL today (see §6). Either downgrade the
   sheet's spec to single-reading, or extend the DSL.
 - **Typos that don't currently break anything but should be fixed at
-  source**: `"SimualtionStarted"` (rule-sets/23.ts:101), `"neecessarily"`
-  (multiple), `"whiel"` (33.ts:98), `"magitude"` / `"magnituide"` (24.ts,
-  33.ts) — these are in Details prose only, not parsed by the engine, but
-  they survive re-extracts.
-- **Tab 35 Cat 2 is unreachable (shadowed by Cat 3).** Cat 2 is
-  `ranSimulation AND NOT setAnyVar` and Cat 3 is
-  `ranSimulation WITH NOT ForestWAWOSuppression`. Any default run that
-  satisfies Cat 2 also lacks the forest-w/wo-suppression pairing, so it
-  satisfies Cat 3 — and Cat 3 > Cat 2 wins. Tab 33's analogous Cat 3
-  carries a `setAnyVar AND` guard that prevents the same shadowing; tab 35's
-  does not. The faithful extraction is committed (the extraction matches the
-  sheet); the fix is a sheet-side edit to add the missing `setAnyVar AND`
-  guard. Flagged here per WM-18 R11a.
+  source.** As of the 2026-06-02 re-extract, `"SimualtionStarted"` and
+  `"whiel"` have been corrected at source and no longer appear. Still
+  outstanding: `"neecessarily"` (multiple — 23/24/32/35/42.ts) and
+  `"magitude"` / `"magnituide"` (24/33/34/35/42.ts). These are in Details
+  prose only, not parsed by the engine, but they survive re-extracts.
+- **Tab 35 Cat 2 shadowing — RESOLVED (2026-06-02 workbook).** Cat 2 is
+  `ranSimulation AND NOT setAnyVar`; Cat 3 was previously
+  `ranSimulation WITH NOT ForestWAWOSuppression`, which any default run
+  satisfying Cat 2 also satisfied — and Cat 3 > Cat 2 won, leaving Cat 2
+  unreachable. The 2026-06-02 sheet adds the predicted `setAnyVar AND` guard
+  (Cat 3 is now `setAnyVar AND ranSimulation WITH NOT ForestWAWOSuppression`),
+  matching tab 33's analogous Cat 3. A default run (NOT setAnyVar) no longer
+  satisfies Cat 3, so Cat 2 is reachable again. Fixed at source per WM-18
+  R11a; carried in by the re-extract.
 
 ---
 
@@ -308,7 +277,7 @@ host-app concerns; they import nothing from the engine substrate today.
    `wildfire-model/package.json`. The boundary already runs through
    `index.ts` — only the wildfire-bridge files (`engine-singleton.ts`,
    `factor-variables.ts`, `sim-props.ts`, `translate.ts`,
-   `factor-variable-stubs.ts`, `types.ts`) need the change.
+   `types.ts`) need the change.
 8. **Update the rule-sets generator's emitted import path.** Each rule-set
    module starts with `import { RuleSet } from "../engine"`. Update
    `scripts/extract-impl.js`'s emit template (and the generated files; or

@@ -148,6 +148,20 @@ export function evaluateWith<TR extends BaseReading, TD>(
   return { value: bound !== undefined, boundReading: bound, candidateEvaluations: candidates };
 }
 
+// Chronological index of a witness within engine.readings, for the sidebar's
+// "Matched on reading #N" label. A factor variable may return a *derived* witness
+// rather than an element of engine.readings: wildfire's canonical-run fold returns a
+// shallow clone of the run's first-start reading to carry merged tool data
+// (canonical-runs.ts foldResume). Such a clone is not `indexOf`-findable, which would
+// drop the index to undefined and render as "#?". Since `at` is a unique per-reading
+// timestamp the clone preserves from its source, fall back to matching on it so a
+// folded (paused/resumed) run still shows the stable index of its first start.
+function readingIndexOf<TR extends BaseReading>(readings: TR[], reading: TR): number {
+  const direct = readings.indexOf(reading);
+  if (direct >= 0) return direct;
+  return readings.findIndex((r) => r.at === reading.at);
+}
+
 // Within a WITH binding, the propExpr is evaluated against a single witness reading.
 // Sim-prop leaves route through wrapSimProp.
 function evaluatePropExpr<TR extends BaseReading, TD>(expr: Expression, reading: TR, ctx: EvalCtx<TR, TD>): boolean {
@@ -223,7 +237,7 @@ export function evaluateLeaf<TR extends BaseReading, TD>(expr: Expression, ctx: 
         ? evaluatePropLeaf(expr.propExpr, witness, ctx)
         : undefined;
       const boundReadingIndex = result.boundReading !== undefined
-        ? ctx.readings.indexOf(result.boundReading)
+        ? readingIndexOf(ctx.readings, result.boundReading)
         : undefined;
       return {
         kind: "with", varName: expr.varName, propExpr: expr.propExpr,

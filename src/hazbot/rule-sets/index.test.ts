@@ -19,20 +19,21 @@ import { makeWildfireEngine } from "./test-helpers";
 // gate constructs each engine without one.
 //
 // Stub-warning distribution: the engine emits one stub-warning per *referenced*
-// stub per rule-set engine. Helitack is referenced by 45/47/54, usedHelitack by
-// 45, SparksAtTopAndBottom by 25 — five stub-warning entries in total.
+// stub per rule-set engine. Helitack / usedHelitack (referenced by 45/47/54 and
+// 45 respectively) were implemented in WM-28, and SparksAtTopAndBottom (ruleset
+// 25) in WM-15, so no rule set emits a stub-warning today.
 const expectedStubWarnings: Record<string, string[]> = {
   "23": [],
   "24": [],
-  "25": ["SparksAtTopAndBottom"],
+  "25": [],
   "32": [],
   "33": [],
   "34": [],
   "35": [],
   "42": [],
-  "45": ["Helitack", "usedHelitack"],
-  "47": ["Helitack"],
-  "54": ["Helitack"],
+  "45": [],
+  "47": [],
+  "54": [],
 };
 
 function collectErrors(ruleSetId: string): EngineError[] {
