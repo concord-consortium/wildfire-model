@@ -17,10 +17,17 @@
 
   & + &{ margin-left: -4px; }  // overlap the shared 4px frames so the pair meets in a single white band (Zeplin)
 
-  &:hover{
+  // A selected zone has no hover state (radio-group behavior) — gate hover on :not(.selected)
+  &:not(.selected):hover{
     .terrainPreview{
+      border: solid 4px rgba(255,255,255,0.5);  // 50% white frame on hover
       .terrainImage {
         opacity: 75%;
+      }
+      .zoneLabelBorder{
+        padding: 4px;             // 50% white frame around the pill on hover (Zeplin "Label Highlight" at 50%)
+        background-color: rgba(255, 255, 255, 0.5);
+        border-radius: 8px;
       }
     }
   }
@@ -45,6 +52,7 @@
     height: 100%;
     border: solid 4px transparent;
     position: relative;
+    cursor: pointer; // set on the label itself; a <label> wrapping a control won't inherit the parent's pointer
 
     .terrainImage{
       width: 100%;
@@ -141,10 +149,6 @@
       display: none;
     }
 
-    &:hover{
-      border: solid 4px rgba(255,255,255,0.5);
-    }
-
     &:active{
       border: solid 4px #ffffff;
     }
@@ -159,6 +163,7 @@
   &.fixed{
     cursor: default;
     .terrainPreview{
+      cursor: default; // readonly recap (wind screen) — non-interactive
       &:hover{
         border: solid 4px transparent;
       }
