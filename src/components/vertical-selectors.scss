@@ -28,7 +28,7 @@
 
   .sliderContainer {
     position: relative;
-    margin-top: 26px;
+    margin-top: 25px;
     height: 114px;
   }
 
@@ -66,13 +66,20 @@
       }
 
       &.placeholder {
-        border: 1px solid $controlGray;
+        // No border here: the veg icon's own dark outline (below) is the single
+        // outline. A border + the icon outline stacked reads as a doubled, too-dark edge.
         background-color: #ffffff;
       }
 
       svg {
         width: 100%;
         height: 100%;
+      }
+
+      // Veg icons ship with both a gray (.dark-outline) and white (.white-outline)
+      // outline rect at the same spot; on the slider show only the dark one.
+      svg rect:global(.white-outline) {
+        display: none;
       }
     }
   }
@@ -97,7 +104,6 @@
 
     .markLabel {
       font-size: 13px;
-      width: 32px;
       font-family: 'Roboto Condensed';
       color: $controlText;
       min-height: 20px;

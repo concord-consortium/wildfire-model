@@ -45,12 +45,47 @@
         font-weight: 500;
       }
 
+      // Match the first-screen (ZonesCountSelector) radio: #797979 ring + dot,
+      // white disk backing behind the ring.
+      .radio,
+      .radio:global(.Mui-checked) {
+        color: $controlGray;
+      }
+
       .radio {
-        padding: 4px; // tighten the gap between the circle and its label (was MUI default 9px)
+        padding: 4px;
         svg {
-          width: 24px; // Zeplin "Radio Button" group is 24x24
-          height: 24px;
+          width: 22px;
+          height: 22px;
         }
+        // White interior backing behind the ring (Radio Button Back, #fff)
+        &::before {
+          content: "";
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 16px;
+          height: 16px;
+          transform: translate(-50%, -50%);
+          border-radius: 50%;
+          background-color: #fff;
+          pointer-events: none;
+        }
+      }
+
+      // Hover shows the radio's selection dot at 50% opacity (#79797980), like the
+      // first screen. MUI draws nothing inside an unchecked radio, so render it ourselves.
+      &:hover .radio:not(:global(.Mui-checked))::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 11px;
+        height: 11px;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background-color: rgba(121, 121, 121, 0.5); // #79797980
+        pointer-events: none;
       }
     }
   }

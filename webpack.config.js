@@ -103,6 +103,17 @@ module.exports = (env, argv) => {
                           removeViewBox: false
                         }
                       }
+                    },
+                    {
+                      // Inline SVGs share one document, and SVGO's generic ids
+                      // (mask-4, path-3, ...) are not unique across files. Two icons
+                      // on the same screen then collide and one hijacks the other's
+                      // <mask>/<defs> — e.g. the Forest icon stealing Forest-with-
+                      // Suppression's masks, which hid its second tree. prefixIds
+                      // namespaces every id per file. Keep class names un-prefixed so
+                      // the `dark-outline` hook (toggled per context) still matches.
+                      name: 'prefixIds',
+                      params: { prefixClassNames: false }
                     }
                   ]
                 }

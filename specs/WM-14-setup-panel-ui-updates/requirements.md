@@ -179,22 +179,22 @@ From a design review of the deployed branch (source: `tmp/wm14/michaels-review-n
 
 ### Second screen — 3 zones (adjust conditions)
 
-- [ ] **Terrain buttons (top)** — treat as radio buttons: once selected, no hover state. _↪ ⚠️ reopened **Zone buttons** (the zone thumbnails are the per-zone radio group; the "selected ⇒ no hover" state didn't land)._
-  - [ ] On hover, their labels also get a **50% white outline**.
-  - [ ] Check the font for the labels beneath these buttons. _↪ ⚠️ reopened **Repositioning pass** (3-zone `.terrainTypeLabel` text under each thumbnail; see Line 16 detail)._
-- [ ] **"Forest with Suppression"** should be **2 lines (not 3)**, lowercase "with". _↪ ⚠️ reopened **Vegetation Type slider**._
-  - [ ] If it becomes 2 lines, drop the "Veg Type" and "Drought Index" labels down a bit. _↪ ⚠️ reopened **Repositioning pass** (Veg/Drought header positions)._
-  - [ ] Its icon looks messed up — try re-grabbing the asset to see if that fixes it. _↪ ⚠️ reopened **Vegetation Type slider** (veg SVG asset)._
+- [x] **Terrain buttons (top)** — treat as radio buttons: once selected, no hover state. _↪ ⚠️ reopened **Zone buttons** (the zone thumbnails are the per-zone radio group; the "selected ⇒ no hover" state didn't land)._ ✅ hover gated on `:not(.selected)` in [zone-selector.scss:21](../../src/components/zone-selector.scss#L21).
+  - [x] On hover, their labels also get a **50% white outline**. ✅ `.zoneLabelBorder` gets `rgba(255,255,255,0.5)` frame on hover ([zone-selector.scss:27-31](../../src/components/zone-selector.scss#L27-L31)).
+  - [x] Check the font for the labels beneath these buttons. _↪ ⚠️ reopened **Repositioning pass** (3-zone `.terrainTypeLabel` text under each thumbnail; see Line 16 detail)._ ✅ Roboto Condensed 13px/400, centered, `color: $controlText` (#434343) per Zeplin ([terrain-panel.scss:160-167](../../src/components/terrain-panel.scss#L160-L167)).
+- [x] **"Forest with Suppression"** should be **2 lines (not 3)**, lowercase "with". _↪ ⚠️ reopened **Vegetation Type slider**._ ✅ 2 lines via removing the label width (flows naturally); lowercase "with" as a display-only transform in [vegetation-selector.tsx:31-34](../../src/components/vegetation-selector.tsx#L31-L34) (canonical `vegetationLabels` stays "With" for Hazbot matching).
+  - [x] If it becomes 2 lines, drop the "Veg Type" and "Drought Index" labels down a bit. _↪ ⚠️ reopened **Repositioning pass** (Veg/Drought header positions)._ ✅ `.selectors` margin-top bump in [terrain-panel.scss:180](../../src/components/terrain-panel.scss#L180) drops the veg/drought block; verified live (headers at y=330, 2-line label below at y=361, no overlap).
+  - [x] Its icon looks messed up — try re-grabbing the asset to see if that fixes it. _↪ ⚠️ reopened **Vegetation Type slider** (veg SVG asset)._ ✅ Not an asset problem (re-grab was identical) — the second tree was masked away by a **duplicate-id collision** between inline SVGs (the Forest icon, earlier in the DOM, owned `mask-4`/`mask-6` and the fll icon's masks resolved to it). Fixed globally by adding SVGO `prefixIds` (`prefixClassNames: false`, keeps the `dark-outline` hook) in [webpack.config.js](../../webpack.config.js); namespaces ids per file so no icon pair can collide. Verified live: 0 duplicate ids, both trees render.
 - [ ] **Slider tick alignment** — designer sees the tick-mark alignment issue; **acceptable as-is** if it's the best we can do. _↪ relates to **Vegetation/Drought Type slider** marks + **Repositioning pass**; designer accepted, no action required unless easy._
-- [ ] **Veg type icon outlines** — use the icon's outlines (toggle the `dark-outline` SVG hook per context, see Asset status):
-  - [ ] On the **slider**: turn off the white outline, leave only the dark outline. _↪ ⚠️ reopened **Vegetation Type slider**._
-  - [ ] On the **terrain buttons**: opposite — show white outline, turn off dark outline. _↪ ⚠️ reopened **Zone buttons** (veg icon preview over the thumbnail)._
+- [x] **Veg type icon outlines** — use the icon's outlines (toggle the `dark-outline` SVG hook per context, see Asset status): ✅ Added a matching `white-outline` class to the white rect in all four veg SVGs (prefix-proof hook, mirrors the existing `dark-outline`).
+  - [x] On the **slider**: turn off the white outline, leave only the dark outline. _↪ ⚠️ reopened **Vegetation Type slider**._ ✅ `.sliderIcon svg rect:global(.white-outline){display:none}` + dropped the redundant `.placeholder` border (was doubling the icon's dark outline into a too-thick/dark edge) in [vertical-selectors.scss](../../src/components/vertical-selectors.scss). Verified live: dark #797979 visible, white hidden.
+  - [x] On the **terrain buttons**: opposite — show white outline, turn off dark outline. _↪ ⚠️ reopened **Zone buttons** (veg icon preview over the thumbnail)._ ✅ `.vegetationPreview svg rect:global(.dark-outline){display:none}` in [zone-selector.scss](../../src/components/zone-selector.scss). Verified live: white #FFF visible, dark hidden.
 
 ### Second screen — 2 zones
 
-- [ ] Same items as 3 zones above, where applicable.
-- [ ] **Fix radio button color** (and anything else) to match the first screen's radio buttons. _↪ **Terrain Type radio buttons + labels** (already `[ ]` open; this is the 2-zone Plains/Foothills/Mountains radio row)._
-  - [ ] Remove the left/right shift when text is bolded. _↪ same **Terrain Type radio buttons + labels** bullet (the designer's "Medium font weight was considered when spacing this row" note); same no-shift-on-bold issue as the first screen._
+- [x] Same items as 3 zones above, where applicable. ✅ Those fixes live in shared components (zone-selector thumbnails, vegetation-selector, terrain labels), so they apply to the 2-zone screen automatically — verified on the `mountainsandplainsTwoZone` (2-zone) preset throughout.
+- [x] **Fix radio button color** (and anything else) to match the first screen's radio buttons. _↪ **Terrain Type radio buttons + labels** (already `[ ]` open; this is the 2-zone Plains/Foothills/Mountains radio row)._ ✅ [terrain-type-selector.scss](../../src/components/terrain-type-selector.scss): #797979 ring + dot, 16px white disk backing, and the 50%-gray hover preview dot — matching ZonesCountSelector.
+  - [x] Remove the left/right shift when text is bolded. _↪ same **Terrain Type radio buttons + labels** bullet (the designer's "Medium font weight was considered when spacing this row" note); same no-shift-on-bold issue as the first screen._ ✅ No visible shift: the 400→500 weight change in Roboto Condensed 13px moves label width <1px; measured label left-edges stable to sub-pixel across all three selections.
 
 ### Wind screen
 

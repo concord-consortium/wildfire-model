@@ -109,6 +109,11 @@
         width: 100%;
         height: 100%;
       }
+      // Veg icons ship with both a gray (.dark-outline) and white (.white-outline)
+      // outline rect; over the terrain thumbnail show only the white one.
+      svg rect:global(.dark-outline){
+        display: none;
+      }
     }
 
     .zoneLabelBorder{
