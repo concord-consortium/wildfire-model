@@ -12,6 +12,14 @@
     width: 143px;
     height: 143px;
 
+    // Dial is top-anchored (top set inline from WIND_DIAL_TOP) and horizontally
+    // centered, so growing it pushes its center down by half the increase.
+    .dialAnchor {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+
     .windSymbolContainer {
       width: 142px;
       height: 142px;
@@ -51,13 +59,13 @@
 
   .windSpeedKey {
     left: 202px;
-    top: 27px;
+    top: 36px; // dropped ~9px to match Zeplin (designer: "drop this section down a little")
   }
 
   .windText {
     position: absolute;
     left: 214px;
-    top: 53px;
+    top: 62px; // dropped with the Wind Speed section (see .windSpeedKey)
     width: 62px;
     font-family: 'Roboto Condensed';
     font-size: 13px;
@@ -73,7 +81,7 @@
   .windSliderControls {
     position: absolute;
     left: 199px;
-    top: 84px;
+    top: 93px; // dropped with the Wind Speed section (see .windSpeedKey)
     width: 92px;
 
     .markLabel {

@@ -25,6 +25,18 @@ const speedMarks = [
   }
 ];
 
+// Wind dial sizing/placement, in px within the 143×143 controlContainer.
+const WIND_CONTROL_SIZE = 143;
+const WIND_DIAL_BASE = 59;   // original dial size (defines the anchored top)
+const WIND_DIAL_SIZE = 74;   // tweak me — Zeplin spec is 79×79, dialed back slightly per review
+const WIND_SYMBOL_SIZE = 142; // windSymbolContainer (the rotation frame)
+// Anchored top: keep the dial's top where the 59px dial used to sit, so enlarging
+// it grows downward (its center drops by half the size increase).
+const WIND_DIAL_TOP = (WIND_CONTROL_SIZE - WIND_DIAL_BASE) / 2;
+const WIND_DIAL_CENTER_Y = WIND_DIAL_TOP + WIND_DIAL_SIZE / 2;
+// Recenter the rotating wind symbol on the (now lower) dial center.
+const WIND_SYMBOL_TOP = WIND_DIAL_CENTER_Y - WIND_SYMBOL_SIZE / 2;
+
 interface IProps {
   speed: number;
   direction: number;
@@ -59,14 +71,17 @@ export const WindCircularControl: React.FC<IProps> = ({ speed, direction, onSpee
   return (
     <div className={css.windContainer}>
       <div className={css.controlContainer}>
-        <div className={css.windSymbolContainer} style={{transform: `rotate(${direction + 180}deg)`}}>
+        <div className={css.windSymbolContainer} style={{ top: WIND_SYMBOL_TOP, transform: `rotate(${direction + 180}deg)` }}>
           <WindSymbol className={css.windSymbol} />
         </div>
-        <WindDial
-          windDirection={direction}
-          onChange={setDirectionAngle}
-          onChangeEnd={handleDirectionAngleEnd}
-        />
+        <div className={css.dialAnchor} style={{ top: WIND_DIAL_TOP }}>
+          <WindDial
+            size={WIND_DIAL_SIZE}
+            windDirection={direction}
+            onChange={setDirectionAngle}
+            onChangeEnd={handleDirectionAngleEnd}
+          />
+        </div>
       </div>
 
       <div className={css.windDirectionKey}>{"Wind\nDirection"}</div>

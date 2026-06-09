@@ -17,8 +17,9 @@
 
   & + &{ margin-left: -4px; }  // overlap the shared 4px frames so the pair meets in a single white band (Zeplin)
 
-  // A selected zone has no hover state (radio-group behavior) — gate hover on :not(.selected)
-  &:not(.selected):hover{
+  // A selected zone has no hover state (radio-group behavior) — gate hover on :not(.selected).
+  // Readonly recap thumbnails (.fixed, wind screen) are non-interactive, so exclude them too.
+  &:not(.selected):not(.fixed):hover{
     .terrainPreview{
       border: solid 4px rgba(255,255,255,0.5);  // 50% white frame on hover
       .terrainImage {
@@ -169,8 +170,8 @@
     cursor: default;
     .terrainPreview{
       cursor: default; // readonly recap (wind screen) — non-interactive
-      &:hover{
-        border: solid 4px transparent;
+      .terrainImage{
+        opacity: 100%; // recap shows the terrain at full strength, not the 50% edit-screen fade
       }
     }
   }
