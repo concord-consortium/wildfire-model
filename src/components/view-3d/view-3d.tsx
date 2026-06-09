@@ -37,6 +37,16 @@ const TERRAIN_FIT_MARGIN = 1.05;
 // before drei's PerspectiveCamera has applied its fov prop (the r3f Canvas
 // default is 75, not our 33).
 const CAMERA_FIT_FOV_DEG = 33;
+// Default camera pose, chosen by the PIs via the ?cameraSettings=true panel and
+// captured on the default preset. In view units (PLANE_WIDTH = 1). CameraFitter
+// preserves this look-angle and design distance, pulling farther back only on
+// narrow viewports.
+const DESIGN_CAMERA_POS = { x: 0.5, y: -0.35, z: 1.285 };
+const DESIGN_TARGET_POS = { x: 0.5, y: 0.263, z: 0.15 };
+// planeHeight of the preset the pose was captured on (default: 80000/120000).
+// The depth-axis (y) components scale by planeHeight / this so the framing
+// adapts to presets with a different model aspect ratio.
+const DESIGN_PLANE_HEIGHT = 80000 / 120000;
 
 const CameraFitter = ({ targetPos, designPos }: {
   targetPos: [number, number, number];
@@ -147,21 +157,22 @@ export const View3d = observer(function View3d() {
   const stores = useStores();
   const simulation = stores.simulation;
   const ui = stores.ui;
-  // Memoize so drei's PerspectiveCamera and OrbitControls don't see a "new"
-  // array literal each re-render and re-apply position/target, which would
-  // overwrite the CameraFitter's mount-time fit.
-  const ph = planeHeight(simulation);
+  // Scale the design pose's depth axis by planeHeight so other-aspect presets
+  // stay framed. Memoize so drei's PerspectiveCamera and OrbitControls don't see
+  // a "new" array literal each re-render and re-apply position/target, which
+  // would overwrite the CameraFitter's mount-time fit.
+  const yScale = planeHeight(simulation) / DESIGN_PLANE_HEIGHT;
   const cameraPos = useMemo<[number, number, number]>(
-    () => [PLANE_WIDTH * 0.5, ph * -0.9, PLANE_WIDTH * 1.0], [ph]
+    () => [DESIGN_CAMERA_POS.x, DESIGN_CAMERA_POS.y * yScale, DESIGN_CAMERA_POS.z], [yScale]
   );
   const targetPos = useMemo<[number, number, number]>(
-    () => [PLANE_WIDTH * 0.5, ph * 0.3, 0.1], [ph]
+    () => [DESIGN_TARGET_POS.x, DESIGN_TARGET_POS.y * yScale, DESIGN_TARGET_POS.z], [yScale]
   );
   const terrainRef = useRef<THREE.Mesh>(null);
   const cameraSettingsEnabled = simulation.config.cameraSettings;
   // When the cameraSettings dev panel is active, the panel's FOV slider drives
-  // the camera's FOV; otherwise the camera uses the default 33.
-  const fov = cameraSettingsEnabled ? cameraDebugStore.fov : 33;
+  // the camera's FOV; otherwise the camera uses the default design FOV.
+  const fov = cameraSettingsEnabled ? cameraDebugStore.fov : CAMERA_FIT_FOV_DEG;
 
   return (
     /* eslint-disable react/no-unknown-property */
