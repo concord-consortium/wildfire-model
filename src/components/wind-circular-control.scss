@@ -2,15 +2,23 @@
 
 .windContainer {
   width: 100%;
-  height: 100%;
+  height: 144px;
   position: relative;
-  margin-top: 10px;
 
   .controlContainer {
-    margin-left: auto;
-    margin-right: auto;
-    width: 144px;
-    height: 144px;
+    position: absolute;
+    left: 52px;
+    top: 8px;
+    width: 143px;
+    height: 143px;
+
+    // Dial is top-anchored (top set inline from WIND_DIAL_TOP) and horizontally
+    // centered, so growing it pushes its center down by half the increase.
+    .dialAnchor {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
 
     .windSymbolContainer {
       width: 142px;
@@ -26,64 +34,41 @@
         bottom: 0px;
       }
     }
-
-    .dialContainer {
-      width: 72px;
-      height: 72px;
-      top: 25%;
-      left: 25%;
-      background-repeat: no-repeat;
-      background-position: center;
-      position: relative;
-
-      .dial {
-        position: absolute;
-        left: 0px;
-        width: 100%;
-        height: 100%;
-      }
-
-      .arrow {
-        position: absolute;
-        left: 0px;
-        width: 100%;
-        height: 100%;
-      }
-
-      .windCircularControl {
-        position: absolute;
-        left: 0px;
-        width: 100%;
-        height: 100%;
-      }
-    }
   }
 
-  .key {
+  .windDirectionKey,
+  .windSpeedKey {
     position: absolute;
-    top: 50px;
-    left: 20px;
-    width: 56px;
-    height: 45px;
+    width: fit-content;
+    padding: 2px 5px;
     font-family: Lato;
-    font-size: 12px;
-    font-weight: bold;
-    font-stretch: normal;
-    font-style: normal;
-    line-height: 1.25;
-    letter-spacing: normal;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: normal;
     text-align: center;
     color: $controlText;
+    border-radius: 4px; // Zeplin "Label back" slight rounding
+    background-color: rgba(255, 255, 255, 0.75); // 75% white fill; text stays fully opaque
+  }
+
+  .windDirectionKey {
+    left: 7px;
+    top: 15px;
+    white-space: pre-line; // renders the "Wind\nDirection" two-line label
+  }
+
+  .windSpeedKey {
+    left: 202px;
+    top: 36px; // dropped ~9px to match Zeplin (designer: "drop this section down a little")
   }
 
   .windText {
     position: absolute;
-    top: 30px;
-    right: 30px;
-    width: 41px;
-    height: 42px;
+    left: 214px;
+    top: 62px; // dropped with the Wind Speed section (see .windSpeedKey)
+    width: 62px;
     font-family: 'Roboto Condensed';
-    font-size: 12px;
+    font-size: 13px;
     font-weight: normal;
     font-stretch: condensed;
     font-style: normal;
@@ -94,14 +79,19 @@
   }
 
   .windSliderControls {
-    margin-left: auto;
-    margin-right: auto;
-    font-size: 0.8em;
-    width: 90%;
+    position: absolute;
+    left: 199px;
+    top: 93px; // dropped with the Wind Speed section (see .windSpeedKey)
+    width: 92px;
 
     .markLabel {
       font-family: 'Roboto Condensed';
-      font-size: 10px;
+      font-size: 13px;
+      color: $controlText;
+
+      &:global(.MuiSlider-markLabelActive) {
+        font-weight: 500;
+      }
     }
 
     .rail {
@@ -119,10 +109,14 @@
     }
 
     .thumb {
-      width: 14px;
-      height: 14px;
-      background-image: url("../assets/slider-horizontal.svg");
+      width: 22px;
+      height: 22px;
+      background-image: url("../assets/slider-thumb-small.svg");
+      background-size: 140%;
+      background-position: center;
+      background-repeat: no-repeat;
       box-shadow: none;
+      cursor: grab;
 
       &:hover {
         box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
@@ -130,6 +124,7 @@
 
       &:active, &:global(.Mui-active), &:global(.Mui-focusVisible) {
         box-shadow: 0 0 0 3px rgba(255, 255, 255, 1);
+        cursor: grabbing;
       }
     }
   }

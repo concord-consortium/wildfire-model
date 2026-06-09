@@ -1,7 +1,8 @@
 @import "common.scss";
 
 .terrain {
-  $width: 288px;
+  // $width / height are the content box; +10px padding +2px border => 320x465 outer (Zeplin "Setup Control back")
+  $width: 308px;
   $padding: 5px;
   position: absolute;
   top: 65px;
@@ -11,9 +12,9 @@
   left: 50%;
   margin-left: calc(-1 * ($width + 2 * $padding) / 2);
   width: $width;
-  height: 476px;
+  height: 453px;
   border-radius: 10px;
-  border: 1px solid silver;
+  border: 1px solid $controlGray;
   box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.5);
 
   background: rgba(255, 255, 255, 1);
@@ -54,18 +55,30 @@
 
   .closeButton {
     position: absolute;
+    cursor: pointer;
     top: 5px;
     right: 5px;
-    width: 20px;
-    height: 20px;
-    border-radius: 6px;
-    text-align: center;
-    line-height: 1.2em;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    background: none;
+    border-radius: 0 5px 0 0;
     color: $controlGray;
-    font-weight: 700;
+
+    .closeIcon {
+      display: block;
+      width: 24px;
+      height: 24px;
+    }
 
     &:hover {
-      background-color: $controlGrayLight1
+      background-color: $controlGrayLight1;
+    }
+
+    &:active {
+      background-color: #757575;
+      color: #ffffff;
     }
   }
 
@@ -76,35 +89,46 @@
     text-align: center;
     font-size: 14px;
     font-family: Lato;
+    font-weight: bold;
+    color: #434343;
     background: white;
+
+    span {
+      display: inline-block;
+      margin-top: 2px;
+    }
   }
 
   .instructions {
-    margin-top: 10px;
-    margin-bottom: 10px;
+    margin-top: 8px;
+    margin-bottom: 6px;
     width: 100%;
     text-align: left;
+    font-family: Lato;
     font-style: italic;
     color: $controlText;
-    font-size: 13px;
+    font-size: 14px;
 
     .setupStepIcon {
       display: inline-block;
-      border-radius: 9px;
-      width: 18px;
-      height: 18px;
-      font-size: 13px;
-      font-weight: bold;
+      position: relative;
+      border-radius: 10px;
+      width: 20px;
+      height: 20px;
+      font-family: 'Roboto Condensed';
+      font-size: 14px;
+      font-weight: 700;
       font-stretch: condensed;
       font-style: normal;
-      line-height: normal;
+      line-height: 20px;
       letter-spacing: normal;
       text-align: center;
       color: #ffffff;
-      background-color: $controlGray;
-      margin-left: 9px;
+      background-color: #595959; // Zeplin "Step back"; not a palette token
+      margin-left: 7px;
       margin-right: 7px;
     }
+
   }
 
   .widgetGroup {
@@ -129,28 +153,33 @@
   }
 
   .terrainTypeLabels {
-    width: 100%;
     display: flex;
+    padding-left: 9px;
+    padding-right: 9px;
 
     .terrainTypeLabel {
       width: 100%;
       flex-grow: 1;
-      padding-left: 4px;
-      padding-right: 4px;
       text-align: center;
-      font-size: 10px;
+      font-size: 13px;
+      font-family: 'Roboto Condensed';
+      color: $controlText; // #434343 per Zeplin
     }
   }
 
   .terrainProperties {
-    width: 100%;
     display: flex;
     color: $controlText;
     height: 70px;
+    margin-top: -16px;
+    margin-left: 22px;
+    margin-right: 22px;
   }
 
   .selectors {
-    margin-top: 10px;
+    margin-top: 21px;
+    margin-left: 7px;
+    margin-right: 20px;
     height: 169px;
     display: flex;
     flex-direction: row;
@@ -166,21 +195,50 @@
   .buttonContainer {
     position: absolute;
     width: 100%;
+    box-sizing: border-box;
+    padding-right: 10px; // shift the centered button(s) 5px left
     margin-left: auto;
-    margin-right: aut0;
-    bottom: 13px;
+    margin-right: auto;
+    bottom: 12px; // 1px lower
 
     .continueButton {
+      cursor: pointer;
       border: 1px solid $controlGray;
       border-radius: 5px;
       background-color: #ffffff;
-      width: 78px;
-      height: 27px;
+      width: 76px;
+      height: 28px;
+      font-family: Lato;
       font-size: 14px;
+      font-weight: 700;
+      text-transform: none;
+      color: $controlText;
+
+      &:hover {
+        background-color: $controlGrayLight1;
+      }
+
+      &:active {
+        background-color: #757575;
+        color: #ffffff;
+      }
+    }
+
+    .createButton {
+      background-color: #aaffc2;
+
+      &:hover {
+        background-color: #66e98b;
+      }
+
+      &:active {
+        background-color: #008927;
+        color: #ffffff;
+      }
     }
 
     .continueButton+.continueButton {
-      margin-left: 20px;
+      margin-left: 15px;
     }
   }
 

@@ -39,6 +39,7 @@ const getColorFilter = (droughtLevel: DroughtLevel) => {
 export const renderZones = (
   zones: Zone[], selectedZone: number, readonly: boolean, zonesCount: number, onChange: any) => {
   const zoneUI: any[] = [];
+  const countClass = zonesCount > 2 ? css.threeZone : css.twoZone;
   // handle two, three (or more) zones
   zones.forEach((z, i) => {
     // can limit the number of zones via a url parameter
@@ -53,7 +54,7 @@ export const renderZones = (
         vegPreviewPosition = css.mid;
       }
       zoneUI.push(
-        <div className={`${css.zone} ${cssClasses[i]} ${zoneStyle}`} key={i} >
+        <div className={`${css.zone} ${countClass} ${cssClasses[i]} ${zoneStyle}`} key={i} >
           <label className={css.terrainPreview}>
             <input type="radio"
               className={css.zoneOption}
@@ -63,7 +64,7 @@ export const renderZones = (
               data-testid="zone-option"
             />
             <span className={`${css.zoneLabelBorder}`}>
-                <span className={`${css.zoneLabel} ${cssClasses[i]}`}>{`Zone ${i + 1}`}</span>
+                <span className={`${css.zoneLabel} ${cssClasses[i]} ${readonly ? css.noZoneLabelBorder : ""}`}>{`Zone ${i + 1}`}</span>
             </span>
             <div className={`${css.terrainImage} ${getColorFilter(z.droughtLevel)}`}
               style={{ backgroundImage: `url(${zoneTerrainImagePath})` }}>

@@ -46,6 +46,6 @@
             </g>
         </g>
         <rect id="Dark-Outline" class="dark-outline" stroke="#797979" stroke-width="1.5" fill-rule="nonzero" x="0.75" y="0.75" width="26.5" height="26.5"></rect>
-        <rect id="White-Outline" stroke="#FFFFFF" stroke-width="1.5" fill-rule="nonzero" x="0.75" y="0.75" width="26.5" height="26.5"></rect>
+        <rect id="White-Outline" class="white-outline" stroke="#FFFFFF" stroke-width="1.5" fill-rule="nonzero" x="0.75" y="0.75" width="26.5" height="26.5"></rect>
     </g>
 </svg>

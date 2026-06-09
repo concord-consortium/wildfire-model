@@ -1,31 +1,59 @@
 @import "common.scss";
 
 .zone{
-  flex-grow: 1;
+  flex: 0 0 auto; // fixed-width tiles, centered as a group (don't stretch to fill)
   /* flex options for children */
   display: flex;
   flex-direction: column;
   flex-wrap: nowrap;
   align-items: center;
   font-family: Lato;
-  height: 140px;
-  margin: auto;
-  padding: 4px;
+  height: 108px;
+  padding: 4px 0; // no horizontal padding so adjacent zone tiles touch
+  cursor: pointer;
 
-  &.selected, &:hover{
-      .terrainPreview{
-        border: solid 4px #ffffff;
-        .terrainImage {
-          opacity: 100%;
-        }
+  &.twoZone{ width: 128px; }   // Zeplin: 120px terrain image + 4px white frame each side
+  &.threeZone{ width: 88px; }  // Zeplin: 80px terrain image + 4px white frame each side
+
+  & + &{ margin-left: -4px; }  // overlap the shared 4px frames so the pair meets in a single white band (Zeplin)
+
+  // A selected zone has no hover state (radio-group behavior) — gate hover on :not(.selected).
+  // Readonly recap thumbnails (.fixed, wind screen) are non-interactive, so exclude them too.
+  &:not(.selected):not(.fixed):hover{
+    .terrainPreview{
+      border: solid 4px rgba(255,255,255,0.5);  // 50% white frame on hover
+      .terrainImage {
+        opacity: 75%;
+      }
+      .zoneLabelBorder{
+        padding: 4px;             // 50% white frame around the pill on hover (Zeplin "Label Highlight" at 50%)
+        background-color: rgba(255, 255, 255, 0.5);
+        border-radius: 8px;
       }
     }
+  }
+
+  &.selected{
+    .terrainPreview{
+      border: solid 4px #ffffff;
+      .terrainImage {
+        opacity: 100%;
+      }
+      .zoneLabelBorder{
+        padding: 4px;             // 4px white frame around the pill, selected zone only (Zeplin "Label Highlight")
+        background-color: #ffffff;
+        border-radius: 8px;
+      }
+    }
+  }
 
   .terrainPreview{
+    box-sizing: border-box; // keep the 4px frame inside the tile so the terrain image is 120x100 (Zeplin) and not zoom-cropped
     width: 100%;
     height: 100%;
     border: solid 4px transparent;
     position: relative;
+    cursor: pointer; // set on the label itself; a <label> wrapping a control won't inherit the parent's pointer
 
     .terrainImage{
       width: 100%;
@@ -82,54 +110,53 @@
         width: 100%;
         height: 100%;
       }
+      // Veg icons ship with both a gray (.dark-outline) and white (.white-outline)
+      // outline rect; over the terrain thumbnail show only the white one.
+      svg rect:global(.dark-outline){
+        display: none;
+      }
     }
 
     .zoneLabelBorder{
       position: absolute;
-      left: calc(50% - 32px);
-      z-index: 1;
-      width: 64px;
-      height: 30px;
-      display: inline-block;
-      color: $controlText;
-      border-radius: 8px;
-      margin-top: 8px;
+      top: 7px;
+      left: 50%;
+      transform: translate(-50%, -50%); // straddle a point 7px below the tile's top edge per Zeplin
+      z-index: 2;
     }
 
     .zoneLabel{
-      position: absolute;
-      z-index: 2;
-      width: 55px;
-      left: 3px;
-      top: 3px;
-      height: 22px;
-      font-size: 12px;
-      display: inline-block;
-      font-weight: bold;
-      line-height: 22px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      width: 59px;              // Zeplin "Label back" 59x24
+      height: 24px;
+      font-family: Lato;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: normal;
+      white-space: nowrap;
       color: $controlText;
       border-radius: 4px;
-      border: solid 1px $controlGray;
+      border: 1px solid #797979; // Zeplin: 1px inside border on the pill
       background-color: #ffffff;
-      opacity: 50%;
+
+      &.zone1{ background-color: #ffd8fa; }
+      &.zone2{ background-color: #d6ecff; }
+      &.zone3{ background-color: #ffe8cd; }
+    }
+
+    .noZoneLabelBorder {
+      border: none !important;
     }
 
     .zoneOption{
       display: none;
     }
 
-    &:hover{
-      border: solid 4px rgba(255,255,255,0.5);
-      .zoneLabelBorder{
-        background-color: rgba(255,255,255,0.5);
-      }
-    }
-
     &:active{
       border: solid 4px #ffffff;
-      .zoneLabelBorder{
-        background-color: rgba(255,255,255,1.0);
-      }
     }
   }
 
@@ -137,39 +164,14 @@
     .vegetationPreview {
       opacity: 100%;
     }
-    .zoneLabelBorder{
-      background-color: rgba(255,255,255,0.5);
-    }
-    .zoneLabel{
-      opacity: 100%;
-      &.zone1{
-        background-color: $zone1Red;
-      }
-      &.zone2{
-        background-color: $zone2Blue;
-      }
-      &.zone3{
-        background-color: $zone3Orange;
-      }
-    }
   }
 
   &.fixed{
+    cursor: default;
     .terrainPreview{
-      &:hover{
-        border: solid 4px transparent;
-      }
-      .zoneLabel{
-        border: none;
-        &.zone1{
-          background-color: $zone1Red;
-        }
-        &.zone2{
-          background-color: $zone2Blue;
-        }
-        &.zone3{
-          background-color: $zone3Orange;
-        }
+      cursor: default; // readonly recap (wind screen) — non-interactive
+      .terrainImage{
+        opacity: 100%; // recap shows the terrain at full strength, not the 50% edit-screen fade
       }
     }
   }

@@ -28,7 +28,10 @@ const getIcons = (terrainType: TerrainType, forestWithSuppressionAvailable: bool
 };
 
 const getMarks = (terrainType: TerrainType, forestWithSuppressionAvailable: boolean) => {
-  const labelsArray = Object.values(vegetationLabels);
+  // Display-only lowercasing of "With" per designer review; the canonical
+  // vegetationLabels value stays "Forest With Suppression" since the Hazbot
+  // engine matches readings against it (see hazbot/wildfire/sim-props.ts).
+  const labelsArray = Object.values(vegetationLabels).map((l) => l.replace("With Suppression", "with Suppression"));
   if (terrainType === TerrainType.Mountains) {
     if (forestWithSuppressionAvailable) {
       // no grass
@@ -52,7 +55,7 @@ export const VegetationSelector = ({ vegetation, terrainType, onChange, onChange
 
   return (
     <div className={`${css.selector} ${css.vegetation}`}>
-      <div className={css.header}>Vegetation Type</div>
+      <div className={`${css.header} ${css.vegetation}`}>Vegetation Type</div>
       <div className={css.sliderContainer}>
         <div className={css.sliderIcons}>
           {

@@ -15,7 +15,7 @@ context("Wildfire Smoke Test", () => {
 
   describe("Terrain setup - Adjusting Variables", () => {
     const headerText = "Setup";
-    const instructionText1 = "Adjust variables in each zone";
+    const instructionText1 = "Adjust conditions in each zone";
     const zoneTotal = 3;
 
     // Commented out code shows leftovers of the Cypress v8 version of this test.
@@ -56,7 +56,7 @@ context("Wildfire Smoke Test", () => {
   // });
 
   // describe("Terrain setup - Wind Direction and Speed", () => {
-    const instructionText2 = "Set initial wind direction and speed";
+    const instructionText2 = "Set initial wind direction and wind speed";
     const zone1 = {
       terrainType: "Mountains",
       currentVegType: "Shrub",

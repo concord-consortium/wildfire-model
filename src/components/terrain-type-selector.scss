@@ -4,39 +4,88 @@
   width: 100%;
 
   .terrainSelectorHeader {
-    text-align: center;
-    margin-left: auto;
-    margin-right: auto;
-    margin-top: 6px;
-    font-size: 12px;
+    width: fit-content;
+    margin: 4px auto 0; // nudge the label down; the radio row's reduced margin-top keeps the radios put
+
+    padding: 2px 5px;
+    border-radius: 4px; // Zeplin "Label back" slight rounding
+    font-family: Lato;
+    font-size: 14px;
+    font-weight: 700;
+    line-height: normal;
     color: $controlText;
+    background-color: rgba(255, 255, 255, 0.75); // 75% white fill; text stays fully opaque
   }
 
   .terrainSelector {
-    width: 80%;
-    margin-left: auto;
-    margin-right: auto;
+    width: 100%;
+    box-sizing: border-box;
+    padding-left: 20px; // shift the centered group ~10px right without changing the container width
+    margin: 1px auto 0; // small gap below the label; raising the radio row leaves the label in place
     display: flex;
     flex-wrap: nowrap;
     flex-direction: row !important;
+    column-gap: 8px; // extra space between each radio+label group (on top of MUI's default margins)
     justify-content: center;
     text-align: center;
-    height: 25px;
+    height: 28px;
 
     .terrainOption {
-      flex-grow: 1;
+      cursor: pointer; // natural width (no flex-grow) so the row packs narrower instead of spreading full-width
 
       span {
-        font-size: 10px !important;
+        font-size: 13px !important; // Zeplin: Roboto Condensed 13/400 #434343 (was 14)
         font-family: 'Roboto Condensed';
+        font-weight: 400;
+        color: $controlText;
+      }
+
+      // selected terrain label is weight 500 (Zeplin), like the slider markLabel emphasis
+      :global(.Mui-checked) + span {
+        font-weight: 500;
+      }
+
+      // Match the first-screen (ZonesCountSelector) radio: #797979 ring + dot,
+      // white disk backing behind the ring.
+      .radio,
+      .radio:global(.Mui-checked) {
         color: $controlGray;
       }
 
       .radio {
+        padding: 4px;
         svg {
           width: 22px;
           height: 22px;
         }
+        // White interior backing behind the ring (Radio Button Back, #fff)
+        &::before {
+          content: "";
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          width: 16px;
+          height: 16px;
+          transform: translate(-50%, -50%);
+          border-radius: 50%;
+          background-color: #fff;
+          pointer-events: none;
+        }
+      }
+
+      // Hover shows the radio's selection dot at 50% opacity (#79797980), like the
+      // first screen. MUI draws nothing inside an unchecked radio, so render it ourselves.
+      &:hover .radio:not(:global(.Mui-checked))::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 11px;
+        height: 11px;
+        transform: translate(-50%, -50%);
+        border-radius: 50%;
+        background-color: rgba(121, 121, 121, 0.5); // #79797980
+        pointer-events: none;
       }
     }
   }
