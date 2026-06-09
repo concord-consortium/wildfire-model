@@ -2,35 +2,54 @@
 
 .lineChartControls
   position: relative
-  width: 220px
   height: 60px
-  margin-left: 50px
-  margin-top: 5px
+  margin-top: 16px
   flex: 0 0 20px
   transform: translate3d(0px, 0px, 0px)  // needed to keep visibility after scaling
 
   .sliderContainer
+    position: relative
+    width: 202px
+    margin-left: 65px
     height: 20px
   .scrubber
     position: absolute
     width: 100%
     margin-top: -5px
 
+    // SVG thumb provides its own visuals; suppress rc-slider's default border/fill/glow.
+    // A bg circle behind the thumb shows as a highlight ring: translucent on hover, solid while dragging.
+    :global(.rc-slider-handle)
+      border: none
+      background-color: transparent
+      box-shadow: none !important
+      opacity: 1
+    :global(.rc-slider-handle:hover)
+      background-color: rgba(201, 201, 201, 0.5)
+    :global(.rc-slider-handle.rc-slider-handle-dragging)
+      background-color: #c9c9c9
+
   .rcSliderDisabled
     background-color: $controlGray
 
   .toggleDataSubset
+    box-sizing: border-box
     text-align: center
-    height: 29px
-    border: 1px solid silver
-    width: 100px
+    width: 136px
+    height: 28px
+    border: 1px solid #797979
+    background-color: #ffffff
+    color: #434343
+    font-size: 14px
+    font-weight: 700
+    line-height: 26px
     margin-left: auto
     margin-right: auto
     margin-bottom: 10px
     border-radius: 5px
-    font-size: 12px
-    line-height: 29px
+    cursor: pointer
     &:hover
-      background-color: $controlGrayLight1
+      background-color: #dfdfdf
     &:active
-      background-color: $controlGray
+      background-color: #757575
+      color: #ffffff

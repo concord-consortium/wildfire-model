@@ -25,12 +25,11 @@ function makeTranslate(): EngineOpts<TR, TD>["translate"] {
   };
 }
 
-function makeRuleSet(opts: { categories?: RuleSet<TD>["categories"]; defaults?: RuleSet<TD>["defaults"] } = {}): RuleSet<TD> {
+function makeRuleSet(opts: { categories?: RuleSet<TD>["categories"] } = {}): RuleSet<TD> {
   return {
     id: "test",
     categories: opts.categories ?? [{ id: 1, studentAction: "", feedback: "", visualFeedback: "", expression: "ranSimulation" }],
     factorVariables: [{ name: "ranSimulation", definition: "", logEvents: [], details: "" }],
-    defaults: opts.defaults ?? {},
   };
 }
 

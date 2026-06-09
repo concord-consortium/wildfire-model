@@ -33,7 +33,6 @@ function makeRuleSet(): RuleSet<TestDefaults> {
       { id: 1, studentAction: "Ran the sim", feedback: "Step 1 done", visualFeedback: "", expression: "ranSimulation" },
     ],
     factorVariables: [{ name: "ranSimulation", definition: "", logEvents: [], details: "" }],
-    defaults: {},
   };
 }
 
@@ -168,7 +167,6 @@ describe("Sidebar (substrate, generic over TReading)", () => {
         { name: "a", definition: "", logEvents: [], details: "" },
         { name: "b", definition: "", logEvents: [], details: "" },
       ],
-      defaults: {},
     };
     const engine = new Engine<TestReading, TestDefaults>({
       ruleSet: rs,
@@ -214,7 +212,6 @@ describe("Sidebar (substrate, generic over TReading)", () => {
         { name: "a", definition: "", logEvents: [], details: "" },
         { name: "b", definition: "", logEvents: [], details: "" },
       ],
-      defaults: {},
     };
     const engine = new Engine<TestReading, TestDefaults>({
       ruleSet: rs,
@@ -238,25 +235,18 @@ describe("Sidebar (substrate, generic over TReading)", () => {
     expect(cat2Row?.textContent).toMatch(/✗/);
   });
 
-  it("shows the inactive-fallback note in Factor Variables panel when engine is inactive but ruleSet is defined (e.g., missing-defaults)", () => {
-    // Build a rule set whose category expression references a factor variable that
-    // declares a requiredDefaults path the rule set's defaults don't satisfy. The
-    // engine constructs (ruleSet retained), fails load validation, and the panel
-    // surfaces the fallback note for the developer.
-    const fvarReadingDefaults: FactorVariableImpl<boolean, TestReading, { needed?: string }> = {
-      defaultValue: false,
-      requiredDefaults: ["needed"],
-      compute: (_readings, defaults) => ({ value: defaults?.needed !== undefined, witnesses: [] }),
-    };
-    const rs: RuleSet<{ needed?: string }> = {
+  it("shows the inactive-fallback note in Factor Variables panel when engine is inactive but ruleSet is defined (e.g., missing-impl)", () => {
+    // Build a rule set whose category references a factor variable that has no
+    // impl. The engine constructs (ruleSet retained), fails load validation with
+    // missing-impl, and the panel surfaces the fallback note for the developer.
+    const rs: RuleSet<TestDefaults> = {
       id: "tabX",
-      categories: [{ id: 1, studentAction: "stub", feedback: "", visualFeedback: "", expression: "needsDefault" }],
-      factorVariables: [{ name: "needsDefault", definition: "", logEvents: [], details: "" }],
-      defaults: {}, // intentionally missing — triggers missing-defaults load failure
+      categories: [{ id: 1, studentAction: "stub", feedback: "", visualFeedback: "", expression: "needsImpl" }],
+      factorVariables: [{ name: "needsImpl", definition: "", logEvents: [], details: "" }],
     };
-    const engine = new Engine<TestReading, { needed?: string }>({
+    const engine = new Engine<TestReading, TestDefaults>({
       ruleSet: rs,
-      factorVariables: { needsDefault: fvarReadingDefaults },
+      factorVariables: {}, // no impl for needsImpl → missing-impl load failure
       simProps: {},
       translate: noopTranslate,
     });
@@ -321,7 +311,6 @@ describe("Sidebar — SimPropsPanel temporalReads hint", () => {
           expression: "ranSimulation WITH GraphOpen" },
       ],
       factorVariables: [{ name: "ranSimulation", definition: "", logEvents: [], details: "" }],
-      defaults: {},
     };
     const tv: TemporalVariableImpl<boolean> = {
       name: "chartTabOpen", initialValue: false,
@@ -468,5 +457,62 @@ describe("Sidebar — describeErrorContext for the four new EngineError variants
     expect(screen.getAllByText(/missing: a/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/unknown: b/).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/c \(boolean → string\)/).length).toBeGreaterThan(0);
+  });
+});
+
+describe("Sidebar — diagnostics slot (WM-27 Requirement 13)", () => {
+  function makeEngine(): Engine<TestReading, TestDefaults> {
+    return new Engine<TestReading, TestDefaults>({
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: ranSimulationImpl },
+      simProps: {},
+      translate: noopTranslate,
+    });
+  }
+
+  it("renders a recognized preset diagnostic with the match (leaf-true) treatment", () => {
+    const Wrapper = wrap(makeEngine());
+    render(
+      <Wrapper>
+        <Sidebar title="Hazbot" diagnostics={[
+          { label: "Requested preset", value: "plainsTwoZone", status: "match" },
+        ]} />
+      </Wrapper>,
+    );
+    expect(screen.getByText("Diagnostics")).toBeInTheDocument();
+    const value = screen.getByText("plainsTwoZone");
+    expect(value.className).toBe("hazbot-sidebar-leaf-true");
+  });
+
+  it("renders an unrecognized preset with the no-match (leaf-false) treatment and the text cue", () => {
+    const Wrapper = wrap(makeEngine());
+    render(
+      <Wrapper>
+        <Sidebar title="Hazbot" diagnostics={[
+          { label: "Requested preset", value: "bogus (unrecognized preset)", status: "no-match" },
+        ]} />
+      </Wrapper>,
+    );
+    const value = screen.getByText("bogus (unrecognized preset)");
+    expect(value.className).toBe("hazbot-sidebar-leaf-false");
+  });
+
+  it("exposes a visually-hidden state equivalent independent of the host-supplied value text", () => {
+    const Wrapper = wrap(makeEngine());
+    render(
+      <Wrapper>
+        <Sidebar title="Hazbot" diagnostics={[
+          { label: "Requested preset", value: "x", status: "no-match" },
+        ]} />
+      </Wrapper>,
+    );
+    const hidden = screen.getByText("(no match)");
+    expect(hidden.className).toBe("hazbot-sidebar-visually-hidden");
+  });
+
+  it("renders no Diagnostics section when diagnostics is undefined", () => {
+    const Wrapper = wrap(makeEngine());
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
+    expect(screen.queryByText("Diagnostics")).not.toBeInTheDocument();
   });
 });

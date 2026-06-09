@@ -1,10 +1,21 @@
 import { FactorVariableImpl } from "../engine";
 import { WildfireDefaults, WildfireReading, WildfireZone } from "./types";
-import { sawIntenseFire } from "./factor-variable-stubs";
+import { vegetationLabels } from "../../types";
+import { canonicalRunReadings } from "./canonical-runs";
 
-// Helpers for value extraction.
-function simulationStartedReadings(readings: WildfireReading[]): WildfireReading[] {
-  return readings.filter((r) => r.triggeredBy === "SimulationStarted");
+// One representative reading per *canonical* run. Pause/resume cycles
+// (SimulationStarted → SimulationStopped → SimulationStarted with no reset
+// between) collapse into a single run, with tool data merged forward (see
+// canonical-runs.ts). Every run-based factor variable reads through this, so the
+// `ranSimulation WITH …` temporal anchor the categories bind against sees one
+// reading per run rather than one per raw start. Without it, the pre-tool half of
+// a paused run (e.g. the initial start before a fire line is drawn while paused)
+// masquerades as a separate "clean" run and can satisfy category arms that are
+// meant to require two distinct runs. Within a run zones/sparks/wind are immutable
+// and the merged representative keeps the first-start setup, so every boolean/Set
+// factor-variable value is unchanged by the fold — only the witness list collapses.
+function runReadings(readings: WildfireReading[]): WildfireReading[] {
+  return canonicalRunReadings(readings);
 }
 
 // Per the sheet (tab 24, `uniqueWindValuesUsed` Details): "If the magnitude is 0,
@@ -23,16 +34,15 @@ function windKey(r: WildfireReading): string {
 const ranSimulation: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,
   compute: (readings) => {
-    const witnesses = simulationStartedReadings(readings);
+    const witnesses = runReadings(readings);
     return { value: witnesses.length > 0, witnesses };
   },
 };
 
 const setDroughtLevel: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,
-  requiredDefaults: ["zones[*].droughtLevel"],
   compute: (readings, defaults) => {
-    const witnesses = simulationStartedReadings(readings).filter((r) =>
+    const witnesses = runReadings(readings).filter((r) =>
       anyZoneDiffers(r.zones, defaults.zones, "droughtLevel"));
     return { value: witnesses.length > 0, witnesses };
   },
@@ -40,9 +50,8 @@ const setDroughtLevel: FactorVariableImpl<boolean, WildfireReading, WildfireDefa
 
 const setVegetation: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,
-  requiredDefaults: ["zones[*].vegetation"],
   compute: (readings, defaults) => {
-    const witnesses = simulationStartedReadings(readings).filter((r) =>
+    const witnesses = runReadings(readings).filter((r) =>
       anyZoneDiffers(r.zones, defaults.zones, "vegetation"));
     return { value: witnesses.length > 0, witnesses };
   },
@@ -50,9 +59,8 @@ const setVegetation: FactorVariableImpl<boolean, WildfireReading, WildfireDefaul
 
 const setTerrainType: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,
-  requiredDefaults: ["zones[*].terrainType"],
   compute: (readings, defaults) => {
-    const witnesses = simulationStartedReadings(readings).filter((r) =>
+    const witnesses = runReadings(readings).filter((r) =>
       anyZoneDiffers(r.zones, defaults.zones, "terrainType"));
     return { value: witnesses.length > 0, witnesses };
   },
@@ -60,9 +68,8 @@ const setTerrainType: FactorVariableImpl<boolean, WildfireReading, WildfireDefau
 
 const setWind: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,
-  requiredDefaults: ["wind.speed", "wind.direction"],
   compute: (readings, defaults) => {
-    const witnesses = simulationStartedReadings(readings).filter((r) =>
+    const witnesses = runReadings(readings).filter((r) =>
       r.wind !== undefined && defaults.wind !== undefined &&
       (r.wind.speed !== defaults.wind.speed || r.wind.direction !== defaults.wind.direction));
     return { value: witnesses.length > 0, witnesses };
@@ -71,9 +78,8 @@ const setWind: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = 
 
 const setAnyZoneVar: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,
-  requiredDefaults: ["zones[*].terrainType", "zones[*].vegetation", "zones[*].droughtLevel"],
   compute: (readings, defaults) => {
-    const witnesses = simulationStartedReadings(readings).filter((r) =>
+    const witnesses = runReadings(readings).filter((r) =>
       anyZoneDiffers(r.zones, defaults.zones, "terrainType") ||
       anyZoneDiffers(r.zones, defaults.zones, "vegetation") ||
       anyZoneDiffers(r.zones, defaults.zones, "droughtLevel"));
@@ -83,12 +89,8 @@ const setAnyZoneVar: FactorVariableImpl<boolean, WildfireReading, WildfireDefaul
 
 const setAnyVar: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,
-  requiredDefaults: [
-    "zones[*].terrainType", "zones[*].vegetation", "zones[*].droughtLevel",
-    "wind.speed", "wind.direction",
-  ],
   compute: (readings, defaults) => {
-    const sims = simulationStartedReadings(readings);
+    const sims = runReadings(readings);
     const witnesses = sims.filter((r) => {
       const zonesDiffer =
         anyZoneDiffers(r.zones, defaults.zones, "terrainType") ||
@@ -105,7 +107,7 @@ const setAnyVar: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> 
 const usedOneSparkPerZone: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,
   compute: (readings) => {
-    const witnesses = simulationStartedReadings(readings).filter((r) => {
+    const witnesses = runReadings(readings).filter((r) => {
       if (!r.sparks || !r.zones) return false;
       if (r.sparks.length !== r.zones.length) return false;
       // The sheet definition reads "two sparks were used with one spark per zone"
@@ -135,7 +137,7 @@ const usedOneSparkPerZone: FactorVariableImpl<boolean, WildfireReading, Wildfire
 const uniqueWindValuesUsed: FactorVariableImpl<Set<string>, WildfireReading, WildfireDefaults> = {
   defaultValue: new Set<string>(),
   compute: (readings) => {
-    const sims = simulationStartedReadings(readings);
+    const sims = runReadings(readings);
     const seen = new Set<string>();
     const witnesses: WildfireReading[] = [];
     for (const r of sims) {
@@ -149,7 +151,7 @@ const uniqueWindValuesUsed: FactorVariableImpl<Set<string>, WildfireReading, Wil
 const uniqueNonZeroWindValuesUsed: FactorVariableImpl<Set<string>, WildfireReading, WildfireDefaults> = {
   defaultValue: new Set<string>(),
   compute: (readings) => {
-    const sims = simulationStartedReadings(readings).filter((r) => (r.wind?.speed ?? 0) > 0);
+    const sims = runReadings(readings).filter((r) => (r.wind?.speed ?? 0) > 0);
     const seen = new Set<string>();
     const witnesses: WildfireReading[] = [];
     for (const r of sims) {
@@ -160,16 +162,57 @@ const uniqueNonZeroWindValuesUsed: FactorVariableImpl<Set<string>, WildfireReadi
   },
 };
 
+// One entry per *canonical* run (pause/resume cycles folded — see runReadings
+// above), so a student who pauses to draw a fire line and resumes is not counted
+// as having run the model twice.
 const simulationRuns: FactorVariableImpl<WildfireReading[], WildfireReading, WildfireDefaults> = {
   defaultValue: [],
   compute: (readings) => {
-    const witnesses = simulationStartedReadings(readings);
+    const witnesses = runReadings(readings);
     return { value: witnesses, witnesses };
   },
 };
 
-// Stub factor variables (per Req 6) imported from `./factor-variable-stubs`
-// at the top of this file.
+// Per the sheet (tab 34): across all runs the union of zone vegetation covers
+// every Vegetation enum value. Folds the run-union against vegetationLabels
+// (src/types.ts) — the enum is the source of truth, so no sheet constant (CA-3).
+const triedAllVegetations: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  compute: (readings) => {
+    const witnesses = runReadings(readings);
+    const seen = new Set<string>();
+    for (const r of witnesses) {
+      for (const z of r.zones ?? []) {
+        if (z.vegetation !== undefined) seen.add(z.vegetation);
+      }
+    }
+    const value = Object.values(vegetationLabels).every((v) => seen.has(v));
+    return { value, witnesses };
+  },
+};
+
+// Per the sheet (tab 45): some run drew a fire line. True if any
+// SimulationStarted reading carries >= 2 fire-line markers.
+const usedFireline: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  compute: (readings) => {
+    const witnesses = runReadings(readings).filter(
+      (r) => (r.fireLineMarkers?.length ?? 0) >= 2,
+    );
+    return { value: witnesses.length > 0, witnesses };
+  },
+};
+
+// Per the sheet (tab 45): some run dropped a helitack. True if any
+// SimulationStarted reading is flagged in-run (requirements.md R4).
+const usedHelitack: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  compute: (readings) => {
+    const witnesses = runReadings(readings).filter((r) => r.helitack === true);
+    return { value: witnesses.length > 0, witnesses };
+  },
+};
+
 export const factorVariables: Record<string, FactorVariableImpl<unknown, WildfireReading, WildfireDefaults>> = {
   ranSimulation,
   setDroughtLevel,
@@ -182,7 +225,9 @@ export const factorVariables: Record<string, FactorVariableImpl<unknown, Wildfir
   uniqueWindValuesUsed,
   uniqueNonZeroWindValuesUsed,
   simulationRuns,
-  sawIntenseFire,
+  triedAllVegetations,
+  usedFireline,
+  usedHelitack,
 };
 
 // Helpers ===

@@ -33,7 +33,6 @@ function makeRuleSet(overrides: Partial<RuleSet<TestDefaults>> = {}): RuleSet<Te
     id: "test",
     categories: [{ id: 1, studentAction: "", feedback: "", visualFeedback: "", expression: "ranSimulation" }],
     factorVariables: [{ name: "ranSimulation", definition: "", logEvents: [], details: "" }],
-    defaults: {},
     ...overrides,
   };
 }
@@ -92,29 +91,11 @@ describe("Engine — construction", () => {
     expect(missing).toBeDefined();
   });
 
-  it("emits missing-defaults when impl declares a path that doesn't resolve", () => {
-    const ruleSet = makeRuleSet({ defaults: { wind: { speed: 5, direction: 0 } } });
-    const impl = makeImpl({ requiredDefaults: ["zones[*].terrainType"] });
+  it("succeeds when there is no missing impl and no parse error", () => {
+    const ruleSet = makeRuleSet();
     const e = new Engine<TestReading, TestDefaults>({
       ruleSet,
-      factorVariables: { ranSimulation: impl },
-      simProps: {},
-      translate: noopTranslate,
-    });
-    const missing = e.errors.find((x) => x.kind === "load-failure" && x.reason === "missing-defaults");
-    if (!missing || missing.kind !== "load-failure") throw new Error("expected missing-defaults load-failure");
-    expect(missing.detail).toMatch(/ranSimulation.*zones\[\*\]\.terrainType/);
-    expect(e.implsWithIncompleteDefaults.has("ranSimulation")).toBe(true);
-  });
-
-  it("succeeds when all defaults resolve, no missing impl, no parse error", () => {
-    const ruleSet = makeRuleSet({
-      defaults: { wind: { speed: 5, direction: 0 }, zones: [{ terrainType: "Plains" }] },
-    });
-    const impl = makeImpl({ requiredDefaults: ["zones[*].terrainType", "wind.speed"] });
-    const e = new Engine<TestReading, TestDefaults>({
-      ruleSet,
-      factorVariables: { ranSimulation: impl },
+      factorVariables: { ranSimulation: makeImpl() },
       simProps: {},
       translate: noopTranslate,
     });
@@ -167,14 +148,13 @@ describe("Engine — construction", () => {
         { name: "setWind", definition: "", logEvents: [], details: "" }, // declared but not referenced in the expression
       ],
     });
-    const setWindImpl = makeImpl({ requiredDefaults: ["wind.speed", "wind.direction"] });
     const e = new Engine<TestReading, TestDefaults>({
       ruleSet,
-      factorVariables: { ranSimulation: makeImpl(), setWind: setWindImpl },
+      factorVariables: { ranSimulation: makeImpl(), setWind: makeImpl() },
       simProps: {},
       translate: noopTranslate,
     });
-    // setWind requires wind defaults but is unreferenced — no missing-defaults should fire.
+    // setWind is declared but unreferenced — it must not block load.
     expect(e.isActive).toBe(true);
   });
 });
@@ -552,5 +532,76 @@ describe("Engine — initialErrors suppression contract", () => {
     });
     expect(e.errors).toEqual(supplied);
     expect(e.isActive).toBe(false);
+  });
+});
+
+describe("Engine — modifier translate result", () => {
+  // A translate that pushes a reading on "START" and dispatches a modifier on "MOD".
+  // The modifier records a flag on the current last reading and returns whether it
+  // mutated, exercising the substrate's single-notify-iff-mutated contract.
+  function makeModifierEngine(
+    apply: (lastReading: TestReading | undefined) => boolean,
+  ): Engine<TestReading, TestDefaults> {
+    return new Engine<TestReading, TestDefaults>({
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: makeImpl() },
+      simProps: {},
+      translate: (event, sessionId) => {
+        if (event.name === "START") {
+          return { kind: "trigger", reading: { triggeredBy: "START", at: event.at, sessionId, temporalHistory: [] } };
+        }
+        if (event.name === "MOD") {
+          return { kind: "modifier", apply };
+        }
+        return { kind: "no-op" };
+      },
+      runStartTriggers: ["START"],
+    });
+  }
+
+  it("apply mutates lastReading and returns true → mutation visible and exactly one notify", () => {
+    const e = makeModifierEngine((lastReading) => {
+      if (!lastReading) return false;
+      lastReading.payload = { ...(lastReading.payload ?? {}), flagged: true };
+      return true;
+    });
+    e.consume({ name: "START", at: 1 });
+    const notify = jest.fn();
+    e.subscribe(notify);
+    e.consume({ name: "MOD", at: 2 });
+    expect(e.readings[e.readings.length - 1].payload).toEqual({ flagged: true });
+    expect(notify).toHaveBeenCalledTimes(1);
+  });
+
+  it("apply returns false → no notify", () => {
+    const e = makeModifierEngine(() => false);
+    e.consume({ name: "START", at: 1 });
+    const notify = jest.fn();
+    e.subscribe(notify);
+    e.consume({ name: "MOD", at: 2 });
+    expect(notify).not.toHaveBeenCalled();
+  });
+
+  it("modifier dispatched with no readings → apply receives undefined and does not throw", () => {
+    let received: TestReading | undefined | "unset" = "unset";
+    const e = makeModifierEngine((lastReading) => {
+      received = lastReading;
+      return false;
+    });
+    expect(() => e.consume({ name: "MOD", at: 1 })).not.toThrow();
+    expect(received).toBeUndefined();
+    expect(e.readings).toHaveLength(0);
+  });
+
+  it("modifier pushes no new reading (length unchanged)", () => {
+    const e = makeModifierEngine((lastReading) => {
+      if (!lastReading) return false;
+      lastReading.payload = { flagged: true };
+      return true;
+    });
+    e.consume({ name: "START", at: 1 });
+    expect(e.readings).toHaveLength(1);
+    e.consume({ name: "MOD", at: 2 });
+    expect(e.readings).toHaveLength(1);
   });
 });

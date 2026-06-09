@@ -13,7 +13,21 @@ import { temporalVariables } from "../wildfire/temporal-variables";
 import { translate } from "../wildfire/translate";
 import { WildfireDefaults, WildfireReading } from "../wildfire/types";
 
-export function makeWildfireEngine(ruleSet: RuleSet<WildfireDefaults>): Engine<WildfireReading, WildfireDefaults> {
+// `defaults` is intentionally optional: it mirrors the optional
+// EngineOpts.defaults, and rule-set 25 references no `set*` factor variable and
+// no defaults-consuming sim-prop, so a required parameter would force a
+// meaningless argument in 25.test.ts. Caution: a rule-set that references a
+// `set*` factor variable OR a `defaults`-consuming sim-prop (`DefaultVars`,
+// `DefaultVegetations`) and is built without `defaults` silently misclassifies
+// — a `set*` factor variable evaluates against `undefined`, throws, and is
+// caught to its `false` fallback; a `defaults`-consuming sim-prop hits its
+// `if (!defaults…) return false` guard. Either way the gated category is wrong.
+// So a caller testing rule-set 23, 24, 32, 33, 34, 35, 42, 45, 47, or 54 must
+// pass `defaults`.
+export function makeWildfireEngine(
+  ruleSet: RuleSet<WildfireDefaults>,
+  defaults?: WildfireDefaults,
+): Engine<WildfireReading, WildfireDefaults> {
   const opts: EngineOpts<WildfireReading, WildfireDefaults> = {
     ruleSet,
     requestedRuleSetId: ruleSet.id,
@@ -22,6 +36,7 @@ export function makeWildfireEngine(ruleSet: RuleSet<WildfireDefaults>): Engine<W
     temporalVariables,
     translate,
     runStartTriggers: ["SimulationStarted"],
+    defaults,
   };
   return new Engine<WildfireReading, WildfireDefaults>(opts);
 }
@@ -36,12 +51,9 @@ export function matchAgainst(
   engine: Engine<WildfireReading, WildfireDefaults>,
   readings: WildfireReading[],
 ): number | null {
-  const defaults = ruleSet.defaults as WildfireDefaults;
   return computeMatchedCategoryFloor(
     ruleSet, engine.parsedExpressions,
-    (slice) => makeRenderCtx(
-      slice, defaults, engine.factorVariables, engine.simProps, engine.implsWithIncompleteDefaults,
-    ),
+    (slice) => makeRenderCtx(slice, engine.defaults, engine.factorVariables, engine.simProps),
     readings,
   );
 }

@@ -49,19 +49,17 @@ export interface EvalCtx<TR extends BaseReading, TD> {
   wrapSimProp: SimPropWrap<TR, TD>;
 }
 
-// Render-path ctx builder using `evaluateForRender` and the engine's
-// per-impl incomplete-defaults Set (per EXT-7 / EXT-18).
+// Render-path ctx builder using `evaluateForRender` (per EXT-7).
 export function makeRenderCtx<TR extends BaseReading, TD>(
   readings: TR[],
   defaults: TD | undefined,
   factorVariables: Record<string, FactorVariableImpl<unknown, TR, TD>>,
   simProps: Record<string, SimPropImpl<TR, TD>>,
-  implsWithIncompleteDefaults?: Set<string>,
 ): EvalCtx<TR, TD> {
   return {
     readings, defaults, factorVariables, simProps,
-    wrapFactorVar: (fvar, rs, ds) => evaluateFactorVarForRender(fvar, rs, ds, implsWithIncompleteDefaults),
-    wrapSimProp: (sprop, r, ds) => evaluateSimPropForRender(sprop, r, ds, implsWithIncompleteDefaults),
+    wrapFactorVar: (fvar, rs, ds) => evaluateFactorVarForRender(fvar, rs, ds),
+    wrapSimProp: (sprop, r, ds) => evaluateSimPropForRender(sprop, r, ds),
   };
 }
 
@@ -150,6 +148,20 @@ export function evaluateWith<TR extends BaseReading, TD>(
   return { value: bound !== undefined, boundReading: bound, candidateEvaluations: candidates };
 }
 
+// Chronological index of a witness within engine.readings, for the sidebar's
+// "Matched on reading #N" label. A factor variable may return a *derived* witness
+// rather than an element of engine.readings: wildfire's canonical-run fold returns a
+// shallow clone of the run's first-start reading to carry merged tool data
+// (canonical-runs.ts foldResume). Such a clone is not `indexOf`-findable, which would
+// drop the index to undefined and render as "#?". Since `at` is a unique per-reading
+// timestamp the clone preserves from its source, fall back to matching on it so a
+// folded (paused/resumed) run still shows the stable index of its first start.
+function readingIndexOf<TR extends BaseReading>(readings: TR[], reading: TR): number {
+  const direct = readings.indexOf(reading);
+  if (direct >= 0) return direct;
+  return readings.findIndex((r) => r.at === reading.at);
+}
+
 // Within a WITH binding, the propExpr is evaluated against a single witness reading.
 // Sim-prop leaves route through wrapSimProp.
 function evaluatePropExpr<TR extends BaseReading, TD>(expr: Expression, reading: TR, ctx: EvalCtx<TR, TD>): boolean {
@@ -225,7 +237,7 @@ export function evaluateLeaf<TR extends BaseReading, TD>(expr: Expression, ctx: 
         ? evaluatePropLeaf(expr.propExpr, witness, ctx)
         : undefined;
       const boundReadingIndex = result.boundReading !== undefined
-        ? ctx.readings.indexOf(result.boundReading)
+        ? readingIndexOf(ctx.readings, result.boundReading)
         : undefined;
       return {
         kind: "with", varName: expr.varName, propExpr: expr.propExpr,
@@ -307,12 +319,10 @@ export function computeMatchedCategoryForEngine<TR extends BaseReading, TD>(
   engine: Engine<TR, TD>,
 ): number | null {
   if (!engine.isActive || !engine.ruleSet) return null;
-  const defaults = engine.ruleSet.defaults as TD | undefined;
+  const defaults = engine.defaults;
   return computeMatchedCategoryFloor(
     engine.ruleSet, engine.parsedExpressions,
-    (slice) => makeRenderCtx(
-      slice, defaults, engine.factorVariables, engine.simProps, engine.implsWithIncompleteDefaults,
-    ),
+    (slice) => makeRenderCtx(slice, defaults, engine.factorVariables, engine.simProps),
     engine.readings,
   );
 }

@@ -27,15 +27,14 @@ export interface ConsumedEvent {
   at: number;              // timestamp the event was emitted
 }
 
-// Recursive-partial form per EXT-8 — lets generated rule sets emit incomplete defaults
-// (e.g. tabs 32–35 with per-zone TBD fields) without TS-level escapes.
-export type DeepPartial<T> = T extends object ? { [K in keyof T]?: DeepPartial<T[K]> } : T;
-
+// `TDefaults` is retained as a phantom parameter (unused inside the interface
+// since WM-27 removed `RuleSet.defaults`) so the generated rule-set modules'
+// `RuleSet<WildfireDefaults>` annotations stay valid without per-module edits.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export interface RuleSet<TDefaults = unknown> {
   id: string;                       // tab name, e.g. "23"
   categories: Category[];           // ordered lowest-to-highest by id
   factorVariables: FactorVariableDef[];
-  defaults: DeepPartial<TDefaults>; // per EXT-8 — partial typing for generated rule sets
 }
 
 export interface Category {
@@ -55,7 +54,6 @@ export interface FactorVariableDef {
 }
 
 export interface FactorVariableImpl<V = unknown, TReading extends BaseReading = BaseReading, TDefaults = unknown> {
-  requiredDefaults?: string[];
   temporalReads?: string[];
   // Substrate's catch handler reads `defaultValue` on impl throw (per ENG-1).
   defaultValue: V;
@@ -64,7 +62,6 @@ export interface FactorVariableImpl<V = unknown, TReading extends BaseReading = 
 }
 
 export interface SimPropImpl<TReading extends BaseReading = BaseReading, TDefaults = unknown> {
-  requiredDefaults?: string[];
   temporalReads?: string[];
   defaultValue: boolean;
   isStub?: boolean;
@@ -72,7 +69,7 @@ export interface SimPropImpl<TReading extends BaseReading = BaseReading, TDefaul
 }
 
 export type EngineError =
-  | { kind: "load-failure"; reason: "missing-rule-set" | "missing-defaults" | "missing-impl"; ruleSetId?: string; detail: string; at: number }
+  | { kind: "load-failure"; reason: "missing-rule-set" | "missing-impl"; ruleSetId?: string; detail: string; at: number }
   | {
       kind: "parse-error"; ruleSetId: string; categoryId: number; expression: string;
       tokenSpan: { start: number; end: number }; offendingToken: string; detail: string; at: number;

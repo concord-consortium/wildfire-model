@@ -13,16 +13,6 @@ describe("renderError", () => {
       expect(renderError(e)).toEqual({ severity: "error", message: "Rule set not found: (no ?hazbotRules param)" });
     });
 
-    it("renders missing-defaults", () => {
-      const e: EngineError = {
-        kind: "load-failure", reason: "missing-defaults", ruleSetId: "23", detail: "zones[1].terrainType is undefined", at: 0,
-      };
-      expect(renderError(e)).toEqual({
-        severity: "error",
-        message: "Missing defaults: 23 · zones[1].terrainType is undefined",
-      });
-    });
-
     it("renders missing-impl", () => {
       const e: EngineError = { kind: "load-failure", reason: "missing-impl", ruleSetId: "23", detail: "ranSimulation", at: 0 };
       expect(renderError(e)).toEqual({ severity: "error", message: "Missing impl: 23 · ranSimulation" });

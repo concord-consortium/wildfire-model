@@ -235,24 +235,14 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       if (typeof config.unburntIslands === "string") configSnapshot.unburntIslands = config.unburntIslands;
       if (typeof config.zoneIndex === "string") configSnapshot.zoneIndex = config.zoneIndex;
 
-      // Add runtime state not in config
-      configSnapshot.sparks = simulation.sparks.map(s => {
-        const cell = simulation.cells.length > 0 ? simulation.cellAt(s.x, s.y) : null;
-        return {
-          x: s.x / config.modelWidth,
-          y: s.y / config.modelHeight,
-          elevation: cell?.elevation,
-          zoneIdx: cell?.zoneIdx
-        };
-      });
-      configSnapshot.fireLineMarkers = simulation.fireLineMarkers.map(fl => {
-        const cell = simulation.cells.length > 0 ? simulation.cellAt(fl.x, fl.y) : null;
-        return {
-          x: fl.x / config.modelWidth,
-          y: fl.y / config.modelHeight,
-          elevation: cell?.elevation
-        };
-      });
+      // Runtime state not in config (sparks carry their localized TPI; markers keep
+      // cell.elevation). zones / wind / towns stay inline. heightmapMaxElevation and
+      // tpiBands are already in configSnapshot via the generic config loop above;
+      // translate() forwards both heightmapMaxElevation and tpiMarginFraction (which
+      // together set the predicate's decision margin) to SparksAtTopAndBottom.
+      const startData = simulation.buildStartReadingData();
+      configSnapshot.sparks = startData.sparks;
+      configSnapshot.fireLineMarkers = startData.fireLineMarkers;
       configSnapshot.zones = simulation.zones.map(z => ({
         vegetation: vegetationLabels[z.vegetation],
         terrainType: terrainLabels[z.terrainType],

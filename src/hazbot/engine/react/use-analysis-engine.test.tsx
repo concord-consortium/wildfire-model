@@ -29,7 +29,6 @@ function makeRuleSet(): RuleSet<TD> {
     id: "test",
     categories: [{ id: 1, studentAction: "", feedback: "good", visualFeedback: "", expression: "ranSimulation" }],
     factorVariables: [{ name: "ranSimulation", definition: "", logEvents: [], details: "" }],
-    defaults: {},
   };
 }
 

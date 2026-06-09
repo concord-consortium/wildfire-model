@@ -134,13 +134,39 @@ describe("evaluator — leaf evaluator (non-short-circuit)", () => {
     expect(leaf.left.truth).toBe(true);
     expect(leaf.right.truth).toBe(false);
   });
+
+  // A factor variable may return a *derived* witness that is not an element of
+  // engine.readings (wildfire's canonical-run fold clones the run's first-start
+  // reading to carry merged tool data). The clone preserves the source `at`, so the
+  // WITH leaf's boundReadingIndex must still resolve by timestamp rather than drop to
+  // undefined ("Matched on reading #?" in the sidebar).
+  it("resolves boundReadingIndex by `at` for a derived (non-identity) witness", () => {
+    const r1 = { ...mkReading("SimulationStarted", 10), payload: { hasOneSpark: false } } as TR;
+    const r2 = mkReading("SimulationStopped", 20) as TR;
+    const r3 = { ...mkReading("SimulationStarted", 30), payload: { hasOneSpark: true } } as TR;
+    // Fold r1+r3 into a clone of r1 that carries r3's matching prop — mirrors foldResume.
+    const foldedWitness = { ...r1, payload: { hasOneSpark: true } } as TR;
+    const foldingFvar: FactorVariableImpl<boolean, TR, TD> = {
+      defaultValue: false,
+      compute: () => ({ value: true, witnesses: [foldedWitness] }),
+    };
+    const oneSparkSim: SimPropImpl<TR, TD> = {
+      defaultValue: false,
+      evaluate: (r) => Boolean((r.payload as { hasOneSpark?: boolean } | undefined)?.hasOneSpark),
+    };
+    const ctx = makeCtx([r1, r2, r3], { ranSimulation: foldingFvar }, { OneSparkPerZone: oneSparkSim });
+    const leaf = evaluateLeaf(parse("ranSimulation WITH OneSparkPerZone"), ctx);
+    if (leaf.kind !== "with") throw new Error("expected with node");
+    expect(leaf.truth).toBe(true);
+    // The clone is not in ctx.readings (indexOf === -1), but its `at` (10) matches r1.
+    expect(leaf.boundReadingIndex).toBe(0);
+  });
 });
 
 describe("evaluator — highestTrueAt + computeMatchedCategoryFloor", () => {
   const ruleSet: RuleSet<TD> = {
     id: "test",
     factorVariables: [],
-    defaults: {},
     categories: [
       { id: 1, studentAction: "", feedback: "", visualFeedback: "", expression: "ranSimulation" },
       { id: 2, studentAction: "", feedback: "", visualFeedback: "", expression: "setDroughtLevel AND NOT usedOneSparkPerZone" },

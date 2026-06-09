@@ -56,9 +56,9 @@
       padding-right: 8px;
       display: flex;
       align-items: flex-end;
-      // Vegetation SVGs ship with both a gray and a white outline rect
-      // at the same position; use only the white one here.
-      svg rect[stroke="#797979"] {
+      // Vegetation SVGs ship with both a gray (.dark-outline) and a white
+      // outline rect at the same position; use only the white one here.
+      svg rect:global(.dark-outline) {
         display: none;
       }
       &.droughtIcon {

@@ -27,13 +27,26 @@ jest.mock("./use-custom-cursors", () => ({ useCustomCursor: jest.fn() }));
 const mockUrlConfig = jest.fn(() => ({ logMonitor: false, hazbotSidebar: false }));
 jest.mock("../config", () => {
   const actual = jest.requireActual("../config");
-  return { ...actual, getUrlConfig: () => mockUrlConfig() };
+  // `mockUrlConfig` is still uninitialized when log.ts's module-level getUrlConfig()
+  // runs during the `createStores` import above (stores.ts imports log.ts, whose
+  // top-level read fires before this const is assigned — jest hoists jest.mock above
+  // the imports but not the const). Fall back to a safe default until the test's mock
+  // fn exists, then defer to it.
+  return {
+    ...actual,
+    getUrlConfig: () =>
+      typeof mockUrlConfig === "function" ? mockUrlConfig() : { logMonitor: false, hazbotSidebar: false },
+  };
 });
 const mockGetEngine = jest.fn();
 jest.mock("../hazbot/wildfire", () => ({
   getAnalysisEngine: () => mockGetEngine(),
   APP_RULES_VERSION: 1,
   buildAnalysisEngineActivatedPayload: jest.fn(),
+  getRequestedPresetInfo: jest.fn(),
+  // Defaults to undefined → no diagnostics; buildPresetDiagnostics's own logic
+  // is covered directly in engine-singleton.test.ts.
+  buildPresetDiagnostics: jest.fn(),
 }));
 
 // AppComponent re-reads `getUrlConfig()` on every render, so per-test mock updates

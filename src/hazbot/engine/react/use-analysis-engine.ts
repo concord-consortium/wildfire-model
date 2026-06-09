@@ -33,12 +33,10 @@ function computeView<TR extends BaseReading, TD>(
   appRulesVersion: string | number,
 ): HookReturn<TR, TD> {
   const factorVariableValues: Record<string, unknown> = {};
-  // factorVariableValues runs in all states via evaluateForRender's 3-branch guard.
+  // factorVariableValues runs in all engine states — evaluateFactorVarForRender
+  // calls compute inside a try/catch and falls back to the impl default on throw.
   Object.entries(engine.factorVariables).forEach(([name, impl]) => {
-    const wrapped = evaluateFactorVarForRender(
-      { name, impl }, engine.readings, engine.ruleSet?.defaults as TD | undefined,
-      engine.implsWithIncompleteDefaults,
-    );
+    const wrapped = evaluateFactorVarForRender({ name, impl }, engine.readings, engine.defaults);
     factorVariableValues[name] = wrapped.value;
   });
 
@@ -47,14 +45,12 @@ function computeView<TR extends BaseReading, TD>(
   // sidebar can show a placeholder rather than a misleading default.
   const simPropValues: Record<string, boolean | null> = {};
   const witnessReading = engine.latestRunStartReading;
-  const defaults = engine.ruleSet?.defaults as TD | undefined;
+  const defaults = engine.defaults;
   Object.entries(engine.simProps).forEach(([name, impl]) => {
     if (witnessReading === undefined) {
       simPropValues[name] = null;
     } else {
-      simPropValues[name] = evaluateSimPropForRender(
-        { name, impl }, witnessReading, defaults, engine.implsWithIncompleteDefaults,
-      );
+      simPropValues[name] = evaluateSimPropForRender({ name, impl }, witnessReading, defaults);
     }
   });
 
@@ -62,9 +58,7 @@ function computeView<TR extends BaseReading, TD>(
   const matchedCategory = computeMatchedCategoryForEngine(engine);
   const perCategoryTruth: Record<number, LeafTruth> = {};
   if (engine.isActive && engine.ruleSet) {
-    const ctx = makeRenderCtx(
-      engine.readings, defaults, engine.factorVariables, engine.simProps, engine.implsWithIncompleteDefaults,
-    );
+    const ctx = makeRenderCtx(engine.readings, defaults, engine.factorVariables, engine.simProps);
     engine.ruleSet.categories.forEach((cat) => {
       const ast = engine.parsedExpressions.get(cat.id);
       if (!ast || ast === PARSE_ERROR_SENTINEL) return;

@@ -8,45 +8,69 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
   categories: [
     {
       id: 1,
-      studentAction: "Did not run the simulation",
-      feedback: "Hazbot: You haven’t run the model yet. Add sparks and run the model first.",
-      visualFeedback: "Arrows pointing to the spark tool and the Play button",
+      studentAction: "Did not run the simulation A.k.a. Click button (before they do anything else)",
+      feedback: `Hazbot: I will analyze your model after you run it. Scroll up to see the instructions at the top of the page!
+[Okay]`,
+      visualFeedback: "",
       expression: "NOT ranSimulation",
     },
     {
       id: 2,
-      studentAction: "Ran the simulation and placed only one spark",
-      feedback: "Hazbot: Place two sparks, one in each zone! One at the top and one at the bottom of a mountain!",
-      visualFeedback: "Arrow pointing to the spark tool with the label: “Place a spark in each zone.” Point One at the top of a mountain, one at the bottom.",
+      studentAction: "Ran the simulation with only one spark",
+      feedback: `Hazbot: I only see 1 spark. Make sure each zone has a spark!
+[Show me]`,
+      visualFeedback: `1. Restart button outlined; coach mark points to Restart button
+2. Spark button outlined; coach mark (no pointer) centered top`,
+      arrowText: `1. Hazbot: Restart your model first. (Step 1 of 2)
+2. Hazbot: Place one spark in Zone 1 and one spark in Zone 2, then run the model again. (Step 2 of 2)
+[Got it!]`,
       expression: "ranSimulation WITH NOT TwoSparks",
     },
     {
       id: 3,
-      studentAction: "Ran the simulation and placed two sparks in the same zone.",
-      feedback: "Hazbot: You placed two sparks in the same zone. To compare the graphs, place one spark in each zone.",
-      visualFeedback: "Arrows pointing to somewhere in zone 1 and somewhere in zone 2.",
+      studentAction: "Ran the simulation with two sparks in the same zone.",
+      feedback: `Hazbot: I see 2 sparks in the same zone. Let's make sure that each zone has 1 spark!
+[Show me]`,
+      visualFeedback: `1. Restart button outlined; coach mark points to Restart button
+2. Coach mark (no pointer) centered top`,
+      arrowText: `1. Hazbot: Restart your model first. (Step 1 of 2)
+2. Hazbot: Place one spark in Zone 1 and one spark in Zone 2, then run the model again. (Step 2 of 2)
+[Got it!]`,
       expression: "ranSimulation WITH NOT OneSparkPerZone AND TwoSparks",
     },
     {
       id: 4,
       studentAction: "Ran the simulation and placed two sparks, but not at the top and bottom of the mountain",
-      feedback: "Hazbot: You placed two sparks, but you need to place one spark at the top of the mountain and the other at the bottom.",
-      visualFeedback: "Arrows pointing to the top and bottom of a mountain on the visual display (one in each zone)",
+      feedback: `Hazbot: Make sure to place one spark at the bottom of a mountain and one at the top!
+[Show me]`,
+      visualFeedback: `1. Restart button outlined; coach mark points to Restart button
+2. Coach mark (no pointer) with images of the bottom of a mountain and top of a mountain  plus arrows pointing to these, centered top`,
+      arrowText: `1. Hazbot: Restart your model first. (Step 1 of 2)
+2. Hazbot: Place one spark at the bottom of a mountain in one zone and one spark at the top of a mountain in the other zone, then run the model again. (Step 2 of 2)
+[Got it!]`,
       expression: "ranSimulation WITH OneSparkPerZone AND NOT SparksAtTopAndBottom",
     },
     {
       id: 5,
-      studentAction: "Ran the simulation at least once with 2 sparks, one on each zone. Never opened graph!",
-      feedback: "Great job setting up the experiment! Now, open the graph to compare the number of acres burned.",
-      visualFeedback: "Arrows pointing to the graph tab.",
-      expression: "ranSimulation WITH OneSparkPerZone AND NOT GraphOpen",
+      studentAction: "Ran the simulation with one spark at the top and one at the bottom of the mountain but with different zone setups.",
+      feedback: `Hazbot: Looks like the two zones are different. Make sure they have the same vegetation and drought!
+[Show me]`,
+      visualFeedback: `1. Restart button outlined; coach mark points to Restart button
+2. Setup button outlined; coach mark points to Setup button
+3. Setup panel outlined; coach mark points to Setup panel`,
+      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
+2. Hazbot: Now click the Setup button. (Step 2 of 3)
+3. Hazbot: Make sure the conditions are the same in each zone. (Step 3 of 3)
+[Got it!]`,
+      expression: "ranSimulation WITH OneSparkPerZone AND SparksAtTopAndBottom AND NOT UniformZoneSettings",
     },
     {
       id: 6,
-      studentAction: "Ran the simulation and placed one spark at the top and one at the bottom of the mountain, and opened the graph.",
-      feedback: "Hazbot: Great job! You’re ready to answer the questions below.",
+      studentAction: "Ran the simulation with one spark at the top and one at the bottom of the mountain with the same zone setups.",
+      feedback: `Hazbot: Great job! You’re ready to answer the questions below.
+[Hooray!]`,
       visualFeedback: "Confetti animation or subtle celebratory visual",
-      expression: "ranSimulation WITH OneSparkPerZone AND SparksAtTopAndBottom AND GraphOpen",
+      expression: "ranSimulation WITH OneSparkPerZone AND SparksAtTopAndBottom AND UniformZoneSettings",
     }
   ],
   factorVariables: [
@@ -66,7 +90,7 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
       name: "OneSparkPerZone",
       definition: "Simulation prop for whether one spark was used per each zone or not.",
       logEvents: ["SimulationStarted->sparks.<j>.zoneIdx"],
-      details: "The sparks array must be of length 2, and the three zoneIdx values collected from the three sparks must cover 0 (zone 1) and 1 (zone 2).  <j> means taking the spark index (the index of the sparks data, which is, or must be, an array), 0-based.",
+      details: "The sparks array must be of length 2, and the two zoneIdx values collected from the two sparks must cover 0 (zone 1) and 1 (zone 2).  <j> means taking the spark index (the index of the sparks data, which is, or must be, an array), 0-based.",
     },
     {
       name: "SparksAtTopAndBottom",
@@ -75,11 +99,10 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
       details: "The sparks array must be of length 2, and the x,y,elevation values for the sparks must be such that one spark is near/at the ridge, while the other spark is near/at the valley.   The code needs to be written based on the topograhy map used and the x, y, elevaation values for the spark locations.  One way to do it would be pre-trace the ridge lines and the valley lines and determine if the spark locations are close enough to them (this work never done before; Alert: new algorithm coding required here).",
     },
     {
-      name: "GraphOpen",
-      definition: "Smulation prop for whether or not graph was opened from the beginning of the simulation or during the simulation.",
-      logEvents: ["ChartTabShown", "ChartTabHidden", "TopBarReloadButtonClicked"],
-      details: "This requires tracking of the chart tab show/hidden state throughout the activity.  The state is toggled by ChartTabShown and ChartTabHiddent events and is reset to hidden by the TopBarReloadButtonClicked event.",
+      name: "UniformZoneSettings",
+      definition: "Simulation prop for whether all zones were set up the same way",
+      logEvents: ["SimulationStarted->zones.<i>.terrainType", "SimulationStarted->zones.<i>.vegetation", "SimulationStarted->zones.<i>.droughtLevel"],
+      details: "For the two zones (i=0 and i=1), the droughtLevel values must be the same, as must be the vegetation values.  The terrainType values should be the same by design (see the \"SIMINIT\" sheet).",
     }
   ],
-  defaults: {},
 };

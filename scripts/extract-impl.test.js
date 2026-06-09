@@ -31,7 +31,9 @@ const SYNTHETIC_SHEETS = [
     ],
   },
   {
-    sheet: "43", // excluded
+    // No longer in EXCLUDED_TABS (WM-18 R1 emptied it). parseTab() returns null
+    // for this tab — it has no category block — so it still lands in skippedTabs.
+    sheet: "43",
     data: [["empty"]],
   },
 ];
@@ -43,6 +45,8 @@ describe("extractFromSheets", () => {
     expect(result.tabs[0].id).toBe("23");
     expect(result.tabs[0].tsSource).toMatch(/AUTO-GENERATED/);
     expect(result.tabs[0].tsSource).toMatch(/export const ruleSet23/);
+    // The generator no longer emits a `defaults` field (per WM-27 Requirement 10).
+    expect(result.tabs[0].tsSource).not.toMatch(/defaults:/);
     expect(result.indexSource).toMatch(/AUTO-GENERATED/);
     expect(result.indexSource).toMatch(/"23": ruleSet23/);
     expect(result.dslGrammar).toMatch(/AUTO-GENERATED/);
@@ -77,25 +81,41 @@ describe("parseTab — categories", () => {
   });
 });
 
-describe("parseTab — defaults", () => {
-  it("parses per-zone drought defaults from the Details column", () => {
-    const parsed = parseTab("23", SYNTHETIC_SHEETS[1].data);
-    expect(parsed.defaults.zones).toEqual([
-      { droughtLevel: "Mild" },
-      { droughtLevel: "Mild" },
-    ]);
+describe("parseTab — feedback-mechanism (id >= 100) rows (R1a)", () => {
+  it("drops a category row with id >= 100", () => {
+    const sheet = [
+      ["#", "Student Action", "Hazbot Feedback", "Visual Feedback", "Pseudocode for Rules"],
+      [1, "Ran it", "Good!", "", "ranSimulation"],
+      [100, "Re-clicked Hazbot", "Answer the questions!", "", "-- no pseudo code --\nfeedback mechanism"],
+    ];
+    const parsed = parseTab("xx", sheet);
+    expect(parsed.categories).toHaveLength(1);
+    expect(parsed.categories[0].id).toBe(1);
   });
 
-  it("leaves defaults absent when Details says TBD", () => {
-    const tbdRows = [
-      ["#", "Student Action", "Hazbot Feedback", "Visual Feedback", "Pseudocode for Rules", "Details"],
-      [1, "X", "Y", "Z", "ranSimulation", "details"],
-      [""],
-      ["Factor variable", "Definition", "Log events", "Details"],
-      ["setDroughtLevel", "X", "SimulationStarted", "TBD (activity revision)"],
-    ];
-    const parsed = parseTab("32", tbdRows);
-    expect(parsed.defaults.zones).toBeUndefined();
+  it("warns when a sim-use expression is mistakenly numbered >= 100", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    // id >= 100 but the cell carries real DSL (no -- no pseudo code -- marker).
+    parseTab("xx", [
+      ["#", "Student Action", "Hazbot Feedback", "Visual Feedback", "Pseudocode for Rules"],
+      [100, "Ran it", "Good!", "", "ranSimulation"],
+    ]);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("disagree"));
+    warn.mockRestore();
+  });
+
+  it("warns when a feedback row (-- no pseudo code --) is misnumbered below 100", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    // id < 100 but the cell IS a -- no pseudo code -- marker. The row is NOT
+    // dropped (drop criterion is strictly id >= 100) — it is emitted as a
+    // normal category; the warning is the safety net that flags the
+    // misnumbering to the author.
+    parseTab("xx", [
+      ["#", "Student Action", "Hazbot Feedback", "Visual Feedback", "Pseudocode for Rules"],
+      [99, "Re-clicked Hazbot", "Answer the questions!", "", "-- no pseudo code --\nfeedback mechanism"],
+    ]);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("disagree"));
+    warn.mockRestore();
   });
 });
 
@@ -124,7 +144,7 @@ function compileAndLoad(tsSource, fileName) {
   // Replace substrate-relative imports with inline stubs so the tmpdir
   // compile doesn't need the real substrate code on the resolution path.
   const stubbed = tsSource
-    .replace('import { RuleSet } from "../engine";', "interface RuleSet<TDefaults> { id: string; categories: any[]; factorVariables: any[]; defaults: any }")
+    .replace('import { RuleSet } from "../engine";', "interface RuleSet<TDefaults> { id: string; categories: any[]; factorVariables: any[]; }")
     .replace('import { WildfireDefaults } from "../wildfire/types";', "type WildfireDefaults = any;");
   fs.writeFileSync(tabPath, stubbed);
   // ts-node/register handles compilation; require errors on TS compile failure.

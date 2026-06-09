@@ -1,9 +1,8 @@
 import { SimulationModel } from "./simulation";
 import { UIModel } from "./ui";
-import presets from "../presets";
-import { getDefaultConfig, getUrlConfig } from "../config";
 import { DroughtLevel, TerrainType, Vegetation } from "../types";
 import { ChartStore } from "./chart-store";
+import { log } from "../log";
 
 export interface IStores {
   simulation: SimulationModel;
@@ -26,7 +25,7 @@ export const createStores = (): IStores => {
   //     [ 0, 1 ]
   //   ]
   // })
-  const simulation = new SimulationModel(presets[getUrlConfig().preset || getDefaultConfig().preset]);
+  const simulation = new SimulationModel();
   (window as any).sim = simulation;
   (window as any).DroughtLevel = DroughtLevel;
   (window as any).Vegetation = Vegetation;
@@ -78,6 +77,16 @@ const createTestHelpers = (simulation: SimulationModel) => {
       const b = zoneBounds(zoneIdx);
       if (!b) throw new Error(`No cells found for zoneIdx=${zoneIdx}`);
       simulation.setHelitackPoint(b.centerX, b.centerY);
+      // Emit the production Helitack log payload (matching the pointer path in
+      // use-helitack-interaction.ts) so the Hazbot engine sees the drop. Unlike
+      // sparks / fire lines (captured from the SimulationStarted snapshot), helitack
+      // detection is event-based, so mutating the sim alone is not engine-visible.
+      const cell = simulation.cellAt(b.centerX, b.centerY);
+      log("Helitack", {
+        x: b.centerX / simulation.config.modelWidth,
+        y: b.centerY / simulation.config.modelHeight,
+        elevation: cell.elevation,
+      });
     },
     zoneBounds,
     // Slot populated by BottomBar.componentDidMount; typed as `any` to avoid

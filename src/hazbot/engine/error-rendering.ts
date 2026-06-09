@@ -18,11 +18,6 @@ export function renderError(e: EngineError, ctx?: RenderErrorContext): RenderedE
             severity: "error",
             message: `Rule set not found: ${e.ruleSetId ?? "(no ?hazbotRules param)"}`,
           };
-        case "missing-defaults":
-          return {
-            severity: "error",
-            message: `Missing defaults: ${e.ruleSetId} · ${e.detail}`,
-          };
         case "missing-impl":
           return {
             severity: "error",
