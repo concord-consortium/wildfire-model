@@ -181,6 +181,10 @@ export const Graph = observer(function WrappedComponent() {
         <Chart
         title="Acres Burned vs. Time"
         chartType="line"
+        // 381 (vs the 400 default) trims the chart so the green chart panel sits
+        // with an even 10px gap on all four sides of the right panel at the
+        // 1366x609 Chromebook viewport.
+        height={381}
         isPlaying={simulation.simulationRunning}
         axisLabelA1Function={axisLabelA1}
         axisLabelA2Function={axisLabelA2} />
