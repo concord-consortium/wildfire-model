@@ -7,7 +7,7 @@
   }
 
   .radio,
-  .radio.Mui-checked {
+  .radio:global(.Mui-checked) {
     color: $controlGray;   // #797979 ring + selected dot
   }
 
@@ -32,7 +32,7 @@
   // Hover anywhere on the option (radio, number, or image) shows the radio's
   // selection dot at 50% opacity (#79797980). MUI draws nothing inside an
   // unchecked radio, so render the preview dot ourselves.
-  .labelContainer:hover .radio:not(.Mui-checked)::after {
+  .labelContainer:hover .radio:not(:global(.Mui-checked))::after {
     content: "";
     position: absolute;
     top: 50%;

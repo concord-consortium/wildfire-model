@@ -33,7 +33,10 @@
     .terrainOption {
       cursor: pointer; // natural width (no flex-grow) so the row packs narrower instead of spreading full-width
 
-      span {
+      // Scope label styling to the MUI label span. A bare `span` selector also
+      // matched the radio's inner icon spans and dragged the icon fill to
+      // #434343; keeping it on the label leaves the radio its #797979 color.
+      :global(.MuiFormControlLabel-label) {
         font-size: 13px !important; // Zeplin: Roboto Condensed 13/400 #434343 (was 14)
         font-family: 'Roboto Condensed';
         font-weight: 400;
@@ -41,8 +44,26 @@
       }
 
       // selected terrain label is weight 500 (Zeplin), like the slider markLabel emphasis
-      :global(.Mui-checked) + span {
+      :global(.Mui-checked) + :global(.MuiFormControlLabel-label) {
         font-weight: 500;
+      }
+
+      // Reserve the bold (500) width on every label via a hidden ghost so
+      // selecting an option (400 -> 500) doesn't widen it and shift the
+      // centered row left/right. The ghost overlays the text in a single grid
+      // cell (not a stacked second line) so the visible text stays vertically
+      // centered with the radio.
+      .label {
+        display: inline-grid;
+        vertical-align: middle; // inline-grid baseline sits low; center the box on the radio
+        &::after {
+          content: attr(data-text);
+          grid-area: 1 / 1;
+          font-weight: 500;
+          height: 0;
+          overflow: hidden;
+          visibility: hidden;
+        }
       }
 
       // Match the first-screen (ZonesCountSelector) radio: #797979 ring + dot,

@@ -18,6 +18,10 @@
       body {
         font-family: 'Lato', sans-serif;
         user-select: none;
+        /* Match the antialiasing of the Zeplin mockups; the browser default
+           (subpixel) renders text noticeably heavier, hurting readability. */
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
     </style>
   </head>

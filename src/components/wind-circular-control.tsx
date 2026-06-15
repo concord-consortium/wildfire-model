@@ -87,7 +87,7 @@ export const WindCircularControl: React.FC<IProps> = ({ speed, direction, onSpee
       <div className={css.windDirectionKey}>{"Wind\nDirection"}</div>
       <div className={css.windSpeedKey}>Wind Speed</div>
       <div className={css.windText}>
-        {`${Math.round(scaledWind)} MPH from the ${degToCompass(direction)}`}
+        {`${Math.round(scaledWind)} MPH\nfrom the ${degToCompass(direction)}`}
       </div>
       <div className={css.windSliderControls} data-testid="wind-speed-slider">
         <Slider

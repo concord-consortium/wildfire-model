@@ -30,31 +30,31 @@
   // outline ring and the arrow are blue (Zeplin #2997ff). Read-only uses (e.g.
   // the model display) keep the default gray baked into the SVGs.
   &.interactive{
+    cursor: grab; // same grab cursor across the whole dial (face, arrow, track)
+    &:active{ cursor: grabbing; }
+
     .dial :global(.windDialOutline){ fill: #2997ff; }
     .arrow :global(.windArrowBody){ fill: #2997ff; }
 
-    .windCircularControl{
-      cursor: grab;
-
-      &:active{
-        cursor: grabbing;
-      }
-    }
-
-    // outer white ring hidden at rest; soft 50% white (Zeplin #ffffff80) on
-    // hover and while dragging. Covers both the SVG #Highlight ring and the
-    // CircularInput track (which carries an always-on white stroke via its prop).
-    .dial :global(.windDialHighlight){ opacity: 0; }
+    // The CircularInput track carries an always-on white stroke via its prop;
+    // keep it transparent so it never doubles up with the SVG highlight ring.
     .windCircularControl circle{ stroke: transparent; }
+
+    // Outer white ring (SVG #Highlight) and the arrow's white halo are hidden at
+    // rest — the halo otherwise covers the compass labels. Soft 50% white on
+    // hover, full white while dragging. Only the SVG ring is used (not the
+    // track) so the outline reads as a single, un-doubled stroke.
+    .dial :global(.windDialHighlight){ opacity: 0; }
+    .arrow :global(.windArrowHighlight){ opacity: 0; }
 
     &:hover{
       .dial :global(.windDialHighlight){ opacity: 0.5; }
-      .windCircularControl circle{ stroke: rgba(255, 255, 255, 0.5); }
+      .arrow :global(.windArrowHighlight){ opacity: 0.5; }
     }
 
     &:active{
       .dial :global(.windDialHighlight){ opacity: 1; }
-      .windCircularControl circle{ stroke: rgba(255, 255, 255, 1); }
+      .arrow :global(.windArrowHighlight){ opacity: 1; }
     }
   }
 }
