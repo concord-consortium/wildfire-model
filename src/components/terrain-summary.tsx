@@ -9,15 +9,19 @@ interface IProps {
   onChange?: any;
 }
 
-export const TerrainSummary = ({ vegetationType, droughtLevel }: IProps) =>
-  (
+export const TerrainSummary = ({ vegetationType, droughtLevel }: IProps) => {
+  // Display-only lowercasing of "With" per designer review; the canonical
+  // vegetationLabels value stays "Forest With Suppression" since the Hazbot
+  // engine matches readings against it (see hazbot/wildfire/sim-props.ts).
+  const vegetationCaption = vegetationLabels[vegetationType].replace("With Suppression", "with Suppression");
+  return (
     <div className={css.terrainSummary}>
       <div className={`${css.row}`}>
         <div className={`${css.column}`}>
           <div className={css.icon}>{vegetationIcons[vegetationType]}</div>
         </div>
         <div className={`${css.column}`}>
-          <div className={css.caption}>{vegetationLabels[vegetationType]}</div>
+          <div className={css.caption}>{vegetationCaption}</div>
         </div>
       </div>
       <div className={`${css.row}`}>
@@ -30,3 +34,4 @@ export const TerrainSummary = ({ vegetationType, droughtLevel }: IProps) =>
       </div>
     </div>
   );
+};
