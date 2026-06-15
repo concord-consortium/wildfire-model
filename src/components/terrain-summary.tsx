@@ -14,6 +14,10 @@ export const TerrainSummary = ({ vegetationType, droughtLevel }: IProps) => {
   // vegetationLabels value stays "Forest With Suppression" since the Hazbot
   // engine matches readings against it (see hazbot/wildfire/sim-props.ts).
   const vegetationCaption = vegetationLabels[vegetationType].replace("With Suppression", "with Suppression");
+  // "Forest with Suppression" is the only label long enough to wrap; a smaller
+  // font (see .fwsCaption) lets it fit the caption as "Forest with" /
+  // "Suppression" instead of three lines, without shifting the layout.
+  const isForestWithSuppression = vegetationType === Vegetation.ForestWithSuppression;
   return (
     <div className={css.terrainSummary}>
       <div className={`${css.row}`}>
@@ -21,7 +25,7 @@ export const TerrainSummary = ({ vegetationType, droughtLevel }: IProps) => {
           <div className={css.icon}>{vegetationIcons[vegetationType]}</div>
         </div>
         <div className={`${css.column}`}>
-          <div className={css.caption}>{vegetationCaption}</div>
+          <div className={`${css.caption} ${isForestWithSuppression ? css.fwsCaption : ""}`}>{vegetationCaption}</div>
         </div>
       </div>
       <div className={`${css.row}`}>
