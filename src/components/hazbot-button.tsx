@@ -68,16 +68,10 @@ export const HazbotButton = observer(function HazbotButton() {
   };
 
   return (
-    // Wrapper is the positioning context; the pulse rings are SIBLINGS of the
-    // Button (not children) so the button's content box can't clip them as they
-    // scale past the button edge. The `ready` class on the wrapper gates the rings.
+    // The `ready` class on the wrapper gates the pulse — a box-shadow halo on the
+    // button, matching the behavior + width of the MODA "Update Code" button's
+    // pulse-shadow (question-interactives/packages/agent-simulation).
     <div className={`${css.hazbotButtonWrap} ${pulsing ? css.ready : ""}`} data-testid="hazbot-button-wrap">
-      {pulsing && (
-        <>
-          <span className={css.pulse} aria-hidden="true" data-testid="hazbot-pulse" />
-          <span className={css.pulse} aria-hidden="true" data-testid="hazbot-pulse" />
-        </>
-      )}
       <Button
         className={css.hazbotButton}
         data-testid="hazbot-button"

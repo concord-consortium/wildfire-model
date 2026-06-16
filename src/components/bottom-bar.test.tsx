@@ -505,13 +505,15 @@ describe("BottomBar Hazbot button (WM-6)", () => {
     (stores.simulation as any).engine = mockEngine();
     stores.ui.hazbotPulseArmed = true;
     render(<Provider stores={stores}><BottomBar /></Provider>);
-    // Pulse rings visible (armed && started && !running).
-    expect(screen.queryAllByTestId("hazbot-pulse").length).toBe(2);
+    // Pulse visible (armed && started && !running) — the `ready` class gates the
+    // box-shadow pulse on the wrapper.
+    const wrap = () => screen.getByTestId("hazbot-button-wrap");
+    expect(wrap().className).toMatch(/ready/);
     await userEvent.click(screen.getByTestId("restart-button"));
     // Restart clears simulationStarted without routing through start(); the
     // armed flag may stay set but the predicate now hides the pulse.
     expect(stores.simulation.simulationStarted).toBe(false);
-    expect(screen.queryAllByTestId("hazbot-pulse").length).toBe(0);
+    expect(wrap().className).not.toMatch(/ready/);
   });
 
   it("natural burnout arms the pulse via the simulationEnded reaction", () => {

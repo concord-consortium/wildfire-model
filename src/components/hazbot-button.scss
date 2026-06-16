@@ -1,10 +1,9 @@
 @import "common.scss";
 
-// Positioning context for the pulse rings; lets them overflow the button box.
 .hazbotButtonWrap {
   position: relative;
   display: inline-flex;
-  overflow: visible;             // rings scale past the 122x48 button edge
+  overflow: visible;             // don't clip the button's pulse box-shadow halo
 }
 
 .hazbotButton {
@@ -72,30 +71,21 @@
   &:active { background: #80aff5 !important; }   // Select / pressed
 }
 
-// Ready: pulsing OUTLINE emanating from the button edge (AP-79). Read off the
-// "Pulse Animation" frames: a 122x48 rounded rect, border-radius 10px,
-// 5px solid #0050c4 outline, #c1daff fill, that scales up and fades out. NOT a
-// box-shadow — the board draws a bordered rounded rect that grows past the
-// button edge. Rendered as a sibling of the <Button> (see component) so it is
-// NOT clipped by the button's content box; the widgetGroup/bottom-bar must allow
-// it to overflow. Multiple staggered rings give the continuous pulse.
-.hazbotButtonWrap.ready .pulse {
-  position: absolute;
-  inset: 0;                      // covers the 122x48 button, then scales out
-  z-index: 0;                    // behind the button (which is z-index:1)
-  border-radius: 10px;
-  border: 5px solid #0050c4;     // accent; fades toward transparent/white over the cycle
-  pointer-events: none;
-  transform-origin: center;
-  animation: hazbotPulse 1.6s ease-out infinite;
+// Ready: a pulsing box-shadow halo emanating from the button edge. Behavior,
+// width (0 -> 8px spread), and timing (1.75s ease infinite) match the MODA
+// "Update Code" button's pulse-shadow (question-interactives,
+// packages/agent-simulation/.../control-panel.scss) — AP-79 explicitly calls for
+// a pulse "similar to the Update Code button in MODA". Colors are the AP-79
+// Zeplin spec for this story: #0050C4 -> #FFF (the #0050C4 accent fading out to
+// white). Much subtler than a scaling ring; the wrapper stays overflow:visible
+// so the 8px halo is not clipped.
+.hazbotButtonWrap.ready .hazbotButton {
+  animation: hazbotPulse 1.75s ease infinite;
 }
-// Second ring, delayed, for the continuous emanating effect (mirrors the
-// 5 onion-skinned frames on the board).
-.hazbotButtonWrap.ready .pulse:nth-child(2) { animation-delay: 0.8s; }
 
 @keyframes hazbotPulse {
-  0%   { transform: scale(1);    opacity: 0.5; }
-  100% { transform: scale(1.35); opacity: 0; }
+  0%   { box-shadow: 0 0 0 0 rgba(0, 80, 196, 0.5); }    // #0050C4 @ 50%
+  100% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); } // -> #FFF, faded out
 }
 
 // ── WM-11 seam (follow-on coach-mark story) ─────────────────────────────────

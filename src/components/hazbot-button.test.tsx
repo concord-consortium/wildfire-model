@@ -27,24 +27,20 @@ it("renders the avatar + two-line label", () => {
 
 it("shows the ready/pulse state only when armed && started && !running", () => {
   const { stores } = renderWithStores();
-  // The `ready` class AND the .pulse rings live on the WRAPPER div, not the
-  // <Button> that carries data-testid. Assert on the wrapper (identity-obj-proxy
-  // makes css.ready === "ready", so the className contains it literally) and on
-  // the count of `hazbot-pulse` rings.
+  // The pulse is a box-shadow animation gated by the `ready` class on the WRAPPER
+  // div (identity-obj-proxy makes css.ready === "ready", so the className contains
+  // it literally).
   const wrap = () => screen.getByTestId("hazbot-button-wrap");
   expect(wrap().className).not.toMatch(/ready/);
-  expect(screen.queryAllByTestId("hazbot-pulse").length).toBe(0);
   act(() => {
     stores.simulation.simulationStarted = true;
     stores.simulation.simulationRunning = false;
     stores.ui.hazbotPulseArmed = true;
   });
   expect(wrap().className).toMatch(/ready/);
-  expect(screen.queryAllByTestId("hazbot-pulse").length).toBe(2);
   // A run in progress hides the pulse.
   act(() => { stores.simulation.simulationRunning = true; });
   expect(wrap().className).not.toMatch(/ready/);
-  expect(screen.queryAllByTestId("hazbot-pulse").length).toBe(0);
 });
 
 it("click sets showHazbotFeedback, clears the pulse, and logs HazbotButtonClicked", () => {
