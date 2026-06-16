@@ -1,0 +1,117 @@
+@import "common.scss";
+
+// Positioning context for the pulse rings; lets them overflow the button box.
+.hazbotButtonWrap {
+  position: relative;
+  display: inline-flex;
+  overflow: visible;             // rings scale past the 122x48 button edge
+}
+
+.hazbotButton {
+  // 122 x 48 per AP-79; reset MUI Button defaults.
+  position: relative;
+  z-index: 1;                    // button sits above the pulse rings
+  min-width: 122px;
+  width: 122px;
+  height: 48px;
+  padding: 0;
+  text-transform: none;
+  // AP-79 default "Button back" (Hazbot Button States artboard): #c1daff fill,
+  // 1.5px solid #797979 inside border, 10px radius. !important: MUI's
+  // emotion-generated base button background/border is injected AFTER this static
+  // SCSS and wins on equal specificity (same source-order battle documented for
+  // .playbackButton min-width in bottom-bar.scss). The border is shared by all
+  // three states (only the fill changes for hover/select).
+  background: #c1daff !important;
+  border: 1.5px solid #797979 !important;
+  border-radius: 10px !important;   // !important: emotion overrides plain radius (renders 9px otherwise)
+
+  .inner {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+  }
+
+  .avatar {
+    position: relative;            // anchor for the absolutely-stacked layers
+    width: 48px;
+    height: 48px;
+    flex: 0 0 48px;
+    // Anchor for the WM-11 "Large" scale-up: growing from the bottom-left keeps
+    // the robot's feet on the bar baseline while the head grows up-and-out (the
+    // ancestor chain is overflow:visible, so it isn't clipped). Inert in WM-6
+    // (no transform applied); it's the documented seam for the follow-on story.
+    transform-origin: bottom left;
+    // Back / Eyes / Blinks are exported as full 48x48 layers sharing one
+    // coordinate space (AP-79), so stack all three at the same origin rather
+    // than centering each independently. A single transform on .avatar scales
+    // all three layers together.
+    svg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 48px;
+      height: 48px;
+    }
+  }
+
+  .label {
+    margin-left: 3px;
+    font-family: Lato, sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 19px;
+    color: #222;
+    text-align: left;
+  }
+
+  // Hover / Select — exact AP-79 "Button back" fills (Hazbot Button States artboard).
+  // !important for the same MUI-emotion source-order reason as the default fill above.
+  &:hover { background: #a4c7f9 !important; }
+  &:active { background: #80aff5 !important; }   // Select / pressed
+}
+
+// Ready: pulsing OUTLINE emanating from the button edge (AP-79). Read off the
+// "Pulse Animation" frames: a 122x48 rounded rect, border-radius 10px,
+// 5px solid #0050c4 outline, #c1daff fill, that scales up and fades out. NOT a
+// box-shadow — the board draws a bordered rounded rect that grows past the
+// button edge. Rendered as a sibling of the <Button> (see component) so it is
+// NOT clipped by the button's content box; the widgetGroup/bottom-bar must allow
+// it to overflow. Multiple staggered rings give the continuous pulse.
+.hazbotButtonWrap.ready .pulse {
+  position: absolute;
+  inset: 0;                      // covers the 122x48 button, then scales out
+  z-index: 0;                    // behind the button (which is z-index:1)
+  border-radius: 10px;
+  border: 5px solid #0050c4;     // accent; fades toward transparent/white over the cycle
+  pointer-events: none;
+  transform-origin: center;
+  animation: hazbotPulse 1.6s ease-out infinite;
+}
+// Second ring, delayed, for the continuous emanating effect (mirrors the
+// 5 onion-skinned frames on the board).
+.hazbotButtonWrap.ready .pulse:nth-child(2) { animation-delay: 0.8s; }
+
+@keyframes hazbotPulse {
+  0%   { transform: scale(1);    opacity: 0.5; }
+  100% { transform: scale(1.35); opacity: 0; }
+}
+
+// ── WM-11 seam (follow-on coach-mark story) ─────────────────────────────────
+// While the coach mark is open, AP-79 shows the button in its "Large" variant:
+// the button grows to 135x69, the #c1daff background fades off, and the avatar
+// scales up and overflows the bar (the ancestor chain is overflow:visible, so it
+// isn't clipped — see bottom-bar.scss). WM-6 only wires the trigger: the click
+// sets `ui.showHazbotFeedback`, which WM-11 maps to a `.coached` class on the
+// wrapper. The structure here already supports it additively — the avatar is an
+// isolated box scaled via a single transform (transform-origin: bottom left
+// above), and the button width/height are overridable. Overrides need
+// `!important` to beat MUI emotion (same source-order reason as the fills above).
+// Sketch (WM-11 to own, not active in WM-6):
+//   .hazbotButtonWrap.coached .hazbotButton {
+//     width: 135px !important; height: 69px !important;
+//     background: transparent !important; border-color: transparent !important;
+//     transition: width .25s, height .25s, background .25s;
+//   }
+//   .hazbotButtonWrap.coached .avatar { transform: scale(1.5); transition: transform .25s; }

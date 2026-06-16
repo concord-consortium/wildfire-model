@@ -8,6 +8,7 @@ import { Vector2 } from "three";
 import { act } from "react-dom/test-utils";
 import { Interaction } from "../models/ui";
 import type { FireEngine } from "../models/engine/fire-engine";
+import { _resetAnalysisEngineForTests } from "../hazbot/wildfire/engine-singleton";
 
 // Minimal FireEngine stand-in for tests that only need the bottom-bar to read
 // engine state, not run a simulation. Centralized so the inline {fireDidStop,
@@ -425,5 +426,107 @@ describe("BottomBar edge cases", () => {
       });
       expect(start).not.toBeDisabled();
     });
+  });
+});
+
+// WM-6 Hazbot Analysis button integration. The button mounts gated on a LOADED
+// rule-set (getAnalysisEngine()?.ruleSet), so these tests drive the memoized
+// engine singleton via the URL (mirroring engine-singleton.test.ts) and reset it
+// around each case so the no-flag default (engine undefined → no button) is
+// restored for the rest of the suite.
+describe("BottomBar Hazbot button (WM-6)", () => {
+  const originalLocation = window.location;
+  const setUrl = (search: string) => {
+    Object.defineProperty(window, "location", {
+      value: new URL(`https://wildfire-model.unexisting.url.com/${search}`),
+      writable: true,
+    });
+  };
+
+  let stores = createStores();
+  beforeEach(() => {
+    _resetAnalysisEngineForTests();
+    setUrl("?hazbotRules=23");
+    stores = createStores();
+    stores.simulation.dataReady = true;
+  });
+  afterEach(() => {
+    _resetAnalysisEngineForTests();
+    Object.defineProperty(window, "location", { value: originalLocation, writable: true });
+  });
+
+  // Seed a running sim with a loaded mock engine so Start/Stop is exercisable.
+  const seedRunning = () => {
+    stores.simulation.sparks.push(new Vector2(50000, 50000));
+    stores.simulation.simulationStarted = true;
+    stores.simulation.simulationRunning = true;
+    (stores.simulation as any).engine = mockEngine();
+  };
+
+  it("renders the Hazbot button when a rule-set is loaded (?hazbotRules=23)", () => {
+    render(<Provider stores={stores}><BottomBar /></Provider>);
+    expect(screen.getByTestId("hazbot-button")).toBeInTheDocument();
+  });
+
+  it("does NOT render the Hazbot button for an invalid rule-set id (?hazbotRules=99)", () => {
+    _resetAnalysisEngineForTests();
+    setUrl("?hazbotRules=99");
+    render(<Provider stores={stores}><BottomBar /></Provider>);
+    expect(screen.queryByTestId("hazbot-button")).toBeNull();
+  });
+
+  it("Start → Stop (manual) arms the pulse; clicking the button clears it and sets showHazbotFeedback", async () => {
+    seedRunning();
+    render(<Provider stores={stores}><BottomBar /></Provider>);
+    // Manual Stop (Start→Stop toggle).
+    await userEvent.click(screen.getByTestId("start-button"));
+    expect(stores.simulation.simulationRunning).toBe(false);
+    expect(stores.ui.hazbotPulseArmed).toBe(true);
+    // Clicking the Hazbot button clears the pulse and opens feedback.
+    await userEvent.click(screen.getByTestId("hazbot-button"));
+    expect(stores.ui.hazbotPulseArmed).toBe(false);
+    expect(stores.ui.showHazbotFeedback).toBe(true);
+  });
+
+  it("Start → Fire Line pause does NOT arm the pulse (mid-intervention exclusion)", async () => {
+    seedRunning();
+    render(<Provider stores={stores}><BottomBar /></Provider>);
+    await userEvent.click(screen.getByTestId("fireline-button"));
+    // Fire Line also stops the sim, but is mid-intervention — must not arm.
+    expect(stores.simulation.simulationRunning).toBe(false);
+    expect(stores.ui.hazbotPulseArmed).toBe(false);
+  });
+
+  it("Restart after a completed run hides the pulse via the simulationStarted guard", async () => {
+    // Completed-run state: started, not running, armed (e.g. after a manual Stop).
+    stores.simulation.sparks.push(new Vector2(50000, 50000));
+    stores.simulation.simulationStarted = true;
+    stores.simulation.simulationRunning = false;
+    (stores.simulation as any).engine = mockEngine();
+    stores.ui.hazbotPulseArmed = true;
+    render(<Provider stores={stores}><BottomBar /></Provider>);
+    // Pulse rings visible (armed && started && !running).
+    expect(screen.queryAllByTestId("hazbot-pulse").length).toBe(2);
+    await userEvent.click(screen.getByTestId("restart-button"));
+    // Restart clears simulationStarted without routing through start(); the
+    // armed flag may stay set but the predicate now hides the pulse.
+    expect(stores.simulation.simulationStarted).toBe(false);
+    expect(screen.queryAllByTestId("hazbot-pulse").length).toBe(0);
+  });
+
+  it("natural burnout arms the pulse via the simulationEnded reaction", () => {
+    seedRunning();
+    render(<Provider stores={stores}><BottomBar /></Provider>);
+    expect(stores.ui.hazbotPulseArmed).toBe(false);
+    // simulationEnded is a computed over simulationStarted && !simulationRunning
+    // && engine.fireDidStop; engine is NOT observable, so only simulationRunning
+    // carries the reactivity edge. Assign the stopped engine FIRST, then flip
+    // simulationRunning false within one act() so the computed sees the
+    // false→true edge and the reaction fires (mirrors production tick()).
+    act(() => {
+      (stores.simulation as any).engine = mockEngine({ fireDidStop: true });
+      stores.simulation.simulationRunning = false;
+    });
+    expect(stores.ui.hazbotPulseArmed).toBe(true);
   });
 });

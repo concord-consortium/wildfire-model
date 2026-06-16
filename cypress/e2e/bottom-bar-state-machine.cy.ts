@@ -187,3 +187,34 @@ describe("Bottom-bar state machine (WM-24)", () => {
     });
   });
 });
+
+// WM-6 Hazbot Analysis button. The one assertion jsdom can't truly exercise:
+// the @observer button re-rendering the ready/pulse state across a live
+// Start → Stop run, then clearing it on click. All other arm/clear/gating/blink
+// logic is covered by the fast Jest tests in src/components/hazbot-button.test.tsx
+// and bottom-bar.test.tsx; this proves the full-page reactivity wiring.
+describe("Hazbot button pulse (WM-6)", () => {
+  const HAZBOT_URL = "/?preset=plainsTwoZone&hazbotRules=23";
+
+  beforeEach(() => {
+    cy.visit(HAZBOT_URL);
+    cy.window().its("sim.dataReady").should("eq", true);
+  });
+
+  it("renders with a loaded rule-set, pulses after a manual Stop, and clears on click", () => {
+    // Button is present on a Hazbot-enabled page with a loaded rule-set.
+    cy.get("[data-testid='hazbot-button']").should("be.visible");
+    // Pre-run: no pulse.
+    cy.get("[data-testid='hazbot-pulse']").should("not.exist");
+    // Place a spark, Start, then manual Stop → the pulse arms (ready state).
+    cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
+    cy.get("[data-testid='start-button']").click();
+    cy.window().its("sim.simulationRunning").should("eq", true);
+    cy.get("[data-testid='start-button']").click();   // Stop
+    cy.window().its("sim.simulationRunning").should("eq", false);
+    cy.get("[data-testid='hazbot-pulse']").should("exist");
+    // Clicking the Hazbot button clears the pulse.
+    cy.get("[data-testid='hazbot-button']").click();
+    cy.get("[data-testid='hazbot-pulse']").should("not.exist");
+  });
+});

@@ -28,12 +28,26 @@ $overflowHeight: 11px;
   z-index: 1;
 
   .leftContainer {
+    // Balanced against .rightContainer (both flex: 1) so .mainContainer stays
+    // centered between them. The logo stays at the container's left edge.
+    flex: 1;
     position: relative;
     vertical-align: top;
     padding: 14px 10px 0 10px;
     .logo, .logoSmall {
       height: 38px;
     }
+  }
+
+  // Right region (WM-6). Balances .leftContainer to keep .mainContainer centered.
+  // Holds the Hazbot button (centered via margin: 0 auto) and the fullscreen
+  // toggle pinned to the far right — so the button sits centered in the gap
+  // between the last control and the fullscreen button (AP-79).
+  .rightContainer {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
   }
 
   .mainContainer {
@@ -137,6 +151,18 @@ $overflowHeight: 11px;
     width: 140px;
   }
 
+  // WM-6 Hazbot button container, inside .rightContainer. `margin: 0 auto`
+  // centers it horizontally in the right region's free space (between the last
+  // control and the fullscreen toggle). NOT a `.widgetGroup` (no white bubble /
+  // rounded-top frame) — the button is a self-contained #c1daff pill that sits
+  // directly in the bar per AP-79. Pulse rings overflow, so don't clip.
+  .hazbotButton {
+    display: flex;
+    align-items: center;
+    margin: 0 auto;
+    overflow: visible;
+  }
+
   // FIS-hidden layout: when the Fire Intensity Scale widgetGroup is not
   // rendered, center the controls cluster horizontally between the CC
   // logo (leftContainer) and the Fullscreen toggle (rightContainer).
@@ -185,6 +211,8 @@ $overflowHeight: 11px;
     // icon-label baseline. Previous 64-tall + margin-top:6 overflowed
     // the 65 px bar by 5 px.
     margin-right: 0;
+    // WM-6: 10px gap between the Hazbot button and the fullscreen toggle (AP-79).
+    margin-left: 10px;
     margin-top: 1px;
     height: 62px;
     width: 62px;
