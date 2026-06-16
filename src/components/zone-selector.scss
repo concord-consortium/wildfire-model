@@ -170,6 +170,7 @@
     cursor: default;
     .terrainPreview{
       cursor: default; // readonly recap (wind screen) — non-interactive
+      pointer-events: none; // don't react to clicks: no :active highlight border, no zone-change handler
       .terrainImage{
         opacity: 100%; // recap shows the terrain at full strength, not the 50% edit-screen fade
       }

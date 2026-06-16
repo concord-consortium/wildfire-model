@@ -6,6 +6,14 @@
   font-family: 'Roboto Condensed';
   padding-top: 2px;
 
+  // 3-zone "Forest with Suppression": the column is tight, so nudge this whole
+  // column left into the panel margin so the 12px label clears the next zone
+  // (paint-only shift, so the other two zones don't move).
+  &.fwsThreeZone{
+    position: relative;
+    left: -10px;
+  }
+
   .row{
     display: flex;
     margin-bottom: 4px;
@@ -22,6 +30,13 @@
         width: 26px;
         height: 26px;
 
+        // Veg icons ship with a gray (.dark-outline) and white (.white-outline)
+        // outline rect at the same spot; the recap keeps only the white frame,
+        // so hide the gray one (like the zone thumbnails).
+        svg rect:global(.dark-outline){
+          display: none;
+        }
+
         &.drought{
           padding-top: 6px;
           right: 5px;
@@ -37,6 +52,15 @@
         margin-left: 0px;
         width: 50px;
         text-align: left;
+
+        // "Forest with Suppression" is too long for the 50px caption at 13px.
+        // Drop to 12px (kept at 50px so the column doesn't grow and reflow the
+        // other zones); a non-breaking space keeps it as "Forest with" /
+        // "Suppression". In the 3-zone case the column is also nudged left
+        // (.fwsThreeZone) so the slightly wider text clears the next zone.
+        &.fwsCaption{
+          font-size: 12px;
+        }
       }
     }
   }

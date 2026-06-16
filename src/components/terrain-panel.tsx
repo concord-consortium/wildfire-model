@@ -223,7 +223,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
 
     zones.forEach((z, i) => {
       labels.push(
-        <TerrainSummary vegetationType={z.vegetation} droughtLevel={z.droughtLevel} key={i} />
+        <TerrainSummary vegetationType={z.vegetation} droughtLevel={z.droughtLevel} zonesCount={zones.length} key={i} />
       );
     });
     return labels;

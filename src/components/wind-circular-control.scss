@@ -64,9 +64,10 @@
 
   .windText {
     position: absolute;
-    left: 214px;
+    left: 205px;
     top: 62px; // dropped with the Wind Speed section (see .windSpeedKey)
-    width: 62px;
+    width: 80px;             // fit "from the WSW" (~73px) on one line; centered on the slider (center x=245)
+    white-space: pre-line;   // honor the explicit break: "{speed} MPH" / "from the {DIR}" — speed digits never add a 3rd line
     font-family: 'Roboto Condensed';
     font-size: 13px;
     font-weight: normal;
