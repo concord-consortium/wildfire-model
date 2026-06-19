@@ -37,12 +37,14 @@
     width: 48px;
     height: 48px;
     flex: 0 0 48px;
-    // Anchor for the WM-11 "Large" scale-up: growing from the bottom-center keeps
-    // the avatar horizontally centered (no sideways drift over the label) and pins
-    // its bottom edge on the bar baseline while the head grows up-and-out (the
-    // ancestor chain is overflow:visible, so it isn't clipped). Inert in WM-6
-    // (no transform applied); it's the documented seam for the follow-on story.
+    // Growing from the bottom-center keeps the avatar horizontally centered (no
+    // sideways drift over the label) and pins its bottom edge on the bar baseline
+    // while the head grows up-and-out (the ancestor chain is overflow:visible, so
+    // it isn't clipped). The transition lives here (not only on `.coached`) so both
+    // the open scale-up and the close scale-down animate, and the transform's
+    // `transitionend` (which gates opening the coach mark) fires reliably.
     transform-origin: bottom center;
+    transition: transform 0.25s;
     // The coachmarks library returns focus to this anchor (the popover's `element`)
     // when the coach mark closes, setting tabindex="-1" on it. On a keyboard close
     // (Escape / Enter on ×/Okay) that programmatic focus would draw a :focus-visible
@@ -105,6 +107,5 @@
 // bottom-bar.scss). The coach mark opens only AFTER this transform transition ends
 // (see hazbot-button.tsx) so the popover anchors to the enlarged robot.
 .hazbotButtonWrap.coached .avatar {
-  transform: scale(1.525);
-  transition: transform .25s;
+  transform: scale(1.525); // transition is on the base `.avatar` (animates open + close)
 }

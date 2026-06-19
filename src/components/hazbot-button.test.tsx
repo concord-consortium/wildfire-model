@@ -96,14 +96,16 @@ it("shows the ready/pulse state only when armed && started && !running", () => {
   expect(wrap().className).not.toMatch(/ready/);
 });
 
-it("click sets showHazbotFeedback, clears the pulse, and logs HazbotButtonClicked", () => {
+it("click clears the pulse and logs HazbotButtonClicked (no engine → panel no-ops)", () => {
   const logSpy = jest.spyOn(logModule, "log");
   const { stores } = renderWithStores();
   act(() => { stores.ui.hazbotPulseArmed = true; });
   fireEvent.click(screen.getByTestId("hazbot-button"));
-  expect(stores.ui.showHazbotFeedback).toBe(true);
+  // No engine in jsdom, so the panel can't open: handleClick sets the flag, then
+  // the guarded effect clears it back (so the button never sticks "Large"). The
+  // pulse is acknowledged and the click logs matchedCategory: null.
+  expect(stores.ui.showHazbotFeedback).toBe(false);
   expect(stores.ui.hazbotPulseArmed).toBe(false);
-  // No engine in this test, so the click logs matchedCategory: null.
   expect(logSpy).toHaveBeenCalledWith("HazbotButtonClicked", { matchedCategory: null });
 });
 
@@ -173,11 +175,13 @@ describe("Hazbot feedback panel", () => {
     expect(spec.popover.side).toBe("top");
   });
 
-  it("does not open when there is no engine / matched category (guarded no-op)", () => {
+  it("does not open when there is no engine / matched category, and resets the flag", () => {
     mockGetEngine.mockReturnValue(undefined);
-    renderWithStores();
+    const { stores } = renderWithStores();
     openPanel();
     expect(mockCreateEngine).not.toHaveBeenCalled();
+    // The guarded no-op clears the flag so the button doesn't stay stuck "Large".
+    expect(stores.ui.showHazbotFeedback).toBe(false);
   });
 
   it("resets ui.showHazbotFeedback on dismiss via onDestroyed (fires on all routes)", () => {

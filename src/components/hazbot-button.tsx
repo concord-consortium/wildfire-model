@@ -84,7 +84,13 @@ export const HazbotButton = observer(function HazbotButton() {
     const matched = engine ? computeMatchedCategoryForEngine(engine) : null;
     const feedback =
       engine?.ruleSet?.categories.find((c) => c.id === matched)?.feedback ?? "";
-    if (!feedback) return; // null-guard: no rule-set / no matched category
+    if (!feedback) {
+      // Nothing to show (no engine / no matched category / empty feedback). Clear
+      // the flag so the button doesn't stay stuck in its "Large" coached state and
+      // a later click can re-trigger the effect.
+      ui.showHazbotFeedback = false;
+      return;
+    }
     const { body, label } = parseFeedback(feedback);
     const avatar = avatarRef.current;
     let destroyed = false;
