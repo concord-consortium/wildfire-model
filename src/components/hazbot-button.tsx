@@ -180,7 +180,7 @@ export const HazbotButton = observer(function HazbotButton() {
       >
         <span className={css.inner}>
           <span className={css.avatar} ref={avatarRef}>
-            <HazbotBack />
+            <HazbotBack data-testid="hazbot-back" />
             {blink
               ? <HazbotBlinks data-testid="hazbot-blinks" />
               : <HazbotEyes data-testid="hazbot-eyes" />}

@@ -73,9 +73,14 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-it("renders the avatar + two-line label", () => {
+it("renders the avatar layers + two-line label", () => {
   renderWithStores();
   expect(screen.getByTestId("hazbot-button")).toHaveTextContent("HazbotAnalysis");
+  // Avatar SVG layers: Back is always present; the default (non-blink) state
+  // shows the open Eyes layer and omits the Blinks layer.
+  expect(screen.getByTestId("hazbot-back")).toBeInTheDocument();
+  expect(screen.getByTestId("hazbot-eyes")).toBeInTheDocument();
+  expect(screen.queryByTestId("hazbot-blinks")).toBeNull();
 });
 
 it("shows the ready/pulse state only when armed && started && !running", () => {
