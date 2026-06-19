@@ -83,6 +83,15 @@ describe("wildfire translate", () => {
     expect(translate(ev("UnknownEvent"), "s").kind).toBe("no-op");
   });
 
+  it("maps HazbotButtonClicked to no-op (WM-6 invariant: the click must not become a reading)", () => {
+    // log() routes every event through engine.consume(), so HazbotButtonClicked
+    // reaches translate() like any other event. It MUST stay unhandled (no-op)
+    // here — otherwise the click would mutate the matched category it just
+    // reported in its own log payload. This pins that invariant against a future
+    // translate() case accidentally turning the click into a trigger/modifier.
+    expect(translate(ev("HazbotButtonClicked", { data: { matchedCategory: 3 } }), "s").kind).toBe("no-op");
+  });
+
   describe("Helitack run-window modifiers", () => {
     const openRunStart = (): WildfireReading => ({
       triggeredBy: "SimulationStarted", sessionId: "s", at: 50, temporalHistory: [],

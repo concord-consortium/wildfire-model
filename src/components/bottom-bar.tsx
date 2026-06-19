@@ -1,4 +1,5 @@
 import { inject, observer } from "mobx-react";
+import { reaction, IReactionDisposer } from "mobx";
 import React from "react";
 import { BaseComponent, IBaseProps } from "./base";
 import { droughtLabels, terrainLabels, vegetationLabels } from "../types";
@@ -24,6 +25,9 @@ import { Interaction } from "../models/ui";
 import { FireIntensityScale } from "./fire-intensity-scale";
 import { IconButton } from "./icon-button";
 import { log } from "../log";
+import { AnalysisEngineProvider } from "../hazbot/engine";
+import { APP_RULES_VERSION, getAnalysisEngine } from "../hazbot/wildfire";
+import { HazbotButton } from "./hazbot-button";
 
 import css from "./bottom-bar.scss";
 
@@ -48,6 +52,14 @@ const toggleFullscreen = () => {
 @inject("stores")
 @observer
 export class BottomBar extends BaseComponent<IProps, IState> {
+  // WM-6: arms the Hazbot "ready" pulse on natural burnout (simulationEnded).
+  private hazbotPulseReactionDisposer?: IReactionDisposer;
+
+  // WM-6: the Hazbot gate (a loaded rule-set) is fixed for the component's
+  // lifetime — getAnalysisEngine() reads the URL once and memoizes the engine —
+  // so resolve it once here rather than calling it on every render.
+  private readonly hazbotEngine = getAnalysisEngine();
+
   constructor(props: IProps) {
     super(props);
     this.state = {
@@ -94,6 +106,17 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     // browsers (where screenfull is gated off) still get the test hook
     // wired for the Playwright fullscreen-variant walkthrough.
     (window as any).test.__bottomBarRef = this;
+
+    // WM-6: arm the Hazbot pulse on natural burnout. simulationEnded is a
+    // computed (started && !running && fireDidStop); arming from this distinct
+    // observable (not bare !simulationRunning) is what excludes the Fire Line
+    // pause and the manual-Stop-vs-burnout ambiguity. Manual Stop is armed in
+    // handleStart instead.
+    const { simulation, ui } = this.stores;
+    this.hazbotPulseReactionDisposer = reaction(
+      () => simulation.simulationEnded,
+      (ended) => { if (ended) ui.hazbotPulseArmed = true; }
+    );
   }
 
   public componentWillUnmount() {
@@ -101,10 +124,12 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       document.removeEventListener(screenfull.raw.fullscreenchange, this.fullscreenChange);
     }
     (window as any).test.__bottomBarRef = null;
+    this.hazbotPulseReactionDisposer?.();
   }
 
   public render() {
     const { simulation } = this.stores;
+    const { hazbotEngine } = this;
     return (
       <div className={`${css.bottomBar} ${!simulation.config.showBurnIndex ? css.fisHidden : ""}`}>
         {simulation.config.bottomBarBaseline && <div className={css.bottomBarBaseline} />}
@@ -196,8 +221,28 @@ export class BottomBar extends BaseComponent<IProps, IState> {
             </div>
           }
         </div>
-        {/* This empty container is necessary so the spacing works correctly */}
+        {/* Right region. `.leftContainer` and `.rightContainer` are balanced flex
+            items (flex: 1) so `.mainContainer` stays centered between them. The
+            Hazbot button centers in this region (margin: 0 auto) with the
+            fullscreen toggle pinned to the far right, 10px to its left — per AP-79
+            the button sits centered in the gap between the last control and the
+            fullscreen button. */}
         <div className={css.rightContainer}>
+          {/* WM-6 Hazbot Analysis button. Gated on a LOADED rule-set
+              (engine?.ruleSet), not engine existence and not the bare ?hazbotRules
+              param: an invalid id (?hazbotRules=99) leaves engine.ruleSet undefined
+              → no feedback path → no button. The AnalysisEngineProvider is a
+              forward-looking deliverable so the sibling WM-11 panel can consume
+              useAnalysisEngine() here without re-plumbing the mount. NOT a
+              `.widgetGroup`: the button is a self-contained #c1daff pill, no white
+              bubble. */}
+          {hazbotEngine?.ruleSet && (
+            <div className={css.hazbotButton}>
+              <AnalysisEngineProvider engine={hazbotEngine} appRulesVersion={APP_RULES_VERSION}>
+                <HazbotButton />
+              </AnalysisEngineProvider>
+            </div>
+          )}
           {
             screenfull?.isEnabled &&
             <div className={this.fullscreenIconStyle} onClick={toggleFullscreen} title="Toggle Fullscreen" />
@@ -215,11 +260,18 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     const { ui, simulation } = this.stores;
     if (simulation.simulationRunning) {
       simulation.stop();
+      // WM-6: a manual Stop counts as "a run completed" and arms the ready pulse.
+      // (A Fire Line pause also calls simulation.stop() but does NOT arm — see
+      // handleFireLine — so the pulse stays off mid-intervention.)
+      ui.hazbotPulseArmed = true;
       log("SimulationStopped", {
         outcome: simulation.getOutcomeData(this.stores.chartStore)
       });
     } else {
       ui.showTerrainUI = false;
+      // WM-6: clear any stale arm before the next run so the pulse re-arms only
+      // when this run completes.
+      ui.hazbotPulseArmed = false;
 
       // Build config snapshot, replacing large arrays with metadata
       const config = simulation.config;
