@@ -37,11 +37,18 @@
     width: 48px;
     height: 48px;
     flex: 0 0 48px;
-    // Anchor for the WM-11 "Large" scale-up: growing from the bottom-left keeps
-    // the robot's feet on the bar baseline while the head grows up-and-out (the
+    // Anchor for the WM-11 "Large" scale-up: growing from the bottom-center keeps
+    // the avatar horizontally centered (no sideways drift over the label) and pins
+    // its bottom edge on the bar baseline while the head grows up-and-out (the
     // ancestor chain is overflow:visible, so it isn't clipped). Inert in WM-6
     // (no transform applied); it's the documented seam for the follow-on story.
-    transform-origin: bottom left;
+    transform-origin: bottom center;
+    // The coachmarks library returns focus to this anchor (the popover's `element`)
+    // when the coach mark closes, setting tabindex="-1" on it. On a keyboard close
+    // (Escape / Enter on ×/Okay) that programmatic focus would draw a :focus-visible
+    // ring on the robot. The avatar isn't a tab stop — keyboard users reach the real
+    // <button>, which keeps its own ring — so suppress the ring here.
+    &:focus { outline: none; }
     // Back / Eyes / Blinks are exported as full 48x48 layers sharing one
     // coordinate space (AP-79), so stack all three at the same origin rather
     // than centering each independently. A single transform on .avatar scales
@@ -88,20 +95,16 @@
   100% { box-shadow: 0 0 0 8px rgba(255, 255, 255, 0); } // -> #FFF, faded out
 }
 
-// ── WM-11 seam (follow-on coach-mark story) ─────────────────────────────────
-// While the coach mark is open, AP-79 shows the button in its "Large" variant:
-// the button grows to 135x69, the #c1daff background fades off, and the avatar
-// scales up and overflows the bar (the ancestor chain is overflow:visible, so it
-// isn't clipped — see bottom-bar.scss). WM-6 only wires the trigger: the click
-// sets `ui.showHazbotFeedback`, which WM-11 maps to a `.coached` class on the
-// wrapper. The structure here already supports it additively — the avatar is an
-// isolated box scaled via a single transform (transform-origin: bottom left
-// above), and the button width/height are overridable. Overrides need
-// `!important` to beat MUI emotion (same source-order reason as the fills above).
-// Sketch (WM-11 to own, not active in WM-6):
-//   .hazbotButtonWrap.coached .hazbotButton {
-//     width: 135px !important; height: 69px !important;
-//     background: transparent !important; border-color: transparent !important;
-//     transition: width .25s, height .25s, background .25s;
-//   }
-//   .hazbotButtonWrap.coached .avatar { transform: scale(1.5); transition: transform .25s; }
+// "Large" state — while the coach-mark feedback panel is open, the wrapper carries
+// the `.coached` class (set from `ui.showHazbotFeedback`). Only the robot avatar
+// scales up and overflows the bar; the button "back" keeps its size, its
+// #c1daff/hover/select fill, and its 1.5px #797979 border. The avatar grows from its
+// bottom-center (transform-origin above) so the robot's feet stay on the bar
+// baseline while the head grows up and out of the (overflow:visible) button — the
+// ancestor chain must stay overflow:visible so the head isn't clipped (see
+// bottom-bar.scss). The coach mark opens only AFTER this transform transition ends
+// (see hazbot-button.tsx) so the popover anchors to the enlarged robot.
+.hazbotButtonWrap.coached .avatar {
+  transform: scale(1.525);
+  transition: transform .25s;
+}
