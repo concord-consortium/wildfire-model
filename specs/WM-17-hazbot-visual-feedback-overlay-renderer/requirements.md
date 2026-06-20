@@ -79,6 +79,11 @@ Only three targets lack a usable `data-testid` today: the Setup-panel **containe
 - Clicking the Hazbot Analysis button opens the matched category's `feedback` text popover anchored to the robot avatar (as today).
 - For a coaching category, that popover's action button is the authored `[Show me]` token; activating it launches the walk-through. Categories with no tour keep their plain dismiss button (`[Okay]` / `[Hooray!]`).
 
+**Hazbot Analysis button states (per the Zeplin "Hazbot Button States" artboard):**
+- **Intro popover open** — the robot avatar scales up ~1.5× ("coached"/Large state); the popover anchors its arrow to the enlarged robot (as today, WM-16).
+- **Tour running** ("No Hazbot Default") — once `[Show me]` launches the walk-through, the robot is shown inside the coach mark, so the button itself drops its robot and **fades to opacity 0.35** (`Button back` keeps its `#c1daff` fill / `1.5px #797979` border / `10px` radius; the avatar is hidden, its box preserved so the "Hazbot Analysis" label keeps position; the faded button is non-interactive). This applies for any tour, even a single-step one.
+- **Pulse suppression** — the post-run pulse halo does not throb while the coach mark is open (intro or tour); a run ending mid-coach-mark re-arms it, and it resumes only once the panel closes.
+
 **Interaction model (action-gated advance):**
 - The walk-through advances only when the student performs each step's action (e.g. clicks Restart, then clicks Setup), not via a passive Next button. This guarantees a step's target is present before that step is shown (e.g. the Setup panel exists only after Setup is clicked).
 - **The coachmarks library does not support action-gated advancement today.** Adding it is part of WM-17's library work — the largest of the library changes, and the critical path for the story. (Exact API is for `implementation.md`; the library already exposes imperative `moveNext()`/`moveTo()` as a starting point.)

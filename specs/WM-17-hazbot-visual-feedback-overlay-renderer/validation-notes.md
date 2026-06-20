@@ -10,6 +10,8 @@ driven via the Playwright MCP per [CLAUDE.md](../../CLAUDE.md). Screenshots unde
 | Mechanic | Where validated | Result |
 |---|---|---|
 | Intro popover + `[Show me]`, avatar badge **suppressed** | 23/2, 24/2, 25/4 | ✅ "I can help! / Show me", no badge |
+| Button "No Hazbot Default" state while tour runs (opacity 0.35, robot hidden, non-interactive) | 23/2 | ✅ wrap `noHazbot`, opacity 0.35, avatar `visibility:hidden`, `pointer-events:none` |
+| Pulse halo suppressed while the coach mark is open (intro + tour) | 23/2 | ✅ `animationName:none`, `box-shadow:none` during the tour |
 | Gated tour launches on `[Show me]` (intro destroyed → gated `drive`) | 23/2 | ✅ |
 | Avatar badge **shown** on tour steps | 23/2, 24/2, 25/4 | ✅ |
 | `showProgress` "Step N of M" stepper (Zeplin: Lato 16px, centered, blue #0050c4) | all | ✅ "Step 1 of 3" … "Step 4 of 4" |

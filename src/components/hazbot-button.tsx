@@ -87,9 +87,13 @@ export const HazbotButton = observer(function HazbotButton() {
 
   // Ready/pulse predicate. The simulationStarted term keeps the pulse off in the
   // pre-run / terrain-setup state and auto-hides a stale arm after Restart/Reload
-  // (both clear simulationStarted without routing through start()).
+  // (both clear simulationStarted without routing through start()). The
+  // !showHazbotFeedback term suppresses the pulse while the coach mark is open
+  // (intro or tour) — a run ending mid-coach-mark re-arms the pulse, which would
+  // otherwise throb under the open panel; it resumes once the panel closes.
   const pulsing =
-    ui.hazbotPulseArmed && simulation.simulationStarted && !simulation.simulationRunning;
+    ui.hazbotPulseArmed && simulation.simulationStarted && !simulation.simulationRunning &&
+    !ui.showHazbotFeedback;
 
   // Coach-mark feedback panel — a two-engine lifecycle (WM-17). When
   // ui.showHazbotFeedback flips true:
@@ -110,8 +114,15 @@ export const HazbotButton = observer(function HazbotButton() {
   // Completed/Dismissed event.
   const avatarRef = useRef<HTMLSpanElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  // True while the walk-through tour is running (after [Show me]). Drives the
+  // "No Hazbot Default" button state (Zeplin): the button fades to 35% and the
+  // robot avatar is hidden, since the robot is shown inside the coach mark instead.
+  // The intro popover keeps the enlarged-robot `.coached` state (it anchors to the
+  // robot); only the tour swaps to `.noHazbot`.
+  const [tourActive, setTourActive] = useState(false);
   useEffect(() => {
     if (!ui.showHazbotFeedback || !avatarRef.current) return;
+    setTourActive(false); // fresh open starts in the intro (enlarged-robot) state
     const engine = getAnalysisEngine();
     const matched = engine ? computeMatchedCategoryForEngine(engine) : null;
     const ruleSetId = engine?.ruleSet?.id ?? null;
@@ -143,6 +154,7 @@ export const HazbotButton = observer(function HazbotButton() {
 
     const openTour = (steps: EngineStep[]) => {
       log("HazbotShowMeClicked", { ruleSetId, categoryId: matched, stepCount: steps.length });
+      setTourActive(true); // fade the button + hide its robot ("No Hazbot Default" state)
       let lastStepIndex = 0;
       tourEngine = createCoachmarksEngine({
         actionGated: true,                       // gated nav/keyboard/focus + wait-for-target
@@ -166,7 +178,7 @@ export const HazbotButton = observer(function HazbotButton() {
           if (!tourCancelled && !cleanup) {
             log("HazbotTourCompleted", { ruleSetId, categoryId: matched, lastStepIndex });
           }
-          if (!cleanup) { phase = "done"; ui.showHazbotFeedback = false; }
+          if (!cleanup) { phase = "done"; ui.showHazbotFeedback = false; setTourActive(false); }
         },
       });
       tourEngine.drive(steps);
@@ -245,12 +257,22 @@ export const HazbotButton = observer(function HazbotButton() {
     log("HazbotButtonClicked", { matchedCategory });
   };
 
+  // Wrapper state classes: `ready` (pulse halo), `coached` (intro enlarged-robot,
+  // intro only), `noHazbot` (faded button while the tour runs). coached and noHazbot
+  // are mutually exclusive — see the effect.
+  const wrapClassName = [
+    css.hazbotButtonWrap,
+    pulsing ? css.ready : "",
+    (ui.showHazbotFeedback && !tourActive) ? css.coached : "",
+    tourActive ? css.noHazbot : "",
+  ].filter(Boolean).join(" ");
+
   return (
     // The `ready` class on the wrapper gates the pulse — a box-shadow halo on the
     // button, matching the behavior + width of the MODA "Update Code" button's
     // pulse-shadow (question-interactives/packages/agent-simulation).
     <div
-      className={`${css.hazbotButtonWrap} ${pulsing ? css.ready : ""} ${ui.showHazbotFeedback ? css.coached : ""}`}
+      className={wrapClassName}
       data-testid="hazbot-button-wrap"
     >
       <Button

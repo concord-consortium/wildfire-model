@@ -227,6 +227,22 @@ describe("Hazbot feedback panel", () => {
     expect(cmOpts.doneBtnText).toBe("Show me");
   });
 
+  it("suppresses the pulse halo while the coach mark is open, even if a run re-arms it", () => {
+    mockGetEngine.mockReturnValue(engineWith([{ id: 1, feedback: "Hazbot: hi [Okay]" }]));
+    mockMatched.mockReturnValue(1);
+    const { stores } = renderWithStores();
+    const wrap = () => screen.getByTestId("hazbot-button-wrap");
+    openPanel(); // clears the arm and opens the coach mark (showHazbotFeedback = true)
+    // Simulate a run ending mid-coach-mark, which re-arms the pulse.
+    act(() => {
+      stores.simulation.simulationStarted = true;
+      stores.simulation.simulationRunning = false;
+      stores.ui.hazbotPulseArmed = true;
+    });
+    expect(stores.ui.showHazbotFeedback).toBe(true);
+    expect(wrap().className).not.toMatch(/ready/); // suppressed while the panel is open
+  });
+
   it("toggles the .coached Large-state class with ui.showHazbotFeedback", () => {
     mockGetEngine.mockReturnValue(engineWith([{ id: 1, feedback: "Hazbot: hi [Okay]" }]));
     mockMatched.mockReturnValue(1);
@@ -306,6 +322,24 @@ describe("Hazbot walk-through tour (WM-17)", () => {
     expect(logSpy).toHaveBeenCalledWith(
       "HazbotShowMeClicked", { ruleSetId: "23", categoryId: 2, stepCount: 3 },
     );
+  });
+
+  it("swaps the button to the faded .noHazbot state during the tour (intro keeps .coached)", () => {
+    jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    renderWithStores();
+    const wrap = () => screen.getByTestId("hazbot-button-wrap");
+    openPanel();
+    // Intro popover open → enlarged-robot "coached" state, not yet faded.
+    expect(wrap().className).toMatch(/coached/);
+    expect(wrap().className).not.toMatch(/noHazbot/);
+    // [Show me] launches the tour → faded "No Hazbot" state, no longer coached.
+    activateShowMe();
+    expect(wrap().className).toMatch(/noHazbot/);
+    expect(wrap().className).not.toMatch(/coached/);
+    // Completing the tour clears both.
+    act(() => { engines[1].opts.onDestroyed(); });
+    expect(wrap().className).not.toMatch(/noHazbot/);
+    expect(wrap().className).not.toMatch(/coached/);
   });
 
   it("logs HazbotTourCompleted on the terminal Done (tour onDestroyed without cancel)", () => {
