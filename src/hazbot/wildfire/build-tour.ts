@@ -27,6 +27,13 @@ export function buildTour(
   // a future authoring drift degrades to the intro popover rather than a mis-zipped tour.
   if (anchors.length !== data.steps.length) return null;
 
+  // A viewport step carries no `target` and no `advanceOn`, so as a NON-terminal step in a
+  // gated (forward-only) tour it would be un-advanceable — the student could only close it.
+  // The authored map only ever places viewport steps last (asserted in tour-map.test.ts);
+  // if a future edit drifts, degrade to the intro popover instead of a stuck tour.
+  const lastIndex = anchors.length - 1;
+  if (anchors.some((a, i) => a.kind === "viewport" && i !== lastIndex)) return null;
+
   return anchors.map((a, i) => {
     const isLast = i === anchors.length - 1;
     const description = data.steps[i].text;

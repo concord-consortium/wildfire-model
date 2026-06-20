@@ -36,8 +36,14 @@ function parseArrowText(arrowText, ctx) {
   const stepLines = done ? lines.slice(0, -1) : lines;
   let declaredTotal = null;
   const steps = stepLines.map((raw, i) => {
-    if (!STEP_RE.test(raw)) {
+    const ord = raw.match(STEP_RE);
+    if (!ord) {
       ctx.fail(`step line ${i + 1} missing leading ordinal: ${JSON.stringify(raw)}`);
+    } else if (Number(ord[1]) !== i + 1) {
+      // The leading "<n>." and the trailing "(Step n of N)" redundantly encode the step
+      // number; validate the leading ordinal against position too (the (Step n of N) form
+      // is checked below), so authoring drift in either is caught at build time.
+      ctx.fail(`step line ${i + 1} has leading ordinal ${ord[1]} — out of sequence: ${JSON.stringify(raw)}`);
     }
     let t = raw.replace(STEP_RE, "");
     const m = t.match(STEPNUM_RE);

@@ -58,6 +58,25 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
     }
   });
 
+  it("viewport steps only ever appear as the terminal step (no un-advanceable gated step)", () => {
+    // A viewport step has no anchor/advanceOn, so a non-terminal one would soft-lock a
+    // gated tour. Assert the authored map never emits one mid-tour, on either branch.
+    const nonTerminalViewports: string[] = [];
+    for (const rs of Object.keys(tourMap)) {
+      for (const cat of Object.keys(tourMap[rs]).map(Number)) {
+        for (const ctx of CTXS) {
+          const steps = tourMap[rs][cat](ctx);
+          steps.forEach((step, i) => {
+            if (step.kind === "viewport" && i !== steps.length - 1) {
+              nonTerminalViewports.push(`${rs}/${cat} step ${i} (sparkZoneCount=${ctx.sparkZoneCount})`);
+            }
+          });
+        }
+      }
+    }
+    expect(nonTerminalViewports).toEqual([]);
+  });
+
   it("25/4 carries a popover image on its centered-top step", () => {
     const step = tourMap["25"][4]({ sparkZoneCount: 2 })[1];
     expect(step).toMatchObject({ kind: "viewport", position: "top-center" });

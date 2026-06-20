@@ -101,6 +101,14 @@ describe("buildTourData", () => {
     expect(() => buildTourData({ "23": ruleSet("23", [cat]) }, silent)).toThrow(/out of order/);
   });
 
+  it("errors on an out-of-sequence leading ordinal even when (Step n of N) is correct", () => {
+    const cat = coachingCat(2);
+    // Leading ordinal 9 on step 1, but "(Step 1 of 3)" stays correct — the (Step n of N)
+    // check passes, so only the leading-ordinal sequence check can catch this drift.
+    cat.arrowText = cat.arrowText.replace("1. Hazbot: First", "9. Hazbot: First");
+    expect(() => buildTourData({ "23": ruleSet("23", [cat]) }, silent)).toThrow(/leading ordinal 9 — out of sequence/);
+  });
+
   it("warns (does not error) when numbered visualFeedback count exceeds arrowText steps (the 34 shape)", () => {
     const cat = coachingCat(2);
     // Add a leading "0." intensity-scale cue → 4 numbered vF lines vs 3 steps.
