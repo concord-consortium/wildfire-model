@@ -48,6 +48,7 @@
     "lint:fix": "eslint --fix \"./src/**/*.{js,jsx,ts,tsx}\" \"./cypress/**/*.{js,jsx,ts,tsx}\"",
     "lint:style": "eslint -c \".eslintrc.style.js\" \"./src/**/*.{js,jsx,ts,tsx}\" \"./cypress/**/*.{js,jsx,ts,tsx}\"",
     "lint:style:fix": "eslint -c \".eslintrc.style.js\" \"./src/**/*.{js,jsx,ts,tsx}\" \"./cypress/**/*.{js,jsx,ts,tsx}\"",
+    "generate-hazbot-tour-data": "node scripts/generate-hazbot-tour-data.js",
     "test": "jest",
     "test:all": "npm-run-all build test start",
     "test:coverage": "jest --coverage",
