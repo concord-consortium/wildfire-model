@@ -97,6 +97,39 @@ describe("zone UI", () => {
   });
 });
 
+describe("tour anchor testids (WM-17)", () => {
+  let stores = createStores();
+  beforeEach(() => {
+    stores = createStores();
+    stores.simulation.zones = defaultTwoZones.map(opt => new Zone(opt));
+    stores.simulation.config.zonesCount = 2;
+    stores.ui.showTerrainUI = true;
+  });
+
+  it("exposes the panel container and Next button when open on the zone panel", () => {
+    render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+    // zonesCount defined → wizard opens on the zone-edit panel (1), which has Next.
+    expect(screen.getByTestId("terrain-panel-container")).toBeInTheDocument();
+    expect(screen.getByTestId("terrain-next")).toBeInTheDocument();
+  });
+
+  it("exposes the Wind section on the final panel", async () => {
+    render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+    // Advance to the wind panel (2), where the Wind section lives.
+    const nextButtons = screen.getAllByRole("button", { name: /next/i });
+    await userEvent.click(nextButtons[nextButtons.length - 1]);
+    expect(screen.getByTestId("terrain-wind")).toBeInTheDocument();
+  });
+});
+
 describe("vegetation selector", () => {
   let stores = createStores();
   beforeEach(() => {
