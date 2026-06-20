@@ -4,14 +4,38 @@ import Button from "@mui/material/Button";
 import { useStores } from "../use-stores";
 import { log } from "../log";
 import { getAnalysisEngine } from "../hazbot/wildfire";
+import { buildTour } from "../hazbot/wildfire/build-tour";
+import { tourData } from "../hazbot/wildfire/tour-data.generated";
+import { TourContext } from "../hazbot/wildfire/tour-map";
 import { computeMatchedCategoryForEngine } from "../hazbot/engine";
-import { createCoachmarksEngine } from "@concord-consortium/coachmarks";
+import { createCoachmarksEngine, EngineHandle, EngineStep } from "@concord-consortium/coachmarks";
+import { SimulationModel } from "../models/simulation";
 import HazbotBack from "../assets/bottom-bar/hazbot-back.svg";
 import HazbotEyes from "../assets/bottom-bar/hazbot-eyes.svg";
 import HazbotBlinks from "../assets/bottom-bar/hazbot-blinks.svg";
 
 import "@concord-consortium/coachmarks/styles/hazbot";
 import css from "./hazbot-button.scss";
+
+// Shared Hazbot coach-mark arrow geometry, used by BOTH the intro popover and the
+// walk-through tour so they match the Zeplin design (strokeWidth 3 = the hazbot
+// theme's 3px popover border). Anchored steps draw this arrow toward their target;
+// anchorless (viewport / degraded) popovers render arrowless, since they point at nothing.
+const HAZBOT_ARROW = { width: 36, height: 18, strokeWidth: 3 };
+
+// Distinct zones currently holding a spark, read at open time for the conditional
+// spark tours (23/4, 33/4, 35/6). simulation.sparks are bare Vector2 positions with
+// no zoneIdx, so map each to its cell's zoneIdx (the run-snapshot builder's path).
+// Source = live sparks (current on-screen placement) so the ring reflects what is
+// actually placed now.
+function countSparkZones(simulation: SimulationModel): number {
+  const zones = new Set<number>();
+  for (const s of simulation.sparks) {
+    const cell = simulation.cells.length > 0 ? simulation.cellAt(s.x, s.y) : undefined;
+    if (cell?.zoneIdx != null) zones.add(cell.zoneIdx);
+  }
+  return zones.size;
+}
 
 // Parse a category's `feedback` into the popover body + action-button label. The
 // avatar is the speaker, so strip the leading "Hazbot:" prefix; the single trailing
@@ -67,21 +91,30 @@ export const HazbotButton = observer(function HazbotButton() {
   const pulsing =
     ui.hazbotPulseArmed && simulation.simulationStarted && !simulation.simulationRunning;
 
-  // Coach-mark feedback panel. When ui.showHazbotFeedback flips true, open the
-  // styled `hazbot`-theme coach mark anchored to the robot face (avatarRef → popover
-  // centered over it, arrow pointing at it). The matched category's feedback is
-  // parsed into the popover body (leading "Hazbot:" stripped) and the action-button
-  // label (the trailing bracket token → doneBtnText), shown alongside the close (×)
-  // button. Every dismiss route (action button → onDestroyed; ×/Escape →
-  // onCancelRequested → destroy() → onDestroyed) resets ui.showHazbotFeedback, so a
-  // re-click reopens with the then-current category. `ringElement` targets the outer
-  // button for the optional outline ring (disabled here via showOutlineRing: false).
+  // Coach-mark feedback panel — a two-engine lifecycle (WM-17). When
+  // ui.showHazbotFeedback flips true:
+  //  1. INTRO: open the matched category's `feedback` popover anchored to the robot
+  //     face (avatarRef), with the robot-avatar badge SUPPRESSED (showAvatar:false) —
+  //     the intro already points at the robot, so the badge would be redundant. The
+  //     action button is the parsed trailing token (`[Show me]` / `[Okay]` / `[Hooray!]`).
+  //  2. TOUR: for a COACHING category (the token is `[Show me]`, so `buildTour` returns
+  //     a tour), activating that button destroys the intro engine and creates a GATED
+  //     tour engine (actionGated + showProgress + the avatar badge) that drives the
+  //     zipped walk-through. Non-coaching categories (`[Okay]`/`[Hooray!]`, no tour)
+  //     keep today's behavior: the intro popover is the whole interaction.
+  //
+  // `cleanup`/`introCancelled`/`tourCancelled` distinguish the real user routes
+  // (Show-me activation, terminal Done, ×/Escape) from a programmatic teardown
+  // (effect cleanup / unmount), since onDestroyed fires for every destroy route —
+  // without them the cleanup path would spuriously launch a tour or mis-log a
+  // Completed/Dismissed event.
   const avatarRef = useRef<HTMLSpanElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (!ui.showHazbotFeedback || !avatarRef.current) return;
     const engine = getAnalysisEngine();
     const matched = engine ? computeMatchedCategoryForEngine(engine) : null;
+    const ruleSetId = engine?.ruleSet?.id ?? null;
     const feedback =
       engine?.ruleSet?.categories.find((c) => c.id === matched)?.feedback ?? "";
     if (!feedback) {
@@ -93,36 +126,89 @@ export const HazbotButton = observer(function HazbotButton() {
     }
     const { body, label } = parseFeedback(feedback);
     const avatar = avatarRef.current;
-    let destroyed = false;
-    let cm: ReturnType<typeof createCoachmarksEngine> | null = null;
-    const open = () => {
-      if (destroyed) return;
-      cm = createCoachmarksEngine({
+
+    // Build the tour up front (read live sim state once). null → non-coaching category.
+    const ctx: TourContext = { sparkZoneCount: countSparkZones(simulation) };
+    const tour = (ruleSetId && matched != null) ? buildTour(ruleSetId, matched, ctx) : null;
+    const tourDoneLabel = (tour && ruleSetId && matched != null)
+      ? tourData[ruleSetId][matched].doneLabel
+      : "Got it!";
+
+    let phase: "intro" | "tour" | "done" = "intro";
+    let intro: EngineHandle | null = null;
+    let tourEngine: EngineHandle | null = null;
+    let introCancelled = false;
+    let tourCancelled = false;
+    let cleanup = false;
+
+    const openTour = (steps: EngineStep[]) => {
+      log("HazbotShowMeClicked", { ruleSetId, categoryId: matched, stepCount: steps.length });
+      let lastStepIndex = 0;
+      tourEngine = createCoachmarksEngine({
+        actionGated: true,                       // gated nav/keyboard/focus + wait-for-target
+        showProgress: true,
+        progressText: "{{current}} of {{total}}",
+        arrow: HAZBOT_ARROW,
+        // popoverOffset 27 (vs the intro's 25) yields the Zeplin ~9px arrow-tip→button
+        // gap: coachmarks places the popover box at popoverOffset and the arrow protrudes
+        // its height (18) toward the anchor, so visible gap = popoverOffset − arrowHeight.
+        popoverOffset: 27,
         showButtons: ["next", "close"],
-        doneBtnText: label || undefined, // single-step highlight renders doneBtnText
-        showOutlineRing: false, // no outline ring on this panel
-        popoverOffset: 25, // raise the popover for a gap between the arrow tip and the robot
-        // Arrow geometry per the Hazbot coach-mark design; strokeWidth 3 matches the
-        // hazbot theme's 3px popover border.
-        arrow: { width: 36, height: 18, strokeWidth: 3 },
-        onCancelRequested: () => { if (!destroyed) cm?.destroy(); },
-        onDestroyed: () => { destroyed = true; ui.showHazbotFeedback = false; },
+        doneBtnText: tourDoneLabel,              // "Got it!"
+        onHighlightStarted: (_el, _step, { state }) => { lastStepIndex = state.activeIndex; },
+        onCancelRequested: () => {
+          tourCancelled = true;
+          log("HazbotTourDismissed", { ruleSetId, categoryId: matched, lastStepIndex });
+          tourEngine?.destroy();
+        },
+        onDestroyed: () => {
+          // Completed ONLY on a terminal Done click: not cancelled (×/Escape), not cleanup.
+          if (!tourCancelled && !cleanup) {
+            log("HazbotTourCompleted", { ruleSetId, categoryId: matched, lastStepIndex });
+          }
+          if (!cleanup) { phase = "done"; ui.showHazbotFeedback = false; }
+        },
       });
-      cm.highlight({
-        element: avatar,                          // anchor: popover centered over the robot
+      tourEngine.drive(steps);
+    };
+
+    const openIntro = () => {
+      if (cleanup) return;
+      intro = createCoachmarksEngine({
+        showButtons: ["next", "close"],
+        doneBtnText: label || undefined,         // "Show me" / "Okay" / "Hooray!"
+        showOutlineRing: false,                  // no outline ring on the intro panel
+        showAvatar: false,                       // intro already points at the robot button
+        popoverOffset: 25,                       // gap between the arrow tip and the robot
+        arrow: HAZBOT_ARROW,
+        onCancelRequested: () => { introCancelled = true; intro?.destroy(); },
+        onDestroyed: () => {
+          // Launch the tour ONLY on a real Show-me activation (not ×/Escape, not cleanup).
+          if (phase === "intro" && !introCancelled && !cleanup && tour) {
+            phase = "tour";
+            openTour(tour);
+          } else if (!cleanup) {
+            phase = "done";
+            ui.showHazbotFeedback = false;
+          }
+        },
+      });
+      intro.highlight({
+        element: avatar,                              // anchor: popover centered over the robot
         ringElement: buttonRef.current ?? undefined, // ring target (inert; ring disabled)
         popover: { side: "top", align: "center", description: body },
       });
     };
-    // Open AFTER the `.coached` scale-up transition settles: a CSS transform does
-    // not fire floating-ui's ResizeObserver, so opening mid-grow would anchor to
+
+    // Open the INTRO after the `.coached` scale-up transition settles: a CSS transform
+    // does not fire floating-ui's ResizeObserver, so opening mid-grow would anchor to
     // the un-scaled robot. Wait for the avatar's transform transitionend (fallback
     // timeout in case it doesn't fire) so the popover offsets by the enlarged size.
     let opened = false;
     const openOnce = () => {
       if (opened) return; // whichever trigger fires first wins; the other no-ops
       opened = true;
-      open();
+      openIntro();
     };
     const onTransitionEnd = (e: TransitionEvent) => {
       if (e.propertyName === "transform") openOnce();
@@ -130,10 +216,13 @@ export const HazbotButton = observer(function HazbotButton() {
     avatar.addEventListener("transitionend", onTransitionEnd);
     const fallbackId = setTimeout(openOnce, 400);
     return () => {
-      destroyed = true;
+      // Programmatic teardown: set `cleanup` BEFORE destroying so neither engine's
+      // onDestroyed launches a tour or logs a Completed/Dismissed event.
+      cleanup = true;
       avatar.removeEventListener("transitionend", onTransitionEnd);
       clearTimeout(fallbackId);
-      cm?.destroy();
+      intro?.destroy();
+      tourEngine?.destroy();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ui.showHazbotFeedback]);
