@@ -45,7 +45,7 @@ So a category's tour = zip(`visualFeedback` targets/styles, `arrowText` text/ste
 - `EngineHandle.drive(steps)` — multi-step tours; `highlight(step)` — single step.
 - `AnchoredPopover` — popover anchored to a DOM element, with optional `ringElement` (outline ring) and `side`/`align`/`anchorOffset`.
 - `ViewportPopover` — no-anchor popover positioned by `position` (e.g. `top-center`), with an optional free-standing `arrow`. Covers "coach mark (no pointer) centered top" cues.
-- `showProgress` + `progressText` (`"{{current}} of {{total}}"`) — the "Step 2 of 3" stepper.
+- `showProgress` + `progressText` (`"Step {{current}} of {{total}}"`) — the "Step 2 of 3" stepper (styled per Zeplin: Lato 16px, centered, in the theme blue `#0050c4`, via the hazbot theme).
 - `showOutlineRing`, `arrow` geometry, `showButtons` (`next`/`previous`/`close`), `nextBtnText`/`prevBtnText`/`doneBtnText`.
 
 The library hazbot theme ([~/projects/coachmarks/src/styles/hazbot.css](file:///home/doug/projects/coachmarks/src/styles/hazbot.css)) does **not** currently render the robot avatar badge shown in the WM-17 reference screenshot (the red circular Hazbot face overlapping the popover's top-left). Adding the robot to the hazbot theme is part of this work; the cross-repo dev/publish loop is documented in [~/tmp/wildfire-yalc.md](file:///home/doug/tmp/wildfire-yalc.md).

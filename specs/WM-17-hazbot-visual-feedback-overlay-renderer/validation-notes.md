@@ -12,7 +12,7 @@ driven via the Playwright MCP per [CLAUDE.md](../../CLAUDE.md). Screenshots unde
 | Intro popover + `[Show me]`, avatar badge **suppressed** | 23/2, 24/2, 25/4 | ✅ "I can help! / Show me", no badge |
 | Gated tour launches on `[Show me]` (intro destroyed → gated `drive`) | 23/2 | ✅ |
 | Avatar badge **shown** on tour steps | 23/2, 24/2, 25/4 | ✅ |
-| `showProgress` "N of M" stepper | all | ✅ "1 of 3" … "4 of 4" |
+| `showProgress` "Step N of M" stepper (Zeplin: Lato 16px, centered, blue #0050c4) | all | ✅ "Step 1 of 3" … "Step 4 of 4" |
 | Outline ring on anchored steps | 23/2 | ✅ |
 | Forward-only gating (no passive Next on intermediate steps; close kept) | 23/2, 24/2 | ✅ only close btn on intermediate steps |
 | Arrow-tip→button gap ≈ 9px (box gap 27 − arrow height 18) | 23/2 (Restart, Setup) | ✅ 27px box gap measured |

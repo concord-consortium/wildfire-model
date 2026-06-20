@@ -147,7 +147,7 @@ export const HazbotButton = observer(function HazbotButton() {
       tourEngine = createCoachmarksEngine({
         actionGated: true,                       // gated nav/keyboard/focus + wait-for-target
         showProgress: true,
-        progressText: "{{current}} of {{total}}",
+        progressText: "Step {{current}} of {{total}}", // Zeplin: "Step N of M"
         arrow: HAZBOT_ARROW,
         // popoverOffset 27 (vs the intro's 25) yields the Zeplin ~9px arrow-tip→button
         // gap: coachmarks places the popover box at popoverOffset and the arrow protrudes

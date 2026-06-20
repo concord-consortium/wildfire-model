@@ -297,6 +297,7 @@ describe("Hazbot walk-through tour (WM-17)", () => {
     expect(engines).toHaveLength(2);
     expect(engines[1].opts.actionGated).toBe(true);
     expect(engines[1].opts.showProgress).toBe(true);
+    expect(engines[1].opts.progressText).toBe("Step {{current}} of {{total}}");
     expect(engines[1].opts.doneBtnText).toBe("Got it!");
     expect(engines[1].opts.showAvatar).toBeUndefined(); // badge shown on tour (library default)
     expect(engines[1].drive).toHaveBeenCalledTimes(1);

@@ -538,7 +538,7 @@ useEffect(() => {
     let lastStepIndex = 0;
     tourEngine = createCoachmarksEngine({
       actionGated: true,                    // gated nav/keyboard/focus + wait-for-target (pre.8)
-      showProgress: true, progressText: "{{current}} of {{total}}",
+      showProgress: true, progressText: "Step {{current}} of {{total}}", // Zeplin: "Step N of M"
       // Same hazbot arrow geometry as the intro so tour coach marks match the Zeplin design and the
       // intro styling (strokeWidth 3 = the theme's 3px border). popoverOffset = 27, derived from the
       // Zeplin tour mock: the measured arrow-tip→Setup-button gap is 9px (matching the design rule
@@ -663,7 +663,7 @@ For each of the 11 tabs, using the ruleset URL params + `window.test.*` helpers 
 `advanceOn` click advances; the Setup-panel / Next / Wind selector steps wait-for-target and anchor
 once present (especially **24**: Next→Wind across the wizard sub-panel swap exercises the Round-4
 held-anchor-removal fix); the terminal step shows `[Got it!]`, lands focus, and completes; the avatar
-badge shows on tour steps but not the intro; `showProgress` reads "N of M"; conditional spark steps
+badge shows on tour steps but not the intro; `showProgress` reads "Step N of M"; conditional spark steps
 (23/4, 33/4, 35/6) outline the Spark button only when one zone has a spark; 25/4 shows the placeholder
 mountain figure. Log `HazbotShowMeClicked`/`Completed`/`Dismissed` payloads observed in the
 log-monitor sidebar.
