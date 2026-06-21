@@ -6,6 +6,8 @@ import React, { useLayoutEffect, useMemo, useRef } from "react";
 import { observer } from "mobx-react";
 import * as THREE from "three";
 import { useStores } from "../../use-stores";
+import { Cell } from "../../models/cell";
+import { getGridIndexForLocation } from "../../models/utils/grid-utils";
 import { ftToViewUnit } from "./helpers";
 
 // Small vertical lift (view units) so the line floats just above the terrain surface.
@@ -22,9 +24,9 @@ export const ZoneLines = observer(function ZoneLines() {
     const cs = simulation.config.cellSize;
     const ratio = ftToViewUnit(simulation);
     const pts: number[] = [];
-    const cellAtGrid = (x: number, y: number) => cells[x + y * gridWidth];
+    const cellAtGrid = (x: number, y: number) => cells[getGridIndexForLocation(x, y, gridWidth)];
     // Average elevation of the two cells an edge divides, in view units, lifted.
-    const edgeZ = (a: any, b: any) => ((a.elevation + b.elevation) / 2) * ratio + Z_LIFT;
+    const edgeZ = (a: Cell, b: Cell) => ((a.elevation + b.elevation) / 2) * ratio + Z_LIFT;
     const push = (x1: number, y1: number, z: number, x2: number, y2: number) => {
       pts.push(x1 * cs * ratio, y1 * cs * ratio, z, x2 * cs * ratio, y2 * cs * ratio, z);
     };
@@ -61,7 +63,10 @@ export const ZoneLines = observer(function ZoneLines() {
 
   return (
     /* eslint-disable react/no-unknown-property */
-    <lineSegments ref={lineRef} renderOrder={2}>
+    // renderOrder 0 keeps the line below markers (sparks/towns/fire lines render
+    // at renderOrder 1) so they draw on top of it; depthTest:false still keeps it
+    // above the terrain surface (drawn in the earlier opaque pass).
+    <lineSegments ref={lineRef} renderOrder={0}>
       <bufferGeometry ref={geomRef} />
       <lineDashedMaterial
         attach="material"
