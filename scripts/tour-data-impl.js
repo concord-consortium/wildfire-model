@@ -137,6 +137,11 @@ function buildTourData(ruleSets, options = {}) {
 function renderArtifact(tourData) {
   const lines = [];
   lines.push(GENERATED_HEADER.trimEnd());
+  // Step text carries markdown bold (**…**) extracted from the sheet; a long
+  // bolded line can exceed the 160-col max-len. This file is generated, so the
+  // content isn't hand-wrapped — silence max-len (re-enabled at end-of-file to
+  // satisfy eslint-comments/disable-enable-pair).
+  lines.push("/* eslint-disable max-len */");
   lines.push("");
   lines.push("export interface TourStepText { text: string; }");
   lines.push("export interface TourData { stepCount: number; doneLabel: string; steps: TourStepText[]; }");
@@ -160,6 +165,7 @@ function renderArtifact(tourData) {
   }
 
   lines.push("};");
+  lines.push("/* eslint-enable max-len */");
   lines.push("");
   return lines.join("\n");
 }

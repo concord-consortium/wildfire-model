@@ -17,13 +17,13 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
     {
       id: 2,
       studentAction: "Ran the simulation with default setup values only",
-      feedback: `Hazbot: Click Setup and change the conditions to compare forest with and without suppression. Then run the model again.
+      feedback: `Hazbot: Click **Setup** and change the conditions to compare forest with and without suppression. Then run the model again.
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Next button on the Setup panel outlined; coach mark points to Next button`,
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
-2. Hazbot: Now click the Setup button. (Step 2 of 3)
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
+2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Set one zone to forest and the other zone to forest with suppression. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation AND NOT setAnyVar",
@@ -31,13 +31,13 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
     {
       id: 3,
       studentAction: "Ran the simulation with terrain, drought or wind changed but without assigning forest with and without suppression to each zone",
-      feedback: `Hazbot: Let’s focus on forests with and without suppression in the vegetation settings.
+      feedback: `Hazbot: Let’s focus on **forests with and without suppression** in the vegetation settings.
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Next button on the Setup panel outlined; coach mark points to Next button`,
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
-2. Hazbot: Now click the Setup button. (Step 2 of 3)
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
+2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Set one zone to forest and the other zone to forest with suppression. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "setAnyVar AND ranSimulation WITH NOT ForestWAWOSuppression",
@@ -45,13 +45,13 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
     {
       id: 4,
       studentAction: "Ran the simulation with forest and forest with suppression assigned but with different drought levels between the zones",
-      feedback: `Hazbot: To compare forest types, make sure the both zones have the same drought level!
+      feedback: `Hazbot: To compare forest types, make sure the both zones have the **same drought level**!
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
-2. Hazbot: Now click the Setup button. (Step 2 of 3)
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
+2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Click each zone and make sure the drought is the same. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation WITH ForestWAWOSuppression AND NOT UniformDroughtLevels",
@@ -59,13 +59,13 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
     {
       id: 5,
       studentAction: "Ran the simulation with forest with and without suppression assigned but different terrains between the zones",
-      feedback: `Hazbot: To compare forest types, make sure both zones have mountains.
+      feedback: `Hazbot: To compare forest types, make sure **both zones have mountains.**
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
-2. Hazbot: Now click the Setup button. (Step 2 of 3)
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
+2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Click each zone and make sure the terrain is the same. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation WITH ForestWAWOSuppression AND NOT UniformTerrainTypes",
@@ -73,14 +73,14 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
     {
       id: 6,
       studentAction: "Ran the simulation with forest with and without suppression, same drought and terrain types between zones, but without a spark in each zone",
-      feedback: `Hazbot: I don’t see a spark in both zones. Add one spark to each so you can compare wildfire spread.
+      feedback: `Hazbot: I don’t see a **spark in both zones.** Add one spark to each so you can compare wildfire spread.
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Coach mark (no pointer) centered top
      - If 2 sparks were placed, do not outline the Spark button.
      - If only one spark was placed, then the Spark button is outlined.`,
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 2)
-2. Hazbot: Place one Spark in Zone 1 and one Spark in Zone 2, then run the model again. (Step 2 of 2)
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 2)
+2. Hazbot: Place one **Spark** in Zone 1 and one **Spark** in Zone 2, then run the model again. (Step 2 of 2)
 [Got it!]`,
       expression: "ranSimulation WITH ForestWAWOSuppression AND UniformTerrainTypes AND UniformDroughtLevels AND NOT OneSparkPerZone",
     },

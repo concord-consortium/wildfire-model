@@ -21,8 +21,8 @@ export const ruleSet42: RuleSet<WildfireDefaults> = {
 [Show me]`,
       visualFeedback: `1. Reload button outlined; coach mark points to Reload button
 2. Start button outlined; coach mark points to Start button`,
-      arrowText: `1. Hazbot: First, Reload your model. (Step 1 of 2)
-2. Hazbot: Click to Start to run the model! (Step 2 of 2)
+      arrowText: `1. Hazbot: First, **Reload** your model. (Step 1 of 2)
+2. Hazbot: Click to **Start** to run the model! (Step 2 of 2)
 [Got it!]`,
       expression: "setAnyVar",
     },

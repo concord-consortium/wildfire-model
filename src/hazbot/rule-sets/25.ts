@@ -9,7 +9,7 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
     {
       id: 1,
       studentAction: "Did not run the simulation A.k.a. Click button (before they do anything else)",
-      feedback: `Hazbot: I will analyze your model after you run it. Scroll up to see the instructions at the top of the page!
+      feedback: `Hazbot: I will analyze your model after you run it. **Scroll up** to see the instructions at the top of the page!
 [Okay]`,
       visualFeedback: "",
       expression: "NOT ranSimulation",
@@ -17,11 +17,11 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
     {
       id: 2,
       studentAction: "Ran the simulation with only one spark",
-      feedback: `Hazbot: I only see 1 spark. Make sure each zone has a spark!
+      feedback: `Hazbot: I only see 1 spark. Make sure **each zone** has a spark!
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Spark button outlined; coach mark (no pointer) centered top`,
-      arrowText: `1. Hazbot: Restart your model first. (Step 1 of 2)
+      arrowText: `1. Hazbot: **Restart** your model first. (Step 1 of 2)
 2. Hazbot: Place one spark in Zone 1 and one spark in Zone 2, then run the model again. (Step 2 of 2)
 [Got it!]`,
       expression: "ranSimulation WITH NOT TwoSparks",
@@ -29,11 +29,11 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
     {
       id: 3,
       studentAction: "Ran the simulation with two sparks in the same zone.",
-      feedback: `Hazbot: I see 2 sparks in the same zone. Let's make sure that each zone has 1 spark!
+      feedback: `Hazbot: I see 2 sparks in the same zone. Let's make sure that **each zone** has 1 spark!
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Coach mark (no pointer) centered top`,
-      arrowText: `1. Hazbot: Restart your model first. (Step 1 of 2)
+      arrowText: `1. Hazbot: **Restart** your model first. (Step 1 of 2)
 2. Hazbot: Place one spark in Zone 1 and one spark in Zone 2, then run the model again. (Step 2 of 2)
 [Got it!]`,
       expression: "ranSimulation WITH NOT OneSparkPerZone AND TwoSparks",
@@ -45,8 +45,8 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Coach mark (no pointer) with images of the bottom of a mountain and top of a mountain  plus arrows pointing to these, centered top`,
-      arrowText: `1. Hazbot: Restart your model first. (Step 1 of 2)
-2. Hazbot: Place one spark at the bottom of a mountain in one zone and one spark at the top of a mountain in the other zone, then run the model again. (Step 2 of 2)
+      arrowText: `1. Hazbot: **Restart** your model first. (Step 1 of 2)
+2. Hazbot: Place one spark at the **bottom of a mountain** in one zone and one spark at the **top of a mountain** in the other zone, then run the model again. (Step 2 of 2)
 [Got it!]`,
       expression: "ranSimulation WITH OneSparkPerZone AND NOT SparksAtTopAndBottom",
     },
@@ -58,8 +58,8 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
-2. Hazbot: Now click the Setup button. (Step 2 of 3)
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
+2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Make sure the conditions are the same in each zone. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation WITH OneSparkPerZone AND SparksAtTopAndBottom AND NOT UniformZoneSettings",
