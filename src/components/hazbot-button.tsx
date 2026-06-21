@@ -158,6 +158,7 @@ export const HazbotButton = observer(function HazbotButton() {
       let lastStepIndex = 0;
       tourEngine = createCoachmarksEngine({
         actionGated: true,                       // gated nav/keyboard/focus + wait-for-target
+        onTargetLost: "close",                   // close the tour if a step's anchor unmounts (vs degrade-to-centered)
         showProgress: true,
         progressText: "Step {{current}} of {{total}}", // Zeplin: "Step N of M"
         arrow: HAZBOT_ARROW,
