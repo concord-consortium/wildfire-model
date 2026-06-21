@@ -11,3 +11,5 @@ declare module "*.png" {
 }
 declare module "shutterbug";
 declare module "chartjs-plugin-annotation";
+// coachmarks hazbot theme stylesheet (side-effect CSS import via package exports).
+declare module "@concord-consortium/coachmarks/styles/hazbot";
