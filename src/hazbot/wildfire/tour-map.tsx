@@ -20,10 +20,16 @@ import MountainPlaceholder from "../../assets/hazbot/mountain-placeholder.svg";
 //   - 34's `0.` intensity-scale pointer is deferred (the tour is its 3 arrowText steps).
 // The authored instruction text is unaffected in every case.
 
+/** Popover placement around an anchored control (floating-ui sides/alignments). */
+export type PopoverSide = "top" | "right" | "bottom" | "left";
+export type PopoverAlign = "start" | "center" | "end";
+
 export type StepAnchor =
   // Bubble anchored to a control. The engine's showOutlineRing draws the ring on it;
   // intermediate steps advance on click (added by the renderer, not the map).
-  | { kind: "anchor"; testid: AnchorTestId }
+  // `side`/`align` override the renderer's top/center default (build-tour.ts) — e.g.
+  // the Setup-panel terminal sits to the panel's RIGHT so it clears the tall panel.
+  | { kind: "anchor"; testid: AnchorTestId; side?: PopoverSide; align?: PopoverAlign }
   // No-pointer bubble centered at top; no ring (a ViewportPopover has no ring).
   // Optional figure rendered in the popover's image slot.
   | { kind: "viewport"; position: "top-center"; image?: ReactNode };
@@ -37,8 +43,16 @@ export interface TourContext {
 export type TourFactory = (ctx: TourContext) => StepAnchor[];
 
 // Shorthand builders for readability.
-const anchor = (testid: AnchorTestId): StepAnchor => ({ kind: "anchor", testid });
+const anchor = (testid: AnchorTestId, side?: PopoverSide, align?: PopoverAlign): StepAnchor =>
+  ({ kind: "anchor", testid, ...(side && { side }), ...(align && { align }) });
 const viewportTop = (image?: ReactNode): StepAnchor => ({ kind: "viewport", position: "top-center", image });
+
+// The Setup-panel terminal bubble: anchored to the RIGHT of the panel (vertically
+// centered) rather than above it. The panel is tall (~465px) and horizontally centered
+// (terrain-panel.scss), so a top-anchored bubble would overlap it; the right side has
+// room to spare. On panel close (the terminal "…run again" instruction) it degrades to
+// a centered bubble via pre.8's gated degrade-on-removal, so `side` only applies while open.
+const setupPanel = (): StepAnchor => anchor("terrain-panel-container", "right");
 
 // The conditional spark step (23/4, 33/4, 35/6): when a zone is still missing its
 // spark, anchor the bubble + ring to the Spark button; when both zones already have
@@ -51,8 +65,8 @@ const conditionalSparkStep = (ctx: TourContext): StepAnchor =>
 export const tourMap: Record<string, Record<number, TourFactory>> = {
   // 23 — Setup-conditions tours; terminal step anchored to the Setup panel.
   "23": {
-    2: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-panel-container")],
-    3: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-panel-container")],
+    2: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
+    3: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
     4: (ctx) => [anchor("restart-button"), conditionalSparkStep(ctx)],
   },
   // 24 — Restart → Setup → Next → Wind (the held-anchor-removal case on Next→Wind).
@@ -70,26 +84,26 @@ export const tourMap: Record<string, Record<number, TourFactory>> = {
     // Mountain imagery (placeholder) in a centered-top bubble.
     4: () => [anchor("restart-button"), viewportTop(<MountainPlaceholder aria-hidden />)],
     // Setup-panel tour.
-    5: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-panel-container")],
+    5: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
   },
   // 32 — Setup tours + a Spark-button terminal.
   "32": {
-    2: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-panel-container")],
-    3: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-panel-container")],
-    4: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-panel-container")],
+    2: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
+    3: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
+    4: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
     5: () => [anchor("restart-button"), anchor("spark-button")],
   },
   // 33 — Setup tours + a conditional spark step.
   "33": {
-    2: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-panel-container")],
-    3: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-panel-container")],
+    2: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
+    3: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
     4: (ctx) => [anchor("restart-button"), conditionalSparkStep(ctx)],
-    5: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-panel-container")],
+    5: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
   },
   // 34 — Setup tours (the `0.` intensity-scale pointer is deferred; tour = 3 steps).
   "34": {
-    2: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-panel-container")],
-    3: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-panel-container")],
+    2: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
+    3: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
   },
   // 35 — vegetation/terrain tours. Per visualFeedback, 35/2 and 35/3 terminate on the
   // Setup-panel Next button; 35/4 and 35/5 terminate on the Setup panel; 35/6 is the
@@ -97,8 +111,8 @@ export const tourMap: Record<string, Record<number, TourFactory>> = {
   "35": {
     2: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-next")],
     3: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-next")],
-    4: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-panel-container")],
-    5: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-panel-container")],
+    4: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
+    5: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
     6: (ctx) => [anchor("restart-button"), conditionalSparkStep(ctx)],
   },
   // 42 — Reload → Start.
@@ -118,7 +132,7 @@ export const tourMap: Record<string, Record<number, TourFactory>> = {
   },
   // 54 — Setup tour; and a Restart → Fireline (ring Fireline only, v1).
   "54": {
-    2: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-panel-container")],
+    2: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
     3: () => [anchor("restart-button"), anchor("fireline-button")],
   },
 };

@@ -54,7 +54,9 @@ export function buildTour(
     return {
       target: `[data-testid="${a.testid}"]`,
       ...(isLast ? {} : { advanceOn: { event: "click" as const } }),
-      popover: { side: "top" as const, align: "center" as const, description },
+      // Default top/center; the map may override per anchor (e.g. the Setup-panel
+      // terminal sits to the panel's right so it clears the tall, centered panel).
+      popover: { side: a.side ?? "top", align: a.align ?? "center", description },
     };
   });
 }
