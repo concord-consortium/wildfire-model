@@ -25,8 +25,18 @@ export const ZoneLines = observer(function ZoneLines() {
     const ratio = ftToViewUnit(simulation);
     const pts: number[] = [];
     const cellAtGrid = (x: number, y: number) => cells[getGridIndexForLocation(x, y, gridWidth)];
+    // fillTerrainEdges zeros the elevation of perimeter cells (left/right columns
+    // and top row) to build the terrain's edge wall. Draping the line over those
+    // zeros makes it dive to the base at the edges, so use the nearest interior
+    // cell's elevation for an edge cell instead.
+    const displayElevation = (cell: Cell) => {
+      if (!simulation.isTerrainEdge(cell.x, cell.y)) return cell.elevation;
+      const ix = cell.x === 0 ? 1 : cell.x === gridWidth - 1 ? gridWidth - 2 : cell.x;
+      const iy = cell.y === 0 ? 1 : cell.y;
+      return (cellAtGrid(ix, iy) ?? cell).elevation;
+    };
     // Average elevation of the two cells an edge divides, in view units, lifted.
-    const edgeZ = (a: Cell, b: Cell) => ((a.elevation + b.elevation) / 2) * ratio + Z_LIFT;
+    const edgeZ = (a: Cell, b: Cell) => ((displayElevation(a) + displayElevation(b)) / 2) * ratio + Z_LIFT;
     const push = (x1: number, y1: number, z: number, x2: number, y2: number) => {
       pts.push(x1 * cs * ratio, y1 * cs * ratio, z, x2 * cs * ratio, y2 * cs * ratio, z);
     };
