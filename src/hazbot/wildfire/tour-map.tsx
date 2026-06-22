@@ -1,6 +1,6 @@
 import React, { ReactNode } from "react";
 import { AnchorTestId } from "./anchor-testids";
-import MountainPlaceholder from "../../assets/hazbot/mountain-placeholder.svg";
+import mountainImg from "../../assets/hazbot/mountain.png";
 
 // The (ruleSetId, categoryId) → tour anchor map (WM-17).
 //
@@ -81,8 +81,9 @@ export const tourMap: Record<string, Record<number, TourFactory>> = {
     2: () => [anchor("restart-button"), anchor("spark-button")],
     // "Coach mark (no pointer) centered top" → plain centered-top bubble, no ring.
     3: () => [anchor("restart-button"), viewportTop()],
-    // Mountain imagery (placeholder) in a centered-top bubble.
-    4: () => [anchor("restart-button"), viewportTop(<MountainPlaceholder aria-hidden />)],
+    // Mountain imagery in a centered-top bubble. Sized to fit the figure slot (179×120,
+    // the new image's aspect ratio fitted inside the prior 240×120 placeholder bounds).
+    4: () => [anchor("restart-button"), viewportTop(<img src={mountainImg} width={179} height={120} alt="" />)],
     // Setup-panel tour.
     5: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
   },

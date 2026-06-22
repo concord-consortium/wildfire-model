@@ -1,6 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="240" height="120" viewBox="0 0 240 120" role="img" aria-hidden="true">
-  <rect width="240" height="120" fill="#eef2f7" stroke="#0050c4" stroke-width="2"/>
-  <polygon points="40,100 90,40 140,100" fill="none" stroke="#0050c4" stroke-width="2"/>
-  <polygon points="120,100 170,55 220,100" fill="none" stroke="#0050c4" stroke-width="2"/>
-  <text x="120" y="115" text-anchor="middle" font-family="sans-serif" font-size="11" fill="#0050c4">TBD: Mountain image</text>
-</svg>
