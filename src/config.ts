@@ -74,6 +74,8 @@ export interface ISimulationConfig {
   helitackDropRadius: number; // ft
   // Renders burn index.
   showBurnIndex: boolean;
+  // Renders dashed lines along the boundaries between zones.
+  showZoneLines: boolean;
   // Displays alert with current coordinates on mouse click. Useful for authoring.
   showCoordsOnClick: boolean;
   // Number between 0 and 1 which decides how likely is for unburnt island to form (as it's random).
@@ -194,6 +196,7 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   maxFireLineLength: 15000, // ft
   helitackDropRadius: 2640, // ft (5280 ft = 1 mile)
   showBurnIndex: true,
+  showZoneLines: false,
   showCoordsOnClick: false,
   unburntIslandProbability: 0.5, // [0, 1]
   fireSurvivalProbability: 0.1, // [0, 1]

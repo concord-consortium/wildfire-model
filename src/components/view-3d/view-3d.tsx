@@ -5,6 +5,7 @@ import { observer, Provider } from "mobx-react";
 import { useStores } from "../../use-stores";
 import { DEFAULT_UP, ftToViewUnit, PLANE_WIDTH, planeHeight } from "./helpers";
 import { Terrain } from "./terrain";
+import { ZoneLines } from "./zone-lines";
 import { SparksContainer } from "./spark";
 import * as THREE from "three";
 import { FireLineMarkersContainer } from "./fire-line-marker";
@@ -214,6 +215,7 @@ export const View3d = observer(function View3d() {
         />
         <hemisphereLight args={[0xC6C2B6, 0x3A403B, 1.2]} up={DEFAULT_UP}/>
         <Terrain ref={terrainRef}/>
+        <ZoneLines/>
         <SparksContainer dragPlane={terrainRef}/>
         <FireLineMarkersContainer dragPlane={terrainRef}/>
         <TownMarkersContainer/>
