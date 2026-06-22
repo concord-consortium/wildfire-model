@@ -17,17 +17,13 @@ import HazbotBlinks from "../assets/bottom-bar/hazbot-blinks.svg";
 import "@concord-consortium/coachmarks/styles/hazbot";
 import css from "./hazbot-button.scss";
 
-// Shared Hazbot coach-mark arrow geometry, used by BOTH the intro popover and the
-// walk-through tour so they match the Zeplin design (strokeWidth 3 = the hazbot
-// theme's 3px popover border). Anchored steps draw this arrow toward their target;
-// anchorless (viewport / degraded) popovers render arrowless, since they point at nothing.
+// Shared coach-mark arrow geometry for both the intro popover and the tour, matching
+// the Zeplin design (strokeWidth 3 = the hazbot theme's 3px popover border).
 const HAZBOT_ARROW = { width: 36, height: 18, strokeWidth: 3 };
 
 // Distinct zones currently holding a spark, read at open time for the conditional
-// spark tours (23/4, 33/4, 35/6). simulation.sparks are bare Vector2 positions with
-// no zoneIdx, so map each to its cell's zoneIdx (the run-snapshot builder's path).
-// Source = live sparks (current on-screen placement) so the ring reflects what is
-// actually placed now.
+// spark tours (23/4, 33/4, 35/6). sparks are bare Vector2 positions, so map each to
+// its cell's zoneIdx.
 function countSparkZones(simulation: SimulationModel): number {
   const zones = new Set<number>();
   for (const s of simulation.sparks) {
@@ -52,18 +48,14 @@ export function parseFeedback(raw: string): { body: string; label: string } {
 
 // The Hazbot Analysis button (bottom bar), a MobX `observer` child of BottomBar.
 // Clicking it opens the coach-mark feedback panel (the effect below) and logs the
-// matched category. It reads the analysis engine directly via getAnalysisEngine() +
-// computeMatchedCategoryForEngine() — a pure read at click/open time — rather than
-// the reactive useAnalysisEngine() hook, since the matched category is only needed
-// at those moments, not live while the popover is open. Run-state + the pulse flag
-// come from useStores(); the layered avatar (Back + Eyes/Blinks) drives the random
-// blink.
+// matched category. It reads the engine directly (getAnalysisEngine() +
+// computeMatchedCategoryForEngine()) rather than the reactive useAnalysisEngine() hook,
+// since the matched category is only needed at click/open time, not live while open.
 export const HazbotButton = observer(function HazbotButton() {
   const { ui, simulation } = useStores();
 
-  // Random blink (AP-79). Local presentation state only — no store/engine coupling.
-  // Recursive setTimeout cycle; the mounted ref hardens the board sketch so no
-  // setBlink fires after unmount.
+  // Random blink (AP-79): local presentation state, no store/engine coupling. A
+  // recursive setTimeout cycle; the `mounted` ref prevents setBlink after unmount.
   const [blink, setBlink] = useState(false);
   const mounted = useRef(true);
   useEffect(() => {
@@ -76,8 +68,8 @@ export const HazbotButton = observer(function HazbotButton() {
         setBlink(true);                    // eyes closed
         timeout = setTimeout(() => {
           if (!mounted.current) return;
-          setBlink(false);                 // eyes open
-          timeout = setTimeout(loop, 80);  // small pause, then restart
+          setBlink(false);                 // eyes open, then a short pause before the next blink
+          timeout = setTimeout(loop, 80);
         }, 180);
       }, 1000 + Math.random() * 2500);     // random idle before next blink
     };
@@ -154,20 +146,20 @@ export const HazbotButton = observer(function HazbotButton() {
 
     const openTour = (steps: EngineStep[]) => {
       log("HazbotShowMeClicked", { ruleSetId, categoryId: matched, stepCount: steps.length });
-      setTourActive(true); // fade the button + hide its robot ("No Hazbot Default" state)
+      setTourActive(true);
       let lastStepIndex = 0;
       tourEngine = createCoachmarksEngine({
         actionGated: true,                       // gated nav/keyboard/focus + wait-for-target
         onTargetLost: "close",                   // close the tour if a step's anchor unmounts (vs degrade-to-centered)
         showProgress: true,
-        progressText: "Step {{current}} of {{total}}", // Zeplin: "Step N of M"
+        progressText: "Step {{current}} of {{total}}",
         arrow: HAZBOT_ARROW,
         // popoverOffset 27 (vs the intro's 25) yields the Zeplin ~9px arrow-tip→button
         // gap: coachmarks places the popover box at popoverOffset and the arrow protrudes
         // its height (18) toward the anchor, so visible gap = popoverOffset − arrowHeight.
         popoverOffset: 27,
         showButtons: ["next", "close"],
-        doneBtnText: tourDoneLabel,              // "Got it!"
+        doneBtnText: tourDoneLabel,
         onHighlightStarted: (_el, _step, { state }) => { lastStepIndex = state.activeIndex; },
         onCancelRequested: () => {
           tourCancelled = true;
@@ -190,7 +182,7 @@ export const HazbotButton = observer(function HazbotButton() {
       intro = createCoachmarksEngine({
         showButtons: ["next", "close"],
         doneBtnText: label || undefined,         // "Show me" / "Okay" / "Hooray!"
-        showOutlineRing: false,                  // no outline ring on the intro panel
+        showOutlineRing: false,
         showAvatar: false,                       // intro already points at the robot button
         popoverOffset: 25,                       // gap between the arrow tip and the robot
         arrow: HAZBOT_ARROW,
@@ -207,7 +199,7 @@ export const HazbotButton = observer(function HazbotButton() {
         },
       });
       intro.highlight({
-        element: avatar,                              // anchor: popover centered over the robot
+        element: avatar,
         ringElement: buttonRef.current ?? undefined, // ring target (inert; ring disabled)
         popover: { side: "top", align: "center", description: body },
       });
@@ -241,18 +233,14 @@ export const HazbotButton = observer(function HazbotButton() {
   }, [ui.showHazbotFeedback]);
 
   const handleClick = () => {
-    // Open the feedback panel (the effect above renders it off this flag).
-    ui.showHazbotFeedback = true;
+    ui.showHazbotFeedback = true;          // the effect above renders the panel off this flag
     // Acknowledge the run — stop pulsing until the next run completes.
     ui.hazbotPulseArmed = false;
-    // Log the request with the matched category, consistent with the other
-    // bottom-bar *ButtonClicked events. Pure engine read (no hook/provider).
-    // computeMatchedCategoryForEngine returns number | null; carry null explicitly.
-    // NOTE: log() routes EVERY event through engine.consume() (log.ts). This event
-    // reaches the engine like any other, but is a deliberate no-op via translate()'s
-    // `default` branch — it must stay unhandled in translate.ts, otherwise the click
-    // would mutate the matched category it just reported. We read matchedCategory
-    // BEFORE log() regardless, so the payload reflects pre-click state.
+    // Log the request with the matched category, consistent with the other bottom-bar
+    // *ButtonClicked events. NOTE: log() routes EVERY event through engine.consume()
+    // (log.ts), so HazbotButtonClicked must stay a deliberate no-op in translate.ts —
+    // otherwise the click would mutate the matched category it just reported. We read
+    // matchedCategory BEFORE log() so the payload reflects pre-click state.
     const engine = getAnalysisEngine();
     const matchedCategory = engine ? computeMatchedCategoryForEngine(engine) : null;
     log("HazbotButtonClicked", { matchedCategory });

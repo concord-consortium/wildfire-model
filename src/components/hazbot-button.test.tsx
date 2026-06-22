@@ -264,7 +264,7 @@ describe("Hazbot feedback panel", () => {
   });
 });
 
-describe("Hazbot walk-through tour (WM-17)", () => {
+describe("Hazbot walk-through tour", () => {
   // A coaching engine: ruleSet.id "23" with category 2 (a [Show me] coaching category
   // present in tour-data.generated). The intro reads engine.ruleSet.{id,categories}.
   function coachingEngine() {

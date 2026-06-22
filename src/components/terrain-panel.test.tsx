@@ -97,7 +97,7 @@ describe("zone UI", () => {
   });
 });
 
-describe("tour anchor testids (WM-17)", () => {
+describe("tour anchor testids", () => {
   let stores = createStores();
   beforeEach(() => {
     stores = createStores();
