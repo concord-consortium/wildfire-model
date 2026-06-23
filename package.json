@@ -48,6 +48,7 @@
     "lint:fix": "eslint --fix \"./src/**/*.{js,jsx,ts,tsx}\" \"./cypress/**/*.{js,jsx,ts,tsx}\"",
     "lint:style": "eslint -c \".eslintrc.style.js\" \"./src/**/*.{js,jsx,ts,tsx}\" \"./cypress/**/*.{js,jsx,ts,tsx}\"",
     "lint:style:fix": "eslint -c \".eslintrc.style.js\" \"./src/**/*.{js,jsx,ts,tsx}\" \"./cypress/**/*.{js,jsx,ts,tsx}\"",
+    "generate-hazbot-tour-data": "node scripts/generate-hazbot-tour-data.js",
     "test": "jest",
     "test:all": "npm-run-all build test start",
     "test:coverage": "jest --coverage",
@@ -122,7 +123,7 @@
     "webpack-dev-server": "^4.15.0"
   },
   "dependencies": {
-    "@concord-consortium/coachmarks": "0.0.1-pre.7",
+    "@concord-consortium/coachmarks": "0.0.1-pre.9",
     "@concord-consortium/lara-interactive-api": "^1.13.0",
     "@concord-consortium/log-monitor": "^1.0.0",
     "@emotion/react": "^11.11.0",

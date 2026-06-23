@@ -9,7 +9,7 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
     {
       id: 1,
       studentAction: "Did not run the simulation. A.k.a. Click button (before they do anything else)",
-      feedback: `Hazbot: I will analyze your model after you run it. Scroll up to see the instructions at the top of the page!
+      feedback: `Hazbot: I will analyze your model after you run it. **Scroll up** to see the instructions at the top of the page!
 [Okay]`,
       visualFeedback: "",
       expression: "NOT ranSimulation",
@@ -17,13 +17,13 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
     {
       id: 2,
       studentAction: "Ran the simulation with default setup values only",
-      feedback: `Hazbot: Looks like you haven’t changed the Setup yet. I can help!
+      feedback: `Hazbot: Looks like you haven’t changed the **Setup** yet. I can help!
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
-2. Hazbot: Now click the Setup button. (Step 2 of 3)
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
+2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Click each zone and change the vegetation to forest in one zone and forest with suppression in the other zone. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation AND NOT setAnyVar",
@@ -36,8 +36,8 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
-2. Hazbot: Now click the Setup button. (Step 2 of 3)
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
+2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Click each zone and change the vegetation to forest in one zone and forest with suppression in the other zone. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "setAnyVar AND ranSimulation WITH NOT ForestWAWOSuppression",
@@ -51,7 +51,7 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
 2. Coach mark (no pointer) centered top
      - If 2 sparks were placed, do not outline the Spark button.
      - If only one spark was placed, then the Spark button is outlined.`,
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 2)
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 2)
 2. Hazbot: Now make sure there is a spark in each zone. Then run the model again. (Step 2 of 2)
 [Got it!]`,
       expression: "ranSimulation WITH ForestWAWOSuppression AND NOT OneSparkPerZone",
@@ -64,8 +64,8 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
-2. Hazbot: Now click the Setup button. (Step 2 of 3)
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
+2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Click each zone and adjust the drought level. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation WITH ForestWAWOSuppression AND OneSparkPerZone AND NOT UniformDroughtLevels",

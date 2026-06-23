@@ -26,6 +26,9 @@ Each generated file starts with `// AUTO-GENERATED — DO NOT EDIT — re-run sc
 > **Note — the committed rule-set modules are intentionally not a clean regenerate (WM-27).**
 > WM-27 removed the per-rule-set `defaults` field by a surgical hand-edit, leaving every other line of `src/hazbot/rule-sets/*.ts` at its older-spreadsheet revision. Regenerating the modules before WM-18 lands will reintroduce unrelated `details`/wording drift from the newer spreadsheet. WM-18 owns reconciling the modules with a clean regenerate; until then, avoid committing a full re-extract of the rule-set modules.
 
+> **Note — text bolding in the sheet is dropped on extraction (candidate WM-18 enhancement).**
+> The Feedback Tables sheet bolds key words in `feedback` / `arrowText` (e.g. **Restart**, **Setup**, **Next**, **Wind Direction**, **Scroll up!**) — verified ~127 bold runs across ~65 strings in the `2026-06-19` export. The extractor reads cell **values** via `read-excel-file` (`readXlsxFile(inputPath, { getSheets: true })`, [extract-hazbot-sheets.js](../scripts/extract-hazbot-sheets.js)), which does **not** expose rich-text run formatting, so the committed rule-set modules carry **no** markdown bold. To preserve it, change the read path to one that surfaces runs — e.g. `exceljs` (`cell.value.richText: [{ font: { bold }, text }]`) or a direct `xl/sharedStrings.xml` parse — and emit each bold run as `**…**`. The rendering side is already markdown-bold-ready: `parseFeedback` leaves `**…**` intact and the coachmarks popover renders it, so once the extractor emits bold it shows in both the WM-16 intro popover and the WM-17 tour steps with no renderer change. WM-17 cannot source this itself: its tour-data generator reads the already-stripped committed modules. (Watch for a mid-word artifact in the sheet — one run is bolded as `**Wind Directio**n`; normalize or fix at source.)
+
 ## 2. Inspect the generated diff
 
 ```sh
@@ -113,6 +116,14 @@ node scripts/generate-hazbot-validation-playbook.js
 
 This regenerates `docs/hazbot-validation/<id>.md` for every rule set (loadable or not). Commit the updated docs alongside the rule-set changes.
 
+## 6a. Re-generate the Hazbot tour data (WM-17)
+
+```sh
+npm run generate-hazbot-tour-data
+```
+
+This re-parses every coaching category's `arrowText` (split into steps, strip the `Hazbot:` prefix and the `(Step n of N)` suffix, extract the `[Got it!]` done label) and rewrites `src/hazbot/wildfire/tour-data.generated.ts` — the build-time artifact the visual-feedback tour renderer consumes. It reads the committed rule-set modules (not the xlsx), so run it whenever any `arrowText` changes. The generator **errors** (non-zero exit, no write) on an authoring mistake — a tour not ending in `[Got it!]`, a missing/out-of-order `(Step n of N)`, or a step-count vs `N` mismatch — and **warns** on a numbered-`visualFeedback`/`arrowText` step-count mismatch (e.g. ruleset 34's extra `0.` intensity-scale cue) or a numbered-`visualFeedback` category with no `arrowText`. Note: when an `arrowText` anchor or step is added/removed, also update the hand-authored anchor map `src/hazbot/wildfire/tour-map.tsx` so its step count stays in sync (the `tour-map.test.ts` invariants enforce this).
+
 ## 7. Bump APP_RULES_VERSION
 
 Increment `src/hazbot/wildfire/rules-version.ts`:
@@ -148,6 +159,7 @@ Group these in one PR:
 - [ ] New / updated factor-variable + sim-prop impls in `src/hazbot/wildfire/`.
 - [ ] New per-rule-set test files for newly-loadable tabs.
 - [ ] Regenerated `docs/hazbot-validation/*.md` playbook docs.
+- [ ] Regenerated `src/hazbot/wildfire/tour-data.generated.ts` if any `arrowText` changed (`npm run generate-hazbot-tour-data`).
 - [ ] `APP_RULES_VERSION` bumped (if semantic change).
 - [ ] All tests pass (`npm test`).
 - [ ] Lint passes (`npm run lint`).

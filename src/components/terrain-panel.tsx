@@ -233,7 +233,10 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
     <div className={`${css.terrain} ${ui.showTerrainUI ? "" : css.disabled}`}>
       {
         ui.showTerrainUI &&
-        <div className={`${css.background} ${cssClasses[selectedZone]} ${panelClasses[currentPanel]}`}>
+        <div
+          className={`${css.background} ${cssClasses[selectedZone]} ${panelClasses[currentPanel]}`}
+          data-testid="terrain-panel-container"
+        >
           <button
             type="button"
             className={css.closeButton}
@@ -255,7 +258,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
                 <ZonesCountSelector zonesCount={zonesCount} onChange={handleZonesCountChange} />
               </div>
               <div className={css.buttonContainer}>
-                <Button className={css.continueButton} onClick={showNextPanel}>
+                <Button className={css.continueButton} onClick={showNextPanel} data-testid="terrain-next">
                   Next
                 </Button>
               </div>
@@ -315,7 +318,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
                     Previous
                   </Button>
                 }
-                <Button className={css.continueButton} onClick={showNextPanel}>
+                <Button className={css.continueButton} onClick={showNextPanel} data-testid="terrain-next">
                   Next
                 </Button>
               </div>
@@ -328,7 +331,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
                 <div className={css.terrainTypeLabels}>{renderZoneTerrainTypeLabels()}</div>
               </div>
               <div className={css.terrainProperties}>{renderTerrainProperties()}</div>
-              <div className={css.wind}>
+              <div className={css.wind} data-testid="terrain-wind">
                 <WindCircularControl
                   speed={windSpeed}
                   direction={windDirection}

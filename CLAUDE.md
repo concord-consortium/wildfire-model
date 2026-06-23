@@ -101,17 +101,24 @@ margin *below*). The margin is `tpiMarginFraction × heightmapMaxElevation`
 (default `0.02 × 20000` = 400 ft); see the `SparksAtTopAndBottom` TPI logic in
 [src/hazbot/wildfire/sim-props.ts](src/hazbot/wildfire/sim-props.ts). `placeSparkInZone`
 places at the *zone center*, whose local TPI is not guaranteed to clear the margin,
-so use these documented coordinates instead (validated live against the running app,
-2026-06-03; they are specific to this preset's heightmap — re-derive if it changes).
+so use these documented coordinates instead (re-derived live against the running app,
+2026-06-20; they are specific to this preset's heightmap — re-derive if it changes).
 Zone 1 is the high zone, zone 0 the low zone, so the robust direction is
 **top → zone 1, bottom → zone 0**:
 
 ```js
 () => {
-  window.sim.addSpark(119000, 38000); // top → zone 1, ridge (mean TPI well above margin)
-  window.sim.addSpark(59000, 3500);   // bottom → zone 0, valley (mean TPI well below margin)
+  window.sim.addSpark(106000, 28000); // top → zone 1, ridge (mean multi-scale TPI ≈ +2594, well above the 400 ft margin)
+  window.sim.addSpark(36000, 30000);  // bottom → zone 0, valley (mean TPI ≈ -1491, well below margin)
 }
 ```
+
+To re-derive after a heightmap change, scan the live map for the extreme-TPI cell in
+each zone (mean of `window.sim.tpiForSpark(x, y)` — note it takes **model feet**, not a
+spark index — vs the `tpiMarginFraction × heightmapMaxElevation` margin), e.g. step `x`/`y`
+in ~2000 ft increments, track the max-mean cell whose `cellAt(x,y).zoneIdx === 1` (ridge)
+and the min-mean cell with `zoneIdx === 0` (valley). The prior `(119000, 38000)` /
+`(59000, 3500)` pair (2026-06-03) no longer clears the margin on the current heightmap.
 
 `addSpark` no-ops once both zones hold a spark, so to switch between the Cat 4
 (mid-slope `placeSparkInZone(0/1)`) and Cat 6 endpoints you must **Reload** (not

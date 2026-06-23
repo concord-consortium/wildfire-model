@@ -109,3 +109,20 @@
 .hazbotButtonWrap.coached .avatar {
   transform: scale(1.525); // transition is on the base `.avatar` (animates open + close)
 }
+
+// "No Hazbot Default" state — while the walk-through tour is running (the wrapper
+// carries `.noHazbot`, set once [Show me] launches the tour), the robot is shown
+// inside the coach mark, so the button drops its robot and fades to 35%. Per the
+// Zeplin "Hazbot Button States" artboard: the Button back keeps its #c1daff fill /
+// 1.5px #797979 border / 10px radius, the whole button at opacity 0.35, robot
+// removed. `visibility: hidden` (not display:none) preserves the avatar's 48px box
+// so the "Hazbot Analysis" label keeps its position. pointer-events:none makes the
+// faded button non-interactive while the tour owns the interaction.
+.hazbotButtonWrap.noHazbot .hazbotButton {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.hazbotButtonWrap.noHazbot .avatar {
+  visibility: hidden;
+}

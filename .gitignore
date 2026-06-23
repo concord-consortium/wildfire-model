@@ -1,6 +1,8 @@
 coverage
 dist
 node_modules
+.yalc
+yalc.lock
 npm-error.log
 .DS_Store
 ./cypress/screenshots

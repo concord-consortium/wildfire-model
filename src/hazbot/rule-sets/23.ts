@@ -9,7 +9,7 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
     {
       id: 1,
       studentAction: "Did not run the simulation. A.k.a. Click button (before they do anything else)",
-      feedback: `Hazbot: I will analyze your model after you run it! Did you see the instructions at the top of the page? Scroll up!
+      feedback: `Hazbot: I will analyze your model after you run it! Did you see the instructions at the top of the page? **Scroll up!**
 [Okay]`,
       visualFeedback: "",
       expression: "NOT ranSimulation",
@@ -17,13 +17,13 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
     {
       id: 2,
       studentAction: "Ran the simulation with only default values.",
-      feedback: `Hazbot: Looks like you haven’t changed the Setup yet. I can help!
+      feedback: `Hazbot: Looks like you haven’t changed the **Setup** yet. I can help!
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
-2. Hazbot: Now click the Setup button. (Step 2 of 3)
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
+2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Click each zone to change its drought conditions to match the instructions. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "NOT setAnyZoneVar AND ranSimulation",
@@ -36,8 +36,8 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 3)
-2. Hazbot: Now click the Setup button. (Step 2 of 3)
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
+2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Adjust the controls so the zones match the photos. (Step 3 of 3)
 [Got it!]`,
       expression: "setAnyZoneVar AND ranSimulation WITH NOT CorrectZoneSetup",
@@ -45,13 +45,13 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
     {
       id: 4,
       studentAction: "Ran the simulation with correct zone setups but without one spark in each zone.",
-      feedback: `Hazbot: I don't see a spark in each zone. Let's make sure that both zones have one spark!
+      feedback: `Hazbot: I don't see a spark in each zone. Let's make sure that **both zones** have one spark!
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Coach mark (no pointer) centered top
      - If 2 sparks were placed, do not outline the Spark button.
      - If only one spark was placed, then the Spark button is outlined.`,
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 2)
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 2)
 2. Hazbot: Place one spark in Zone 1 and one spark in Zone 2, then run the model again. (Step 2 of 2)
 [Got it!]`,
       expression: "ranSimulation WITH CorrectZoneSetup AND NOT OneSparkPerZone",

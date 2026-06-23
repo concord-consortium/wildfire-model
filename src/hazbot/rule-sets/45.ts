@@ -21,8 +21,8 @@ export const ruleSet45: RuleSet<WildfireDefaults> = {
 [Show me]`,
       visualFeedback: `1. Reload button outlined; coach mark points to Reload button
 2. Start button outlined; coach mark points to Start button`,
-      arrowText: `1. Hazbot: First, Reload your model. (Step 1 of 2)
-2. Hazbot: Click Start to run the model! (Step 2 of 2)
+      arrowText: `1. Hazbot: First, **Reload** your model. (Step 1 of 2)
+2. Hazbot: Click **Start** to run the model! (Step 2 of 2)
 [Got it!]`,
       expression: "ranSimulation WITH NOT DefaultVars",
     },
@@ -37,12 +37,12 @@ OR
 with helitacks only 
  
 in a single or multiple trials.`,
-      feedback: `Hazbot: Try using both the firelines and helitacks!
+      feedback: `Hazbot: Try using both the **firelines and helitacks!**
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Fireline and Helitack buttons outlined (both are disabled) and Start button outlined; coach mark points to Fireline/Helitack buttons`,
-      arrowText: `1. Hazbot: First, Restart your model. (Step 1 of 2)
-2. Hazbot: Add both a Fireline and a Helitack while the model is running. Click Start to begin! (Step 2 of 2)
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 2)
+2. Hazbot: Add both a **Fireline** and a **Helitack** while the model is running. Click **Start** to begin! (Step 2 of 2)
 [Got it!]`,
       expression: "NOT (usedFireline AND usedHelitack) AND ranSimulation WITH DefaultVars",
     },
@@ -58,7 +58,7 @@ in a single or multiple trials.`,
   factorVariables: [
     {
       name: "ranSimulation",
-      definition: "At least one \"SimulationStarted\" event was recorded.",
+      definition: "At least one \"non-resuming SimulationStarted\" event was recorded.",
       logEvents: ["SimulationStarted", "SimulationStopped", "SimulationRestarted", "SimulationReloaded", "TopBarReloadButtonClicked", "SimulationEnded"],
       details: "Each simulation run is started by 'SimulationStarted', and how it is paused, is resumed, and ends is determined by various events listed here.  It is necessary for this activity to monitor the end of the simulation as well as the beginning, since turning on a sim prop (\"Helitack\") relies on knowing that a simulation is in progress, and fireline installation events occur during a simulation pause.  A \"resuming SimulationStarted\" event is one that was preceded by a SimulationStopped and then started again (SimulationStarted) without being reset/ended (SimulationEnded, SimulationRestarted, SimulationReloaded, TopBarReloadButtonClicked; or the simulation being restarted by an embedding unit (such as an \"Activity Player\")) in between.  All other \"SimulationStarted\" events are \"non-resuming\".",
     },

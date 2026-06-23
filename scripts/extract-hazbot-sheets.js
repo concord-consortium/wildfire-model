@@ -26,6 +26,7 @@ const path = require("path");
 const fs = require("fs");
 const readXlsxFile = require("read-excel-file/node");
 const { extractFromSheets, EXCLUDED_TABS } = require("./extract-impl");
+const { buildBoldMap } = require("./rich-text-bold");
 
 const [, , inputArg, outputArg] = process.argv;
 
@@ -44,12 +45,20 @@ if (!fs.existsSync(inputPath)) {
 
 (async () => {
   const allSheets = await readXlsxFile(inputPath, { getSheets: true });
-  // Normalize: drop fully-empty rows, replace nulls with "".
+  // read-excel-file flattens rich text to plain values, dropping the sheet's bold
+  // runs. Recover them as markdown `**…**`: buildBoldMap keys each bolded shared
+  // string by its plain text, so swapping any cell whose value matches restores the
+  // bold the author set on feedback / arrowText. See scripts/rich-text-bold.js.
+  const boldMap = buildBoldMap(inputPath);
+  // Normalize: drop fully-empty rows, replace nulls with "", apply bold markdown.
   const normalized = allSheets.map(({ sheet, data }) => ({
     sheet: String(sheet),
     data: data
       .filter((r) => r.some((c) => c !== null && c !== ""))
-      .map((r) => r.map((c) => (c == null ? "" : c))),
+      .map((r) => r.map((c) => {
+        if (c == null) return "";
+        return (typeof c === "string" && boldMap.get(c)) || c;
+      })),
   }));
 
   const result = extractFromSheets(normalized);
