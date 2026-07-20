@@ -119,3 +119,10 @@ Inside of your `package.json` file:
 Starter Projects are Copyright 2020 (c) by the Concord Consortium and is distributed under the [MIT license](http://www.opensource.org/licenses/MIT).
 
 See license.md for the complete license text.
+
+## Deployment
+
+S3 deployment is handled by GitHub Actions using OIDC for AWS authentication. See
+[deploy-setup.md in starter-projects](https://github.com/concord-consortium/starter-projects/blob/main/doc/deploy-setup.md)
+for how the AWS side is set up, and [doc/deploy.md](doc/deploy.md) for how deploys work
+in this repo.
