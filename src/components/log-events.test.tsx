@@ -100,7 +100,7 @@ describe("Log events", () => {
       expect(mockLog.mock.calls[endedIdx][1].reason).toBe("TopBarReloadButtonClicked");
     });
 
-    it("does NOT fire on Stop/Pause", async () => {
+    it("does NOT fire on Pause", async () => {
       // Put simulation into running state without actually starting the engine
       act(() => {
         stores.simulation.dataReady = true;
@@ -115,7 +115,7 @@ describe("Log events", () => {
         </Provider>
       );
 
-      // Click Stop (the button shows "Stop" when simulationRunning is true)
+      // Click Pause (the button shows "Pause" when simulationRunning is true)
       await userEvent.click(screen.getByTestId("start-button"));
 
       const endedCalls = mockLog.mock.calls.filter(
