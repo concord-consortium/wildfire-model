@@ -188,7 +188,7 @@ describe("BottomBar state machine (Requirements 1-7)", () => {
     expectButtonState("fireline-button", true);
     expectButtonState("helitack-button", true);
     // Requirement 4: label is "Pause" while simulationRunning === true.
-    // Regression guard for the ternary at bottom-bar.tsx:148.
+    // Regression guard for the simulationRunning ternary on the start button.
     expect(screen.getByTestId("start-button")).toHaveTextContent("Pause");
   });
 
@@ -241,7 +241,7 @@ describe("BottomBar edge cases", () => {
     it("Start → Pause → Start label remains 'Start' and is enabled", () => {
       stores.simulation.sparks.push(new Vector2(50000, 50000));
       stores.simulation.simulationStarted = true;
-      stores.simulation.simulationRunning = false; // Stop pressed
+      stores.simulation.simulationRunning = false; // Pause pressed
       (stores.simulation as any).engine = mockEngine();
       render(<Provider stores={stores}><BottomBar /></Provider>);
       const start = screen.getByTestId("start-button");
@@ -478,7 +478,7 @@ describe("BottomBar Hazbot button (WM-6)", () => {
   it("Start → Pause (manual) arms the pulse; clicking the button clears it and sets showHazbotFeedback", async () => {
     seedRunning();
     render(<Provider stores={stores}><BottomBar /></Provider>);
-    // Manual Stop (Start→Stop toggle).
+    // Manual pause (Start→Pause toggle).
     await userEvent.click(screen.getByTestId("start-button"));
     expect(stores.simulation.simulationRunning).toBe(false);
     expect(stores.ui.hazbotPulseArmed).toBe(true);
