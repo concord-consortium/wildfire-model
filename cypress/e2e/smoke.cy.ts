@@ -63,7 +63,9 @@ context("Wildfire Smoke Test", () => {
       currentDroughtIndex: "Medium Drought"
     };
     const zone2 = {
-      terrainType: "Foothills",
+      // The label rendered for TerrainType.Foothills, which is still logged and
+      // matched as "Foothills" (see terrainDisplayLabels in types.ts).
+      terrainType: "Hills",
       currentVegType: "Shrub",
       currentDroughtIndex: "Mild Drought"
     };

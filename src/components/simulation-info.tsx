@@ -8,9 +8,11 @@ import LockIcon from "../assets/lock.svg";
 import { log } from "../log";
 import css from "./simulation-info.scss";
 
+// Display-only labels; see terrainDisplayLabels in types.ts for why 1 reads
+// "Hills" here while it is still logged and matched as "Foothills".
 const zoneTypeText = {
   0: "Plains",
-  1: "Foothills",
+  1: "Hills",
   2: "Mountains"
 };
 

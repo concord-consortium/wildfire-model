@@ -28,7 +28,7 @@ export const TerrainTypeSelector = ({ terrainType, onChange }: IProps) => (
       <FormControlLabel
         control={<Radio color="default" className={css.radio} />}
         value={TerrainType.Foothills}
-        label={<span className={css.label} data-text="Foothills">Foothills</span>}
+        label={<span className={css.label} data-text="Hills">Hills</span>}
         className={css.terrainOption}
         labelPlacement="end" />
       <FormControlLabel
