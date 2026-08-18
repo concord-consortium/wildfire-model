@@ -174,10 +174,10 @@ describe("BottomBar state machine (Requirements 1-7)", () => {
     expectButtonState("helitack-button", false);
   });
 
-  // State 4: Running — Restart, Start/Stop, Fireline, Helitack enabled;
+  // State 4: Running — Restart, Start/Pause, Fireline, Helitack enabled;
   // Setup, Spark disabled
   // eslint-disable-next-line max-len
-  it("state 4 (Running): Setup/Spark disabled; Restart/Start/Fireline/Helitack enabled; Reload enabled; label is 'Stop'", () => {
+  it("state 4 (Running): Setup/Spark disabled; Restart/Start/Fireline/Helitack enabled; Reload enabled; label is 'Pause'", () => {
     seedState(stores, 4);
     render(<Provider stores={stores}><BottomBar /></Provider>);
     expectButtonState("terrain-button", false);
@@ -187,9 +187,9 @@ describe("BottomBar state machine (Requirements 1-7)", () => {
     expectButtonState("start-button", true);
     expectButtonState("fireline-button", true);
     expectButtonState("helitack-button", true);
-    // Requirement 4: label is "Stop" while simulationRunning === true.
-    // Regression guard for the ternary at bottom-bar.tsx:148.
-    expect(screen.getByTestId("start-button")).toHaveTextContent("Stop");
+    // Requirement 4: label is "Pause" while simulationRunning === true.
+    // Regression guard for the simulationRunning ternary on the start button.
+    expect(screen.getByTestId("start-button")).toHaveTextContent("Pause");
   });
 
   // State 5: Ended — Start, Fireline, Helitack disabled; Restart, Reload enabled
@@ -238,10 +238,10 @@ describe("BottomBar edge cases", () => {
   });
 
   describe("Paused vs. Ended", () => {
-    it("Start → Stop (Paused) → Start label remains 'Start' and is enabled", () => {
+    it("Start → Pause → Start label remains 'Start' and is enabled", () => {
       stores.simulation.sparks.push(new Vector2(50000, 50000));
       stores.simulation.simulationStarted = true;
-      stores.simulation.simulationRunning = false; // Stop pressed
+      stores.simulation.simulationRunning = false; // Pause pressed
       (stores.simulation as any).engine = mockEngine();
       render(<Provider stores={stores}><BottomBar /></Provider>);
       const start = screen.getByTestId("start-button");
@@ -475,10 +475,10 @@ describe("BottomBar Hazbot button (WM-6)", () => {
     expect(screen.queryByTestId("hazbot-button")).toBeNull();
   });
 
-  it("Start → Stop (manual) arms the pulse; clicking the button clears it and sets showHazbotFeedback", async () => {
+  it("Start → Pause (manual) arms the pulse; clicking the button clears it and sets showHazbotFeedback", async () => {
     seedRunning();
     render(<Provider stores={stores}><BottomBar /></Provider>);
-    // Manual Stop (Start→Stop toggle).
+    // Manual pause (Start→Pause toggle).
     await userEvent.click(screen.getByTestId("start-button"));
     expect(stores.simulation.simulationRunning).toBe(false);
     expect(stores.ui.hazbotPulseArmed).toBe(true);

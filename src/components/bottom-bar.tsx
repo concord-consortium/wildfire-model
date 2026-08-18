@@ -188,7 +188,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               disableRipple={true}
             >
               { simulation.simulationRunning
-                ? <span><PauseIcon/><span className={css.playbackButtonLabel}>Stop</span></span>
+                ? <span><PauseIcon/><span className={css.playbackButtonLabel}>Pause</span></span>
                 : <span><StartIcon /><span className={css.playbackButtonLabel}>Start</span></span> }
             </Button>
           </div>

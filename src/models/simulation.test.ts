@@ -303,7 +303,7 @@ describe("SimulationModel", () => {
       }
     });
 
-    it("is false in user-Pause sub-state (Stop pressed, engine not finished)", async () => {
+    it("is false in user-Pause sub-state (Pause pressed, engine not finished)", async () => {
       const sim = createSim();
       await sim.dataReadyPromise;
       sim.start();
