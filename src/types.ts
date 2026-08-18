@@ -33,10 +33,22 @@ export enum TerrainType {
   Mountains = 2
 }
 
+// DATA labels: logged in the SimulationStarted and ZoneUpdated payloads, and
+// compared against by the Hazbot matcher (sim-props.ts, derive-defaults.ts), so
+// they are effectively wire format. The UI renders "Hills" for Foothills via
+// terrainDisplayLabels below; do not sync these to it.
 export const terrainLabels: Record<TerrainType, string> = {
   [TerrainType.Plains]: "Plains",
   [TerrainType.Foothills]: "Foothills",
   [TerrainType.Mountains]: "Mountains",
+};
+
+// DISPLAY labels. Rendered text only, safe to change. TerrainType.Foothills
+// reads as "Hills" on screen (students did not know the word "foothill") while
+// still logging and matching as "Foothills".
+export const terrainDisplayLabels: Record<TerrainType, string> = {
+  ...terrainLabels,
+  [TerrainType.Foothills]: "Hills",
 };
 
 export enum DroughtLevel {

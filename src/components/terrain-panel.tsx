@@ -1,12 +1,14 @@
 import { observer } from "mobx-react";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { IBaseProps } from "./base";
 import { Button } from "@mui/material";
 import { renderZones } from "./zone-selector";
 import { TerrainTypeSelector } from "./terrain-type-selector";
 import { VegetationSelector } from "./vegetation-selector";
 import { DroughtSelector } from "./drought-selector";
-import { droughtLabels, DroughtLevel, terrainLabels, TerrainType, Vegetation, vegetationLabels } from "../types";
+import {
+  droughtLabels, DroughtLevel, terrainDisplayLabels, terrainLabels, TerrainType, Vegetation, vegetationLabels
+} from "../types";
 import { WindCircularControl } from "./wind-circular-control";
 import { TerrainSummary } from "./terrain-summary";
 import { log } from "../log";
@@ -213,7 +215,8 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
   const renderZoneTerrainTypeLabels = () => {
     const labels: any[] = [];
     zones.forEach((z, i) => {
-      labels.push(<div className={css.terrainTypeLabel} key={i}>{terrainLabels[z.terrainType]}</div>);
+      // Display-only lookup: terrainLabels still feeds the ZoneUpdated log payload.
+      labels.push(<div className={css.terrainTypeLabel} key={i}>{terrainDisplayLabels[z.terrainType]}</div>);
     });
     return labels;
   };
