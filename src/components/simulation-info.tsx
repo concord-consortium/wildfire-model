@@ -6,15 +6,8 @@ import { Zone } from "../models/zone";
 import { WindDial, degToCompass } from "./wind-dial";
 import LockIcon from "../assets/lock.svg";
 import { log } from "../log";
+import { terrainDisplayLabels } from "../types";
 import css from "./simulation-info.scss";
-
-// Display-only labels; see terrainDisplayLabels in types.ts for why 1 reads
-// "Hills" here while it is still logged and matched as "Foothills".
-const zoneTypeText = {
-  0: "Plains",
-  1: "Hills",
-  2: "Mountains"
-};
 
 const zoneCssClasses = [css.zone1, css.zone2, css.zone3];
 
@@ -28,7 +21,7 @@ export const ZoneInfo = ({zone, idx, locked, onClick}: {zone: Zone; idx: number;
     <div className={`${css.icon} ${css.droughtIcon}`}>{droughtIcons[zone.droughtLevel]}</div>
     <div className={`${css.zoneText}`}>
       <div className={css.zoneName}>Zone {idx + 1}</div>
-      <div className={css.terrain}>{zoneTypeText[zone.terrainType]}</div>
+      <div className={css.terrain}>{terrainDisplayLabels[zone.terrainType]}</div>
     </div>
     { locked && <div className={css.lockIcon} data-testid="lock-icon"><LockIcon/></div> }
   </div>
