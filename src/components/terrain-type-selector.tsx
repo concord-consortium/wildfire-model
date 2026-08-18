@@ -1,6 +1,6 @@
 import React from "react";
 import { Radio, RadioGroup, FormControlLabel } from "@mui/material";
-import { TerrainType } from "../types";
+import { TerrainType, terrainDisplayLabels } from "../types";
 
 import css from "./terrain-type-selector.scss";
 
@@ -22,19 +22,31 @@ export const TerrainTypeSelector = ({ terrainType, onChange }: IProps) => (
       <FormControlLabel
         control={<Radio color="default" className={css.radio} />}
         value={TerrainType.Plains}
-        label={<span className={css.label} data-text="Plains">Plains</span>}
+        label={
+          <span className={css.label} data-text={terrainDisplayLabels[TerrainType.Plains]}>
+            {terrainDisplayLabels[TerrainType.Plains]}
+          </span>
+        }
         className={css.terrainOption}
         labelPlacement="end" />
       <FormControlLabel
         control={<Radio color="default" className={css.radio} />}
         value={TerrainType.Foothills}
-        label={<span className={css.label} data-text="Hills">Hills</span>}
+        label={
+          <span className={css.label} data-text={terrainDisplayLabels[TerrainType.Foothills]}>
+            {terrainDisplayLabels[TerrainType.Foothills]}
+          </span>
+        }
         className={css.terrainOption}
         labelPlacement="end" />
       <FormControlLabel
         control={<Radio color="default" className={css.radio} />}
         value={TerrainType.Mountains}
-        label={<span className={css.label} data-text="Mountains">Mountains</span>}
+        label={
+          <span className={css.label} data-text={terrainDisplayLabels[TerrainType.Mountains]}>
+            {terrainDisplayLabels[TerrainType.Mountains]}
+          </span>
+        }
         className={css.terrainOption}
         labelPlacement="end" />
     </RadioGroup>
