@@ -131,6 +131,13 @@ describe("chart annotations", () => {
     });
   });
 
+  it("carries eventKind through to the formatted annotation", () => {
+    const withKind = new Annotation({ type: "verticalLine", value: 10, eventKind: "fireLine" });
+    expect(withKind.formatted.eventKind).toBe("fireLine");
+    const withoutKind = new Annotation({ type: "verticalLine", value: 10 });
+    expect("eventKind" in withoutKind.formatted).toBe(false);
+  });
+
   it("can create a chart with annotations", () => {
     chart = new ChartDataModel({
       name: "Samples",

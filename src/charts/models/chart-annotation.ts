@@ -35,6 +35,9 @@ export interface IChartAnnotation{
   yMin?: number;
   fontFamily?: string;
   fontSize?: number;
+  // Which kind of event this annotation marks, for renderers that draw their own artwork.
+  // Not consumed by chartjs-plugin-annotation, which ignores keys it does not know.
+  eventKind?: string;
 }
 export class Annotation implements IChartAnnotation {
   public type: string;
@@ -57,6 +60,7 @@ export class Annotation implements IChartAnnotation {
   public showingExpandLabel?: boolean = false;
   public fontFamily?: string;
   public fontSize?: number;
+  public eventKind?: string;
 
   constructor(props: IChartAnnotation) {
     makeObservable(this);
@@ -135,6 +139,10 @@ export class Annotation implements IChartAnnotation {
 
     if (this.dashArray && this.dashArray.length) {
       formatted.borderDash = this.dashArray;
+    }
+
+    if (this.eventKind) {
+      formatted.eventKind = this.eventKind;
     }
 
     if (this.expandLabel) {
