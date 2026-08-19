@@ -465,6 +465,28 @@ describe("Log events", () => {
         expect(stores.ui.interaction).toBeNull();
       });
 
+      it("leaves Escape to an open coach mark", () => {
+        renderCancelHook();
+        placeFirstEnd();
+        stores.ui.showHazbotFeedback = true;
+
+        act(() => { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
+
+        expect(callsNamed("FireLineCanceled")).toHaveLength(0);
+        expect(stores.simulation.fireLineMarkers).toHaveLength(2);
+      });
+
+      it("does not cancel a placement the second click completed", () => {
+        renderCancelHook();
+        const { result } = renderFireLineInteraction(stores);
+        act(() => { result.current.onPointerDown?.(point(30000, 40000)); });
+        act(() => { result.current.onPointerDown?.(point(38000, 40000)); });
+
+        expect(callsNamed("FireLineAdded")).toHaveLength(1);
+        expect(callsNamed("FireLineCanceled")).toHaveLength(0);
+        expect(stores.simulation.fireLineMarkers).toHaveLength(2);
+      });
+
       it("logs reason 'other' when the reaction backstop catches an unrouted departure", () => {
         renderCancelHook();
         placeFirstEnd();

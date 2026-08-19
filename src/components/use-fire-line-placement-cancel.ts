@@ -12,8 +12,13 @@ export const useFireLinePlacementCancel = () => {
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // defaultPrevented lets an overlay that already handled Escape (coachmarks) win.
       if (e.key !== "Escape" || e.defaultPrevented) {
+        return;
+      }
+      // An open coach mark owns Escape. Its own handler cannot be relied on to claim
+      // the event first: it is attached on open, so this one, attached at mount, runs
+      // before it and would see defaultPrevented still false.
+      if (ui.showHazbotFeedback) {
         return;
       }
       if (ui.interaction !== Interaction.DrawFireLine) {
