@@ -112,8 +112,10 @@ Restart and Reload are the only clean exits today, since both set `ui.interactio
 
 1. With the Fireline tool armed, the first click on the terrain places one end of the fire line. No
    press-and-hold, and no drag, is required.
-2. After the first click, the fire line icon remains attached to the cursor, so the tool visibly stays
-   armed and awaiting the second end.
+2. The fire line icon stays with the cursor for the whole interaction, so the tool visibly stays armed
+   and awaiting the second end. Before the first click that icon is the cursor art; after it, the marker
+   tracking the pointer takes over and the cursor art gives way to a plain crosshair, so only one fire
+   line icon is ever on screen.
 3. A second click on the terrain places the other end and ends the interaction, leaving
    `ui.interaction = null`.
 4. The resulting fire line must respect `config.maxFireLineLength` exactly as the drag gesture does
@@ -174,7 +176,7 @@ Restart and Reload are the only clean exits today, since both set `ui.interactio
 | `src/components/view-3d/use-draw-fire-line-interaction.tsx` | The whole gesture. This is the file the story is about. |
 | `src/components/view-3d/use-dragging.ts` | Supplies `startDragging` / window pointermove listeners. May become unused by the fire line path. |
 | `src/components/view-3d/terrain.tsx` | Registers the interaction in its `interactions` array; is the raycast surface. |
-| `src/components/use-custom-cursors.ts` | Maps `Interaction.DrawFireLine` to `url(fire-line-cursor.png) 32 64, crosshair`. Already correct for a persistent armed cursor. |
+| `src/components/use-custom-cursors.ts` | Maps `Interaction.DrawFireLine` to `url(fire-line-cursor.png) 32 64, crosshair`. Gains the requirement 2 handover to the marker. |
 | `src/models/simulation.ts` | `addFireLineMarker`, `setFireLineMarker`, `limitFireLineLength`, `markFireLineUnderConstruction`, `canAddFireLineMarker`. |
 | `src/models/ui.ts` | `Interaction` enum, `ui.dragging`. |
 | `src/components/bottom-bar.tsx` | `handleFireLine`, `fireLineEnabled`. |
@@ -267,6 +269,17 @@ complete two-marker fire line (14 under-construction cells), whereas two-click p
 that the rubber band then makes visible before the student commits the second. Not addressed here.
 Making a drag mean "camera" and a click mean "placement" (place on pointer up below a small movement
 threshold) would fix it properly for all four tools, and is a reasonable follow-up.
+
+### Only one fire line icon during placement
+
+`useCustomCursor` maps `Interaction.DrawFireLine` to `url(fire-line-cursor.png)`, and the moving second
+marker draws the same art in the 3D scene. The two coincide under the pointer and read as one icon until
+`limitFireLineLength` stops the marker at `maxFireLineLength` while the pointer keeps going, at which
+point both are plainly visible. The drag gesture never showed this because `startDragging` set
+`ui.dragging`, which `useCustomCursor` checks first, returning `"move"` for the whole gesture. Under
+two-click nothing is dragging, so the check has to be on `ui.fireLinePlacementInProgress` instead. The
+marker is the copy worth keeping: it is the real endpoint, it is what the clamp acts on, and it is what
+the second click commits.
 
 ### `handleFireLine` must branch before it logs
 

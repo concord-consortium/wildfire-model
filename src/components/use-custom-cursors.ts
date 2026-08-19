@@ -20,10 +20,17 @@ export const useCustomCursor = () => {
       document.body.style.cursor = "move";
       return;
     }
+    // The fire line marker follows the pointer between the two clicks, so the cursor
+    // art would be a second copy of the same icon. The two overlap until the length
+    // clamp holds the marker back, and then both are visible at once.
+    if (ui.fireLinePlacementInProgress) {
+      document.body.style.cursor = "crosshair";
+      return;
+    }
     if (ui.interaction && interactionCursors[ui.interaction]) {
       document.body.style.cursor = interactionCursors[ui.interaction] as string;
       return;
     }
     document.body.style.cursor = "default";
-  }, [ui.interaction, ui.dragging]);
+  }, [ui.interaction, ui.dragging, ui.fireLinePlacementInProgress]);
 };
