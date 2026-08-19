@@ -38,6 +38,9 @@ export interface IChartAnnotation{
   // Which kind of event this annotation marks, for renderers that draw their own artwork.
   // Not consumed by chartjs-plugin-annotation, which ignores keys it does not know.
   eventKind?: string;
+  // When the student took the action this marks, relative to their other actions. Icons that
+  // land in the same hour are painted in this order rather than the order they were added.
+  actionOrder?: number;
 }
 export class Annotation implements IChartAnnotation {
   public type: string;
@@ -61,6 +64,7 @@ export class Annotation implements IChartAnnotation {
   public fontFamily?: string;
   public fontSize?: number;
   public eventKind?: string;
+  public actionOrder?: number;
 
   constructor(props: IChartAnnotation) {
     makeObservable(this);
@@ -143,6 +147,7 @@ export class Annotation implements IChartAnnotation {
 
     if (this.eventKind) {
       formatted.eventKind = this.eventKind;
+      formatted.actionOrder = this.actionOrder;
     }
 
     if (this.expandLabel) {

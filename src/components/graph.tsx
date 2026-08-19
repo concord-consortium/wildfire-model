@@ -30,6 +30,7 @@ export const Graph = observer(function WrappedComponent() {
         type: "verticalLine",
         value: simulation.timeInHours,
         eventKind: FIRE_LINE_EVENT,
+        actionOrder: simulation.fireLineActionOrder,
         thickness: 1,
         dashArray: borderDash1
       }));
@@ -42,6 +43,7 @@ export const Graph = observer(function WrappedComponent() {
         type: "verticalLine",
         value: simulation.timeInHours,
         eventKind: HELITACK_EVENT,
+        actionOrder: simulation.helitackActionOrder,
         thickness: 1,
         dashArray: borderDash2
       }));

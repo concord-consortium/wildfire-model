@@ -94,10 +94,21 @@ export const iconPlacement = (
   };
 };
 
+/**
+ * Annotations in the order their icons should be painted, earliest student action first, so the
+ * most recent one lands on top.
+ *
+ * Insertion order does not answer that on its own. A helitack takes effect the moment it is
+ * dropped, but a fire line is only built when the student presses Start, so a line drawn before a
+ * helitack during the same pause is still annotated after it and would be painted over the very
+ * icon that should cover it. `actionOrder` is stamped when the student acts, so it survives that
+ * gap. Sorting is stable, so annotations without one keep their relative order.
+ */
+export const annotationsInDrawOrder = <T extends { actionOrder?: number }>(annotations: T[]): T[] =>
+  [...annotations].sort((a, b) => (a.actionOrder ?? 0) - (b.actionOrder ?? 0));
+
 // Draws a marker icon above the plot for every annotation carrying an eventKind. Must stay after
-// ChartAnnotation in line-chart.tsx's `plugins` array; the comment there explains why. Iterates the
-// annotation array in order, which is the order events were added, so the most recent icon lands on
-// top.
+// ChartAnnotation in line-chart.tsx's `plugins` array; the comment there explains why.
 export const annotationIconPlugin = {
   afterDraw(chart: any) {
     const area = chart.chartArea;
@@ -106,7 +117,7 @@ export const annotationIconPlugin = {
     if (!area || !scale || !annotations) {
       return;
     }
-    annotations.forEach((annotation: any) => {
+    annotationsInDrawOrder(annotations).forEach((annotation: any) => {
       const eventKind: string | undefined = annotation.eventKind;
       const placement = iconPlacement(eventKind, annotation.value, scale, area.top);
       const image = isAnnotationEventKind(eventKind) ? images[eventKind] : undefined;

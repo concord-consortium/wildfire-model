@@ -1,5 +1,5 @@
 import {
-  annotationIcons, FIRE_LINE_EVENT, HELITACK_EVENT, iconBandHeight, iconPlacement
+  annotationIcons, annotationsInDrawOrder, FIRE_LINE_EVENT, HELITACK_EVENT, iconBandHeight, iconPlacement
 } from "./annotation-icons";
 
 // 0 to 100 hours across a 100px plot starting at x = 50, so one hour is one pixel
@@ -47,5 +47,37 @@ describe("annotation icon placement", () => {
   it("ignores annotations with no event kind, or an unknown one", () => {
     expect(iconPlacement(undefined, 20, scale, CHART_AREA_TOP)).toBeNull();
     expect(iconPlacement("smokeJumper", 20, scale, CHART_AREA_TOP)).toBeNull();
+  });
+});
+
+describe("annotation icon draw order", () => {
+  it("paints the earlier student action first, whatever order the annotations were added in", () => {
+    // A fire line drawn before a helitack is annotated after it, because it is not built until
+    // Start. Painting in array order would put the fire line icon on top of the helitack.
+    const added = [
+      { eventKind: HELITACK_EVENT, value: 7, actionOrder: 2 },
+      { eventKind: FIRE_LINE_EVENT, value: 7, actionOrder: 1 }
+    ];
+    expect(annotationsInDrawOrder(added).map(a => a.eventKind)).toEqual([FIRE_LINE_EVENT, HELITACK_EVENT]);
+  });
+
+  it("leaves an already-correct order alone", () => {
+    const added = [
+      { eventKind: HELITACK_EVENT, value: 7, actionOrder: 1 },
+      { eventKind: FIRE_LINE_EVENT, value: 7, actionOrder: 2 }
+    ];
+    expect(annotationsInDrawOrder(added).map(a => a.eventKind)).toEqual([HELITACK_EVENT, FIRE_LINE_EVENT]);
+  });
+
+  it("keeps annotations with no action order in their existing relative order", () => {
+    const added = [{ value: 1, actionOrder: undefined }, { value: 2, actionOrder: undefined },
+      { value: 3, actionOrder: undefined }];
+    expect(annotationsInDrawOrder(added).map(a => a.value)).toEqual([1, 2, 3]);
+  });
+
+  it("does not mutate the array it was given", () => {
+    const added = [{ actionOrder: 2 }, { actionOrder: 1 }];
+    annotationsInDrawOrder(added);
+    expect(added.map(a => a.actionOrder)).toEqual([2, 1]);
   });
 });
