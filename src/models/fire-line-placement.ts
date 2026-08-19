@@ -4,7 +4,8 @@ import { log } from "../log";
 
 // "other" is reserved for the reaction backstop in useFireLinePlacementCancel: it means
 // a route left DrawFireLine without calling this itself, and should be treated as a gap.
-export type FireLineCancelReason = "escape" | "toggle" | "toolSwitch" | "start" | "other";
+export type FireLineCancelReason =
+  "escape" | "toggle" | "toolSwitch" | "start" | "restart" | "reload" | "other";
 
 // Discards a fire line placement that was never completed and disarms the tool. Safe to
 // call unconditionally; it does nothing unless the tool is armed or a placement is open.

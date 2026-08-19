@@ -62,18 +62,15 @@ the cursor, and a second click places the other end. Adjusting the two ends afte
 15. The first click logs **`FireLineFirstEndPlaced`** with `{ x, y, elevation }`, x and y normalized by
     `modelWidth` / `modelHeight`, matching the `SparkPlaced` payload convention.
 16. Every cancel route logs **`FireLineCanceled`** with a `reason` field taking one of `"escape"`,
-    `"toggle"`, `"toolSwitch"`, `"start"`, or `"other"`. The first four match the departure routes in
-    requirement 10; `"other"` is emitted by the requirement 10 reaction backstop when it fires for a
-    route not covered by an explicit call site, and its appearance in collected data should be treated
-    as a signal that a route was missed. When an endpoint had been placed, the payload also carries
+    `"toggle"`, `"toolSwitch"`, `"start"`, `"restart"`, `"reload"`, or `"other"`. The first six name
+    every departure route that is reachable mid-placement, each from an explicit call site;
+    `"other"` is emitted by the requirement 10 reaction backstop when it fires for a route not covered
+    by one of them, and its appearance in collected data should be treated as a signal that a route was
+    missed. When an endpoint had been placed, the payload also carries
     `{ x, y, elevation }` for the discarded endpoint, normalized as in requirement 15; when the tool
     was armed but no endpoint was placed, those fields are omitted and the event still fires. The
     requirement 13 too-short rejection is **not** logged: it is a no-op click, and logging every
-    rejected click would be noise. *(Partial: the enum does not name Restart or Reload, which are also
-    reachable mid-placement and so land on `"other"` through the backstop. The reason is still
-    recoverable from the `SimulationRestarted` / `SimulationReloaded` event that follows immediately,
-    but adding `"restart"` and `"reload"` would keep `"other"` meaning what requirement 16 says it
-    means. Left as a follow-up.)*
+    rejected click would be noise.
 
 ## Technical Notes
 
@@ -157,6 +154,14 @@ that `start()` never builds, and that snapshot is exactly what `factor-variables
 count a fire line the
 student abandoned. This is the mirror image of the phantom fire line: phantom in the researcher data
 rather than in the terrain. Cancel at the top of the `else` branch, before any snapshot is built.
+
+Every route that can leave `DrawFireLine` mid-placement needs its own `reason`, or the backstop
+reports a routine student action as an implementation gap. Restart and Reload both stay enabled while
+the tool is armed (`restartEnabled` is `simulationStarted`, and `reloadEnabled` is true whenever a
+spark exists), so both are reachable and both get an explicit call site rather than falling through.
+Spark and Helitack cannot reach it: their buttons are disabled or already cancelled by the time their
+interactions run, and `use-dragging-over-plane-interaction.ts` is inactive while `DrawFireLine` is
+armed. The top bar's reload never writes `ui.interaction` at all, since it reloads the page.
 
 Separately, do not rely on reaction timing for this route. The `reaction` fires synchronously only
 while the mutation happens outside a MobX action. `handleStart` is a plain arrow function today, so

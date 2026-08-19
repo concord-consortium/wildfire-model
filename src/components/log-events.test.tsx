@@ -487,6 +487,31 @@ describe("Log events", () => {
         expect(stores.simulation.fireLineMarkers).toHaveLength(2);
       });
 
+      it("logs reason 'restart' when Restart discards a placement", async () => {
+        renderCancelHook();
+        renderBottomBar();
+        placeFirstEnd();
+
+        await userEvent.click(screen.getByTestId("restart-button"));
+
+        expect(canceledCall().reason).toBe("restart");
+        expect(stores.simulation.fireLineMarkers).toHaveLength(0);
+        // The abandonment has to read as part of this restart, not the next run.
+        const names = mockLog.mock.calls.map((call: unknown[]) => call[0]);
+        expect(names.indexOf("FireLineCanceled")).toBeLessThan(names.indexOf("SimulationRestarted"));
+      });
+
+      it("logs reason 'reload' when Reload discards a placement", async () => {
+        renderCancelHook();
+        renderBottomBar();
+        placeFirstEnd();
+
+        await userEvent.click(screen.getByTestId("reload-button"));
+
+        expect(canceledCall().reason).toBe("reload");
+        expect(stores.simulation.fireLineMarkers).toHaveLength(0);
+      });
+
       it("logs reason 'other' when the reaction backstop catches an unrouted departure", () => {
         renderCancelHook();
         placeFirstEnd();

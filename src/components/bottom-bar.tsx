@@ -329,6 +329,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       });
     }
     this.stores.chartStore.reset();
+    cancelFireLinePlacement(simulation, ui, "restart");
     ui.interaction = null;
     simulation.restart();
     log("SimulationRestarted");
@@ -344,6 +345,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       });
     }
     this.stores.chartStore.reset();
+    cancelFireLinePlacement(simulation, ui, "reload");
     ui.interaction = null;
     simulation.reload();
     log("SimulationReloaded");
