@@ -4,9 +4,10 @@ import { useStores } from "../use-stores";
 import { Interaction } from "../models/ui";
 import { cancelFireLinePlacement } from "../models/fire-line-placement";
 
-// Wires the two cancel affordances that live outside the bottom bar: the Escape key, and
-// a backstop for any writer that moves ui.interaction off DrawFireLine without cancelling
-// first (ui.interaction is written from a dozen places, including a hover-out handler).
+// Escape-to-cancel, plus a backstop for any writer that moves ui.interaction off
+// DrawFireLine without cancelling first. ui.interaction is written from a dozen places
+// with no common setter, one of them a hover-out handler, so the invariant cannot rely
+// on each call site remembering.
 export const useFireLinePlacementCancel = () => {
   const { simulation, ui } = useStores();
 
