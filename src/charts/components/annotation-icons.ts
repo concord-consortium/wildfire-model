@@ -99,7 +99,7 @@ export const annotationIconPlugin = {
   afterDraw(chart: any) {
     const area = chart.chartArea;
     const scale = chart.scales["x-axis-0"];
-    const annotations = chart.options.annotation && chart.options.annotation.annotations;
+    const annotations = chart.options.annotation?.annotations;
     if (!area || !scale || !annotations) {
       return;
     }
