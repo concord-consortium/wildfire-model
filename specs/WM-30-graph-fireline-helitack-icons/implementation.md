@@ -39,8 +39,8 @@ Each step leaves the app working, and none of them regresses the app in passing.
           oneOf: [
             {
               // `import url from "./icon.svg?url"` yields a URL rather than a React component,
-              // for artwork drawn onto a canvas via an Image. The svgr branch below cannot do
-              // this, and .nosvgo.svg is not an escape hatch (it matches no rule at all).
+              // for artwork drawn onto a canvas via an Image. The svgr branch below cannot do this.
+              // Anchored so it cannot claim `?nourl`, `?urls` or `?myurl=1`.
               resourceQuery: /^\?url$/,
               type: 'asset',
             },
@@ -148,17 +148,15 @@ export interface IAnnotationIcon {
   gap: number;
 }
 
-// Sizes and gaps come from the WM-25 artboard, which is 1:1 with app CSS pixels. The two gaps
-// differ by design: the icon bottoms land 1px apart rather than flush, so the taller shield
-// starts higher and stays partly visible under an overlapping helicopter.
+// The two gaps differ by design: the icon bottoms land 1px apart rather than flush, so the taller
+// shield starts higher and stays partly visible under an overlapping helicopter.
 export const annotationIcons = {
   fireLine: { url: fireLineIconUrl, width: 21, height: 27, gap: 2 },
   helitack: { url: helitackIconUrl, width: 27, height: 22, gap: 3 }
 } satisfies Record<string, IAnnotationIcon>;
 
-// The kinds this renderer knows how to draw. graph.tsx binds its two annotations to the
-// constants below rather than to bare strings, so a typo or a rename on either side is a
-// compile error instead of a silently missing icon.
+// Producers bind to the constants below rather than to bare strings, so a typo or a rename on
+// either side is a compile error instead of a silently missing icon.
 export type AnnotationEventKind = keyof typeof annotationIcons;
 export const FIRE_LINE_EVENT: AnnotationEventKind = "fireLine";
 export const HELITACK_EVENT: AnnotationEventKind = "helitack";
@@ -232,10 +230,10 @@ export const iconPlacement = (
   };
 };
 
-// Draws a marker icon above the plot for every annotation carrying an eventKind. Must be
-// registered after ChartAnnotation in line-chart.tsx's `plugins` array, which is load-bearing
-// rather than tidy; the comment there explains why. Iterates the annotation array in order,
-// which is the order events were added, so the most recent icon lands on top.
+// Draws a marker icon above the plot for every annotation carrying an eventKind. Must stay after
+// ChartAnnotation in line-chart.tsx's `plugins` array; the comment there explains why. Iterates the
+// annotation array in order, which is the order events were added, so the most recent icon lands on
+// top.
 export const annotationIconPlugin = {
   afterDraw(chart: any) {
     const area = chart.chartArea;
@@ -278,9 +276,9 @@ and the helitack effect the same with `HELITACK_EVENT` and `dashArray: borderDas
 ```ts
   layout: {
     padding: {
-      // room above the plot for the suppression-event icons; comes out of the plot area so
-      // the 381px chart and the panel around it keep their size. Currently 30, derived from
-      // the tallest icon and its gap in annotation-icons.ts rather than fixed here.
+      // room above the plot for the suppression-event icons; comes out of the plot area so the
+      // chart and the panel around it keep their size. Currently 30, derived from the tallest icon
+      // and its gap in annotation-icons.ts rather than fixed here.
       top: iconBandHeight,
       left: 3,
       right: 19
@@ -356,9 +354,9 @@ describe("annotation icon placement", () => {
   });
 
   it("suppresses an event that has scrolled out of the visible range", () => {
-    const window = { ...scale, min: 30, max: 72 };
-    expect(iconPlacement(FIRE_LINE_EVENT, 20, window, CHART_AREA_TOP)).toBeNull();
-    expect(iconPlacement(FIRE_LINE_EVENT, 73, window, CHART_AREA_TOP)).toBeNull();
+    const scrolled = { ...scale, min: 30, max: 72 };
+    expect(iconPlacement(FIRE_LINE_EVENT, 20, scrolled, CHART_AREA_TOP)).toBeNull();
+    expect(iconPlacement(FIRE_LINE_EVENT, 73, scrolled, CHART_AREA_TOP)).toBeNull();
   });
 
   it("ignores annotations with no event kind, or an unknown one", () => {
@@ -507,6 +505,78 @@ Verified after the swap, with the full plan applied to a scratch tree:
 If Michael comes back with a re-export, replacing the file is the whole change; nothing in
 this plan is coupled to which of the two files is on disk, other than the byte figures quoted
 in the requirements spec.
+
+---
+
+## Self-Review: round 2 (during implementation, 2026-08-19)
+
+The plan was applied to the working tree as three commits, and `/cc-code-review` was run to
+convergence after each. Two findings survived verification, both in the reviewed round-1 code
+above rather than in anything the implementation invented, and both are folded into the snippets
+in this document so the plan and the tree agree.
+
+### RESOLVED: the `?url` branch comment explained a road not taken for a convention with no instances
+
+The comment carried "and .nosvgo.svg is not an escape hatch (it matches no rule at all)".
+`find src -name '*.nosvgo.svg'` returns nothing: the repo has no such file, so the clause sends a
+reader to investigate a convention that does not exist. The `exclude: /\.nosvgo\.svg$/i` on the
+parent rule is what made it look worth pre-empting.
+
+**Resolution**: the clause dropped, and the anchoring rationale (previously only in this document's
+prose) moved into the comment, where it guards against a maintainer "simplifying" the pattern to the
+loose `/url/` webpack's own examples use. Snippet updated above.
+
+### RESOLVED: the out-of-range test bound its stub scale to `window`
+
+`const window = { ...scale, min: 30, max: 72 }` shadows the jsdom global inside that callback, in a
+suite whose module under test constructs `new Image()` against the real global at import time. No
+functional effect, and ESLint does not flag it, but a reader has to stop and rule out an interaction.
+The sibling stub two tests up is named `fractional`, which describes what it is.
+
+**Resolution**: renamed to `scrolled`. Snippet updated above.
+
+### Deviations from the round-1 snippets, and why
+
+Three further differences between the snippets above and the shipped code, all comment text, made to
+satisfy this repo's comment conventions rather than in response to a finding. The snippets have been
+updated to match the tree.
+
+- The icon registry's comment no longer opens with "Sizes and gaps come from the WM-25 artboard".
+  Comments must not carry Jira story IDs; the artboard provenance lives in the requirements spec,
+  which is where a reader looking for it will be.
+- `AnnotationEventKind`'s comment says "Producers bind to the constants below" rather than naming
+  `graph.tsx`. The resolved location question accepts wildfire artwork in `src/charts/`, but a
+  comment in the chart layer pointing at a specific consumer in the app layer is a reference that
+  goes stale the moment a second producer appears.
+- The `padding.top` comment says "the chart and the panel around it keep their size" rather than
+  "the 381px chart". The number is load-bearing but it is recorded in the requirements spec and in
+  `graph.tsx`; repeating it in a third place is one more copy to drift.
+
+### Verified live, not only by unit test
+
+The three failure modes this plan says a stub test would stay green through were checked against the
+running app at 1366 x 609, on `plainsTwoZone` with a fire line at hour 26 and a helitack at hour 47.
+All held:
+
+- **`eventKind` survives Chart.js's config merge.** `options.annotation.annotations` reads
+  `[{eventKind: "fireLine", value: 26, borderDash: [5,5]}, {eventKind: "helitack", value: 47,
+  borderDash: [10,5]}]`, in push order.
+- **The `x-axis-0` scale resolves and the plugin runs**, with no console errors across the session.
+- **Draw order is latest-on-top.** At 6x magnification the helicopter paints over the shield in the
+  ~6px where the two rects overlap.
+
+The geometry matched the prediction to the pixel: `layout.padding.top` 30, `chartArea.top` exactly
+30, plot 254.68, canvas still 286 x 381, icon ink in canvas rows 1 to 27 with rows 28 and 29 clear
+and the top gridline at row 30. Measured ink for the shield spans x 82 to 103 against a predicted
+82.09 to 103.09. Row 27 carries 3 inked pixels rather than 21, which is the direct confirmation that
+the artwork has no background fill.
+
+Suppression, clearing and both data modes were exercised on the real axis rather than a stub. With
+the Show Recent Data window at 58 to 77 both events drew nothing above the plot (the only ink there
+was the y-axis tick label, at x 39 to 58, entirely left of `chartArea.left` at 70.25); switching to
+Show All Data drew both. Restart left 0 annotations and 0 icon ink, with `chartArea.top` still 30 and
+the canvas still 286 x 381. The page had no scrollbars at the Chromebook viewport and the graph panel
+kept its 10px right gap.
 
 ---
 
