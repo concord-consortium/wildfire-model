@@ -8,6 +8,7 @@ import { ChartColors } from "../models/chart-data-set";
 import { hexToRGBValue } from "../utils";
 import { LineChartControls } from "./line-chart-controls";
 import { BaseComponent } from "../../components/base";
+import { annotationIconPlugin, iconBandHeight } from "./annotation-icons";
 
 const LEGEND_LINE_LENGTH = 25;
 
@@ -107,6 +108,10 @@ const defaultOptions: ChartOptions = {
   },
   layout: {
     padding: {
+      // room above the plot for the suppression-event icons; comes out of the plot area so the
+      // chart and the panel around it keep their size. Currently 30, derived from the tallest icon
+      // and its gap in annotation-icons.ts rather than fixed here.
+      top: iconBandHeight,
       left: 3,
       right: 19
     }
@@ -343,7 +348,10 @@ export class LineChart extends BaseComponent<ILineProps, ILineState> {
         height={h}
         width={w}
         redraw={true}
-        plugins={[ChartAnnotation, legendPlugin, yAxisLinePlugin]}
+        // annotationIconPlugin must stay after ChartAnnotation: the annotation plugin also
+        // self-registers globally, so it strokes its lines twice per frame, and only a later array
+        // position beats the second pass. Moving it first puts the lines over the icons.
+        plugins={[ChartAnnotation, legendPlugin, yAxisLinePlugin, annotationIconPlugin]}
       />;
     return (
       <div className="line-chart-container">

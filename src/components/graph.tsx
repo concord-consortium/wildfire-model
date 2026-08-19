@@ -5,6 +5,7 @@ import { Chart } from "../charts/components/chart";
 import css from "./graph.scss";
 import { Annotation } from "../charts/models/chart-annotation";
 import { DataPoint, ChartDataSet } from "../charts/models/chart-data-set";
+import { FIRE_LINE_EVENT, HELITACK_EVENT } from "../charts/components/annotation-icons";
 
 const chartColor0 = "#e85bd4";
 const chartColor1 = "#2b95f0";
@@ -28,14 +29,7 @@ export const Graph = observer(function WrappedComponent() {
       chartStore.chart.addAnnotation(new Annotation({
         type: "verticalLine",
         value: simulation.timeInHours,
-        label: "Fire Line",
-        labelXOffset: 0,
-        labelYOffset: 4,
-        labelPosition: "top",
-        labelBackgroundColor: "white",
-        fontFamily: "'Roboto Condensed', Lato, arial, sans-serif",
-        fontSize: 13,
-        labelColor: "#606060",
+        eventKind: FIRE_LINE_EVENT,
         thickness: 1,
         dashArray: borderDash1
       }));
@@ -47,14 +41,7 @@ export const Graph = observer(function WrappedComponent() {
       chartStore.chart.addAnnotation(new Annotation({
         type: "verticalLine",
         value: simulation.timeInHours,
-        label: "Helitack",
-        labelXOffset: 0,
-        labelYOffset: 4,
-        labelPosition: "top",
-        labelBackgroundColor: "white",
-        fontFamily: "'Roboto Condensed', Lato, arial, sans-serif",
-        fontSize: 13,
-        labelColor: "#606060",
+        eventKind: HELITACK_EVENT,
         thickness: 1,
         dashArray: borderDash2
       }));
