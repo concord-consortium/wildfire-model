@@ -87,6 +87,7 @@ the cursor, and a second click places the other end. Adjusting the two ends afte
 | `src/components/bottom-bar.tsx` | `handleFireLine`, `fireLineEnabled`. |
 | `src/components/view-3d/fire-line-marker.tsx` | Renders and drags placed markers. Its `onDragEnd` pairs markers by `idx % 2` and dereferenced `fireLineMarkers[idx + 1]` without a guard, which threw on an odd marker count (requirement 11). |
 | `src/components/icon-button.tsx` / `icon-button.scss` | Default / hover / pressed / disabled states today. Gains the persistent `.selected` armed state. |
+| `LOGGED-EVENTS.md` | Repo-root reference for every logged event. Gains `FireLineFirstEndPlaced` and `FireLineCanceled`, and a note that `FireLineButtonClicked` no longer fires on a cancel click. |
 
 ### Precedent in the codebase
 

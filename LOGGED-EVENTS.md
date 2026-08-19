@@ -30,8 +30,10 @@ All model coordinates are in feet. Normalized coordinates (x, y) are relative to
 |-------|-----------|------|
 | `SparkButtonClicked` | — | User clicks Spark button |
 | `SparkPlaced` | `{ x, y, elevation }` | User places a spark on the terrain |
-| `FireLineButtonClicked` | — | User clicks Fire Line button |
-| `FireLineAdded` | `{ x1, y1, elevation1, x2, y2, elevation2 }` | User draws a fire line |
+| `FireLineButtonClicked` | — | User clicks Fire Line button to arm the tool. Not logged when the click cancels an already-armed tool, so this counts attempts rather than button presses; that click logs `FireLineCanceled` with `reason: "toggle"` instead. |
+| `FireLineFirstEndPlaced` | `{ x, y, elevation }` | User clicks the first end of a fire line. The tool stays armed and a length-clamped preview follows the cursor until the second click. |
+| `FireLineAdded` | `{ x1, y1, elevation1, x2, y2, elevation2 }` | User clicks the second end, completing the fire line. Records where the line was *first* drawn, not its final geometry: later endpoint drags log `FireLineUpdated`, and the line actually built into the terrain is `fireLineMarkers` in the `SimulationStarted` payload. |
+| `FireLineCanceled` | `{ reason: "escape" \| "toggle" \| "toolSwitch" \| "start" \| "restart" \| "reload" \| "other", x?, y?, elevation? }` | User abandons a fire line before the second click, or disarms the tool without placing anything. `reason` names the route out: the Escape key, a second click on the Fire Line button, switching to Helitack, or pressing Start, Restart or Reload. Coordinates are the discarded first endpoint, omitted when the tool was armed but no end was placed. `"other"` is a backstop for a route with no explicit call site and should be read as a gap to investigate rather than an expected value. |
 | `FireLineUpdated` | `{ x1, y1, elevation1, x2, y2, elevation2 }` | User drags a fire line endpoint |
 | `HelitackButtonClicked` | — | User clicks Helitack button |
 | `Helitack` | `{ x, y, elevation }` | User drops helitack on the terrain |
