@@ -449,6 +449,22 @@ describe("Log events", () => {
         expect(stores.simulation.fireLineMarkers).toHaveLength(0);
       });
 
+      it("logs reason 'start' and empties the SimulationStarted snapshot's fireLineMarkers", async () => {
+        // The snapshot is built before start() runs, so a cancel that lands after it
+        // would leave the log reporting a fire line the run never builds.
+        jest.spyOn(stores.simulation, "start").mockImplementation(() => { /* noop */ });
+        stores.simulation.simulationRunning = false;
+        renderBottomBar();
+        placeFirstEnd();
+
+        await userEvent.click(screen.getByTestId("start-button"));
+
+        expect(canceledCall().reason).toBe("start");
+        const startedCall = mockLog.mock.calls.find((call: unknown[]) => call[0] === "SimulationStarted");
+        expect(startedCall[1].fireLineMarkers).toEqual([]);
+        expect(stores.ui.interaction).toBeNull();
+      });
+
       it("logs reason 'other' when the reaction backstop catches an unrouted departure", () => {
         renderCancelHook();
         placeFirstEnd();

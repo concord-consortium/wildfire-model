@@ -377,6 +377,16 @@ describe("BottomBar edge cases", () => {
       expectButtonState("spark-button", true);
     });
 
+    it("Start-during-Helitack: a run never resumes with a placement tool armed", async () => {
+      jest.spyOn(stores.simulation, "start").mockImplementation(() => { /* noop */ });
+      seedState(stores, 4);
+      stores.simulation.simulationRunning = false;
+      stores.ui.interaction = Interaction.Helitack;
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      await userEvent.click(screen.getByTestId("start-button"));
+      expect(stores.ui.interaction).toBeNull();
+    });
+
     it("Restart-during-DrawFireLine: ui.interaction cleared post-Restart", async () => {
       stores.simulation.sparks.push(new Vector2(50000, 50000));
       stores.simulation.simulationStarted = true;

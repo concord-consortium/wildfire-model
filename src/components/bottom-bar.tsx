@@ -269,6 +269,11 @@ export class BottomBar extends BaseComponent<IProps, IState> {
         outcome: simulation.getOutcomeData(this.stores.chartStore)
       });
     } else {
+      // Must precede buildStartReadingData() below: that snapshot is what
+      // SimulationStarted reports and what the rulesets read for fire line use, so
+      // cancelling after it would log a fire line this run never builds.
+      cancelFireLinePlacement(simulation, ui, "start");
+      ui.interaction = null;
       ui.showTerrainUI = false;
       // WM-6: clear any stale arm before the next run so the pulse re-arms only
       // when this run completes.

@@ -35,3 +35,21 @@ export const cancelFireLinePlacement = (
   }
   log("FireLineCanceled", data);
 };
+
+// Logs a drag of one placed fire line endpoint. The markers pair up by index, so an odd
+// count leaves an endpoint without a partner and there is no line to report.
+export const logFireLineUpdate = (simulation: SimulationModel, idx: number) => {
+  const start = idx % 2 === 0 ? simulation.fireLineMarkers[idx] : simulation.fireLineMarkers[idx - 1];
+  const end = idx % 2 === 0 ? simulation.fireLineMarkers[idx + 1] : simulation.fireLineMarkers[idx];
+  if (!start || !end) {
+    return;
+  }
+  log("FireLineUpdated", {
+    x1: start.x / simulation.config.modelWidth,
+    y1: start.y / simulation.config.modelHeight,
+    elevation1: simulation.cellAt(start.x, start.y)?.elevation,
+    x2: end.x / simulation.config.modelWidth,
+    y2: end.y / simulation.config.modelHeight,
+    elevation2: simulation.cellAt(end.x, end.y)?.elevation
+  });
+};

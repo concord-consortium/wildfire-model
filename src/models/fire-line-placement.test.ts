@@ -1,6 +1,6 @@
 import { SimulationModel } from "./simulation";
 import { Interaction, UIModel } from "./ui";
-import { cancelFireLinePlacement } from "./fire-line-placement";
+import { cancelFireLinePlacement, logFireLineUpdate } from "./fire-line-placement";
 import { log } from "../log";
 
 jest.mock("../log", () => ({ log: jest.fn() }));
@@ -114,5 +114,30 @@ describe("cancelFireLinePlacement", () => {
     expect(() => cancelFireLinePlacement(simulation, ui, "other")).not.toThrow();
     expect(ui.fireLinePlacementInProgress).toBe(false);
     expect(mockLog).toHaveBeenCalledWith("FireLineCanceled", { reason: "other" });
+  });
+});
+
+describe("logFireLineUpdate", () => {
+  beforeEach(() => mockLog.mockClear());
+
+  it("reports the pair either endpoint belongs to", async () => {
+    const simulation = await createSimulation();
+    simulation.addFireLineMarker(20000, 40000);
+    simulation.addFireLineMarker(28000, 40000);
+
+    logFireLineUpdate(simulation, 1);
+
+    expect(mockLog).toHaveBeenCalledWith("FireLineUpdated", expect.objectContaining({
+      x1: 20000 / MODEL_WIDTH,
+      x2: 28000 / MODEL_WIDTH
+    }));
+  });
+
+  it("does not throw or log when the partner marker is missing", async () => {
+    const simulation = await createSimulation();
+    simulation.addFireLineMarker(20000, 40000);
+
+    expect(() => logFireLineUpdate(simulation, 0)).not.toThrow();
+    expect(mockLog).not.toHaveBeenCalled();
   });
 });
