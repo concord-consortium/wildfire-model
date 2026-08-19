@@ -359,6 +359,15 @@ describe("BottomBar edge cases", () => {
       expectButtonState("fireline-button", true);
     });
 
+    it("marks the Fireline button selected, and only while armed", () => {
+      seedState(stores, 4);
+      const { rerender } = render(<Provider stores={stores}><BottomBar /></Provider>);
+      expect(screen.getByTestId("fireline-button").className).not.toContain("selected");
+      act(() => { stores.ui.interaction = Interaction.DrawFireLine; });
+      rerender(<Provider stores={stores}><BottomBar /></Provider>);
+      expect(screen.getByTestId("fireline-button").className).toContain("selected");
+    });
+
     it("disarms the tool when the button is clicked again", async () => {
       seedArmedFireLine(stores);
       render(<Provider stores={stores}><BottomBar /></Provider>);

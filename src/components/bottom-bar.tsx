@@ -129,7 +129,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   }
 
   public render() {
-    const { simulation } = this.stores;
+    const { simulation, ui } = this.stores;
     const { hazbotEngine } = this;
     return (
       <div className={`${css.bottomBar} ${!simulation.config.showBurnIndex ? css.fisHidden : ""}`}>
@@ -199,6 +199,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               icon={<FireLineIcon />}
               highlightIcon={<FireLineHighlightIcon />}
               disabled={!this.fireLineEnabled}
+              selected={ui.interaction === Interaction.DrawFireLine}
               buttonText="Fireline"
               dataTest="fireline-button"
               onClick={this.handleFireLine}
