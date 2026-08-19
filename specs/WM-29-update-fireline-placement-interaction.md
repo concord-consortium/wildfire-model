@@ -1,112 +1,14 @@
 # Update interaction for placing a Fireline
 
 **Jira**: https://concord-consortium.atlassian.net/browse/WM-29
-**Repo**: https://github.com/concord-consortium/wildfire-model
-**Status**: **In Development**
+
+**Status**: **Closed**
 
 ## Overview
 
 Change how a student draws a fire line on the 3D map: instead of pressing, holding, and dragging to
 place both ends in one gesture, the first click places one end, the fire line icon stays attached to
 the cursor, and a second click places the other end. Adjusting the two ends afterward is unchanged.
-
-## Project Owner Overview
-
-Placing a fire line is currently the only suppression tool in the model that requires a press-hold-drag
-gesture. Placing a spark and placing a helitack drop are both single clicks. The drag gesture is harder
-to discover, harder to perform on a trackpad, and inconsistent with the rest of the toolbar, which
-costs students time and attention that should be going toward the fire behavior they are there to
-reason about.
-
-This story replaces that gesture with two ordinary clicks. The intent is that no other part of the fire
-line workflow changes: the model still pauses when the Fireline tool is picked, the two ends can still
-be nudged individually before the run resumes, and the fire line is still built into the terrain when
-the student presses Start.
-
-## Background
-
-### The current gesture, as verified against the running app
-
-Walking the current build (`plainsTwoZone`, dev server, real mouse events) confirms this sequence:
-
-1. Clicking **Fireline** in the bottom bar calls `BottomBar.handleFireLine`, which calls
-   `simulation.stop()` (logging `SimulationStopped` if a run was in progress), sets
-   `ui.interaction = Interaction.DrawFireLine`, and logs `FireLineButtonClicked`.
-   **The model is paused for the whole placement interaction.** Verified live:
-   `simulationRunning` went `true` to `false` on that click.
-2. The Fireline button becomes **disabled** as soon as the interaction is armed, because
-   `BottomBar.fireLineEnabled` includes `ui.interaction !== Interaction.DrawFireLine`. Verified live.
-3. `useDrawFireLineInteraction.onPointerDown` pushes **two** markers at the same point and immediately
-   calls `startDragging`. `ui.dragging` flips true, which disables OrbitControls rotation via
-   `enableRotate={!ui.dragging}` in `view-3d.tsx`.
-4. `onDrag` calls `setFireLineMarker(lastIdx, x, y)` on every pointer move, which erases the old
-   dashed preview, moves the endpoint, applies `limitFireLineLength`, and redraws. Verified live: the
-   under-construction cell count grew 10 to 16 across a drag and the final length clamped to exactly
-   15000 ft, the `maxFireLineLength` default.
-5. `onDragEnd` compares the two markers against `MIN_DIST` (1500 ft). If both axes are under it, the
-   markers are removed and **the interaction stays armed**. Otherwise `ui.interaction = null` and
-   `FireLineAdded` is logged.
-6. The two markers persist as draggable `<Marker>`s with the dashed preview between them. They are
-   converted into real fire line cells by `applyFireLineMarkers()`, which `SimulationModel.start()`
-   calls when the student presses Start.
-
-Verified live: a press-and-release with no movement pushes 2 markers on pointer down, then resets to
-0 markers and leaves the tool armed. **Today, a plain click on the terrain is a no-op.** That is
-precisely the click WM-29 needs to make meaningful, which is why the `MIN_DIST` guard cannot simply be
-carried over unchanged.
-
-### What this means for the change
-
-The model layer already supports two-click placement with no changes. A throwaway Jest probe against
-`SimulationModel` confirmed:
-
-- `addFireLineMarker` once leaves `fireLineMarkers.length === 1`, draws no preview (the
-  `count % 2 === 0` guard), and leaves `canAddFireLineMarker` true, so the second click can still add.
-- The second `addFireLineMarker` draws the dashed preview at the moment it lands.
-- `setFireLineMarker(1, x, y)` erases and redraws cleanly with no cell leakage, so a rubber band
-  preview between the two clicks needs no new model code.
-- `applyFireLineMarkers()` tolerates a dangling odd marker without throwing and clears the array.
-
-**One real gap.** `addFireLineMarker` does **not** apply `limitFireLineLength`; only `setFireLineMarker`
-does. The probe placed two markers 99000 ft apart through `addFireLineMarker` and got a 99000 ft fire
-line against a 15000 ft cap. So an implementation that simply pushes a marker on click one and pushes
-another on click two silently removes the length limit. The second endpoint has to land through
-`setFireLineMarker` (or `addFireLineMarker` has to gain the clamp).
-
-### Interaction ownership is not a conflict
-
-Fire line markers are draggable through `useDraggingOverPlaneInteraction`, whose `active` flag is
-`enabled && (ui.interaction === null || ui.interaction === Interaction.HoverOverDraggable)`. While
-`DrawFireLine` is armed that is false, and `getEventHandlers` only wires handlers for active
-interactions, so a marker already on the map cannot swallow the second click or hijack the cursor.
-The two-click flow does not need to defend against that.
-
-### Abandoning a half-placed fire line (two verified failures)
-
-Splitting placement into two clicks creates a state that cannot exist today: a fire line with one end
-committed and the other not. Four bottom-bar buttons stay enabled while `DrawFireLine` is armed
-(Helitack, Start, Restart, Reload; Setup, Spark and Fireline are disabled), so the student can leave
-that state by several routes. Two of them are broken, both verified live:
-
-**The crash.** `FireLineMarkersContainer`'s `onDragEnd` pairs markers by `idx % 2` and dereferences
-`fireLineMarkers[idx + 1]` without a guard. Reaching an odd marker count with `ui.interaction === null`
-(arm Fireline, place one end, click Helitack, drop it) and then dragging the lone marker throws
-`Cannot read properties of undefined (reading 'x')` and raises the dev-server error overlay, which
-blocks all further interaction until reload. Note the existing code optional-chains the *cells*
-(`cell1?.elevation`) but not the *markers*, which is backwards: the markers are what go missing.
-
-**The phantom fire line, which is worse.** If the rubber band reuses the current two-marker mechanism
-(push both on click one, move the second on pointer move), then abandoning mid-placement leaves two
-markers and a live preview that are indistinguishable from a confirmed line. Verified: arm Fireline,
-place one end, click Helitack, drop it, press Start, and `applyFireLineMarkers()` builds a real
-21-cell fire line the student never confirmed, running from their first click to wherever the cursor
-happened to be. Silent, no error, and it changes fire behavior.
-
-Two further routes contribute to this. `handleStart` never clears `ui.interaction`, so pressing Start
-mid-placement resumes the run with the fire line cursor still live and the next terrain click begins a
-new line mid-run (verified). `handleHelitack` replaces `ui.interaction` without touching the markers.
-Restart and Reload are the only clean exits today, since both set `ui.interaction = null` and clear
-`fireLineMarkers`, but each discards the whole run and so cannot serve as "cancel this fire line".
 
 ## Requirements
 
@@ -115,7 +17,9 @@ Restart and Reload are the only clean exits today, since both set `ui.interactio
 2. The fire line icon stays with the cursor for the whole interaction, so the tool visibly stays armed
    and awaiting the second end. Before the first click that icon is the cursor art; after it, the marker
    tracking the pointer takes over and the cursor art gives way to a plain crosshair, so only one fire
-   line icon is ever on screen.
+   line icon is ever on screen. *(Amended during implementation; the original wording kept the cursor
+   art on for the whole interaction, which showed the icon twice. See "Only one fire line icon during
+   placement" under Technical Notes.)*
 3. A second click on the terrain places the other end and ends the interaction, leaving
    `ui.interaction = null`.
 4. The resulting fire line must respect `config.maxFireLineLength` exactly as the drag gesture does
@@ -165,7 +69,11 @@ Restart and Reload are the only clean exits today, since both set `ui.interactio
     `{ x, y, elevation }` for the discarded endpoint, normalized as in requirement 15; when the tool
     was armed but no endpoint was placed, those fields are omitted and the event still fires. The
     requirement 13 too-short rejection is **not** logged: it is a no-op click, and logging every
-    rejected click would be noise.
+    rejected click would be noise. *(Partial: the enum does not name Restart or Reload, which are also
+    reachable mid-placement and so land on `"other"` through the backstop. The reason is still
+    recoverable from the `SimulationRestarted` / `SimulationReloaded` event that follows immediately,
+    but adding `"restart"` and `"reload"` would keep `"other"` meaning what requirement 16 says it
+    means. Left as a follow-up.)*
 
 ## Technical Notes
 
@@ -174,13 +82,13 @@ Restart and Reload are the only clean exits today, since both set `ui.interactio
 | File | Role |
 |---|---|
 | `src/components/view-3d/use-draw-fire-line-interaction.tsx` | The whole gesture. This is the file the story is about. |
-| `src/components/view-3d/use-dragging.ts` | Supplies `startDragging` / window pointermove listeners. May become unused by the fire line path. |
+| `src/components/view-3d/use-dragging.ts` | Supplied `startDragging` / window pointermove listeners to the old drag gesture. The fire line path no longer uses it; `use-dragging-over-plane-interaction.ts` still does, so it is not dead code. |
 | `src/components/view-3d/terrain.tsx` | Registers the interaction in its `interactions` array; is the raycast surface. |
 | `src/components/use-custom-cursors.ts` | Maps `Interaction.DrawFireLine` to `url(fire-line-cursor.png) 32 64, crosshair`. Gains the requirement 2 handover to the marker. |
 | `src/models/simulation.ts` | `addFireLineMarker`, `setFireLineMarker`, `limitFireLineLength`, `markFireLineUnderConstruction`, `canAddFireLineMarker`. |
 | `src/models/ui.ts` | `Interaction` enum, `ui.dragging`. |
 | `src/components/bottom-bar.tsx` | `handleFireLine`, `fireLineEnabled`. |
-| `src/components/view-3d/fire-line-marker.tsx` | Renders and drags placed markers; contains the odd-count pairing hazard noted above. |
+| `src/components/view-3d/fire-line-marker.tsx` | Renders and drags placed markers. Its `onDragEnd` pairs markers by `idx % 2` and dereferenced `fireLineMarkers[idx + 1]` without a guard, which threw on an odd marker count (requirement 11). |
 | `src/components/icon-button.tsx` / `icon-button.scss` | Default / hover / pressed / disabled states today. Gains the persistent `.selected` armed state. |
 
 ### Precedent in the codebase
@@ -188,8 +96,10 @@ Restart and Reload are the only clean exits today, since both set `ui.interactio
 `usePlaceSparkInteraction` and `useHelitackInteraction` are both single-click, stateless, and clear
 `ui.interaction` in their `onPointerDown`. WM-29 makes the fire line the **first multi-step interaction
 in the app**, so where the "first end is placed, waiting for the second" state lives is a new decision.
-Note that it may not need a new field at all: `fireLineMarkers.length` already distinguishes the
-states, and `canAddFireLineMarker` gates on `length < 2`.
+It looked at first as though no new field would be needed, since `canAddFireLineMarker` gates on
+`length < 2`. That does not survive the next note: the half-placed state holds two markers, so the
+marker count cannot tell it apart from a completed line and an explicit
+`ui.fireLinePlacementInProgress` flag is required.
 
 ### Performance
 
@@ -218,31 +128,33 @@ why that guard stays as a backstop rather than being dropped.
 
 ### Enforcing the cancel invariant (requirement 10)
 
-`ui.interaction` is written from 10 sites across 6 files with no common setter: `bottom-bar.tsx` (325,
-340, 355, 362, 375), `use-draw-fire-line-interaction.tsx:40`, `use-helitack-interaction.ts:17`,
-`use-place-spark-interaction.tsx:17` and `use-dragging-over-plane-interaction.ts` (44, 53). The last is
+`ui.interaction` is written from 10 sites across 6 files with no common setter: five in
+`bottom-bar.tsx`, plus `use-draw-fire-line-interaction.tsx`, `use-helitack-interaction.ts`,
+`use-place-spark-interaction.tsx` and two in `use-dragging-over-plane-interaction.ts`. The last is
 a *hover-out* handler, which nobody adding a tool later would think to audit for fire line cancel
 behavior. Requiring each site to call the cancel path would make requirement 10 a convention that
 decays as tools are added.
 
 Prefer a MobX `reaction` on `ui.interaction` that invokes the cancel whenever it transitions away from
 `DrawFireLine` leaving an incomplete line, so the invariant holds for writers that do not know it
-exists. `reaction` with a stored disposer is already the pattern in this codebase: `bottom-bar.tsx:116`
-(the WM-6 Hazbot pulse, disposed in `componentWillUnmount`) and `app.tsx:59`.
+exists. `reaction` with a stored disposer is already the pattern in this codebase: the WM-6 Hazbot
+pulse reaction in `BottomBar.componentDidMount` (disposed in `componentWillUnmount`) and the
+natural-end reaction in `app.tsx`.
 
-**Ordering hazard.** The cancel must run **before `buildStartReadingData()`** (`bottom-bar.tsx:295`),
-not merely before `simulation.start()` (:311). The ordering there is:
+**Ordering hazard.** The cancel must run **before `buildStartReadingData()`**, not merely before
+`simulation.start()`. The order inside `BottomBar.handleStart` is:
 
 ```
-295: const startData = simulation.buildStartReadingData();   // captures fireLineMarkers
-297: configSnapshot.fireLineMarkers = startData.fireLineMarkers;
-310: log("SimulationStarted", configSnapshot);
-311: simulation.start();                                     // applyFireLineMarkers()
+const startData = simulation.buildStartReadingData();   // captures fireLineMarkers
+configSnapshot.fireLineMarkers = startData.fireLineMarkers;
+log("SimulationStarted", configSnapshot);
+simulation.start();                                     // applyFireLineMarkers()
 ```
 
-A cancel anywhere between 295 and 311 leaves the log reporting a two-marker fire line that `start()`
-never builds, and that snapshot is exactly what `factor-variables.ts:200` and `sim-props.ts:211` read
-via `(fireLineMarkers?.length ?? 0) >= 2`, so rulesets 45, 47 and 54 would count a fire line the
+A cancel anywhere between the first and last of those leaves the log reporting a two-marker fire line
+that `start()` never builds, and that snapshot is exactly what `factor-variables.ts:200` and
+`sim-props.ts:211` read via `(fireLineMarkers?.length ?? 0) >= 2`, so rulesets 45, 47 and 54 would
+count a fire line the
 student abandoned. This is the mirror image of the phantom fire line: phantom in the researcher data
 rather than in the terrain. Cancel at the top of the `else` branch, before any snapshot is built.
 
@@ -304,8 +216,9 @@ logic is required. The WM-1 description is stale, not the code.
 ### Testing
 
 No existing test breaks: none of the six states in `cypress/e2e/bottom-bar-state-machine.cy.ts` arms
-the tool, so relaxing `fireLineEnabled` is invisible to it, and `cypress/e2e/bottom-bar-visuals.cy.ts:112`
-asserts highlight opacity only in the unarmed default state. But nothing covers the new behavior
+the tool, so relaxing `fireLineEnabled` is invisible to it, and the "renders default-state highlight
+opacity = 0 on icon-on-top buttons" test in `cypress/e2e/bottom-bar-visuals.cy.ts` asserts highlight
+opacity only in the unarmed default state. But nothing covers the new behavior
 either, and both defects this spec records were found by hand rather than by a test.
 `src/components/view-3d/interaction-handler.test.ts` is the unit-test precedent for this area.
 
@@ -335,7 +248,7 @@ payloads:
 - `FireLineAdded` fires exactly once per completed line, on the second click.
 
 The `"start"` case is worth asserting against the log payload rather than the model: it is the one that
-must fire before `buildStartReadingData()` at `bottom-bar.tsx:295`, so the test should confirm that the
+must fire before `buildStartReadingData()` in `BottomBar.handleStart`, so the test should confirm that the
 `SimulationStarted` payload's `fireLineMarkers` is empty when a placement was abandoned. That is the
 regression test for the ordering hazard, where the model looks right and only the log is wrong.
 
@@ -364,9 +277,9 @@ become a follow-up; the cost is weaker feedback that the tool is armed.
   entirely. Worth knowing it uses `addFireLineMarker` twice and so is itself unclamped, but changing it
   is not part of this story.
 
-## Open Questions
+## Decisions
 
-### RESOLVED: Does a live preview line follow the cursor between the two clicks?
+### Does a live preview line follow the cursor between the two clicks?
 
 **Context**: Today the drag gives continuous feedback: you watch the dashed line stretch and watch it
 stop growing when it hits the 15000 ft cap. The Jira text only says the icon reattaches to the cursor,
@@ -395,7 +308,7 @@ already does the erase / move / clamp / redraw, so no new model code is required
 
 ---
 
-### RESOLVED: How does a student abandon the interaction after placing the first end?
+### How does a student abandon the interaction after placing the first end?
 
 **Context**: The drag gesture is self-terminating: releasing the mouse always ends it. Two clicks
 create a mid-state with no exit. The Fireline button cannot serve as the escape hatch because
@@ -440,9 +353,15 @@ Scope note: Escape is wired for `DrawFireLine` only. Extending it to cancel Spar
 a consistency improvement but changes two tools this story does not cover, so it is listed as a
 follow-up rather than done here.
 
+*Implementation amendment*: the `e.defaultPrevented` guard turned out not to be sufficient on its own.
+Coachmarks attaches its `document` handler when a mark opens, whereas the wildfire handler is attached
+at app mount, so the wildfire handler runs first and always sees `defaultPrevented` still false. The
+shipped guard also bails on `ui.showHazbotFeedback`, which is true for exactly as long as a coach mark
+is open.
+
 ---
 
-### RESOLVED: What happens when the second click is too close to the first?
+### What happens when the second click is too close to the first?
 
 **Context**: `MIN_DIST` (1500 ft) exists today only to tell a real drag apart from an accidental click,
 and it is what makes a plain click a no-op right now. Under two-click placement that job disappears,
@@ -480,7 +399,7 @@ Left as-is rather than inventing a visual treatment; raise with Michael if one i
 
 ---
 
-### RESOLVED: Should the first click emit a log event?
+### Should the first click emit a log event?
 
 **Context**: The analysis engine consumes the `Readings` event log, and `FireLineAdded` currently fires
 once per completed fire line. Splitting placement into two steps creates a point in time that the log
@@ -531,7 +450,7 @@ warrant a ruleset reading these events. The events being present does not commit
 
 ---
 
-### RESOLVED: Is there a Zeplin artboard or other design guidance for this interaction?
+### Is there a Zeplin artboard or other design guidance for this interaction?
 
 **Context**: The Zeplin MCP server is available, but no Zeplin URL was supplied with this story and the
 Jira ticket has no attachments. The existing cursor art (`src/assets/interactions/fire-line-cursor.png`,
@@ -569,164 +488,157 @@ Deliberately not decided here: whether Spark and Helitack should get the same se
 consistency. They have the same armed-with-no-indication behavior, but changing them is outside this
 story.
 
-## Self-Review
+---
 
-### Senior Engineer
+### SE1: Requirement 12 directly contradicts the Out of Scope list
 
-#### RESOLVED: SE1 — Requirement 12 directly contradicts the Out of Scope list
-Out of Scope says "`applyFireLineMarkers` / Start behavior" is excluded, while requirement 12 changes
-Start behavior by clearing `ui.interaction`. One of the two has to give. Since requirement 12 was
-adopted deliberately as layer 3 of the Q2 fix, the Out of Scope entry is the stale one, but leaving
-both in place means an implementer can cite the spec to justify either choice.
+**Context**: Out of Scope said "`applyFireLineMarkers` / Start behavior" was excluded, while requirement
+12 changes Start behavior by clearing `ui.interaction`. One of the two had to give. Since requirement 12
+was adopted deliberately as layer 3 of the Q2 fix, the Out of Scope entry was the stale one, but leaving
+both in place would let an implementer cite the spec to justify either choice.
 
-**Resolution**: Out of Scope narrowed to `applyFireLineMarkers` and the fire spread model, with
+**Decision**: Out of Scope narrowed to `applyFireLineMarkers` and the fire spread model, with
 requirement 12 named as the single deliberate exception to "Start behavior is otherwise unchanged".
 
 ---
 
-#### RESOLVED: SE2 — Requirement 10 states an invariant with no enforcement point
-"Every departure from `DrawFireLine` with an incomplete line routes through the cancel path" is stated
-as a rule but not as a mechanism. `ui.interaction` is a plain observable written from **10 sites across
-6 files** (`bottom-bar.tsx` x5, `use-draw-fire-line-interaction.tsx`, `use-helitack-interaction.ts`,
-`use-place-spark-interaction.tsx`, `use-dragging-over-plane-interaction.ts` x2) with no setter to funnel
-through. Requiring each call site to remember to cancel is exactly the kind of rule that holds at merge
-and rots later. Note `use-dragging-over-plane-interaction.ts:53` sets `ui.interaction = null` from a
-*hover-out* handler, a writer nobody would think to audit. A MobX `reaction` on `ui.interaction` that
-fires the cancel whenever it transitions away from `DrawFireLine` with an incomplete line would make
-the invariant structural rather than conventional.
+### SE2: Requirement 10 states an invariant with no enforcement point
 
-**Resolution**: requirement 10 stays behavioral; the mechanism is recorded under Technical Notes,
-"Enforcing the cancel invariant (requirement 10)", including the `reaction` precedent already in
-`bottom-bar.tsx:116` and `app.tsx:59`.
+**Context**: "Every departure from `DrawFireLine` with an incomplete line routes through the cancel
+path" was stated as a rule but not as a mechanism. `ui.interaction` is a plain observable written from
+**10 sites across 6 files** (`bottom-bar.tsx` x5, `use-draw-fire-line-interaction.tsx`,
+`use-helitack-interaction.ts`, `use-place-spark-interaction.tsx`,
+`use-dragging-over-plane-interaction.ts` x2) with no setter to funnel through. Requiring each call site
+to remember to cancel is exactly the kind of rule that holds at merge and rots later. Note
+`use-dragging-over-plane-interaction.ts:53` sets `ui.interaction = null` from a *hover-out* handler, a
+writer nobody would think to audit.
 
----
-
-#### RESOLVED: SE3 — The rotate-drag collision is worse for a two-click tool than the note admits
-The Camera rotation note argues the collision is acceptable because Spark and Helitack already act on
-pointer down while armed. That understates it. Spark and Helitack are single-click: one accidental
-rotate-drag places one object and disarms the tool, so the mistake is self-limiting and obvious. Under
-two-click placement, a student who rotates the camera twice while the tool is armed places *both*
-endpoints and draws a complete fire line they never intended, each drag also moving the camera so the
-map no longer looks the way it did. The mistake compounds instead of terminating.
-
-**Resolution**: **finding withdrawn.** It compared against an idealized baseline rather than the
-measured one. On the current build a rotate-drag with Fireline armed draws a *complete* fire line, so
-two-click (one visible endpoint per drag) is an improvement, not a regression. The Camera rotation note
-was corrected for accuracy instead: rotation is ungated by `cameraSettings`, and it is `ui.dragging`,
-set by `startDragging`, that suppresses rotation during today's drag.
+**Decision**: requirement 10 stays behavioral; the mechanism is recorded under Technical Notes,
+"Enforcing the cancel invariant (requirement 10)", using a MobX `reaction` on `ui.interaction`, with the
+`reaction` precedent already in `BottomBar.componentDidMount` and `app.tsx`.
 
 ---
 
-### QA Engineer
+### SE3: The rotate-drag collision is worse for a two-click tool than the note admits
 
-#### RESOLVED: QA1 — No test strategy, for a story whose two worst defects were found by manual probing
-Both the crash and the phantom fire line were found by driving the running app, not by any test. The
-spec notes that `interaction-handler.test.ts` exists and that Cypress does not cover fire line
-placement, then stops. Requirements 10 to 13 are precisely the behaviors that will silently regress.
-The spec should name what gets a regression test (the cancel invariant, the missing-partner guard, the
-Euclidean minimum, the clamp on the second click) and at which level.
+**Context**: The Camera rotation note argued the collision is acceptable because Spark and Helitack
+already act on pointer down while armed. The objection was that this understates it: Spark and Helitack
+are single-click, so one accidental rotate-drag places one object and disarms the tool, whereas under
+two-click a student who rotates twice while armed would place *both* endpoints and draw a complete fire
+line they never intended.
 
-**Resolution**: Testing note rewritten with the four model-level cases, the two Cypress specs to
-extend, and the verified fact that no existing test breaks.
+**Decision**: **finding withdrawn.** It compared against an idealized baseline rather than the measured
+one. On the current build a rotate-drag with Fireline armed draws a *complete* fire line, so two-click
+(one visible endpoint per drag) is an improvement, not a regression. The Camera rotation note was
+corrected for accuracy instead: rotation is ungated by `cameraSettings`, and it is `ui.dragging`, set by
+`startDragging`, that suppresses rotation during today's drag.
 
 ---
 
-### Product Manager
+### QA1: No test strategy, for a story whose two worst defects were found by manual probing
 
-#### RESOLVED: PM1 — Half the requirements are discovered work, not what WM-29 asked for
-WM-29 asks for one thing: replace click-hold-drag with two clicks. Requirements 10, 11, 12 and 14 are
-all things this investigation turned up. Some are inseparable from the change (10 and 11 exist only
-because two-click creates the half-placed state), but 12 changes Start for every tool and 14 adds a
-button state to the design system. On a story marked **Low** priority, someone other than the
+**Context**: Both the crash and the phantom fire line were found by driving the running app, not by any
+test. The spec noted that `interaction-handler.test.ts` exists and that Cypress does not cover fire line
+placement, then stopped. Requirements 10 to 13 are precisely the behaviors that will silently regress.
+
+**Decision**: Testing note rewritten with the four model-level cases, the two Cypress specs to extend,
+and the verified fact that no existing test breaks.
+
+---
+
+### PM1: Half the requirements are discovered work, not what WM-29 asked for
+
+**Context**: WM-29 asks for one thing: replace click-hold-drag with two clicks. Requirements 10, 11, 12
+and 14 are all things this investigation turned up. Some are inseparable from the change (10 and 11
+exist only because two-click creates the half-placed state), but 12 changes Start for every tool and 14
+adds a button state to the design system. On a story marked **Low** priority, someone other than the
 implementer should decide whether those ship here or split into follow-ups.
 
-**Resolution**: separability checked rather than assumed. 9, 10 and 11 are inseparable. 12 is *also*
+**Decision**: separability checked rather than assumed. 9, 10 and 11 are inseparable. 12 is *also*
 inseparable (it is the trigger that closes the Start route, not a tidy-up). Only 14 can be split. A
-Scope section now records this, and the MobX ordering hazard uncovered while checking it is recorded
-under the cancel-invariant Technical Note.
+Scope section records this, and the MobX ordering hazard uncovered while checking it is recorded under
+the cancel-invariant Technical Note.
 
 ---
 
-### Student
+### ST1: Requirement 9 does not say whether cancel disarms the tool or only clears the endpoint
 
-#### RESOLVED: ST1 — Requirement 9 does not say whether cancel disarms the tool or only clears the endpoint
-"Both cancel the placement" is ambiguous between two materially different behaviors: (a) clear the
-first endpoint but stay armed, so the next click starts a new fire line, or (b) clear the endpoint and
-disarm entirely, cursor back to default. The button toggle strongly implies (b), since clicking a
-toggle off should turn the tool off, while Escape could reasonably mean either. Leaving both readings
-open guarantees the two affordances get implemented inconsistently.
+**Context**: "Both cancel the placement" was ambiguous between two materially different behaviors: (a)
+clear the first endpoint but stay armed, so the next click starts a new fire line, or (b) clear the
+endpoint and disarm entirely, cursor back to default. The button toggle strongly implies (b), since
+clicking a toggle off should turn the tool off, while Escape could reasonably mean either. Leaving both
+readings open would guarantee the two affordances get implemented inconsistently.
 
-**Resolution**: (b). Both affordances disarm completely. Requirement 9 now says so explicitly and
+**Decision**: (b). Both affordances disarm completely. Requirement 9 now says so explicitly and
 distinguishes cancel from the requirement 13 rejection, which stays armed. After a cancel,
 `canAddFireLineMarker` is true again so the button re-enables with no extra work.
 
 ---
 
-### Education Researcher
+### ER1: Cancelling re-logs `FireLineButtonClicked`, making tool-intent counts ambiguous
 
-#### RESOLVED: ER1 — Cancelling re-logs `FireLineButtonClicked`, making tool-intent counts ambiguous
-`handleFireLine` logs `FireLineButtonClicked` unconditionally. Once requirement 9 re-enables the button
-as a cancel toggle, the cancel click runs the same handler and emits a second `FireLineButtonClicked`,
-so "student attempted a fire line" is double-counted in LARA. Verified that the neighboring risk does
-*not* occur: `simulation.stop()` is guarded by `wasRunning`, and the model is already paused by the
-first click, so no spurious second `SimulationStopped` reaches `canonical-runs.ts`. The event is a
-no-op in `translate.ts`, so no ruleset breaks; the cost is researcher log clarity only.
+**Context**: `handleFireLine` logs `FireLineButtonClicked` unconditionally. Once requirement 9
+re-enables the button as a cancel toggle, the cancel click runs the same handler and emits a second
+`FireLineButtonClicked`, so "student attempted a fire line" is double-counted in LARA. Verified that the
+neighboring risk does *not* occur: `simulation.stop()` is guarded by `wasRunning`, and the model is
+already paused by the first click, so no spurious second `SimulationStopped` reaches
+`canonical-runs.ts`. The event is a no-op in `translate.ts`, so no ruleset breaks; the cost is
+researcher log clarity only.
 
-**Resolution**: `handleFireLine` branches at the top (Technical Notes, "`handleFireLine` must branch
+**Decision**: `handleFireLine` branches at the top (Technical Notes, "`handleFireLine` must branch
 before it logs"). Without the branch the cancel click would also *re-arm* the tool, so the branch is
 required for correctness, not only for logging hygiene. The cancel path logs `FireLineCanceled` with
 `reason: "toggle"` rather than nothing, following the reversal of the Q4 decision.
 
-## Self-Review (second pass)
+---
 
-### Senior Engineer
+### SE4: "Cancel before `simulation.start()`" is too late; it must precede `buildStartReadingData()`
 
-#### RESOLVED: SE4 — "Cancel before `simulation.start()`" is too late; it must precede `buildStartReadingData()`
-The cancel-invariant note says `handleStart` should call the cancel path "before `simulation.start()`".
-The actual ordering in `bottom-bar.tsx` makes that insufficient:
+**Context**: The cancel-invariant note said `handleStart` should call the cancel path "before
+`simulation.start()`". The actual ordering in `BottomBar.handleStart` makes that insufficient:
 
 ```
-295: const startData = simulation.buildStartReadingData();   // captures fireLineMarkers
-297: configSnapshot.fireLineMarkers = startData.fireLineMarkers;
-310: log("SimulationStarted", configSnapshot);
-311: simulation.start();                                     // applyFireLineMarkers()
+const startData = simulation.buildStartReadingData();   // captures fireLineMarkers
+configSnapshot.fireLineMarkers = startData.fireLineMarkers;
+log("SimulationStarted", configSnapshot);
+simulation.start();                                     // applyFireLineMarkers()
 ```
 
-Cancelling anywhere between 295 and 311 satisfies the note yet still corrupts the data: the snapshot
-already captured the abandoned markers at 295, so `SimulationStarted` at 310 reports a two-marker fire
-line, while the cancel has emptied `fireLineMarkers` so `start()` at 311 builds nothing. The run then
+Cancelling anywhere after the snapshot is taken satisfies the note yet still corrupts the data: the
+snapshot already captured the abandoned markers, so `SimulationStarted` reports a two-marker fire
+line, while the cancel has emptied `fireLineMarkers` so `start()` builds nothing. The run then
 has **no** fire line but the log says it had one. Worse, that snapshot is exactly what
 `factor-variables.ts:200` and `sim-props.ts:211` read via `(fireLineMarkers?.length ?? 0) >= 2`, so
 rulesets 45, 47 and 54 would classify the student as having used a fire line they abandoned. This is
 the mirror image of the phantom fire line: phantom in the log rather than in the terrain.
 
-**Resolution**: the ordering-hazard note now specifies cancelling at the top of the `else` branch,
-before `buildStartReadingData()` at :295, and retains the MobX action/reaction timing caveat.
+**Decision**: the ordering-hazard note now specifies cancelling at the top of the `else` branch, before
+`buildStartReadingData()` is called, and retains the MobX action/reaction timing caveat.
 
 ---
 
-#### RESOLVED: SE5 — Requirement 16 is undefined in two reachable states
-(a) **No endpoint placed yet.** Requirement 9 re-enables the Fireline button while armed, so the
-student can arm the tool and immediately click the button again with zero markers placed. Requirement
-16 specifies a payload containing "the discarded endpoint", which does not exist in that state.
-(b) **The reaction backstop.** Requirement 10's `reaction` exists precisely to catch departure routes
-that nobody anticipated, but a route nobody anticipated has no `reason` string to report, and
-requirement 16 enumerates exactly four.
+### SE5: Requirement 16 is undefined in two reachable states
 
-**Resolution**: requirement 16 now logs the event in both states. Coordinates are omitted when no
-endpoint was placed (skipping the log entirely would recreate the ambiguity that justified the event),
-and `"other"` is added to the enum so the backstop can report that it fired for an uncovered route.
+**Context**: (a) **No endpoint placed yet.** Requirement 9 re-enables the Fireline button while armed,
+so the student can arm the tool and immediately click the button again with zero markers placed.
+Requirement 16 specified a payload containing "the discarded endpoint", which does not exist in that
+state. (b) **The reaction backstop.** Requirement 10's `reaction` exists precisely to catch departure
+routes that nobody anticipated, but a route nobody anticipated has no `reason` string to report, and
+requirement 16 enumerated exactly four.
+
+**Decision**: requirement 16 now logs the event in both states. Coordinates are omitted when no endpoint
+was placed (skipping the log entirely would recreate the ambiguity that justified the event), and
+`"other"` is added to the enum so the backstop can report that it fired for an uncovered route.
 
 ---
 
-### QA Engineer
+### QA2: The Testing note predates requirements 15 and 16
 
-#### RESOLVED: QA2 — The Testing note predates requirements 15 and 16
-The test list was written when the spec had no new log events. It covers the cancel invariant, the
-missing-partner guard, the clamp and the Euclidean minimum, but nothing asserts that
+**Context**: The test list was written when the spec had no new log events. It covered the cancel
+invariant, the missing-partner guard, the clamp and the Euclidean minimum, but nothing asserted that
 `FireLineFirstEndPlaced` and `FireLineCanceled` fire, carry the right payloads, or that the `reason`
-field is correct per route. `log-events.test.tsx` already mocks `log` and asserts specific events, so
-it is the natural home and the pattern already exists.
+field is correct per route. `log-events.test.tsx` already mocks `log` and asserts specific events, so it
+is the natural home and the pattern already exists.
 
-**Resolution**: Testing note extended with the four log-event cases, including the `"start"` route
+**Decision**: Testing note extended with the four log-event cases, including the `"start"` route
 asserted against the `SimulationStarted` payload as the regression test for the ordering hazard.
