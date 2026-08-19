@@ -16,16 +16,21 @@ describe("annotation icon placement", () => {
 
   it("centers the icon on its event time, above the plot", () => {
     expect(iconPlacement(FIRE_LINE_EVENT, 20, scale, CHART_AREA_TOP)).toEqual({
-      left: 70 - 21 / 2, top: 30 - 2 - 27, width: 21, height: 27
+      left: Math.round(70 - 21 / 2), top: 30 - 2 - 27, width: 21, height: 27
     });
     expect(iconPlacement(HELITACK_EVENT, 20, scale, CHART_AREA_TOP)).toEqual({
-      left: 70 - 27 / 2, top: 30 - 3 - 22, width: 27, height: 22
+      left: Math.round(70 - 27 / 2), top: 30 - 3 - 22, width: 27, height: 22
     });
   });
 
-  it("keeps sub-pixel positions rather than rounding onto the pixel grid", () => {
+  // The artwork touches its bounding box on every side and its outline is 1px, so a fractional
+  // offset makes drawImage resample that outline across two columns and the side edges read as
+  // clipped (measured on the live chart: outline alpha 103-139 fractional vs 255 integer).
+  it("rounds onto the pixel grid so the 1px outline stays solid", () => {
     const fractional = { ...scale, getPixelForValue: (value: number) => 50.4 + value };
-    expect(iconPlacement(FIRE_LINE_EVENT, 20, fractional, CHART_AREA_TOP)?.left).toBeCloseTo(59.9, 5);
+    expect(iconPlacement(FIRE_LINE_EVENT, 20, fractional, CHART_AREA_TOP)?.left).toBe(60);
+    const fractionalTop = 30.6;
+    expect(iconPlacement(FIRE_LINE_EVENT, 20, fractional, fractionalTop)?.top).toBe(2);
   });
 
   it("draws an event sitting exactly on either end of the visible range", () => {

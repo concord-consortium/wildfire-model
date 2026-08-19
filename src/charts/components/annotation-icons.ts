@@ -70,8 +70,11 @@ interface IXScale {
  * end is allowed to overhang the plot rather than being clamped inward, since clamping would slide
  * it off its own line.
  *
- * No rounding anywhere: the plugin strokes its line on the raw pixel value, so centering on the
- * same raw value puts the icon on its line, and SVG artwork stays crisp at fractional offsets.
+ * Rounded to whole pixels. The artwork touches its own bounding box on every side and its outline
+ * is 1px, so at a fractional offset drawImage resamples that outline across two columns at roughly
+ * 45% alpha each and the side edges read as thin or clipped (measured: outline alpha 103-139 at a
+ * fractional x versus 255 at an integer one). Rounding costs at most half a pixel of offset from
+ * the line the plugin strokes on the raw value, which is imperceptible, and buys a solid border.
  */
 export const iconPlacement = (
   eventKind: string | undefined,
@@ -84,8 +87,8 @@ export const iconPlacement = (
   }
   const icon = annotationIcons[eventKind];
   return {
-    left: scale.getPixelForValue(value) - icon.width / 2,
-    top: chartAreaTop - icon.gap - icon.height,
+    left: Math.round(scale.getPixelForValue(value) - icon.width / 2),
+    top: Math.round(chartAreaTop - icon.gap - icon.height),
     width: icon.width,
     height: icon.height
   };
