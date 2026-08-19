@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, renderHook, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "mobx-react";
 import { createStores } from "../models/stores";
@@ -10,6 +10,7 @@ import { act } from "react-dom/test-utils";
 import { reaction } from "mobx";
 import { Interaction } from "../models/ui";
 import { renderFireLineInteraction, terrainPointerEvent } from "./view-3d/fire-line-interaction-test-helpers";
+import { useFireLinePlacementCancel } from "./use-fire-line-placement-cancel";
 
 // Mock the log module
 const mockLog = jest.fn();
@@ -366,6 +367,98 @@ describe("Log events", () => {
 
       expect(callsNamed("FireLineAdded")).toHaveLength(0);
       expect(callsNamed("FireLineFirstEndPlaced")).toHaveLength(1);
+    });
+
+    describe("cancel routes", () => {
+      const renderBottomBar = () => render(
+        <Provider stores={stores}>
+          <BottomBar />
+        </Provider>
+      );
+
+      const renderCancelHook = () => renderHook(() => useFireLinePlacementCancel(), {
+        wrapper: ({ children }: { children?: React.ReactNode }) =>
+          <Provider stores={stores}>{children}</Provider>
+      });
+
+      const placeFirstEnd = () => {
+        const { result } = renderFireLineInteraction(stores);
+        act(() => { result.current.onPointerDown?.(point(30000, 40000)); });
+      };
+
+      const canceledCall = () => {
+        const calls = callsNamed("FireLineCanceled");
+        expect(calls).toHaveLength(1);
+        return calls[0][1];
+      };
+
+      const expectPlacementDiscarded = () => {
+        expect(stores.simulation.fireLineMarkers).toHaveLength(0);
+        expect(stores.simulation.cells.filter(c => c.isFireLineUnderConstruction)).toHaveLength(0);
+        expect(stores.ui.fireLinePlacementInProgress).toBe(false);
+        expect(stores.ui.interaction).toBeNull();
+      };
+
+      beforeEach(async () => {
+        await armFireLineTool();
+        stores.simulation.simulationStarted = true;
+      });
+
+      it("logs reason 'escape' and discards the placement on the Escape key", () => {
+        renderCancelHook();
+        placeFirstEnd();
+
+        act(() => { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
+
+        expect(canceledCall().reason).toBe("escape");
+        expectPlacementDiscarded();
+      });
+
+      it("logs reason 'toggle' on a second Fireline button click, without re-arming", async () => {
+        stores.ui.interaction = null;
+        renderBottomBar();
+        await userEvent.click(screen.getByTestId("fireline-button"));
+        expect(stores.ui.interaction).toBe(Interaction.DrawFireLine);
+        placeFirstEnd();
+
+        await userEvent.click(screen.getByTestId("fireline-button"));
+
+        expect(canceledCall().reason).toBe("toggle");
+        // The cancel click must not count as a second attempt to draw a fire line.
+        expect(callsNamed("FireLineButtonClicked")).toHaveLength(1);
+        expectPlacementDiscarded();
+      });
+
+      it("omits the coordinates when the tool was armed but no end was placed", async () => {
+        renderBottomBar();
+
+        await userEvent.click(screen.getByTestId("fireline-button"));
+
+        expect(canceledCall()).toEqual({ reason: "toggle" });
+      });
+
+      it("logs reason 'toolSwitch' when Helitack takes over mid-placement", async () => {
+        stores.simulation.simulationRunning = true;
+        renderBottomBar();
+        placeFirstEnd();
+
+        await userEvent.click(screen.getByTestId("helitack-button"));
+
+        expect(canceledCall().reason).toBe("toolSwitch");
+        expect(stores.ui.interaction).toBe(Interaction.Helitack);
+        expect(stores.simulation.fireLineMarkers).toHaveLength(0);
+      });
+
+      it("logs reason 'other' when the reaction backstop catches an unrouted departure", () => {
+        renderCancelHook();
+        placeFirstEnd();
+
+        act(() => { stores.ui.interaction = Interaction.PlaceSpark; });
+
+        expect(canceledCall().reason).toBe("other");
+        expect(stores.ui.interaction).toBe(Interaction.PlaceSpark);
+        expect(stores.simulation.fireLineMarkers).toHaveLength(0);
+      });
     });
   });
 });

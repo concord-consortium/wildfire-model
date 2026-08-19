@@ -21,6 +21,7 @@ import { APP_RULES_VERSION, getAnalysisEngine, getRequestedPresetInfo, buildPres
 
 import css from "./app.scss";
 import { useCustomCursor } from "./use-custom-cursors";
+import { useFireLinePlacementCancel } from "./use-fire-line-placement-cancel";
 
 const getMousePosition = (e: React.MouseEvent) => {
   const rect = e.currentTarget.getBoundingClientRect();
@@ -76,6 +77,8 @@ export const AppComponent = observer(function WrappedComponent() {
 
   // This will setup document cursor based on various states of UI store (interactions).
   useCustomCursor();
+
+  useFireLinePlacementCancel();
 
   const config = simulation.config;
   // Convert time from minutes to days.

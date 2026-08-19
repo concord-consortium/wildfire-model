@@ -337,6 +337,36 @@ describe("BottomBar edge cases", () => {
     });
   });
 
+  describe("Fireline tool armed", () => {
+    const seedArmedFireLine = (stores: ReturnType<typeof createStores>) => {
+      seedState(stores, 4);
+      stores.ui.interaction = Interaction.DrawFireLine;
+    };
+
+    it("keeps the Fireline button enabled so it can cancel the placement", () => {
+      seedArmedFireLine(stores);
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      expectButtonState("fireline-button", true);
+    });
+
+    it("keeps it enabled once the first end is placed and the markers are used up", () => {
+      seedArmedFireLine(stores);
+      // Pushed directly: addFireLineMarker draws the preview, which needs loaded cells.
+      stores.simulation.fireLineMarkers.push(new Vector2(30000, 40000), new Vector2(38000, 40000));
+      stores.ui.fireLinePlacementInProgress = true;
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      expect(stores.simulation.canAddFireLineMarker).toBe(false);
+      expectButtonState("fireline-button", true);
+    });
+
+    it("disarms the tool when the button is clicked again", async () => {
+      seedArmedFireLine(stores);
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      await userEvent.click(screen.getByTestId("fireline-button"));
+      expect(stores.ui.interaction).toBeNull();
+    });
+  });
+
   describe("ui.interaction reset", () => {
     it("Reload-during-PlaceSpark: returns to Default with Spark enabled", async () => {
       stores.simulation.setSetupChanged(true); // so Reload is enabled
