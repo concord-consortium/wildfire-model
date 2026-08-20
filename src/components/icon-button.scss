@@ -29,7 +29,9 @@
         opacity: 0.5;
       }
     }
-    &:active {
+    // .selected holds the pressed treatment while a tool stays armed, which is
+    // otherwise indistinguishable from idle now that armed buttons stay enabled.
+    &:active, &.selected {
       .iconButtonHighlightSvg {
         opacity: 1;
       }

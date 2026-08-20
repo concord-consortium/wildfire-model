@@ -9,7 +9,7 @@ import { Zone } from "./zone";
 import { FireEngine } from "./engine/fire-engine";
 import { getGridIndexForLocation, forEachPointBetween, dist } from "./utils/grid-utils";
 
-interface ICoords {
+export interface ICoords {
   x: number;
   y: number;
 }

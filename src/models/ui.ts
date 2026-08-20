@@ -17,6 +17,11 @@ export class UIModel {
   @observable public interaction: Interaction | null = null;
   @observable public dragging = false;
 
+  // True between the first and second click of a fire line placement. Both markers
+  // exist from the first click on, so fireLineMarkers.length cannot tell a half-placed
+  // line from a completed one.
+  @observable public fireLinePlacementInProgress = false;
+
   // WM-6 Hazbot button. `showHazbotFeedback` is the contract the sibling WM-11
   // panel story reads (set true on button click); WM-6 does not render the panel.
   @observable public showHazbotFeedback = false;

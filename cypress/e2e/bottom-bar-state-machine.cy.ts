@@ -166,6 +166,24 @@ describe("Bottom-bar state machine (WM-24)", () => {
     });
   });
 
+  it("Fireline armed: the Fireline button stays enabled so it can cancel", () => {
+    cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
+    cy.get("[data-testid='start-button']").click();
+    cy.window().its("sim.simulationRunning").should("eq", true);
+    cy.get("[data-testid='fireline-button']").click();
+    // Arming pauses the model and leaves the tool live as its own cancel toggle;
+    // every other tool disables its button while armed.
+    cy.window().its("sim.simulationRunning").should("eq", false);
+    expectButtonStates({
+      setup: false, spark: false,
+      reload: true, restart: true, startStop: true,
+      fireLine: true, helitack: true,
+    });
+    // Clicking it again disarms, and the button stays available.
+    cy.get("[data-testid='fireline-button']").click();
+    cy.get("[data-testid='fireline-button']").should("not.be.disabled");
+  });
+
   it("state 7 (AfterReload from SetupChanged): identical to Default for plainsTwoZone", () => {
     // Reach SetupChanged
     cy.get("[data-testid='terrain-button']").click();

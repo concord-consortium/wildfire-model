@@ -16,6 +16,11 @@
 
 const APP_URL = "/?preset=plainsTwoZone";
 
+// window.test hooks from src/models/stores.ts. Cast rather than augmented because
+// Cypress's Window already declares `test` (Mocha's globals).
+const placeSparkInZone = (win: Window, zoneIdx: number) =>
+  (win as unknown as { test: { placeSparkInZone(z: number): void } }).test.placeSparkInZone(zoneIdx);
+
 // Pivots from a data-testid'd inner element up to its enclosing widgetGroup
 // (the per-pair outer container with the 1 px border). The
 // [class*="widgetGroup"] substring-match survives CSS modules hashing.
@@ -115,6 +120,14 @@ describe("Bottom-bar visual regression (WM-23)", () => {
       cy.get(`[data-testid="${id}"] [class*="iconButtonHighlightSvg"]`)
         .should("have.css", "opacity", "0");
     });
+  });
+
+  it("renders highlight opacity = 1 on the Fireline button while its tool is armed", () => {
+    cy.window().then((win: Window) => { placeSparkInZone(win, 0); });
+    cy.get("[data-testid='start-button']").click();
+    cy.get("[data-testid='fireline-button']").click();
+    cy.get('[data-testid="fireline-button"] [class*="iconButtonHighlightSvg"]')
+      .should("have.css", "opacity", "1");
   });
 
   it("renders the Fireline button with label 'Fireline'", () => {

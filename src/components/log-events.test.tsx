@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, renderHook, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "mobx-react";
 import { createStores } from "../models/stores";
@@ -8,6 +8,9 @@ import { TopBar } from "./top-bar/top-bar";
 import { Vector2 } from "three";
 import { act } from "react-dom/test-utils";
 import { reaction } from "mobx";
+import { Interaction } from "../models/ui";
+import { renderFireLineInteraction, terrainPointerEvent } from "./view-3d/fire-line-interaction-test-helpers";
+import { useFireLinePlacementCancel } from "./use-fire-line-placement-cancel";
 
 // Mock the log module
 const mockLog = jest.fn();
@@ -300,6 +303,225 @@ describe("Log events", () => {
         (call: unknown[]) => call[0] === "SimulationStarted"
       );
       expect(startedCall[1].elevation).toMatch(/^2D array \[\d+x\d+\]$/);
+    });
+  });
+
+  describe("Fire line placement", () => {
+    const MODEL_WIDTH = 120000;
+    const MODEL_HEIGHT = 80000;
+
+    const armFireLineTool = async () => {
+      stores.simulation.load({
+        modelWidth: MODEL_WIDTH,
+        modelHeight: MODEL_HEIGHT,
+        gridWidth: 240,
+        sparks: [[60000, 40000]],
+        zoneIndex: [[0]],
+        elevation: [[0]],
+        unburntIslands: [[1]],
+        unburntIslandProbability: 1,
+        riverData: null
+      });
+      await stores.simulation.dataReadyPromise;
+      stores.ui.interaction = Interaction.DrawFireLine;
+      mockLog.mockClear();
+    };
+
+    const point = (x: number, y: number) => terrainPointerEvent(x, y, MODEL_WIDTH);
+
+    const callsNamed = (name: string) => mockLog.mock.calls.filter((call: unknown[]) => call[0] === name);
+
+    it("logs FireLineFirstEndPlaced on the first click with normalized coordinates", async () => {
+      await armFireLineTool();
+      const { result } = renderFireLineInteraction(stores);
+
+      result.current.onPointerDown?.(point(30000, 40000));
+
+      const calls = callsNamed("FireLineFirstEndPlaced");
+      expect(calls).toHaveLength(1);
+      expect(calls[0][1].x).toBeCloseTo(30000 / MODEL_WIDTH, 5);
+      expect(calls[0][1].y).toBeCloseTo(40000 / MODEL_HEIGHT, 5);
+      expect(calls[0][1]).toHaveProperty("elevation");
+      expect(callsNamed("FireLineAdded")).toHaveLength(0);
+    });
+
+    it("logs FireLineAdded exactly once, on the second click", async () => {
+      await armFireLineTool();
+      const { result } = renderFireLineInteraction(stores);
+
+      result.current.onPointerDown?.(point(30000, 40000));
+      result.current.onPointerDown?.(point(38000, 40000));
+
+      const calls = callsNamed("FireLineAdded");
+      expect(calls).toHaveLength(1);
+      expect(calls[0][1].x1).toBeCloseTo(30000 / MODEL_WIDTH, 5);
+      expect(calls[0][1].x2).toBeCloseTo(38000 / MODEL_WIDTH, 5);
+    });
+
+    it("does not log FireLineAdded for a second click below the minimum distance", async () => {
+      await armFireLineTool();
+      const { result } = renderFireLineInteraction(stores);
+
+      result.current.onPointerDown?.(point(30000, 40000));
+      result.current.onPointerDown?.(point(31000, 40000));
+
+      expect(callsNamed("FireLineAdded")).toHaveLength(0);
+      expect(callsNamed("FireLineFirstEndPlaced")).toHaveLength(1);
+    });
+
+    describe("cancel routes", () => {
+      const renderBottomBar = () => render(
+        <Provider stores={stores}>
+          <BottomBar />
+        </Provider>
+      );
+
+      const renderCancelHook = () => renderHook(() => useFireLinePlacementCancel(), {
+        wrapper: ({ children }: { children?: React.ReactNode }) =>
+          <Provider stores={stores}>{children}</Provider>
+      });
+
+      const placeFirstEnd = () => {
+        const { result } = renderFireLineInteraction(stores);
+        act(() => { result.current.onPointerDown?.(point(30000, 40000)); });
+      };
+
+      const canceledCall = () => {
+        const calls = callsNamed("FireLineCanceled");
+        expect(calls).toHaveLength(1);
+        return calls[0][1];
+      };
+
+      const expectPlacementDiscarded = () => {
+        expect(stores.simulation.fireLineMarkers).toHaveLength(0);
+        expect(stores.simulation.cells.filter(c => c.isFireLineUnderConstruction)).toHaveLength(0);
+        expect(stores.ui.fireLinePlacementInProgress).toBe(false);
+        expect(stores.ui.interaction).toBeNull();
+      };
+
+      beforeEach(async () => {
+        await armFireLineTool();
+        stores.simulation.simulationStarted = true;
+      });
+
+      it("logs reason 'escape' and discards the placement on the Escape key", () => {
+        renderCancelHook();
+        placeFirstEnd();
+
+        act(() => { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
+
+        expect(canceledCall().reason).toBe("escape");
+        expectPlacementDiscarded();
+      });
+
+      it("logs reason 'toggle' on a second Fireline button click, without re-arming", async () => {
+        stores.ui.interaction = null;
+        renderBottomBar();
+        await userEvent.click(screen.getByTestId("fireline-button"));
+        expect(stores.ui.interaction).toBe(Interaction.DrawFireLine);
+        placeFirstEnd();
+
+        await userEvent.click(screen.getByTestId("fireline-button"));
+
+        expect(canceledCall().reason).toBe("toggle");
+        // The cancel click must not count as a second attempt to draw a fire line.
+        expect(callsNamed("FireLineButtonClicked")).toHaveLength(1);
+        expectPlacementDiscarded();
+      });
+
+      it("omits the coordinates when the tool was armed but no end was placed", async () => {
+        renderBottomBar();
+
+        await userEvent.click(screen.getByTestId("fireline-button"));
+
+        expect(canceledCall()).toEqual({ reason: "toggle" });
+      });
+
+      it("logs reason 'toolSwitch' when Helitack takes over mid-placement", async () => {
+        stores.simulation.simulationRunning = true;
+        renderBottomBar();
+        placeFirstEnd();
+
+        await userEvent.click(screen.getByTestId("helitack-button"));
+
+        expect(canceledCall().reason).toBe("toolSwitch");
+        expect(stores.ui.interaction).toBe(Interaction.Helitack);
+        expect(stores.simulation.fireLineMarkers).toHaveLength(0);
+      });
+
+      it("logs reason 'start' and empties the SimulationStarted snapshot's fireLineMarkers", async () => {
+        // The snapshot is built before start() runs, so a cancel that lands after it
+        // would leave the log reporting a fire line the run never builds.
+        jest.spyOn(stores.simulation, "start").mockImplementation(() => { /* noop */ });
+        stores.simulation.simulationRunning = false;
+        renderBottomBar();
+        placeFirstEnd();
+
+        await userEvent.click(screen.getByTestId("start-button"));
+
+        expect(canceledCall().reason).toBe("start");
+        const startedCall = mockLog.mock.calls.find((call: unknown[]) => call[0] === "SimulationStarted");
+        expect(startedCall[1].fireLineMarkers).toEqual([]);
+        expect(stores.ui.interaction).toBeNull();
+      });
+
+      it("leaves Escape to an open coach mark", () => {
+        renderCancelHook();
+        placeFirstEnd();
+        stores.ui.showHazbotFeedback = true;
+
+        act(() => { document.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape" })); });
+
+        expect(callsNamed("FireLineCanceled")).toHaveLength(0);
+        expect(stores.simulation.fireLineMarkers).toHaveLength(2);
+      });
+
+      it("does not cancel a placement the second click completed", () => {
+        renderCancelHook();
+        const { result } = renderFireLineInteraction(stores);
+        act(() => { result.current.onPointerDown?.(point(30000, 40000)); });
+        act(() => { result.current.onPointerDown?.(point(38000, 40000)); });
+
+        expect(callsNamed("FireLineAdded")).toHaveLength(1);
+        expect(callsNamed("FireLineCanceled")).toHaveLength(0);
+        expect(stores.simulation.fireLineMarkers).toHaveLength(2);
+      });
+
+      it("logs reason 'restart' when Restart discards a placement", async () => {
+        renderCancelHook();
+        renderBottomBar();
+        placeFirstEnd();
+
+        await userEvent.click(screen.getByTestId("restart-button"));
+
+        expect(canceledCall().reason).toBe("restart");
+        expect(stores.simulation.fireLineMarkers).toHaveLength(0);
+        // The abandonment has to read as part of this restart, not the next run.
+        const names = mockLog.mock.calls.map((call: unknown[]) => call[0]);
+        expect(names.indexOf("FireLineCanceled")).toBeLessThan(names.indexOf("SimulationRestarted"));
+      });
+
+      it("logs reason 'reload' when Reload discards a placement", async () => {
+        renderCancelHook();
+        renderBottomBar();
+        placeFirstEnd();
+
+        await userEvent.click(screen.getByTestId("reload-button"));
+
+        expect(canceledCall().reason).toBe("reload");
+        expect(stores.simulation.fireLineMarkers).toHaveLength(0);
+      });
+
+      it("logs reason 'other' when the reaction backstop catches an unrouted departure", () => {
+        renderCancelHook();
+        placeFirstEnd();
+
+        act(() => { stores.ui.interaction = Interaction.PlaceSpark; });
+
+        expect(canceledCall().reason).toBe("other");
+        expect(stores.ui.interaction).toBe(Interaction.PlaceSpark);
+        expect(stores.simulation.fireLineMarkers).toHaveLength(0);
+      });
     });
   });
 });

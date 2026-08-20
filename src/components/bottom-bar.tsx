@@ -28,6 +28,7 @@ import { log } from "../log";
 import { AnalysisEngineProvider } from "../hazbot/engine";
 import { APP_RULES_VERSION, getAnalysisEngine } from "../hazbot/wildfire";
 import { HazbotButton } from "./hazbot-button";
+import { cancelFireLinePlacement } from "../models/fire-line-placement";
 
 import css from "./bottom-bar.scss";
 
@@ -81,11 +82,11 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   get fireLineEnabled() {
     const { simulation, ui } = this.stores;
     // canAddFireLineMarker already gates on config.fireLineAvailable + cooldown
-    // + 2-marker capacity (see simulation.ts:109-117).
+    // + 2-marker capacity (see simulation.ts:109-117). Unlike Spark and Helitack,
+    // the button stays live while its own interaction is armed so it can cancel it.
     return simulation.simulationStarted
       && !simulation.simulationEnded
-      && simulation.canAddFireLineMarker
-      && ui.interaction !== Interaction.DrawFireLine;
+      && (simulation.canAddFireLineMarker || ui.interaction === Interaction.DrawFireLine);
   }
 
   get helitackEnabled() {
@@ -128,7 +129,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   }
 
   public render() {
-    const { simulation } = this.stores;
+    const { simulation, ui } = this.stores;
     const { hazbotEngine } = this;
     return (
       <div className={`${css.bottomBar} ${!simulation.config.showBurnIndex ? css.fisHidden : ""}`}>
@@ -198,6 +199,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               icon={<FireLineIcon />}
               highlightIcon={<FireLineHighlightIcon />}
               disabled={!this.fireLineEnabled}
+              selected={ui.interaction === Interaction.DrawFireLine}
               buttonText="Fireline"
               dataTest="fireline-button"
               onClick={this.handleFireLine}
@@ -268,6 +270,11 @@ export class BottomBar extends BaseComponent<IProps, IState> {
         outcome: simulation.getOutcomeData(this.stores.chartStore)
       });
     } else {
+      // Must precede buildStartReadingData() below: that snapshot is what
+      // SimulationStarted reports and what the rulesets read for fire line use, so
+      // cancelling after it would log a fire line this run never builds.
+      cancelFireLinePlacement(simulation, ui, "start");
+      ui.interaction = null;
       ui.showTerrainUI = false;
       // WM-6: clear any stale arm before the next run so the pulse re-arms only
       // when this run completes.
@@ -322,6 +329,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       });
     }
     this.stores.chartStore.reset();
+    cancelFireLinePlacement(simulation, ui, "restart");
     ui.interaction = null;
     simulation.restart();
     log("SimulationRestarted");
@@ -337,6 +345,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       });
     }
     this.stores.chartStore.reset();
+    cancelFireLinePlacement(simulation, ui, "reload");
     ui.interaction = null;
     simulation.reload();
     log("SimulationReloaded");
@@ -344,6 +353,12 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   public handleFireLine = () => {
     const { ui, simulation } = this.stores;
+    if (ui.interaction === Interaction.DrawFireLine) {
+      // Second click on an armed button cancels. Returning early also keeps it from
+      // re-arming the tool and logging a second FireLineButtonClicked.
+      cancelFireLinePlacement(simulation, ui, "toggle");
+      return;
+    }
     ui.showTerrainUI = false;
     const wasRunning = simulation.simulationRunning;
     simulation.stop();
@@ -357,8 +372,9 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   };
 
   public handleHelitack = () => {
-    const { ui } = this.stores;
+    const { ui, simulation } = this.stores;
     ui.showTerrainUI = false;
+    cancelFireLinePlacement(simulation, ui, "toolSwitch");
     ui.interaction = Interaction.Helitack;
     log("HelitackButtonClicked");
   };

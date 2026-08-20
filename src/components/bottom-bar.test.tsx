@@ -337,6 +337,45 @@ describe("BottomBar edge cases", () => {
     });
   });
 
+  describe("Fireline tool armed", () => {
+    const seedArmedFireLine = () => {
+      seedState(stores, 4);
+      stores.ui.interaction = Interaction.DrawFireLine;
+    };
+
+    it("keeps the Fireline button enabled so it can cancel the placement", () => {
+      seedArmedFireLine();
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      expectButtonState("fireline-button", true);
+    });
+
+    it("keeps it enabled once the first end is placed and the markers are used up", () => {
+      seedArmedFireLine();
+      // Pushed directly: addFireLineMarker draws the preview, which needs loaded cells.
+      stores.simulation.fireLineMarkers.push(new Vector2(30000, 40000), new Vector2(38000, 40000));
+      stores.ui.fireLinePlacementInProgress = true;
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      expect(stores.simulation.canAddFireLineMarker).toBe(false);
+      expectButtonState("fireline-button", true);
+    });
+
+    it("marks the Fireline button selected, and only while armed", () => {
+      seedState(stores, 4);
+      const { rerender } = render(<Provider stores={stores}><BottomBar /></Provider>);
+      expect(screen.getByTestId("fireline-button").className).not.toContain("selected");
+      act(() => { stores.ui.interaction = Interaction.DrawFireLine; });
+      rerender(<Provider stores={stores}><BottomBar /></Provider>);
+      expect(screen.getByTestId("fireline-button").className).toContain("selected");
+    });
+
+    it("disarms the tool when the button is clicked again", async () => {
+      seedArmedFireLine();
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      await userEvent.click(screen.getByTestId("fireline-button"));
+      expect(stores.ui.interaction).toBeNull();
+    });
+  });
+
   describe("ui.interaction reset", () => {
     it("Reload-during-PlaceSpark: returns to Default with Spark enabled", async () => {
       stores.simulation.setSetupChanged(true); // so Reload is enabled
@@ -345,6 +384,16 @@ describe("BottomBar edge cases", () => {
       await userEvent.click(screen.getByTestId("reload-button"));
       expect(stores.ui.interaction).toBeNull();
       expectButtonState("spark-button", true);
+    });
+
+    it("Start-during-Helitack: a run never resumes with a placement tool armed", async () => {
+      jest.spyOn(stores.simulation, "start").mockImplementation(() => { /* noop */ });
+      seedState(stores, 4);
+      stores.simulation.simulationRunning = false;
+      stores.ui.interaction = Interaction.Helitack;
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      await userEvent.click(screen.getByTestId("start-button"));
+      expect(stores.ui.interaction).toBeNull();
     });
 
     it("Restart-during-DrawFireLine: ui.interaction cleared post-Restart", async () => {
