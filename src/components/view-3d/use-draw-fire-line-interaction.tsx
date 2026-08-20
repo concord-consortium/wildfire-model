@@ -4,6 +4,7 @@ import { Event } from "three";
 import { Interaction } from "../../models/ui";
 import { InteractionHandler } from "./interaction-handler";
 import { dist } from "../../models/utils/grid-utils";
+import { fireLineData, fireLinePointData } from "../../models/fire-line-placement";
 import { log } from "../../log";
 
 const MIN_DIST = 1500; // feet
@@ -27,12 +28,7 @@ export const useDrawFireLineInteraction: () => InteractionHandler = () => {
     simulation.addFireLineMarker(x, y);
     simulation.addFireLineMarker(x, y);
     ui.fireLinePlacementInProgress = true;
-    const cell = simulation.cellAt(x, y);
-    log("FireLineFirstEndPlaced", {
-      x: x / simulation.config.modelWidth,
-      y: y / simulation.config.modelHeight,
-      elevation: cell?.elevation
-    });
+    log("FireLineFirstEndPlaced", fireLinePointData(simulation, { x, y }));
   };
 
   const placeSecondEnd = (x: number, y: number) => {
@@ -43,18 +39,9 @@ export const useDrawFireLineInteraction: () => InteractionHandler = () => {
     }
     simulation.setFireLineMarker(1, x, y);
     const end = simulation.fireLineMarkers[1];
-    const cell1 = simulation.cellAt(start.x, start.y);
-    const cell2 = simulation.cellAt(end.x, end.y);
     ui.fireLinePlacementInProgress = false;
     ui.interaction = null;
-    log("FireLineAdded", {
-      x1: start.x / simulation.config.modelWidth,
-      y1: start.y / simulation.config.modelHeight,
-      elevation1: cell1?.elevation,
-      x2: end.x / simulation.config.modelWidth,
-      y2: end.y / simulation.config.modelHeight,
-      elevation2: cell2?.elevation
-    });
+    log("FireLineAdded", fireLineData(simulation, start, end));
   };
 
   return {

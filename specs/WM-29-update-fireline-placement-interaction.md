@@ -79,7 +79,7 @@ the cursor, and a second click places the other end. Adjusting the two ends afte
 | File | Role |
 |---|---|
 | `src/components/view-3d/use-draw-fire-line-interaction.tsx` | The whole gesture. This is the file the story is about. |
-| `src/components/view-3d/use-dragging.ts` | Supplied `startDragging` / window pointermove listeners to the old drag gesture. The fire line path no longer uses it; `use-dragging-over-plane-interaction.ts` still does, so it is not dead code. |
+| `src/components/view-3d/use-dragging.ts` | Supplied `startDragging` / window pointermove listeners to the old drag gesture. The fire line path no longer uses it; `use-dragging-over-plane-interaction.ts` still does, so it is not dead code. Its `useOffset` option was, though: the fire line hook was the only caller passing `false`, so the option and its branch were removed and the offset is now always applied. |
 | `src/components/view-3d/terrain.tsx` | Registers the interaction in its `interactions` array; is the raycast surface. |
 | `src/components/use-custom-cursors.ts` | Maps `Interaction.DrawFireLine` to `url(fire-line-cursor.png) 32 64, crosshair`. Gains the requirement 2 handover to the marker. |
 | `src/models/simulation.ts` | `addFireLineMarker`, `setFireLineMarker`, `limitFireLineLength`, `markFireLineUnderConstruction`, `canAddFireLineMarker`. |

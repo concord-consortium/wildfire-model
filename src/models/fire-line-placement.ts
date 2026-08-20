@@ -1,6 +1,23 @@
-import { SimulationModel } from "./simulation";
+import { ICoords, SimulationModel } from "./simulation";
 import { Interaction, UIModel } from "./ui";
 import { log } from "../log";
+
+// Every fire line event reports positions as a fraction of the model extent paired with the
+// elevation under the point, so one point and one endpoint pair describe them all.
+export const fireLinePointData = (simulation: SimulationModel, point: ICoords) => ({
+  x: point.x / simulation.config.modelWidth,
+  y: point.y / simulation.config.modelHeight,
+  elevation: simulation.cellAt(point.x, point.y)?.elevation
+});
+
+export const fireLineData = (simulation: SimulationModel, start: ICoords, end: ICoords) => {
+  const from = fireLinePointData(simulation, start);
+  const to = fireLinePointData(simulation, end);
+  return {
+    x1: from.x, y1: from.y, elevation1: from.elevation,
+    x2: to.x, y2: to.y, elevation2: to.elevation
+  };
+};
 
 // "other" is reserved for the reaction backstop in useFireLinePlacementCancel: it means
 // a route left DrawFireLine without calling this itself, and should be treated as a gap.
@@ -20,9 +37,7 @@ export const cancelFireLinePlacement = (
   const placed = ui.fireLinePlacementInProgress && !!start;
   const data: Record<string, unknown> = { reason };
   if (placed) {
-    data.x = start.x / simulation.config.modelWidth;
-    data.y = start.y / simulation.config.modelHeight;
-    data.elevation = simulation.cellAt(start.x, start.y)?.elevation;
+    Object.assign(data, fireLinePointData(simulation, start));
     if (end) {
       simulation.markFireLineUnderConstruction(start, end, false);
     }
@@ -45,12 +60,5 @@ export const logFireLineUpdate = (simulation: SimulationModel, idx: number) => {
   if (!start || !end) {
     return;
   }
-  log("FireLineUpdated", {
-    x1: start.x / simulation.config.modelWidth,
-    y1: start.y / simulation.config.modelHeight,
-    elevation1: simulation.cellAt(start.x, start.y)?.elevation,
-    x2: end.x / simulation.config.modelWidth,
-    y2: end.y / simulation.config.modelHeight,
-    elevation2: simulation.cellAt(end.x, end.y)?.elevation
-  });
+  log("FireLineUpdated", fireLineData(simulation, start, end));
 };
