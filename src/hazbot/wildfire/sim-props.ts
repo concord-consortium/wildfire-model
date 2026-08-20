@@ -1,5 +1,6 @@
 import { SimPropImpl } from "../engine";
 import { WildfireDefaults, WildfireReading } from "./types";
+import { anyZoneDiffers } from "./factor-variables";
 import {
   TerrainType, terrainLabels, Vegetation, vegetationLabels, DroughtLevel, droughtLabels,
 } from "../../types";
@@ -261,6 +262,40 @@ const DefaultVars: SimPropImpl<WildfireReading, WildfireDefaults> = {
   },
 };
 
+// Per the sheet (tab 34): any wind parameter set distinct from the default.
+// Deliberately strict, and deliberately NOT the complement of DefaultVars above:
+// Sam's 2026-08-20 ruling is that each wind rule resolves in the student's favor,
+// so DefaultVars keeps its tolerance (a near-default run still counts as default)
+// while this one has none (the smallest deliberate change still counts as a
+// change). "Any small change should be accepted", per the sheet's Details cell.
+// The consequence is an overlap, not a bug: a sub-tolerance nudge satisfies both.
+// Mirrors setWind (factor-variables.ts), comparing speed and direction
+// independently so a direction change registers even at zero magnitude.
+const WindSet: SimPropImpl<WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  evaluate: (reading, defaults) => {
+    if (!reading.wind || !defaults?.wind) return false;
+    return reading.wind.speed !== defaults.wind.speed ||
+      reading.wind.direction !== defaults.wind.direction;
+  },
+};
+
+// Per the sheet (tab 34): vegetation / drought level set distinct from the
+// default in any zone. Run-scoped twins of the setVegetation / setDroughtLevel
+// factor variables, sharing anyZoneDiffers so the two stay in step. Note this
+// does NOT fail closed on a zone-count mismatch the way DefaultVars does: the
+// helper skips defaults entries the reading has no counterpart for, which is the
+// literal reading of the sheet's "set distinct from the default value for any zone".
+const VegetationSet: SimPropImpl<WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  evaluate: (reading, defaults) => anyZoneDiffers(reading.zones, defaults?.zones, "vegetation"),
+};
+
+const DroughtLevelSet: SimPropImpl<WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  evaluate: (reading, defaults) => anyZoneDiffers(reading.zones, defaults?.zones, "droughtLevel"),
+};
+
 // Per the sheet (tab 54): every zone's vegetation is at its config-sourced
 // default. Compares against the WM-27 deriveWildfireDefaults() output — the
 // config is the source of truth, so no hard-coded sheet constant (per CA-3).
@@ -314,6 +349,9 @@ export const simProps: Record<string, SimPropImpl<WildfireReading, WildfireDefau
   UniformZoneSettings,
   Fireline,
   DefaultVars,
+  WindSet,
+  VegetationSet,
+  DroughtLevelSet,
   DefaultVegetations,
   SevereDroughts,
   Helitack,

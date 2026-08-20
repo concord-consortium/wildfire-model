@@ -23,7 +23,7 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
+2. Hazbot: Click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Click each zone and change the vegetation to forest in one zone and forest with suppression in the other zone. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation AND NOT setAnyVar",
@@ -37,7 +37,7 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
+2. Hazbot: Click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Click each zone and change the vegetation to forest in one zone and forest with suppression in the other zone. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "setAnyVar AND ranSimulation WITH NOT ForestWAWOSuppression",
@@ -52,7 +52,7 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
      - If 2 sparks were placed, do not outline the Spark button.
      - If only one spark was placed, then the Spark button is outlined.`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 2)
-2. Hazbot: Now make sure there is a spark in each zone. Then run the model again. (Step 2 of 2)
+2. Hazbot: Make sure there is a spark in each zone. Then run the model again. (Step 2 of 2)
 [Got it!]`,
       expression: "ranSimulation WITH ForestWAWOSuppression AND NOT OneSparkPerZone",
     },
@@ -65,7 +65,7 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
+2. Hazbot: Click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Click each zone and adjust the drought level. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation WITH ForestWAWOSuppression AND OneSparkPerZone AND NOT UniformDroughtLevels",
@@ -114,7 +114,7 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
       name: "setWind",
       definition: "There is at least one \"SimulationStarted\" event for which the wind value was set distinct from the default value for any zone.",
       logEvents: ["SimulationStarted->wind.speed", "wind.direction", "wind.scaleFactor"],
-      details: "Wind is set globally (for all zones).  For the default values, read the \"SIMINIT\" sheet.  If the magnitude is 0, then the direction has no effect and must be ignored.  So set the direction to null, if the magnitude is 0.  Here, the \"magnitude\" means the wind speed as displayed in the simulation (like \"10\" as in \"10 MPH\").  In the log data, the magnitude data entails two fields \"wind.speed\" and \"wind.scaleFactor\".  The \"magnitude\" is computed as \"wind.speed\" / \"wind.scaleFactor\".",
+      details: "Wind is set globally (for all zones).  For the default values, read the \"SIMINIT\" sheet.   Allow this variable to evalue to true when direction is set away from the default value even if the magnitude was set to zero.  Here, the \"magnitude\" means the wind speed as displayed in the simulation (like \"10\" as in \"10 MPH\").  In the log data, the magnitude data entails two fields \"wind.speed\" and \"wind.scaleFactor\".  The \"magnitude\" is computed as \"wind.speed\" / \"wind.scaleFactor\". Any small change should be accepted.",
     },
     {
       name: "setAnyVar",

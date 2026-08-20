@@ -2,14 +2,17 @@ import { ruleSet32 } from "./32";
 import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
 import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/types";
 
-// Tab 32 categories (regenerated from the 2026-05-22 sheet; Cat 100 dropped):
+// Tab 32 categories (regenerated from the 2026-08-20 sheet; Cat 100 dropped):
 //   1: NOT ranSimulation
 //   2: ranSimulation AND NOT setAnyZoneVar
-//   3: setDroughtLevel AND NOT ranSimulation WITH UniqueVegetationPerZone
+//   3: setAnyZoneVar AND ranSimulation WITH NOT UniqueVegetationPerZone
 //   4: ranSimulation WITH UniqueVegetationPerZone AND NOT UniformDroughtLevels
-//   5: ranSimulation WITH UniqueVegetationPerZone AND NOT OneSparkPerZone
+//   5: ranSimulation WITH UniqueVegetationPerZone AND UniformDroughtLevels AND NOT OneSparkPerZone
 //   6: ranSimulation WITH UniqueVegetationPerZone AND UniformDroughtLevels AND OneSparkPerZone
 // No stub-gated category — the (e) shape is N/A.
+// Changed in the 2026-08-20 re-extract: cat 3 became a run-scoped catch-all led by
+// setAnyZoneVar (it was `setDroughtLevel AND NOT ranSimulation WITH …`), and cat 5
+// gained the `UniformDroughtLevels` conjunct that makes it disjoint from cat 4.
 
 // SIMINIT defaults for tab 32: 3 zones Plains / Grass / Mild Drought, wind 0/0.
 const defaultZone: WildfireZone = { terrainType: "Plains", vegetation: "Grass", droughtLevel: "Mild Drought" };
@@ -52,9 +55,19 @@ describe("ruleSet 32 — per-rule-set behavior sweep", () => {
     const e = makeWildfireEngine(ruleSet32, defaults);
     expect(matchAgainst(ruleSet32, e, [startReading()])).toBe(2);
   });
-  it("(c) multiple-true → highest wins — unique veg, non-uniform drought, no sparks → cat 4 & 5 true → cat 5", () => {
+  it("(c) multiple-true → highest wins — a non-unique-veg run then a unique-veg run → cat 3 & 4 true → cat 4", () => {
+    // Cat 5 gained `UniformDroughtLevels` in the 2026-08-20 re-extract, which made
+    // it disjoint from cat 4, so the old single-run fixture no longer makes two
+    // categories true at once. Two runs do: run 1 satisfies cat 3 (a variable was
+    // touched, and that run's vegetation is not unique), run 2 satisfies cat 4
+    // (unique vegetation, non-uniform drought). Both are existential over runs,
+    // so both hold and the higher must win.
     const e = makeWildfireEngine(ruleSet32, defaults);
-    expect(matchAgainst(ruleSet32, e, [startReading({ zones: uniqueVegNonUniformDrought })])).toBe(5);
+    const readings = [
+      startReading({ zones: droughtChangedNotUniqueVeg }),
+      startReading({ at: 200, zones: uniqueVegNonUniformDrought }),
+    ];
+    expect(matchAgainst(ruleSet32, e, readings)).toBe(4);
   });
   it("(d) stability — cat 6 holds across a later all-default run", () => {
     const e = makeWildfireEngine(ruleSet32, defaults);

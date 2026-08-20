@@ -163,18 +163,27 @@ each reachable category end to end through the engine.
 `window.test.placeHelitackInZone`); see the WM-28 PR description for the per-tab
 walk summary. The stub-effects column below now reads "none" for every row.
 
-| Ruleset | Preset | R9 Jest coverage | Stub effects (per WM-18) |
-|---------|--------|------------------|--------------------------|
-| 23 | plainsTwoZone | cats 1–5 ✓ | none |
-| 24 | plainsTwoZone | cats 1–5 ✓ | none |
-| 25 | mountainTwoZoneFixedTerrain | cats 1–6 ✓ | none |
-| 32 | threeGreenZonePlains | cats 1–6 ✓ | none |
-| 33 | mountainTwoZone | cats 1–6 ✓ | none |
-| 34 | shrubThreeZone | cats 1–4 ✓ | none — `sawIntenseFire` was dropped in WM-18; cat 4 now uses `triedAllVegetations` |
-| 35 | mountainTwoZone | cats 1–7 ✓ | none — cat 3 gained a `setAnyVar AND` guard in the 2026-06-02 sheet, so cat 2 is reachable again (see [TBD.md §4](../../src/hazbot/TBD.md)) |
-| 42 | defaultTwoZone | cats 1–3 ✓ | none |
-| 45 | townsThreeZone | cats 1–4 ✓ | none (`Helitack` / `usedHelitack` implemented, WM-28): cat 4 reachable (same-run or across-trials), cat 3 no longer over-matches fireline+helitack runs |
-| 47 | dryTownsThreeZone | cats 1–5 ✓ | none (WM-28): helitack arm of cats 4/5 live; cat 3 no longer over-matches helitack-only runs |
-| 54 | fiveTownsThreeZone | cats 1–4 ✓ | none (WM-28): helitack arm of cat 4 live (gated on `DefaultVegetations AND SevereDroughts`); cat 3 no longer over-matches helitack-only runs |
+| Ruleset | Preset | R9 Jest coverage | Browser walk (WM-51, 2026-08-20) | Stub effects (per WM-18) |
+|---------|--------|------------------|----------------------------------|--------------------------|
+| 23 | plainsTwoZone | cats 1–5 ✓ | cats 1–5 ✓ | none |
+| 24 | plainsTwoZone | cats 1–5 ✓ | cats 1–5 ✓ | none |
+| 25 | mountainTwoZoneFixedTerrain | cats 1–6 ✓ | cats 1–6 ✓ — the CLAUDE.md top/bottom spark coordinates still clear the margin (TPI +2594 / −1491 vs 400 ft) | none |
+| 32 | threeGreenZonePlains | cats 1–6 ✓ | cats 1–6 ✓ | none |
+| 33 | mountainTwoZone | cats 1–6 ✓ | cats 1–6 ✓ | none |
+| 34 | shrubThreeZone | cats 1–5 ✓ | cats 1–5 ✓ | none — rewritten by the 2026-08-20 re-extract into a two-by-two over `VegetationSet` × (`WindSet` OR `DroughtLevelSet`); the endpoint moved from cat 4 to cat 5 and `triedAllVegetations` is no longer referenced |
+| 35 | mountainTwoZone | cats 1–7 ✓ | cats 1–7 ✓ — includes the state that used to fall through the coverage hole (uniform terrain, uniform drought, no forest pairing), now cat 4 | none — cats 3 and 4 were reshuffled and both carry a `setAnyVar AND` guard as of 2026-08-20 (see [TBD.md §4](../../src/hazbot/TBD.md)) |
+| 42 | defaultTwoZone | cats 1–3 ✓ | cats 1–3 ✓ — verified that a compliant second run escapes cat 2, which the pre-2026-08-20 expression made impossible | none |
+| 45 | townsThreeZone | cats 1–4 ✓ | cats 1–4 ✓ | none (`Helitack` / `usedHelitack` implemented, WM-28): cat 4 reachable (same-run or across-trials), cat 3 no longer over-matches fireline+helitack runs |
+| 47 | dryTownsThreeZone | cats 1–5 ✓ | cats 1–5 ✓ — cat 4 needs one mitigated run, cat 5 needs a separate clean run as well | none (WM-28): helitack arm of cats 4/5 live; cat 3 no longer over-matches helitack-only runs |
+| 54 | fiveTownsThreeZone | cats 1–4 ✓ | cats 1–4 ✓ | none (WM-28): helitack arm of cat 4 live (gated on `DefaultVegetations AND SevereDroughts`); cat 3 no longer over-matches helitack-only runs |
 
-Re-run this validation pass whenever rule-sets are regenerated from the source sheet, or when an impl in [src/hazbot/wildfire/sim-props.ts](../../src/hazbot/wildfire/sim-props.ts) / [factor-variables.ts](../../src/hazbot/wildfire/factor-variables.ts) changes. (WM-28 has landed helitack run-window detection and re-validated tabs 45/47/54; there are no remaining Hazbot impl stubs.)
+Re-run this validation pass whenever rule-sets are regenerated from the source sheet, or when an impl in [src/hazbot/wildfire/sim-props.ts](../../src/hazbot/wildfire/sim-props.ts) / [factor-variables.ts](../../src/hazbot/wildfire/factor-variables.ts) changes.
+
+**Driving the browser walk (WM-51, 2026-08-20).** All 56 reachable categories across the 11 tabs were confirmed against the sidebar's matched-category row. Four things cost real time and are worth knowing before repeating it:
+
+- **A full page navigation per probe**, not Restart or Reload. Readings accumulate across both and the matched category is a monotone floor, so consecutive probes in one session return the previous probe's floor.
+- **Several presets already default a zone to the value you would reach for as "changed"**: zone 0 on `defaultTwoZone` is already Medium Drought, and zone 0 on the app default is already Forest. Mutating to those is a silent no-op that looks exactly like a classification bug. Read `window.sim.zones` first.
+- **A helitack only registers while the run is live.** `window.test.placeHelitackInZone` during a pause does nothing to `usedHelitack`, because the `Helitack` modifier in `translate.ts` requires an open run start.
+- **A fire line only registers on resume.** The `Fireline` sim-prop reads `reading.fireLineMarkers` off the run-start snapshot, and placing a fire line pauses the run, so the markers reach the reading on the resume `SimulationStarted` and `canonical-runs.ts` merges them forward into the same run. Place the fire line, then press Start again, then read.
+
+Tabs 45, 47 and 54 also confirm the canonical-run merge directly: the sidebar's `simulationRuns` reads `[1]` after a pause/resume with mitigation, and `[2]` only when a run is genuinely closed with Restart before the next one. (WM-28 has landed helitack run-window detection and re-validated tabs 45/47/54; there are no remaining Hazbot impl stubs.)

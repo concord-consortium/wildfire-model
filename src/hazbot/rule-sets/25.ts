@@ -17,7 +17,7 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
     {
       id: 2,
       studentAction: "Ran the simulation with only one spark",
-      feedback: `Hazbot: I only see 1 spark. Make sure **each zone** has a spark!
+      feedback: `Hazbot: I see only 1 spark. Make sure **each zone** has a spark!
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Spark button outlined; coach mark (no pointer) centered top`,
@@ -59,7 +59,7 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
+2. Hazbot: Click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Make sure the conditions are the same in each zone. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation WITH OneSparkPerZone AND SparksAtTopAndBottom AND NOT UniformZoneSettings",
@@ -96,7 +96,7 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
       name: "SparksAtTopAndBottom",
       definition: "Simulation prop for whether or not one spark was at or near the top (ridge), while the other spark was at or near the bottom (valley).",
       logEvents: ["SimulationStarted->sparks.<j>.x", "y", "elevation"],
-      details: "The sparks array must be of length 2, and the x,y,elevation values for the sparks must be such that one spark is near/at the ridge, while the other spark is near/at the valley.   The code needs to be written based on the topograhy map used and the x, y, elevaation values for the spark locations.  One way to do it would be pre-trace the ridge lines and the valley lines and determine if the spark locations are close enough to them (this work never done before; Alert: new algorithm coding required here).",
+      details: "The sparks array must be of length 2, and the x,y,elevation values for the sparks must be such that one spark is near/at the ridge, while the other spark is near/at the valley.   The code needs to consider the topograhy map and the x, y, elevaion values for the spark locations.",
     },
     {
       name: "UniformZoneSettings",

@@ -443,6 +443,81 @@ describe("wildfire sim-props", () => {
     });
   });
 
+  describe("WindSet", () => {
+    // Per tab 34's Details cell ("Any small change should be accepted"): NO
+    // tolerance, any deviation counts. These assertions are the deliberate inverse
+    // of the DefaultVars tolerance block above, because each rule resolves in the
+    // student's favor rather than against a shared threshold.
+    const zones = [{ vegetation: "Shrub", droughtLevel: "Mild Drought" }];
+    const defaults: WildfireDefaults = { zones, wind: { speed: 0, direction: 0 } };
+
+    it("false when wind is exactly at default", () => {
+      const r = mkRead({ zones, wind: { speed: 0, direction: 0 } });
+      expect(simProps.WindSet.evaluate(r, defaults)).toBe(false);
+    });
+    it("true for a 1 MPH nudge, well inside DefaultVars' +/-2 tolerance", () => {
+      const r = mkRead({ zones, wind: { speed: 1, direction: 0 } });
+      expect(simProps.WindSet.evaluate(r, defaults)).toBe(true);
+    });
+    it("true for a 15 deg turn, well inside DefaultVars' +/-20 tolerance", () => {
+      const r = mkRead({ zones, wind: { speed: 0, direction: 15 } });
+      expect(simProps.WindSet.evaluate(r, defaults)).toBe(true);
+    });
+    it("true for a direction change at zero magnitude (the sheet calls this out)", () => {
+      const r = mkRead({ zones, wind: { speed: 0, direction: 90 } });
+      expect(simProps.WindSet.evaluate(r, defaults)).toBe(true);
+    });
+    it("overlaps DefaultVars rather than complementing it: a sub-tolerance nudge satisfies both", () => {
+      const r = mkRead({ zones, wind: { speed: 1, direction: 0 } });
+      expect(simProps.WindSet.evaluate(r, defaults)).toBe(true);
+      expect(simProps.DefaultVars.evaluate(r, defaults)).toBe(true);
+    });
+    it("false when the reading or the defaults carry no wind", () => {
+      expect(simProps.WindSet.evaluate(mkRead({ zones }), defaults)).toBe(false);
+      expect(simProps.WindSet.evaluate(mkRead({ zones, wind: { speed: 5, direction: 0 } }), { zones })).toBe(false);
+    });
+  });
+
+  describe("VegetationSet / DroughtLevelSet", () => {
+    // Per tab 34: set distinct from the default in ANY zone. Run-scoped twins of
+    // setVegetation / setDroughtLevel, sharing anyZoneDiffers.
+    const defaultZones = [
+      { vegetation: "Shrub", droughtLevel: "Mild Drought" },
+      { vegetation: "Shrub", droughtLevel: "Mild Drought" },
+    ];
+    const defaults: WildfireDefaults = { zones: defaultZones };
+
+    it("false when every zone is at default", () => {
+      const r = mkRead({ zones: defaultZones });
+      expect(simProps.VegetationSet.evaluate(r, defaults)).toBe(false);
+      expect(simProps.DroughtLevelSet.evaluate(r, defaults)).toBe(false);
+    });
+    it("true when one zone's vegetation differs, and drought stays false", () => {
+      const r = mkRead({
+        zones: [{ vegetation: "Forest", droughtLevel: "Mild Drought" }, defaultZones[1]],
+      });
+      expect(simProps.VegetationSet.evaluate(r, defaults)).toBe(true);
+      expect(simProps.DroughtLevelSet.evaluate(r, defaults)).toBe(false);
+    });
+    it("true when one zone's drought differs, and vegetation stays false", () => {
+      const r = mkRead({
+        zones: [{ vegetation: "Shrub", droughtLevel: "Severe Drought" }, defaultZones[1]],
+      });
+      expect(simProps.DroughtLevelSet.evaluate(r, defaults)).toBe(true);
+      expect(simProps.VegetationSet.evaluate(r, defaults)).toBe(false);
+    });
+    it("compares only the zones the reading has, rather than failing closed on a count mismatch", () => {
+      // The documented divergence from DefaultVars: a shorter reading is compared
+      // against the defaults it does line up with, not rejected outright.
+      const r = mkRead({ zones: [{ vegetation: "Forest", droughtLevel: "Mild Drought" }] });
+      expect(simProps.VegetationSet.evaluate(r, defaults)).toBe(true);
+    });
+    it("false when the reading or the defaults carry no zones", () => {
+      expect(simProps.VegetationSet.evaluate(mkRead({}), defaults)).toBe(false);
+      expect(simProps.DroughtLevelSet.evaluate(mkRead({ zones: defaultZones }), {})).toBe(false);
+    });
+  });
+
   describe("default values", () => {
     it("all sim-props declare defaultValue: false", () => {
       Object.values(simProps).forEach((impl) => {

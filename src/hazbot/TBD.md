@@ -77,15 +77,36 @@ Items where the source data should be corrected before the next re-extract:
   outstanding: `"neecessarily"` (multiple — 23/24/32/35/42.ts) and
   `"magitude"` / `"magnituide"` (24/33/34/35/42.ts). These are in Details
   prose only, not parsed by the engine, but they survive re-extracts.
-- **Tab 35 Cat 2 shadowing — RESOLVED (2026-06-02 workbook).** Cat 2 is
-  `ranSimulation AND NOT setAnyVar`; Cat 3 was previously
-  `ranSimulation WITH NOT ForestWAWOSuppression`, which any default run
+- **Tab 35 Cat 2 shadowing — RESOLVED, and the guard has since moved
+  (2026-08-20 workbook).** Cat 2 is `ranSimulation AND NOT setAnyVar`; Cat 3 was
+  originally `ranSimulation WITH NOT ForestWAWOSuppression`, which any default run
   satisfying Cat 2 also satisfied — and Cat 3 > Cat 2 won, leaving Cat 2
-  unreachable. The 2026-06-02 sheet adds the predicted `setAnyVar AND` guard
-  (Cat 3 is now `setAnyVar AND ranSimulation WITH NOT ForestWAWOSuppression`),
-  matching tab 33's analogous Cat 3. A default run (NOT setAnyVar) no longer
-  satisfies Cat 3, so Cat 2 is reachable again. Fixed at source per WM-18
-  R11a; carried in by the re-extract.
+  unreachable. The 2026-06-02 sheet added the predicted `setAnyVar AND` guard,
+  matching tab 33's analogous Cat 3, and Cat 2 became reachable.
+
+  **Read the rest of this bullet before reusing it as precedent.** The 2026-08-20
+  re-extract reshuffled cats 3, 4 and 5, and Cat 3 now keys on terrain
+  (`setAnyVar AND ranSimulation WITH NOT UniformTerrainTypes`) rather than on the
+  forest pairing. Cat 2 survives, verified through the real engine and in the
+  browser, and **by the same mechanism as before**: Sam's 2026-08-20 sheet carries
+  the `setAnyVar AND` guard on Cat 3 *and* on the new Cat 4, so an all-default run
+  fails it and neither can shadow Cat 2. The preset's uniform default terrain would
+  also exclude Cat 3, but that is a second reason rather than a replacement.
+
+  The first draft of that sheet dropped the `setAnyVar AND` guard from Cat 3
+  altogether, and **that is what opened a coverage hole**: a student on uniform
+  terrain with uniform drought who had not set the forest pairing matched no
+  category at all, and because the matched category is a monotone floor seeded
+  from the empty-prefix match, they were shown Cat 1's "You haven't run the model
+  yet" right after running it. The fix, authored by Sam on 2026-08-20, restores
+  the guard on **both** Cat 3 and the new Cat 4
+  (`setAnyVar AND ranSimulation WITH UniformTerrainTypes AND NOT ForestWAWOSuppression`).
+
+  So the durable lesson is the one this bullet has always carried, now with a
+  second instance: on this tab a leading `setAnyVar AND` guard is load-bearing,
+  and removing it breaks something even when every category still looks reachable.
+  Coverage and reachability are different properties, and only the coverage sweep
+  sees the first.
 
 ---
 

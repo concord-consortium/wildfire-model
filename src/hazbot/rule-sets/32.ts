@@ -23,7 +23,7 @@ export const ruleSet32: RuleSet<WildfireDefaults> = {
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
+2. Hazbot: Click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Click each zone and change the vegetation. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation AND NOT setAnyZoneVar",
@@ -37,10 +37,10 @@ export const ruleSet32: RuleSet<WildfireDefaults> = {
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
+2. Hazbot: Click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Click each zone and change the vegetation. Then run the model again. (Step 3 of 3)
 [Got it!]`,
-      expression: "setDroughtLevel AND NOT ranSimulation WITH UniqueVegetationPerZone",
+      expression: "setAnyZoneVar AND ranSimulation WITH NOT UniqueVegetationPerZone",
     },
     {
       id: 4,
@@ -51,7 +51,7 @@ export const ruleSet32: RuleSet<WildfireDefaults> = {
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
+2. Hazbot: Click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Click each zone and make sure the drought level is the same. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation WITH UniqueVegetationPerZone AND NOT UniformDroughtLevels",
@@ -64,9 +64,9 @@ export const ruleSet32: RuleSet<WildfireDefaults> = {
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Spark button outlined; coach mark points to spark button`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 2)
-2. Hazbot: Now make sure there is a **Spark** in each zone. Then run the model again. (Step 2 of 2)
+2. Hazbot: Make sure there is a **Spark** in each zone. Then run the model again. (Step 2 of 2)
 [Got it!]`,
-      expression: "ranSimulation WITH UniqueVegetationPerZone AND NOT OneSparkPerZone",
+      expression: "ranSimulation WITH UniqueVegetationPerZone AND UniformDroughtLevels AND NOT OneSparkPerZone",
     },
     {
       id: 6,

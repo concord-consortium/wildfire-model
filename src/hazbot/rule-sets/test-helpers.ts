@@ -18,7 +18,8 @@ import { WildfireDefaults, WildfireReading } from "../wildfire/types";
 // no defaults-consuming sim-prop, so a required parameter would force a
 // meaningless argument in 25.test.ts. Caution: a rule-set that references a
 // `set*` factor variable OR a `defaults`-consuming sim-prop (`DefaultVars`,
-// `DefaultVegetations`) and is built without `defaults` silently misclassifies
+// `DefaultVegetations`, `WindSet`, `VegetationSet`, `DroughtLevelSet`) and is
+// built without `defaults` silently misclassifies
 // — a `set*` factor variable evaluates against `undefined`, throws, and is
 // caught to its `false` fallback; a `defaults`-consuming sim-prop hits its
 // `if (!defaults…) return false` guard. Either way the gated category is wrong.

@@ -23,7 +23,7 @@ export const ruleSet54: RuleSet<WildfireDefaults> = {
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
+2. Hazbot: Click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Change the drought in each zone to **severe**! Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation WITH NOT DefaultVegetations OR NOT SevereDroughts",
