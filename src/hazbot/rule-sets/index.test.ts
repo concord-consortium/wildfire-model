@@ -1,6 +1,8 @@
 import { ruleSets } from "./index";
 import { EngineConstructionError, EngineError } from "../engine";
 import { makeWildfireEngine } from "./test-helpers";
+import { factorVariables } from "../wildfire/factor-variables";
+import { simProps } from "../wildfire/sim-props";
 
 // R5 load gate: construct the engine for every regenerated rule-set and assert
 // the collected load errors are exactly — zero missing-impl, zero parse-error,
@@ -54,6 +56,27 @@ describe("rule-sets/index — R5 load gate", () => {
 
   it("expectedStubWarnings covers every exported rule-set", () => {
     expect(Object.keys(expectedStubWarnings).sort()).toEqual(Object.keys(ruleSets).sort());
+  });
+
+  // Which implementations no expression references any more. Deliberately a
+  // pinned list rather than a "should be empty" assertion: nothing is deleted
+  // when a re-extract orphans an impl (some are expected back when the analysis
+  // window lands), so the value of this test is that an unplanned change to the
+  // set fails loudly. A name appearing here after a re-extract means some tab
+  // stopped using it; a name disappearing means a tab started.
+  const expectedUnreferenced = [
+    "GraphOpen", "setDroughtLevel", "setTerrainType", "setVegetation", "setWind",
+    "simulationRuns", "triedAllVegetations", "usedOneSparkPerZone",
+  ];
+
+  it("references exactly the expected set of factor variables and sim-props", () => {
+    const parts: string[] = [];
+    Object.values(ruleSets).forEach((rs) => rs.categories.forEach((c) => parts.push(c.expression)));
+    const expressions = parts.join(" ");
+    const allNames = [...Object.keys(factorVariables), ...Object.keys(simProps)];
+    const unreferenced = allNames
+      .filter((n) => !new RegExp(`\\b${n}\\b`).test(expressions)).sort();
+    expect(unreferenced).toEqual([...expectedUnreferenced].sort());
   });
 
   for (const id of Object.keys(ruleSets)) {

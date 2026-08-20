@@ -231,39 +231,65 @@ describe("wildfire sim-props", () => {
   });
 
   describe("CorrectZoneSetup", () => {
-    // Per tab 23's sheet row (CorrectZoneSetup, dump-xlsx.js tab 23, R16):
-    //   zone 1 = Foothills / Grass / No Drought
-    //   zone 2 = Foothills / Grass / Mild Drought OR Medium Drought
-    // Fixtures resolve enum members through the label maps — the same source of
-    // truth the impl uses — so a src/types.ts relabeling does not false-alarm (CA-5).
-    const correctZone1 = {
-      terrainType: terrainLabels[TerrainType.Foothills],
-      vegetation: vegetationLabels[Vegetation.Grass],
-      droughtLevel: droughtLabels[DroughtLevel.NoDrought],
-    };
-    const correctZone2Mild = {
-      terrainType: terrainLabels[TerrainType.Foothills],
-      vegetation: vegetationLabels[Vegetation.Grass],
-      droughtLevel: droughtLabels[DroughtLevel.MildDrought],
-    };
-    const correctZone2Medium = {
-      ...correctZone2Mild, droughtLevel: droughtLabels[DroughtLevel.MediumDrought],
-    };
+    // Per tab 23's Details column, revised in the 2026-08-20 workbook:
+    //   base(a,b): a = {Foothills|Plains} / {Grass|Shrub} / {Mild|Medium};
+    //             b = a's terrain or Foothills / a's vegetation /
+    //                 {No Drought|Mild}, and different from a's drought
+    //   correct = base(z1,z2) OR base(z2,z1)
+    // Fixtures resolve enum members through the label maps, the same source of
+    // truth the impl uses, so a src/types.ts relabeling does not false-alarm.
+    const z = (t: TerrainType, v: Vegetation, d: DroughtLevel) => ({
+      terrainType: terrainLabels[t], vegetation: vegetationLabels[v], droughtLevel: droughtLabels[d],
+    });
+    const F = TerrainType.Foothills, P = TerrainType.Plains, M = TerrainType.Mountains;
+    const G = Vegetation.Grass, S = Vegetation.Shrub, FO = Vegetation.Forest;
+    const NO = DroughtLevel.NoDrought, MI = DroughtLevel.MildDrought;
+    const ME = DroughtLevel.MediumDrought, SE = DroughtLevel.SevereDrought;
+    const correct = (zones: ReturnType<typeof z>[]) =>
+      simProps.CorrectZoneSetup.evaluate(mkRead({ zones }), {});
 
-    it("true for the sheet-defined correct setup (zone 2 = Mild Drought)", () => {
-      const r = mkRead({ zones: [correctZone1, correctZone2Mild] });
-      expect(simProps.CorrectZoneSetup.evaluate(r, {})).toBe(true);
+    it("true for the base shape: Foothills/Grass Mild then No Drought", () => {
+      expect(correct([z(F, G, MI), z(F, G, NO)])).toBe(true);
     });
-    it("true with zone 2 at Medium Drought (sheet allows Mild or Medium)", () => {
-      const r = mkRead({ zones: [correctZone1, correctZone2Medium] });
-      expect(simProps.CorrectZoneSetup.evaluate(r, {})).toBe(true);
+    it("true for the swap of that pair, which is the pre-revision setup", () => {
+      // Zone 1 at No Drought no longer satisfies the base shape on its own; it
+      // stays correct only through the swap arm. This is the pair the browser
+      // walk used, which is why the revision did not surface there.
+      expect(correct([z(F, G, NO), z(F, G, MI)])).toBe(true);
     });
-    it("false when a zone's drought level is wrong", () => {
-      const wrongZone1 = { ...correctZone1, droughtLevel: droughtLabels[DroughtLevel.SevereDrought] };
-      expect(simProps.CorrectZoneSetup.evaluate(mkRead({ zones: [wrongZone1, correctZone2Mild] }), {})).toBe(false);
+    it("true for the newly allowed Plains and Shrub setups", () => {
+      expect(correct([z(P, G, MI), z(P, G, NO)])).toBe(true);
+      expect(correct([z(F, S, ME), z(F, S, MI)])).toBe(true);
+      expect(correct([z(P, S, ME), z(P, S, NO)])).toBe(true);
+    });
+    it("true when zone 2 falls back to Foothills against a Plains zone 1", () => {
+      expect(correct([z(P, G, ME), z(F, G, MI)])).toBe(true);
+    });
+    it("false when zone 2's terrain is neither zone 1's nor Foothills", () => {
+      expect(correct([z(P, G, ME), z(M, G, MI)])).toBe(false);
+    });
+    it("false when the two zones' vegetation differs", () => {
+      expect(correct([z(F, G, ME), z(F, S, MI)])).toBe(false);
+    });
+    it("false when both zones share a drought level", () => {
+      // The sheet requires zone 2's drought to differ from zone 1's.
+      expect(correct([z(F, G, MI), z(F, G, MI)])).toBe(false);
+    });
+    it("false for drought levels outside the allowed sets", () => {
+      expect(correct([z(F, G, SE), z(F, G, MI)])).toBe(false);
+      expect(correct([z(F, G, ME), z(F, G, SE)])).toBe(false);
+      // Medium is allowed for the base zone but not for its partner, so a Medium
+      // partner is only ever reached through the swap arm. Both of these are.
+      expect(correct([z(F, G, MI), z(F, G, ME)])).toBe(true);  // swap of (ME, MI)
+      expect(correct([z(F, G, NO), z(F, G, ME)])).toBe(true);  // swap of (ME, NO)
+      // Two Mediums fail: Medium is not in the partner set on either arm.
+      expect(correct([z(F, G, ME), z(F, G, ME)])).toBe(false);
+    });
+    it("false for vegetation outside {Grass, Shrub}", () => {
+      expect(correct([z(F, FO, ME), z(F, FO, MI)])).toBe(false);
     });
     it("false when not exactly two zones", () => {
-      expect(simProps.CorrectZoneSetup.evaluate(mkRead({ zones: [correctZone1] }), {})).toBe(false);
+      expect(correct([z(F, G, MI)])).toBe(false);
       expect(simProps.CorrectZoneSetup.evaluate(mkRead({}), {})).toBe(false);
     });
   });

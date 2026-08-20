@@ -140,7 +140,21 @@ The rule-sets under `src/hazbot/rule-sets/` are generated, not hand-written. `sc
 
 **Context**: The re-extract fails nine tests across four files. The obvious approach is to fix the assertions.
 
-**Decision**: **Rewrite against the new expressions, names and comments included, rather than chasing failures to green.** Tab 35 in particular reshuffled its categories, and all three of its coverage-test names described inverted conditions, so fixing the assertion alone would have pinned the wrong category under a name that was already wrong. The dangerous tests are the passing ones: only tabs 23 and 24 pass untouched, and those are exactly the two whose rewrites are semantics-preserving, so a green result there is expected rather than reassuring.
+**Decision**: **Rewrite against the new expressions, names and comments included, rather than chasing failures to green.** Tab 35 in particular reshuffled its categories, and all three of its coverage-test names described inverted conditions, so fixing the assertion alone would have pinned the wrong category under a name that was already wrong. The dangerous tests are the passing ones: only tabs 23 and 24 pass untouched, and those are exactly the two whose *expression* rewrites are semantics-preserving, so a green result there is expected rather than reassuring. Tab 23 proved the point the hard way: its expression change really was a pure reorder, but its `CorrectZoneSetup` Details cell was rewritten in the same revision, and no test failed because that contract lives in a hand-written impl. See the decision below.
+
+---
+
+### Tab 23's `CorrectZoneSetup` contract changed, and comparing expressions did not show it
+
+**Context**: The story's diff method compared category *expressions* between the old and new extraction. Tab 23's expression change is a pure reorder (`NOT setAnyZoneVar AND ranSimulation` to `ranSimulation AND NOT setAnyZoneVar`), so the tab was classified as semantically unchanged. It was not: the same revision rewrote the `Details` cell that defines `CorrectZoneSetup`, and that contract is implemented by hand in `sim-props.ts` rather than generated, so nothing regenerated and nothing failed.
+
+The old contract was zone 1 = Foothills/Grass/No Drought, zone 2 = Foothills/Grass/Mild or Medium. The new one is a base shape (terrain in {Foothills, Plains}, vegetation in {Grass, Shrub}, drought in {Mild, Medium}, partner matching on vegetation, matching or Foothills on terrain, and a *different* drought in {No Drought, Mild}) plus a rule that swapping the two zones of any allowed setting is also allowed.
+
+**Why it went unnoticed until PR review**: the browser walk reached categories 4 and 5 using the pre-revision pair, which is still correct under the new contract *through the swap arm*, since it is the swap of (Mild, No Drought). So the walk passed while every newly-allowed setup, such as Plains or Shrub, evaluated false and would have left a student at category 3 being told their zone setup was wrong.
+
+**Decision**: **Implement the revised contract as `base(z1,z2) OR base(z2,z1)`**, with unit tests covering the base shape, the swap arm, each newly-allowed dimension, and the exclusions. Verified in the browser: a Plains/Shrub setup now reaches category 5 with `CorrectZoneSetup` true.
+
+**The durable lesson**: a re-extract diff must compare the `Details` cells that define hand-written impls, not only the expressions. `CorrectZoneSetup` is the one identifier on these tabs whose meaning lives entirely in prose, so it is the one that can change silently. The comment above the impl now says so.
 
 ---
 
