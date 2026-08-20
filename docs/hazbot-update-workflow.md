@@ -49,6 +49,70 @@ The DSL grammar may have evolved at source. The hand-written parser at `src/hazb
 - New operator / token: extend `src/hazbot/engine/parser/tokenize.ts` + `parse.ts` + add parser tests.
 - New WITH semantic: review `parsePropExpression` in `parse.ts`.
 
+### A `details` or `definition` cell changed (the silent one)
+
+**Run this every time. It is the only failure mode in this document that no test, no
+playbook and no browser walk will surface.**
+
+Every factor-variable and sim-prop impl is hand-written, and its contract lives in the
+sheet's `Details` prose. A `Details` edit therefore changes what a rule *means* while
+regenerating nothing: the expression is untouched, the module diff looks editorial, the
+suite stays green, and the impl silently no longer matches the sheet. WM-51 shipped
+exactly this and it reached PR review: tab 23's `CorrectZoneSetup` contract was
+broadened at source, the impl still encoded the old one, and every newly-allowed zone
+setup would have held students at the "your setup is wrong" category.
+
+Diff every contract cell against the base branch:
+
+```sh
+python3 - <<'EOF'
+import re, subprocess
+TABS = ["23","24","25","32","33","34","35","42","45","47","54"]
+def rows(src):
+    out, cur = {}, None
+    for line in src.split("\n"):
+        t = line.strip()
+        m = re.match(r'name: "([^"]+)",', t)
+        if m: cur = m.group(1); out[cur] = {}; continue
+        if cur:
+            for k in ("definition", "details"):
+                mm = re.match(rf'{k}: (.*?),?$', t)
+                if mm: out[cur][k] = mm.group(1).rstrip(",")
+    return out
+for tab in TABS:
+    p = f"src/hazbot/rule-sets/{tab}.ts"
+    old = rows(subprocess.run(["git","show",f"origin/master:{p}"],capture_output=True,text=True).stdout)
+    new = rows(open(p).read())
+    for name in sorted(set(old) | set(new)):
+        o, n = old.get(name), new.get(name)
+        if o is None: print(f"tab {tab}  {name}: ADDED")
+        elif n is None: print(f"tab {tab}  {name}: REMOVED")
+        else:
+            for k in ("definition", "details"):
+                if o.get(k) != n.get(k): print(f"tab {tab}  {name}: {k} CHANGED")
+EOF
+```
+
+For every row it reports, open the impl in `src/hazbot/wildfire/sim-props.ts` or
+`factor-variables.ts` and read it against the new prose. Most changes are editorial;
+the ones that are not are the whole reason for this step. An `ADDED` row means a tab
+started referencing an impl it did not before, so check that tab's wording matches the
+wording the impl was written against, which is not guaranteed to be identical across tabs.
+
+**Validate the sweep before you trust a clean result.** A naive regex over
+`details: "..."` does not survive the escaped quotes these cells contain. The first
+version of this script under-reported and missed the very row that had just caused a
+bug. Before believing an empty report, confirm the script reports a change you already
+know about, or an under-reporting sweep will hand you false confidence in the one place
+this process has already failed.
+
+**Why the usual validation cannot cover this.** Both the coverage sweep and the
+per-category browser walk test *reachability*: does some state match this category. A
+contract that narrows relative to its new definition still leaves every category
+reachable, because the old fixtures generally remain valid, so both passes stay green.
+Reachability and contract-fidelity are different properties and only this step checks
+the second.
+
 ## 3. Run tests
 
 ```sh
