@@ -94,7 +94,15 @@ EOF
 ```
 
 For every row it reports, open the impl in `src/hazbot/wildfire/sim-props.ts` or
-`factor-variables.ts` and read it against the new prose. Most changes are editorial;
+`factor-variables.ts` and read it against the new prose.
+
+Extend the same reading to the `studentAction` cell of every category whose expression
+changed. It is never read by the engine, so it cannot break a student, but per Sam
+(2026-08-20) a `studentAction` that has drifted out of sync with its expression "means
+that the logic has deviated from the intended StudentAction due to having to plug in
+logical gaps". Treat a mismatch as evidence that an expression was bent to close a gap,
+and check that the gap was closed the way the author intended, rather than only
+correcting the prose. Most changes are editorial;
 the ones that are not are the whole reason for this step. An `ADDED` row means a tab
 started referencing an impl it did not before, so check that tab's wording matches the
 wording the impl was written against, which is not guaranteed to be identical across tabs.

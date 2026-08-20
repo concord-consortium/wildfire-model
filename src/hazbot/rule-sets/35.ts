@@ -44,7 +44,7 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
     },
     {
       id: 4,
-      studentAction: "Ran the simulation with two different droughts but without assigning forest with and without suppression to each zone",
+      studentAction: "Ran the simulation with the same terrain in both zones but without assigning forest with and without suppression to each zone",
       feedback: `Hazbot: Let’s focus on **forests with and without suppression** in the vegetation settings. Also, check the same drought level in each zone.
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button

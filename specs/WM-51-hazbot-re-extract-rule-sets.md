@@ -45,9 +45,13 @@ The rule-sets under `src/hazbot/rule-sets/` are generated, not hand-written. `sc
 - **The Reload to Clear All rename (WM-47).**
 - **Parser, tokenizer and extractor changes** (R8), and **removing dead factor-variable implementations** (R7).
 
-## Not Yet Implemented
+## Resolved after the first review pass
 
-- **Two `studentAction` cells describe a variable their expression no longer tests.** Tab 35 category 4 reads "two different droughts" against an expression with no drought clause; tab 32 category 3 reads "drought changed" against an expression that broadened to `setAnyZoneVar`. Raised with Sam on 2026-08-20 with proposed replacement wording for both. Neither is student-facing (`studentAction` reaches only the dev sidebar and the generated playbook headings), and it is editorial under the R6 policy, so it owes no second rules-version bump. **Deferred to a follow-up commit** rather than held for an answer.
+- **Two `studentAction` cells described a variable their expression no longer tested.** Tab 35 category 4 read "two different droughts" against an expression with no drought clause; tab 32 category 3 read "drought changed" against an expression that had broadened to `setAnyZoneVar`. Raised with Sam on 2026-08-20, who edited both cells the same afternoon, and the corrected export is carried on this branch. The tab-35 playbook no longer contradicts itself: its category 4 heading now reads "the same terrain in both zones", matching `UniformTerrainTypes`.
+
+  Sam's framing is worth keeping, because it makes this a diagnostic rather than a tidiness item: *"When StudentAction is no longer in sync with the logic, it means that the logic has deviated from the intended StudentAction due to having to plug in logical gaps."* A drifted `studentAction` is evidence that an expression was bent to close a gap, so it is worth reading as a signal on the next re-extract rather than merely corrected.
+
+  He also noted he is not the primary author of the `studentAction`, feedback and coach-mark cells, and asked Trudi and hlee to review the two he edited (orange background, tabs 32 and 35). Those cells may be revised again; that would be another text-only re-extract owing no rules-version bump.
 
 ## Decisions
 

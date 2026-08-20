@@ -30,7 +30,7 @@ export const ruleSet32: RuleSet<WildfireDefaults> = {
     },
     {
       id: 3,
-      studentAction: "Ran the simulation with drought changed but without three different vegetation types assigned (one per zone)",
+      studentAction: "Ran the simulation with a zone setting changed but without three different vegetation types assigned (one per zone)",
       feedback: `Hazbot: Hmm, I don’t see all vegetation types. Let’s set the zones to grass, shrub, and forest!
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
