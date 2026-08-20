@@ -75,6 +75,13 @@ module.exports = (env, argv) => {
           exclude: /\.nosvgo\.svg$/i,
           oneOf: [
             {
+              // `import url from "./icon.svg?url"` yields a URL rather than a React component,
+              // for artwork drawn onto a canvas via an Image. The svgr branch below cannot do this.
+              // Anchored so it cannot claim `?nourl`, `?urls` or `?myurl=1`.
+              resourceQuery: /^\?url$/,
+              type: 'asset',
+            },
+            {
               // Do not apply SVGR import in CSS files.
               issuer: /\.(css|scss|less)$/,
               type: 'asset',

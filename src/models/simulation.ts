@@ -53,6 +53,12 @@ export class SimulationModel {
   @observable public simulationStarted = false;
   @observable public simulationRunning = false;
   @observable public lastFireLineTimestamp = -Infinity;
+  // Orders graph icons that land in the same hour by when the student acted. A fire line is
+  // drawn while the model is paused but not built until Start, so its build timestamp cannot
+  // say whether the student drew it before or after a helitack dropped during the same pause.
+  private interventionCount = 0;
+  @observable public fireLineActionOrder = 0;
+  @observable public helitackActionOrder = 0;
   @observable public lastHelitackTimestamp = -Infinity;
   @observable public totalCellCountByZone: {[key: number]: number} = {};
   @observable public burnedCellsInZone: {[key: number]: number} = {};
@@ -406,6 +412,9 @@ export class SimulationModel {
     this.fireLineMarkers.length = 0;
     this.lastFireLineTimestamp = -Infinity;
     this.lastHelitackTimestamp = -Infinity;
+    this.interventionCount = 0;
+    this.fireLineActionOrder = 0;
+    this.helitackActionOrder = 0;
     this.updateCellsStateFlag();
     this.updateCellsElevationFlag();
     this.time = 0;
@@ -611,6 +620,7 @@ export class SimulationModel {
       const count = this.fireLineMarkers.length;
       if (count % 2 === 0) {
         this.markFireLineUnderConstruction(this.fireLineMarkers[count - 2], this.fireLineMarkers[count - 1], true);
+        this.fireLineActionOrder = ++this.interventionCount;
       }
     }
   }
@@ -704,6 +714,7 @@ export class SimulationModel {
       }
     }
     this.lastHelitackTimestamp = this.time;
+    this.helitackActionOrder = ++this.interventionCount;
   }
 
   @action.bound public setWindDirection(direction: number) {

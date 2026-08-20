@@ -511,4 +511,54 @@ describe("SimulationModel", () => {
       expect(sim.tpiForSpark(50000, 50000)).toBeUndefined();
     });
   });
+
+  describe("intervention action order", () => {
+    const createSim = async () => {
+      const sim = new SimulationModel({
+        modelWidth: 120000,
+        modelHeight: 80000,
+        gridWidth: 240,
+        sparks: [[60000, 40000]],
+        zoneIndex: [[0]],
+        elevation: [[0]],
+        unburntIslands: [[1]],
+        unburntIslandProbability: 1,
+        riverData: null,
+      });
+      await sim.dataReadyPromise;
+      return sim;
+    };
+
+    it("records a fire line drawn before a helitack as the earlier action", async () => {
+      const sim = await createSim();
+      sim.time = 469;
+      sim.addFireLineMarker(20000, 40000);
+      sim.addFireLineMarker(30000, 40000);
+      sim.setHelitackPoint(60000, 40000);
+
+      expect(sim.fireLineActionOrder).toBeLessThan(sim.helitackActionOrder);
+      // Both land in the same hour, so the graph cannot order them by time.
+      sim.applyFireLineMarkers();
+      expect(sim.lastFireLineTimestamp).toEqual(sim.lastHelitackTimestamp);
+    });
+
+    it("records a helitack dropped before a fire line as the earlier action", async () => {
+      const sim = await createSim();
+      sim.time = 469;
+      sim.setHelitackPoint(60000, 40000);
+      sim.addFireLineMarker(20000, 40000);
+      sim.addFireLineMarker(30000, 40000);
+
+      expect(sim.helitackActionOrder).toBeLessThan(sim.fireLineActionOrder);
+    });
+
+    it("resets the ordering on restart", async () => {
+      const sim = await createSim();
+      sim.setHelitackPoint(60000, 40000);
+      expect(sim.helitackActionOrder).toBeGreaterThan(0);
+      sim.restart();
+      expect(sim.helitackActionOrder).toEqual(0);
+      expect(sim.fireLineActionOrder).toEqual(0);
+    });
+  });
 });
