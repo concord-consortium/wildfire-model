@@ -156,6 +156,18 @@ The old contract was zone 1 = Foothills/Grass/No Drought, zone 2 = Foothills/Gra
 
 **The durable lesson**: a re-extract diff must compare the `Details` cells that define hand-written impls, not only the expressions. `CorrectZoneSetup` is the one identifier on these tabs whose meaning lives entirely in prose, so it is the one that can change silently. The comment above the impl now says so.
 
+**That sweep was then run across all 11 tabs**, comparing every `definition` and `details` cell against `origin/master`, and it found 15 changes. Only one needed code:
+
+| Change | Verdict |
+|---|---|
+| 23 `CorrectZoneSetup` details | The bug above |
+| 25 `SparksAtTopAndBottom` details | Editorial: same requirement, minus a stale "new algorithm coding required here" note that WM-15 obsoleted |
+| 33 / 35 / 42 `setWind` details | The impl compares direction independently of magnitude, so it satisfies the new prose and never satisfied the old; the added "any small change should be accepted" is satisfied by the strict comparison |
+| 42 `DefaultVars` added to the tab | Wording byte-identical to tabs 45 and 47, so the existing impl applies unchanged |
+| 34: 3 rows added, 6 removed | The expected two-by-two restructure |
+
+A caution for whoever repeats this: the first version of that sweep silently under-reported, because a regex over `details: "..."` does not survive the escaped quotes those cells contain, and it missed `CorrectZoneSetup` itself. It was only caught by checking the output against a change already known to exist. Validate the sweep against a known case before trusting a clean result, because an under-reporting sweep is worse than none in exactly the place that has already burned this story once.
+
 ---
 
 ### Does `src/hazbot/TBD.md` need updating?
