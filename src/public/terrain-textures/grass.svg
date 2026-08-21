@@ -1,0 +1,221 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256px" height="256px" viewBox="0 0 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>grass</title>
+    <defs>
+        <rect id="path-1" x="0" y="0" width="256" height="256"></rect>
+    </defs>
+    <g id="grass" stroke="none" fill="none" fill-rule="evenodd" stroke-width="1">
+        <g id="Group">
+            <rect id="Rectangle" fill="#808080" x="0" y="0" width="256" height="256"></rect>
+            <g id="Clipped">
+                <mask id="mask-2" fill="white">
+                    <use xlink:href="#path-1"></use>
+                </mask>
+                <g id="Rectangle"></g>
+                <g id="Group" mask="url(#mask-2)" stroke-linecap="round">
+                    <g transform="translate(-7.78, 3.98)">
+                        <line x1="21.35" y1="18.94" x2="21.35" y2="-3.55271368e-15" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="21.35" y1="18.94" x2="13.26" y2="4.17" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="21.35" y1="18.94" x2="29.44" y2="4.17" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="56.73" y1="21.45" x2="56.73" y2="2.28" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="56.73" y1="21.45" x2="48.54" y2="6.5" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="56.73" y1="21.45" x2="64.92" y2="6.5" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="87.31" y1="18.35" x2="87.31" y2="1.31" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="87.31" y1="18.35" x2="80.39" y2="5.06" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="87.31" y1="18.35" x2="94.24" y2="5.06" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="120.26" y1="20.94" x2="120.26" y2="4.38" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="120.26" y1="20.94" x2="113.73" y2="8.02" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="120.26" y1="20.94" x2="126.78" y2="8.02" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="150.3" y1="20.76" x2="150.3" y2="1.9" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="150.3" y1="20.76" x2="141.77" y2="6.05" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="150.3" y1="20.76" x2="158.83" y2="6.05" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="182.81" y1="18.97" x2="182.81" y2="0.63" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="182.81" y1="18.97" x2="174.79" y2="4.66" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="182.81" y1="18.97" x2="190.83" y2="4.66" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="217.5" y1="20.82" x2="217.5" y2="2.29" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="217.5" y1="20.82" x2="209.18" y2="6.37" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="217.5" y1="20.82" x2="225.81" y2="6.37" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="247.82" y1="22.84" x2="247.82" y2="4.48" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="247.82" y1="22.84" x2="240.04" y2="8.52" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="247.82" y1="22.84" x2="255.6" y2="8.52" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="6.9" y1="53.99" x2="13.37" y2="39.9" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="37.38" y1="53.13" x2="37.38" y2="34.38" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="37.38" y1="53.13" x2="30.66" y2="38.5" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="37.38" y1="53.13" x2="44.1" y2="38.5" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="73.44" y1="50.42" x2="73.44" y2="33.32" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="73.44" y1="50.42" x2="66.17" y2="37.09" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="73.44" y1="50.42" x2="80.7" y2="37.09" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="106.56" y1="52.41" x2="106.56" y2="34.2" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="106.56" y1="52.41" x2="98.51" y2="38.2" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="106.56" y1="52.41" x2="114.62" y2="38.2" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="138.14" y1="55.48" x2="138.14" y2="36.04" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="138.14" y1="55.48" x2="130.31" y2="40.32" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="138.14" y1="55.48" x2="145.97" y2="40.32" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="165.04" y1="56.21" x2="165.04" y2="39.88" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="165.04" y1="56.21" x2="156.98" y2="43.48" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="165.04" y1="56.21" x2="173.1" y2="43.48" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="197.93" y1="50.73" x2="197.93" y2="31.13" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="197.93" y1="50.73" x2="190.38" y2="35.45" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="197.93" y1="50.73" x2="205.47" y2="35.45" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="228.66" y1="51.75" x2="228.66" y2="32.7" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="228.66" y1="51.75" x2="220.41" y2="36.89" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="228.66" y1="51.75" x2="236.91" y2="36.89" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <g id="Group" stroke="none" stroke-width="1" fill-rule="evenodd" transform="translate(256.44, 34.93)">
+                            <line x1="6.46" y1="19.06" x2="6.46" y2="1" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                            <line x1="6.46" y1="19.06" x2="0" y2="4.97" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                            <line x1="6.46" y1="19.06" x2="12.93" y2="4.97" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        </g>
+                        <line x1="24.38" y1="85.72" x2="24.38" y2="68.36" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="24.38" y1="85.72" x2="15.95" y2="72.18" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="24.38" y1="85.72" x2="32.81" y2="72.18" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="56.71" y1="82.75" x2="56.71" y2="65.81" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="56.71" y1="82.75" x2="50.09" y2="69.54" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="56.71" y1="82.75" x2="63.33" y2="69.54" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="88.18" y1="84.07" x2="88.18" y2="66.73" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="88.18" y1="84.07" x2="81.32" y2="70.54" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="88.18" y1="84.07" x2="95.05" y2="70.54" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="120.43" y1="82.62" x2="120.43" y2="64.95" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="120.43" y1="82.62" x2="113.72" y2="68.84" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="120.43" y1="82.62" x2="127.14" y2="68.84" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="153.1" y1="82.9" x2="153.1" y2="66.68" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="153.1" y1="82.9" x2="144.74" y2="70.25" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="153.1" y1="82.9" x2="161.47" y2="70.25" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="186.98" y1="85.15" x2="186.98" y2="67.62" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="186.98" y1="85.15" x2="180.31" y2="71.48" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="186.98" y1="85.15" x2="193.64" y2="71.48" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="216.73" y1="84.52" x2="216.73" y2="65.09" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="216.73" y1="84.52" x2="208.67" y2="69.36" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="216.73" y1="84.52" x2="224.79" y2="69.36" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="245.44" y1="85.31" x2="245.44" y2="65.98" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="245.44" y1="85.31" x2="238.87" y2="70.23" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="245.44" y1="85.31" x2="252.01" y2="70.23" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="5.28" y1="119.93" x2="11.78" y2="105.42" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="37.54" y1="119.86" x2="37.54" y2="103.06" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="37.54" y1="119.86" x2="30.79" y2="106.76" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="37.54" y1="119.86" x2="44.3" y2="106.76" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="73.07" y1="114.06" x2="73.07" y2="96.67" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="73.07" y1="114.06" x2="65.41" y2="100.5" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="73.07" y1="114.06" x2="80.74" y2="100.5" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="106.6" y1="117.84" x2="106.6" y2="99.31" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="106.6" y1="117.84" x2="99.93" y2="103.39" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="106.6" y1="117.84" x2="113.27" y2="103.39" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="132.63" y1="118.35" x2="132.63" y2="101.5" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="132.63" y1="118.35" x2="125.68" y2="105.2" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="132.63" y1="118.35" x2="139.58" y2="105.2" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="168.03" y1="114.17" x2="168.03" y2="96.42" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="168.03" y1="114.17" x2="160.68" y2="100.33" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="168.03" y1="114.17" x2="175.38" y2="100.33" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="201.42" y1="120.13" x2="201.42" y2="102.27" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="201.42" y1="120.13" x2="192.84" y2="106.2" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="201.42" y1="120.13" x2="209.99" y2="106.2" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="232.28" y1="118.86" x2="232.28" y2="102.04" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="232.28" y1="118.86" x2="225.66" y2="105.74" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="232.28" y1="118.86" x2="238.91" y2="105.74" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="261.28" y1="119.93" x2="261.28" y2="101.33" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="261.28" y1="119.93" x2="254.78" y2="105.42" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="261.28" y1="119.93" x2="267.78" y2="105.42" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="20.72" y1="149.35" x2="20.72" y2="133.01" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="20.72" y1="149.35" x2="13.71" y2="136.61" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="20.72" y1="149.35" x2="27.72" y2="136.61" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="58.52" y1="150.95" x2="58.52" y2="133.03" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="58.52" y1="150.95" x2="51.66" y2="136.97" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="58.52" y1="150.95" x2="65.37" y2="136.97" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="89.17" y1="150.02" x2="89.17" y2="131.17" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="89.17" y1="150.02" x2="82.09" y2="135.31" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="89.17" y1="150.02" x2="96.26" y2="135.31" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="116.93" y1="147.31" x2="116.93" y2="127.72" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="116.93" y1="147.31" x2="110.29" y2="132.03" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="116.93" y1="147.31" x2="123.56" y2="132.03" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="148.98" y1="151.28" x2="148.98" y2="131.71" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="148.98" y1="151.28" x2="141.84" y2="136.02" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="148.98" y1="151.28" x2="156.11" y2="136.02" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="184.46" y1="148.38" x2="184.46" y2="131.64" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="184.46" y1="148.38" x2="176.54" y2="135.33" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="184.46" y1="148.38" x2="192.38" y2="135.33" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="214.91" y1="146.66" x2="214.91" y2="130.3" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="214.91" y1="146.66" x2="206.48" y2="133.9" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="214.91" y1="146.66" x2="223.34" y2="133.9" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="245.17" y1="150.77" x2="245.17" y2="134.51" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="245.17" y1="150.77" x2="238.21" y2="138.09" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="245.17" y1="150.77" x2="252.14" y2="138.09" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="8.15" y1="181.25" x2="8.15" y2="162.77" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="8.15" y1="181.25" x2="2.66453526e-15" y2="166.83" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="8.15" y1="181.25" x2="16.31" y2="166.83" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="37.86" y1="179.24" x2="37.86" y2="160.4" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="37.86" y1="179.24" x2="30.21" y2="164.55" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="37.86" y1="179.24" x2="45.51" y2="164.55" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="73.26" y1="183.16" x2="73.26" y2="166.29" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="73.26" y1="183.16" x2="65.27" y2="170" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="73.26" y1="183.16" x2="81.25" y2="170" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="106.02" y1="183.93" x2="106.02" y2="165.82" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="106.02" y1="183.93" x2="99.49" y2="169.8" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="106.02" y1="183.93" x2="112.56" y2="169.8" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="138.54" y1="183.61" x2="138.54" y2="167.2" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="138.54" y1="183.61" x2="130.26" y2="170.81" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="138.54" y1="183.61" x2="146.81" y2="170.81" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="166.84" y1="183.46" x2="166.84" y2="167.06" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="166.84" y1="183.46" x2="159.25" y2="170.67" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="166.84" y1="183.46" x2="174.44" y2="170.67" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="198.71" y1="181.11" x2="198.71" y2="161.66" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="198.71" y1="181.11" x2="191.93" y2="165.94" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="198.71" y1="181.11" x2="205.48" y2="165.94" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="229.34" y1="182.37" x2="229.34" y2="165.78" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="229.34" y1="182.37" x2="221.72" y2="169.43" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="229.34" y1="182.37" x2="236.96" y2="169.43" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="264.15" y1="181.25" x2="264.15" y2="162.77" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="264.15" y1="181.25" x2="256" y2="166.83" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="22.94" y1="212.25" x2="22.94" y2="194.7" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="22.94" y1="212.25" x2="15.33" y2="198.56" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="22.94" y1="212.25" x2="30.54" y2="198.56" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="54.51" y1="211.36" x2="54.51" y2="195.11" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="54.51" y1="211.36" x2="46.9" y2="198.69" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="54.51" y1="211.36" x2="62.12" y2="198.69" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="89.77" y1="211.65" x2="89.77" y2="192.29" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="89.77" y1="211.65" x2="81.48" y2="196.55" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="89.77" y1="211.65" x2="98.07" y2="196.55" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="119.33" y1="210.12" x2="119.33" y2="190.54" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="119.33" y1="210.12" x2="110.77" y2="194.85" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="119.33" y1="210.12" x2="127.88" y2="194.85" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="153.21" y1="215.56" x2="153.21" y2="198.21" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="153.21" y1="215.56" x2="146.16" y2="202.03" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="153.21" y1="215.56" x2="160.27" y2="202.03" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="181.13" y1="211.5" x2="181.13" y2="192.33" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="181.13" y1="211.5" x2="174.21" y2="196.55" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="181.13" y1="211.5" x2="188.06" y2="196.55" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="215.02" y1="209.94" x2="215.02" y2="193.38" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="215.02" y1="209.94" x2="206.44" y2="197.02" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="215.02" y1="209.94" x2="223.61" y2="197.02" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="245.98" y1="212.28" x2="245.98" y2="192.79" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="245.98" y1="212.28" x2="237.45" y2="197.08" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="245.98" y1="212.28" x2="254.5" y2="197.08" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="5.46" y1="245.65" x2="12.41" y2="231.6" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="40.28" y1="243.29" x2="40.28" y2="223.92" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="40.28" y1="243.29" x2="33.79" y2="228.18" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="40.28" y1="243.29" x2="46.78" y2="228.18" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="69.09" y1="247.66" x2="69.09" y2="228.63" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="69.09" y1="247.66" x2="61.43" y2="232.81" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="69.09" y1="247.66" x2="76.75" y2="232.81" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="102.92" y1="245.52" x2="102.92" y2="226.68" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="102.92" y1="245.52" x2="96.46" y2="230.82" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="102.92" y1="245.52" x2="109.38" y2="230.82" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="135.48" y1="245.48" x2="135.48" y2="229.05" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="135.48" y1="245.48" x2="127.78" y2="232.67" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="135.48" y1="245.48" x2="143.18" y2="232.67" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="169.58" y1="246.53" x2="169.58" y2="230.17" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="169.58" y1="246.53" x2="162.11" y2="233.77" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="169.58" y1="246.53" x2="177.05" y2="233.77" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="201.06" y1="246.95" x2="201.06" y2="228.06" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="201.06" y1="246.95" x2="192.83" y2="232.22" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="201.06" y1="246.95" x2="209.28" y2="232.22" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="232.41" y1="244.89" x2="232.41" y2="226.7" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="232.41" y1="244.89" x2="224.04" y2="230.7" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="232.41" y1="244.89" x2="240.77" y2="230.7" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="261.46" y1="245.65" x2="261.46" y2="227.64" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="261.46" y1="245.65" x2="254.51" y2="231.6" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                        <line x1="261.46" y1="245.65" x2="268.41" y2="231.6" id="Path" stroke="#2A2A2A" stroke-width="3"></line>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

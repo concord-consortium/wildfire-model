@@ -74,6 +74,64 @@ export interface ISimulationConfig {
   helitackDropRadius: number; // ft
   // Renders burn index.
   showBurnIndex: boolean;
+  // EXPLORATORY. Renders the terrain with vegetation/char textures instead of flat
+  // per-cell colors. Off by default: when false the terrain renders through the
+  // original vertex-color path, unchanged. Enable via ?texturedTerrain=true.
+  // Tiles are the grayscale SVGs in src/public/terrain-textures/ — see
+  // terrain-textures.ts for the authoring contract.
+  texturedTerrain: boolean;
+  // Ground distance one texture tile covers, in ft. Only used when
+  // `texturedTerrain` is on.
+  //
+  // Counter-intuitively this must be LARGE. The default view shows ~120 ft per
+  // screen pixel, so a tile set to a few thousand feet puts its detail below the
+  // pixel grid, mipmapping averages it back to the tile's mean, and — since the
+  // mean is the neutral 128 by contract — the texture disappears entirely. The
+  // tiles are abstract map symbols, and a symbol needs ~15-30px on screen to be
+  // recognizable, which is 1800-3600 ft of ground. That is what this value
+  // controls. Smaller also means a shorter repeat period, so the tiling becomes
+  // more noticeable, not less.
+  terrainTextureTileFt: number;
+  // Target contrast ratio between a glyph and the terrain color it sits on, using
+  // the WCAG relative-luminance form. The glyph ink is derived per-fragment from
+  // the terrain color — same hue and saturation, darkened until it hits this
+  // ratio — so every drought level gets glyphs in its own color family that are
+  // still guaranteed to read.
+  //
+  // IMPORTANT: this ratio is applied to the MATERIAL color, and is not what
+  // reaches the eye. The hemisphere light scales the whole scene down by roughly
+  // 0.19-0.35x depending on terrain slope, and contrast ratio is not preserved
+  // under scaling — the +0.05 term means uniform dimming compresses the ratio. So
+  // a material ratio of 6 lands nearer 2.5:1 on screen. WCAG 1.4.11 asks 3:1 for
+  // graphical objects that carry meaning, which these glyphs do; on the darkest
+  // (no-drought) zone that is not reachable by darkening at all, since even pure
+  // black glyphs top out around 2.8:1 against that zone's lit color. Closing the
+  // rest of the gap needs a lighter base color or more light in the scene.
+  terrainGlyphContrast: [number, number, number, number];
+  // Same, for burnt ground. Separate because burnt is not a drought level and its
+  // ink lightens rather than darkens, so it lands on screen quite differently.
+  terrainGlyphContrastBurnt: number;
+  // How far tile values ABOVE neutral lift the terrain color toward white, 0..1.
+  // Only affects highlights within a tile; glyph legibility is governed by
+  // terrainGlyphContrast, not this.
+  terrainTextureHighlight: number;
+  // Frequency of the noise the burn edge is thresholded against. Higher values
+  // give a finer, more crenulated fire perimeter.
+  terrainBurnEdgeNoiseScale: number;
+  // Half-width of the burn edge transition. Near 0 gives a hard, ragged edge;
+  // larger values fade back toward the original soft gradient.
+  terrainBurnEdgeSoftness: number;
+  // Strength of the large-scale procedural luminance variation laid over the
+  // tiles, 0..1. This exists to break up naturalistic texture; with the current
+  // abstract map symbols it mostly just makes the field look blotchy, so it is
+  // kept low. Raise it if the tiles are ever replaced with organic artwork.
+  terrainTextureMacroAmount: number;
+  // Range of "upness" (the surface normal's up component, 1 = flat, 0 = vertical)
+  // over which the texture fades in: [fully faded, fully textured]. Exists because
+  // the tile UV is a top-down planar projection, which smears badly on the near
+  // vertical skirt fillTerrainEdges puts around the model. Raise the upper bound
+  // to also strip texture off steep mountain faces, lower it to keep more.
+  terrainTextureSlopeFade: [number, number];
   // Renders dashed lines along the boundaries between zones.
   showZoneLines: boolean;
   // Displays alert with current coordinates on mouse click. Useful for authoring.
@@ -196,6 +254,20 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   maxFireLineLength: 15000, // ft
   helitackDropRadius: 2640, // ft (5280 ft = 1 mile)
   showBurnIndex: true,
+  texturedTerrain: false,
+  terrainTextureTileFt: 18000, // ft — 6.7 repeats across the default 120,000 ft model
+  // Per drought level: [none, mild, medium, severe]. Severe is bumped because its
+  // tan field measures ~2.27:1 on screen at 6, below the ~2.4-2.5:1 the others
+  // reach. Keep severe under ~8.6: past that, darkening cannot reach the ratio at
+  // all against that field (pure black tops out there) and wfInk clamps to black,
+  // which throws away the same-color-family look for no extra contrast.
+  terrainGlyphContrast: [6, 6, 6, 7],
+  terrainGlyphContrastBurnt: 6,
+  terrainTextureHighlight: 0.18, // [0, 1]
+  terrainBurnEdgeNoiseScale: 260,
+  terrainBurnEdgeSoftness: 0.06,
+  terrainTextureMacroAmount: 0.07, // [0, 1]
+  terrainTextureSlopeFade: [0.15, 0.5],
   showZoneLines: false,
   showCoordsOnClick: false,
   unburntIslandProbability: 0.5, // [0, 1]
