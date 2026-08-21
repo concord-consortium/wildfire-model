@@ -31,7 +31,27 @@ import { WildfireReading } from "./types";
 // *merged* tool data across the run.
 
 export function canonicalRunReadings(readings: WildfireReading[]): WildfireReading[] {
+  return canonicalRunWalk(readings).runs;
+}
+
+// Index into `readings` of the first SimulationStarted of each canonical run, in run
+// order. Produced by the same walk as canonicalRunReadings, so the two cannot disagree
+// about where a run begins.
+//
+// The windowed `category.current` trim needs this because it cannot recover a run's
+// index from the run object: foldResume returns a shallow clone, so indexOf is -1 for
+// exactly the pause/resume runs the trim has to handle, and matching on `at` would
+// return the FIRST reading with that timestamp, silently widening the window to the
+// whole session when timestamps collide.
+export function canonicalRunStartIndices(readings: WildfireReading[]): number[] {
+  return canonicalRunWalk(readings).startIndices;
+}
+
+function canonicalRunWalk(readings: WildfireReading[]): {
+  runs: WildfireReading[]; startIndices: number[];
+} {
   const runs: WildfireReading[] = [];
+  const startIndices: number[] = [];
   // The representative reading for the run currently being accumulated, or null
   // before the first start.
   let current: WildfireReading | null = null;
@@ -39,7 +59,8 @@ export function canonicalRunReadings(readings: WildfireReading[]): WildfireReadi
   // (resumable), "ended" = definitive end (next start is fresh), null = running.
   let lastTerminal: "stopped" | "ended" | null = null;
 
-  for (const r of readings) {
+  for (let i = 0; i < readings.length; i++) {
+    const r = readings[i];
     switch (r.triggeredBy) {
       case "SimulationStarted": {
         const isResume = current !== null && lastTerminal === "stopped";
@@ -49,6 +70,7 @@ export function canonicalRunReadings(readings: WildfireReading[]): WildfireReadi
         } else {
           current = r;
           runs.push(r);
+          startIndices.push(i);
         }
         lastTerminal = null; // running again
         break;
@@ -67,7 +89,7 @@ export function canonicalRunReadings(readings: WildfireReading[]): WildfireReadi
         break;
     }
   }
-  return runs;
+  return { runs, startIndices };
 }
 
 // Merge a resume start into the run representative. Setup fields (zones, sparks,

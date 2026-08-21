@@ -1,6 +1,7 @@
 export {
   getAnalysisEngine,
   buildAnalysisEngineActivatedPayload,
+  getDerivedRangeCc,
   getRequestedPresetInfo,
   buildPresetDiagnostics,
 } from "./engine-singleton";

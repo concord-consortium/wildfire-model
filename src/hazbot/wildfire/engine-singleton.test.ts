@@ -1,6 +1,6 @@
 import {
   getAnalysisEngine, buildAnalysisEngineActivatedPayload, APP_RULES_VERSION,
-  getRequestedPresetInfo, buildPresetDiagnostics,
+  getDerivedRangeCc, getRequestedPresetInfo, buildPresetDiagnostics,
 } from "./index";
 import { _resetAnalysisEngineForTests } from "./engine-singleton";
 import { ENGINE_VERSION } from "../engine";
@@ -200,6 +200,19 @@ describe("buildAnalysisEngineActivatedPayload (per Req 20)", () => {
     });
   });
 
+  it("carries rangeCc only when given one, including the 0 that means no window", () => {
+    expect(buildAnalysisEngineActivatedPayload("23")).not.toHaveProperty("rangeCc");
+    expect(buildAnalysisEngineActivatedPayload("23", undefined, 2).rangeCc).toBe(2);
+    // 0 is the value that disambiguates a null categoryCurrent, so it must survive the
+    // optional spread rather than being dropped as falsy.
+    expect(buildAnalysisEngineActivatedPayload("24", undefined, 0)).toEqual({
+      engineVersion: ENGINE_VERSION,
+      appRulesVersion: APP_RULES_VERSION,
+      ruleSetId: "24",
+      rangeCc: 0,
+    });
+  });
+
   it("records an unrecognized preset name verbatim with presetRecognized false", () => {
     const payload = buildAnalysisEngineActivatedPayload("23", { preset: "bogus", recognized: false });
     expect(payload.preset).toBe("bogus");
@@ -210,5 +223,34 @@ describe("buildAnalysisEngineActivatedPayload (per Req 20)", () => {
     expect(typeof APP_RULES_VERSION).toBe("number");
     expect(APP_RULES_VERSION).toBeGreaterThanOrEqual(1);
     expect(Number.isInteger(APP_RULES_VERSION)).toBe(true);
+  });
+});
+
+describe("getDerivedRangeCc", () => {
+  it("returns 0 when the activity has no engine", () => {
+    setUrl("");
+    expect(getDerivedRangeCc()).toBe(0);
+  });
+
+  it("returns 0 for a placeholder engine with no rule set", () => {
+    setUrl("?hazbotRules=missing-id");
+    expect(getDerivedRangeCc()).toBe(0);
+  });
+
+  it("derives the active rule set's value", () => {
+    setUrl("?hazbotRules=23");
+    expect(getDerivedRangeCc()).toBe(1);
+    setUrl("?hazbotRules=47");
+    // Memoized alongside the engine, which is itself memoized, so a later URL change
+    // without a reset does not re-derive.
+    expect(getDerivedRangeCc()).toBe(1);
+  });
+
+  it("is cleared by the test reset hook, so a second engine is not read at the first's value", () => {
+    setUrl("?hazbotRules=24");
+    expect(getDerivedRangeCc()).toBe(0);
+    _resetAnalysisEngineForTests();
+    setUrl("?hazbotRules=45");
+    expect(getDerivedRangeCc()).toBe(2);
   });
 });

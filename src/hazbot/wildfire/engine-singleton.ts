@@ -1,9 +1,11 @@
-import { Engine, EngineConstructionError, ENGINE_VERSION } from "../engine";
+import { categoryExpressions, Engine, EngineConstructionError, ENGINE_VERSION } from "../engine";
 import type { SidebarDiagnostic } from "../engine/sidebar";
 import { getResolvedConfig, getUrlConfig } from "../../config";
 import presets from "../../presets";
 import { ruleSets } from "../rule-sets";
 import { deriveWildfireDefaults } from "./derive-defaults";
+import { deriveRangeCc } from "./range-cc";
+import { makeReadingsWindow } from "./run-window";
 import { factorVariables } from "./factor-variables";
 import { simProps } from "./sim-props";
 import { temporalVariables } from "./temporal-variables";
@@ -15,6 +17,9 @@ import { APP_RULES_VERSION } from "./rules-version";
 // Per Tech Notes "Library scope and the Reading boundary" / spec line ~290.
 let cached: Engine<WildfireReading, WildfireDefaults> | undefined;
 let init: "uninit" | "initialized" = "uninit";
+// Per-activity constant derived from the engine's parsed expressions, so it memoizes
+// beside the engine and is cleared with it below.
+let rangeCcMemo: number | undefined;
 
 export function getAnalysisEngine(): Engine<WildfireReading, WildfireDefaults> | undefined {
   if (init === "initialized") return cached;
@@ -35,6 +40,14 @@ export function getAnalysisEngine(): Engine<WildfireReading, WildfireDefaults> |
   // config (preset + URL params) — the same initial state the running
   // SimulationModel loads (per WM-27 Requirements 2–5).
   const defaults = deriveWildfireDefaults(getResolvedConfig());
+  // The selector must be lazy: deriveRangeCc reads engine.parsedExpressions, and the
+  // Engine parses inside its constructor, so the value does not exist at the moment
+  // EngineOpts is assembled. That laziness is also why it is installed unconditionally,
+  // including on a range_cc 0 activity: the value is unknown on this line, so the
+  // "no window" answer is the selector's null return rather than the absence of a
+  // selector. getDerivedRangeCc memoizes, so the selector and log.ts share one
+  // derivation.
+  const readingsWindow = makeReadingsWindow(getDerivedRangeCc);
   // ChartTab events are now state changes processed by the chartTabOpen
   // temporal variable; translate no longer needs the latest reading.
   try {
@@ -47,6 +60,7 @@ export function getAnalysisEngine(): Engine<WildfireReading, WildfireDefaults> |
       translate,
       runStartTriggers: ["SimulationStarted"],
       defaults,
+      readingsWindow,
     });
     // Step 14 wires src/log.ts to detect this just-constructed active engine and
     // emit AnalysisEngineActivated using buildAnalysisEngineActivatedPayload below.
@@ -84,6 +98,26 @@ export function getAnalysisEngine(): Engine<WildfireReading, WildfireDefaults> |
 export function _resetAnalysisEngineForTests(): void {
   cached = undefined;
   init = "uninit";
+  // Without this a test that builds a tab-24 engine, resets, then builds a tab-45 one
+  // keeps range_cc 0, so tab 45's selector returns null and every windowed assertion
+  // in the file passes vacuously against `best`.
+  rangeCcMemo = undefined;
+}
+
+// Derived range_cc for the active engine, or 0 when there is no engine or no rule set.
+// Both the window selector and log.ts read this one value, so they cannot disagree.
+//
+// Exported because AnalysisEngineActivated carries it: without it a logged
+// `categoryCurrent: null` is uninterpretable, since it has two causes (the activity's
+// range_cc is 0, and no category matched at the end of the window) that log identically.
+export function getDerivedRangeCc(): number {
+  if (rangeCcMemo !== undefined) return rangeCcMemo;
+  const engine = getAnalysisEngine();
+  // Not memoized when there is no engine yet: getAnalysisEngine is itself lazy, and
+  // caching a 0 from a pre-initialization call would stick for the page's lifetime.
+  if (!engine?.ruleSet) return 0;
+  rangeCcMemo = deriveRangeCc(categoryExpressions(engine));
+  return rangeCcMemo;
 }
 
 export interface RequestedPresetInfo {
@@ -121,14 +155,16 @@ export function getRequestedPresetInfo(): RequestedPresetInfo | undefined {
 export function buildAnalysisEngineActivatedPayload(
   ruleSetId: string,
   presetInfo?: RequestedPresetInfo,
+  rangeCc?: number,
 ): {
   engineVersion: string; appRulesVersion: string | number; ruleSetId: string;
-  preset?: string; presetRecognized?: boolean;
+  rangeCc?: number; preset?: string; presetRecognized?: boolean;
 } {
   return {
     engineVersion: ENGINE_VERSION,
     appRulesVersion: APP_RULES_VERSION,
     ruleSetId,
+    ...(rangeCc !== undefined ? { rangeCc } : {}),
     ...(presetInfo ? { preset: presetInfo.preset, presetRecognized: presetInfo.recognized } : {}),
   };
 }

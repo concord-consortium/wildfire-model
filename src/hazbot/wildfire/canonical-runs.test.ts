@@ -1,4 +1,4 @@
-import { canonicalRunReadings } from "./canonical-runs";
+import { canonicalRunReadings, canonicalRunStartIndices } from "./canonical-runs";
 import { WildfireReading } from "./types";
 
 let seq = 0;
@@ -137,5 +137,29 @@ describe("canonicalRunReadings", () => {
     const runs = canonicalRunReadings([a, ended(), b]);
     expect(runs[0]).toBe(a);
     expect(runs[1]).toBe(b);
+  });
+});
+
+describe("canonicalRunStartIndices", () => {
+  it("returns [] for no readings", () => {
+    expect(canonicalRunStartIndices([])).toEqual([]);
+  });
+
+  it("indexes the first start of each run, one-for-one with the runs", () => {
+    const readings = [
+      started(), stopped(), started(),   // one folded run, starting at index 0
+      ended(),
+      started(),                          // a fresh run
+      stopped(),
+    ];
+    const starts = canonicalRunStartIndices(readings);
+    expect(starts).toEqual([0, 4]);
+    expect(starts.map((i) => readings[i].at))
+      .toEqual(canonicalRunReadings(readings).map((r) => r.at));
+  });
+
+  it("is not shifted by leading non-run readings", () => {
+    const readings = [mkRead("ChartTabShown"), started(), ended(), started()];
+    expect(canonicalRunStartIndices(readings)).toEqual([1, 3]);
   });
 });

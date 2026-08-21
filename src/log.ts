@@ -1,7 +1,9 @@
 import { log as laraLog } from "@concord-consortium/lara-interactive-api";
 import { createLogWrapper } from "@concord-consortium/log-monitor";
 import { getUrlConfig } from "./config";
-import { buildAnalysisEngineActivatedPayload, getAnalysisEngine, getRequestedPresetInfo } from "./hazbot/wildfire";
+import {
+  buildAnalysisEngineActivatedPayload, getAnalysisEngine, getDerivedRangeCc, getRequestedPresetInfo,
+} from "./hazbot/wildfire";
 
 const { logMonitor } = getUrlConfig();
 
@@ -36,7 +38,7 @@ export const log = (name: string, data?: object): void => {
     analysisEngineActivatedEmitted = true;
     externalLog(
       "AnalysisEngineActivated",
-      buildAnalysisEngineActivatedPayload(engine.ruleSet.id, getRequestedPresetInfo()),
+      buildAnalysisEngineActivatedPayload(engine.ruleSet.id, getRequestedPresetInfo(), getDerivedRangeCc()),
     );
   }
 };
