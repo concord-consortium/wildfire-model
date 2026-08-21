@@ -326,3 +326,82 @@ export function computeMatchedCategoryForEngine<TR extends BaseReading, TD>(
     engine.readings,
   );
 }
+
+export interface CurrentCategoryResult {
+  // The highest category true at the end of the window, or null when none is.
+  category: number | null;
+  // The host's description of the window it evaluated over (WindowSelection.label).
+  label?: string;
+}
+
+// `category.current`: ONE evaluation at the end of the host-supplied window. No floor
+// over the window's own prefixes, so computeMatchedCategoryFloor's monotone ratchet is
+// not reintroduced at window scale.
+//
+// Returns null rather than `{ category: null }` when the engine is inactive, when the
+// host supplied no selector, or when the selector returns null. Callers need to tell
+// "this activity has no window" apart from "the window matched nothing", and only the
+// outer null carries the first.
+//
+// The selector's null must NOT be collapsed into an empty window: highestTrueAt over an
+// empty readings array evaluates the empty-prefix state, which on every wildfire tab
+// matches category 1, `NOT ranSimulation`. A `current ?? best` consumer would then tell
+// a student who has run the model twice to go run it.
+export function computeCurrentCategoryForEngine<TR extends BaseReading, TD>(
+  engine: Engine<TR, TD>,
+): CurrentCategoryResult | null {
+  if (!engine.isActive || !engine.ruleSet || !engine.readingsWindow) return null;
+  const selection = engine.readingsWindow(engine.readings);
+  if (!selection) return null;
+  const ctx = makeRenderCtx(
+    selection.readings, engine.defaults, engine.factorVariables, engine.simProps,
+  );
+  return {
+    category: highestTrueAt(engine.ruleSet, engine.parsedExpressions, ctx),
+    label: selection.label,
+  };
+}
+
+export interface CategorySelection {
+  // The monotone floor over the whole history, i.e. the best the student ever did.
+  best: number | null;
+  // Highest category true at the end of the host's window, or null when the host
+  // supplied no window or nothing matched in it.
+  current: number | null;
+  // What a consumer should SHOW.
+  used: number | null;
+  // The host's description of the window (WindowSelection.label), or undefined.
+  label?: string;
+}
+
+// The one place the `current ?? best` selection rule lives. Every consumer that shows
+// or logs a category reads `used` from here rather than restating it, so the feedback
+// component, the sidebar and the replay-fixture generator cannot drift apart.
+//
+// `current` is NOT bounded above by `best`, and this must never acquire a min: a
+// trailing window can make a NOT-guarded lower category true that was false over the
+// full history, and the feedback is meant to follow the window in that direction too.
+export function computeCategorySelectionForEngine<TR extends BaseReading, TD>(
+  engine: Engine<TR, TD>,
+): CategorySelection {
+  const best = computeMatchedCategoryForEngine(engine);
+  const result = computeCurrentCategoryForEngine(engine);
+  const current = result ? result.category : null;
+  return { best, current, used: current ?? best, label: result?.label };
+}
+
+// The successfully-parsed expression for each category id, with parse failures omitted.
+//
+// Lets a host walk the ASTs the engine already parsed without reaching for
+// PARSE_ERROR_SENTINEL, which stays substrate-internal and free to change.
+// `engine.parsedExpressions` is public but typed in terms of that sentinel, so it
+// cannot be iterated safely through the barrel alone.
+export function categoryExpressions<TR extends BaseReading, TD>(
+  engine: Engine<TR, TD>,
+): Map<number, Expression> {
+  const out = new Map<number, Expression>();
+  engine.parsedExpressions.forEach((ast, id) => {
+    if (ast !== PARSE_ERROR_SENTINEL) out.set(id, ast);
+  });
+  return out;
+}

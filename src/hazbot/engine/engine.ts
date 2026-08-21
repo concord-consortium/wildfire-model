@@ -1,6 +1,6 @@
 import {
   BaseReading, ConsumedEvent, EngineConstructionError, EngineError, FactorVariableImpl,
-  RuleSet, SimPropImpl, TemporalVariableChange, TemporalVariableImpl,
+  RuleSet, SimPropImpl, TemporalVariableChange, TemporalVariableImpl, WindowSelection,
 } from "./types";
 import { Expression, parse, ParseError } from "./parser";
 import { generateSessionId } from "./session-id";
@@ -30,6 +30,17 @@ export interface EngineOpts<TReading extends BaseReading, TDefaults = unknown> {
   // Engine-level change-detection defaults, supplied by the consumer at
   // construction (per WM-27 — defaults are a construction input, not RuleSet-baked).
   defaults?: TDefaults;
+  // Host-supplied trailing-window selector for `category.current`. Called lazily
+  // during evaluation, never during construction, so a host whose window size comes
+  // from the parsed expressions can derive it after this constructor returns.
+  //
+  // Omitting the option and returning null from the selector are the same "no window"
+  // answer, reachable at construction time and at evaluation time respectively. The
+  // nullable return exists because a host with a derived window size has no
+  // opportunity to omit the option, and an empty window is not a substitute: it
+  // evaluates the empty-prefix state, which typically matches the activity's "has not
+  // run anything yet" category.
+  readingsWindow?: (readings: TReading[]) => WindowSelection<TReading> | null;
 }
 
 // Sentinel for AST cache slots that failed to parse.
@@ -45,6 +56,7 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
   // EngineOpts.defaults at construction (per WM-27).
   defaults: TDefaults | undefined = undefined;
   requestedRuleSetId: string | undefined;
+  readingsWindow: EngineOpts<TReading, TDefaults>["readingsWindow"];
   factorVariables: Record<string, FactorVariableImpl<unknown, TReading, TDefaults>>;
   simProps: Record<string, SimPropImpl<TReading, TDefaults>>;
   // Substrate-internal: cached parsed ASTs per category id. Per Req 12 the
@@ -95,6 +107,7 @@ export class Engine<TReading extends BaseReading, TDefaults = unknown> {
     this.translate = opts.translate;
     this.runStartTriggers = opts.runStartTriggers;
     this.defaults = opts.defaults;
+    this.readingsWindow = opts.readingsWindow;
 
     if (opts.ruleSet === undefined) {
       // Maintenance gate: this branch must remain throw-free.
