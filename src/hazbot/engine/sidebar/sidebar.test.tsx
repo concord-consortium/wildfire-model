@@ -571,6 +571,11 @@ describe("Sidebar — Category summary (best / current / used)", () => {
   // eslint-disable-next-line testing-library/no-node-access
   const matchedRow = () => document.querySelector(".hazbot-sidebar-category-matched")?.textContent;
 
+  // The value sits in a text node beside the <strong> label, so the row's own text is what
+  // carries "best: 2". One helper keeps the node access (and its disable) in a single place.
+  // eslint-disable-next-line testing-library/no-node-access
+  const rowText = (label: RegExp) => screen.getByText(label).parentElement?.textContent ?? "";
+
   it("renders no Category block at all for an engine with no window selector", () => {
     renderSidebar(makeEngine());
     expect(screen.queryByText("Category")).not.toBeInTheDocument();
@@ -581,9 +586,9 @@ describe("Sidebar — Category summary (best / current / used)", () => {
   it("renders best, current, used and the window label when a selector is present", () => {
     renderSidebar(makeEngine((readings) => ({ readings: readings.slice(-1), label: "last 1 of 2 runs" })));
     expect(screen.getByText("Category")).toBeInTheDocument();
-    expect(screen.getByText(/best:/).parentElement).toHaveTextContent("best: 2");
-    expect(screen.getByText(/current:/).parentElement).toHaveTextContent("current: 3");
-    expect(screen.getByText(/used:/).parentElement).toHaveTextContent("used: 3");
+    expect(rowText(/best:/)).toContain("best: 2");
+    expect(rowText(/current:/)).toContain("current: 3");
+    expect(rowText(/used:/)).toContain("used: 3");
     expect(screen.getByText(/last 1 of 2 runs/)).toBeInTheDocument();
   });
 
@@ -594,15 +599,15 @@ describe("Sidebar — Category summary (best / current / used)", () => {
 
   it("puts the highlight on `used` when the window is below `best`", () => {
     renderSidebar(makeEngine(() => ({ readings: [] })));
-    expect(screen.getByText(/best:/).parentElement).toHaveTextContent("best: 2");
-    expect(screen.getByText(/current:/).parentElement).toHaveTextContent("current: 1");
+    expect(rowText(/best:/)).toContain("best: 2");
+    expect(rowText(/current:/)).toContain("current: 1");
     expect(matchedRow()).toMatch(/Did not run/);
   });
 
   it("shows current: n/a with the highlight back on best when the selector returns null", () => {
     renderSidebar(makeEngine(() => null));
-    expect(screen.getByText(/current:/).parentElement).toHaveTextContent("current: n/a");
-    expect(screen.getByText(/used:/).parentElement).toHaveTextContent("used: 2");
+    expect(rowText(/current:/)).toContain("current: n/a");
+    expect(rowText(/used:/)).toContain("used: 2");
     expect(matchedRow()).toMatch(/Ran it/);
   });
 });

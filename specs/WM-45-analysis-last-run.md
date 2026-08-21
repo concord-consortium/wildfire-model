@@ -115,6 +115,7 @@ For a non-engineering audience: when a student clicks the Hazbot button, Hazbot 
 - **A two-run enumeration never exercises R12a's upward bar.** Upward moves first appear on tab 45 at depth 3. So the committed sweep runs tab 45 at depth 3; every other positive-`range_cc` tab stays at depth 2.
 - **The selector return type must be nullable.** Returning an *empty* window for `range_cc` 0 makes `highestTrueAt` evaluate the empty-prefix state, which matches `NOT ranSimulation` on every tab: measured on tab 24, `best` 5 and empty-window `current` 1, so the student is told to scroll up and run the model no matter what they did.
 - **R4's fallback is unreachable across all ten positive-`range_cc` tabs**, not just 45 and 47: swept at depth 2 over each tab's own shape space (1,000+ states), zero null `current` and zero null `best` anywhere.
+- **Lint is a hard CI gate, through the build rather than through a job of its own.** `npm run build` is `npm-run-all lint:build clean build:webpack`, so `lint:build` errors fail the "Build and Run Jest Tests" job before Jest runs, and the job's name then blames the tests. Run `npm run lint` before pushing: it catches the same errors, and the two configs differ only in severity for warnings.
 
 ## Out of Scope
 
@@ -410,6 +411,8 @@ For a non-engineering audience: when a student clicks the Hazbot button, Hazbot 
 - C) A generated JSON fixture plus a generator script (413 lines for tab 23, ~5,000 across all ten).
 
 **Decision**: **D**, a hybrid the three options missed: **store compact, assert named.** All three were built for tab 23's 81 states and diffed against a simulated deliberate change. The deciding evidence was the Jest failure message rather than the PR diff: A's `toBe` prints two 81-character strings (512 for tab 45) with no pointer to the difference, while B's `toEqual` names each changed key but costs ~1,150 committed lines. D commits the compact series, chunked one line per first-run shape and labeled with it, then asserts that the *moved set* is empty, so the failure lists only the states that moved, named, with old and new values.
+
+**Supporting findings, one of them corrected after the fact.** `max-len` is a warning at 160 characters, so tab 45's 512-character flat series would warn while 64-character chunks will not. The source spec paired that with a claim that lint is not a gate ("CI runs build, Jest and Cypress with no separate lint step, so this is about reviewability"), and **that half is wrong**: there is no separate lint *job*, but `npm run build` is `npm-run-all lint:build clean build:webpack`, so `lint:build` runs first and its errors fail the "Build and Run Jest Tests" job before Jest starts. Found on 2026-08-21 when this branch's PR went red: seven `testing-library/no-node-access` errors in `sidebar.test.tsx` while all 879 tests passed. The chunking decision is unaffected, since `max-len` really is only a warning; what changes is that a lint error anywhere is a hard gate.
 
 ---
 
