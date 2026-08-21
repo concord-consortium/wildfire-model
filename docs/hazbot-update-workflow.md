@@ -23,8 +23,8 @@ This regenerates:
 
 Each generated file starts with `// AUTO-GENERATED — DO NOT EDIT — re-run scripts/extract-hazbot-sheets.js`. Manual edits will be overwritten on the next run; PR review should flag any.
 
-> **Note — the committed rule-set modules are intentionally not a clean regenerate (WM-27).**
-> WM-27 removed the per-rule-set `defaults` field by a surgical hand-edit, leaving every other line of `src/hazbot/rule-sets/*.ts` at its older-spreadsheet revision. Regenerating the modules before WM-18 lands will reintroduce unrelated `details`/wording drift from the newer spreadsheet. WM-18 owns reconciling the modules with a clean regenerate; until then, avoid committing a full re-extract of the rule-set modules.
+> **Note: the committed rule-set modules are a clean regenerate, so `git diff` is the sheet diff (WM-51).**
+> This reverses an earlier caveat. WM-27 removed the per-rule-set `defaults` field, and until WM-18 reconciled the modules a re-extract mixed real sheet changes with unrelated drift. WM-18 landed and did the reconciliation, and re-extracting the workbook the committed modules came from now reproduces all eleven rule-set modules, `index.ts` and `dsl-grammar.md` byte-for-byte (verified 2026-08-20 against `Wildfire Hazbot Feedback Tables-2026-06-21-v2.xlsx`). Run the extractor in place and read step 2's diff directly; there is no need to compare temp extractions against each other.
 
 > **Note — text bolding in the sheet is dropped on extraction (candidate WM-18 enhancement).**
 > The Feedback Tables sheet bolds key words in `feedback` / `arrowText` (e.g. **Restart**, **Setup**, **Next**, **Wind Direction**, **Scroll up!**) — verified ~127 bold runs across ~65 strings in the `2026-06-19` export. The extractor reads cell **values** via `read-excel-file` (`readXlsxFile(inputPath, { getSheets: true })`, [extract-hazbot-sheets.js](../scripts/extract-hazbot-sheets.js)), which does **not** expose rich-text run formatting, so the committed rule-set modules carry **no** markdown bold. To preserve it, change the read path to one that surfaces runs — e.g. `exceljs` (`cell.value.richText: [{ font: { bold }, text }]`) or a direct `xl/sharedStrings.xml` parse — and emit each bold run as `**…**`. The rendering side is already markdown-bold-ready: `parseFeedback` leaves `**…**` intact and the coachmarks popover renders it, so once the extractor emits bold it shows in both the WM-16 intro popover and the WM-17 tour steps with no renderer change. WM-17 cannot source this itself: its tour-data generator reads the already-stripped committed modules. (Watch for a mid-word artifact in the sheet — one run is bolded as `**Wind Directio**n`; normalize or fix at source.)
@@ -48,6 +48,78 @@ The DSL grammar may have evolved at source. The hand-written parser at `src/hazb
 - Editorial change (typo / formatting): no parser action needed.
 - New operator / token: extend `src/hazbot/engine/parser/tokenize.ts` + `parse.ts` + add parser tests.
 - New WITH semantic: review `parsePropExpression` in `parse.ts`.
+
+### A `details` or `definition` cell changed (the silent one)
+
+**Run this every time. It is the only failure mode in this document that no test, no
+playbook and no browser walk will surface.**
+
+Every factor-variable and sim-prop impl is hand-written, and its contract lives in the
+sheet's `Details` prose. A `Details` edit therefore changes what a rule *means* while
+regenerating nothing: the expression is untouched, the module diff looks editorial, the
+suite stays green, and the impl silently no longer matches the sheet. WM-51 shipped
+exactly this and it reached PR review: tab 23's `CorrectZoneSetup` contract was
+broadened at source, the impl still encoded the old one, and every newly-allowed zone
+setup would have held students at the "your setup is wrong" category.
+
+Diff every contract cell against the base branch:
+
+```sh
+python3 - <<'EOF'
+import re, subprocess
+TABS = ["23","24","25","32","33","34","35","42","45","47","54"]
+def rows(src):
+    out, cur = {}, None
+    for line in src.split("\n"):
+        t = line.strip()
+        m = re.match(r'name: "([^"]+)",', t)
+        if m: cur = m.group(1); out[cur] = {}; continue
+        if cur:
+            for k in ("definition", "details"):
+                mm = re.match(rf'{k}: (.*?),?$', t)
+                if mm: out[cur][k] = mm.group(1).rstrip(",")
+    return out
+for tab in TABS:
+    p = f"src/hazbot/rule-sets/{tab}.ts"
+    old = rows(subprocess.run(["git","show",f"origin/master:{p}"],capture_output=True,text=True).stdout)
+    new = rows(open(p).read())
+    for name in sorted(set(old) | set(new)):
+        o, n = old.get(name), new.get(name)
+        if o is None: print(f"tab {tab}  {name}: ADDED")
+        elif n is None: print(f"tab {tab}  {name}: REMOVED")
+        else:
+            for k in ("definition", "details"):
+                if o.get(k) != n.get(k): print(f"tab {tab}  {name}: {k} CHANGED")
+EOF
+```
+
+For every row it reports, open the impl in `src/hazbot/wildfire/sim-props.ts` or
+`factor-variables.ts` and read it against the new prose.
+
+Extend the same reading to the `studentAction` cell of every category whose expression
+changed. It is never read by the engine, so it cannot break a student, but per Sam
+(2026-08-20) a `studentAction` that has drifted out of sync with its expression "means
+that the logic has deviated from the intended StudentAction due to having to plug in
+logical gaps". Treat a mismatch as evidence that an expression was bent to close a gap,
+and check that the gap was closed the way the author intended, rather than only
+correcting the prose. Most changes are editorial;
+the ones that are not are the whole reason for this step. An `ADDED` row means a tab
+started referencing an impl it did not before, so check that tab's wording matches the
+wording the impl was written against, which is not guaranteed to be identical across tabs.
+
+**Validate the sweep before you trust a clean result.** A naive regex over
+`details: "..."` does not survive the escaped quotes these cells contain. The first
+version of this script under-reported and missed the very row that had just caused a
+bug. Before believing an empty report, confirm the script reports a change you already
+know about, or an under-reporting sweep will hand you false confidence in the one place
+this process has already failed.
+
+**Why the usual validation cannot cover this.** Both the coverage sweep and the
+per-category browser walk test *reachability*: does some state match this category. A
+contract that narrows relative to its new definition still leaves every category
+reachable, because the old fixtures generally remain valid, so both passes stay green.
+Reachability and contract-fidelity are different properties and only this step checks
+the second.
 
 ## 3. Run tests
 
@@ -122,7 +194,7 @@ This regenerates `docs/hazbot-validation/<id>.md` for every rule set (loadable o
 npm run generate-hazbot-tour-data
 ```
 
-This re-parses every coaching category's `arrowText` (split into steps, strip the `Hazbot:` prefix and the `(Step n of N)` suffix, extract the `[Got it!]` done label) and rewrites `src/hazbot/wildfire/tour-data.generated.ts` — the build-time artifact the visual-feedback tour renderer consumes. It reads the committed rule-set modules (not the xlsx), so run it whenever any `arrowText` changes. The generator **errors** (non-zero exit, no write) on an authoring mistake — a tour not ending in `[Got it!]`, a missing/out-of-order `(Step n of N)`, or a step-count vs `N` mismatch — and **warns** on a numbered-`visualFeedback`/`arrowText` step-count mismatch (e.g. ruleset 34's extra `0.` intensity-scale cue) or a numbered-`visualFeedback` category with no `arrowText`. Note: when an `arrowText` anchor or step is added/removed, also update the hand-authored anchor map `src/hazbot/wildfire/tour-map.tsx` so its step count stays in sync (the `tour-map.test.ts` invariants enforce this).
+This re-parses every coaching category's `arrowText` (split into steps, strip the `Hazbot:` prefix and the `(Step n of N)` suffix, extract the `[Got it!]` done label) and rewrites `src/hazbot/wildfire/tour-data.generated.ts` — the build-time artifact the visual-feedback tour renderer consumes. It reads the committed rule-set modules (not the xlsx), so run it whenever any `arrowText` changes. The generator **errors** (non-zero exit, no write) on an authoring mistake — a tour not ending in `[Got it!]`, a missing/out-of-order `(Step n of N)`, or a step-count vs `N` mismatch — and **warns** on a numbered-`visualFeedback`/`arrowText` step-count mismatch (e.g. ruleset 34's extra `0.` intensity-scale cue) or a numbered-`visualFeedback` category with no `arrowText`. Note: when an `arrowText` anchor or step is added/removed, also update the hand-authored anchor map `src/hazbot/wildfire/tour-map.tsx` so its step count stays in sync (the `tour-map.test.ts` invariants enforce this). **Re-read `visualFeedback` on every changed category too, not only the ones whose step count moved.** A category can keep its step count and still retarget a coach mark, and when the sheet swaps targets between two categories nothing catches it: the step counts agree, both testids are canonical, and the `tourData` key set is unchanged, so every `tour-map.test.ts` invariant passes while the map points each tour at the other one's control. WM-51 hit exactly this on tab 35, where categories 3 and 4 exchanged their terminal step between the Setup panel and the Setup panel's Next button. Only a browser walk or a manual read of `visualFeedback` against the map will see it.
 
 ## 7. Bump APP_RULES_VERSION
 

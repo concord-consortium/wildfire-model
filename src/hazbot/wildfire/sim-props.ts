@@ -1,5 +1,6 @@
 import { SimPropImpl } from "../engine";
-import { WildfireDefaults, WildfireReading } from "./types";
+import { WildfireDefaults, WildfireReading, WildfireZone } from "./types";
+import { anyZoneDiffers } from "./factor-variables";
 import {
   TerrainType, terrainLabels, Vegetation, vegetationLabels, DroughtLevel, droughtLabels,
 } from "../../types";
@@ -158,34 +159,55 @@ const SparksAtTopAndBottom: SimPropImpl<WildfireReading, WildfireDefaults> = {
   },
 };
 
-// Per tab 23's sheet definition (CorrectZoneSetup, verified via dump-xlsx.js,
-// tab 23): zone 1 = Foothills / Grass / No Drought; zone 2 = Foothills / Grass /
-// Mild Drought or Medium Drought. The per-zone *enum choice* is the
-// sheet-authored constant — this impl is NOT regenerated on re-extraction (see
-// the CorrectZoneSetup Technical Note in requirements.md), so its unit test
-// cites the sheet definition as the fixture source of truth (R6). The label
+// Per tab 23's sheet definition (CorrectZoneSetup, Details column, revised in the
+// 2026-08-20 workbook). The contract is a base shape plus a swap rule:
+//
+//   base(a, b):  a.terrain in {Foothills, Plains}
+//                a.vegetation in {Grass, Shrub}
+//                a.drought in {Mild, Medium}
+//                b.terrain == a.terrain, or Foothills
+//                b.vegetation == a.vegetation
+//                b.drought in {No Drought, Mild}, and != a.drought
+//
+//   correct  ==  base(zone1, zone2) OR base(zone2, zone1)
+//
+// The swap arm is why the pre-2026-08-20 pair (zone 1 No Drought, zone 2 Mild)
+// still evaluates true even though zone 1 alone no longer satisfies the base
+// shape: it is the swap of (Mild, No Drought). That is also why this revision
+// went unnoticed by the browser walk, which used exactly that pair.
+//
+// The per-zone *enum choice* is the sheet-authored constant — this impl is NOT
+// regenerated on re-extraction, so a sheet edit to this row has to be carried
+// here by hand, and only the unit tests below will say if it was not. The label
 // *strings* are not sheet constants: each enum member is resolved through
-// terrainLabels / vegetationLabels / droughtLabels (src/types.ts) — the same
-// maps the SimulationStarted payload uses — so a future relabeling tracks
-// automatically rather than silently desyncing (per self-review CA-4). The
-// `[z1, z2] = zones` destructuring is positional: `reading.zones` is in
-// `config.zones` tuple order and is never reordered at runtime, so slots 0 / 1
-// are the sheet's "zone 1" / "zone 2" — see the zone-array-order Technical Note
-// in requirements.md (per external-review item ER-2).
+// terrainLabels / vegetationLabels / droughtLabels (src/types.ts), the same maps
+// the SimulationStarted payload uses, so a relabeling tracks automatically. The
+// `[z1, z2]` destructuring is positional: `reading.zones` is in `config.zones`
+// tuple order and is never reordered at runtime.
+const correctZonePair = (a: WildfireZone, b: WildfireZone): boolean => {
+  const aOk = (a.terrainType === terrainLabels[TerrainType.Foothills] ||
+      a.terrainType === terrainLabels[TerrainType.Plains]) &&
+    (a.vegetation === vegetationLabels[Vegetation.Grass] ||
+      a.vegetation === vegetationLabels[Vegetation.Shrub]) &&
+    (a.droughtLevel === droughtLabels[DroughtLevel.MildDrought] ||
+      a.droughtLevel === droughtLabels[DroughtLevel.MediumDrought]);
+  if (!aOk) return false;
+  const bOk = (b.terrainType === a.terrainType ||
+      b.terrainType === terrainLabels[TerrainType.Foothills]) &&
+    b.vegetation === a.vegetation &&
+    (b.droughtLevel === droughtLabels[DroughtLevel.NoDrought] ||
+      b.droughtLevel === droughtLabels[DroughtLevel.MildDrought]) &&
+    b.droughtLevel !== a.droughtLevel;
+  return bOk;
+};
+
 const CorrectZoneSetup: SimPropImpl<WildfireReading, WildfireDefaults> = {
   defaultValue: false,
   evaluate: (reading) => {
     const zones = reading.zones;
     if (!zones || zones.length !== 2) return false;
     const [z1, z2] = zones;
-    const zone1Ok = z1.terrainType === terrainLabels[TerrainType.Foothills] &&
-      z1.vegetation === vegetationLabels[Vegetation.Grass] &&
-      z1.droughtLevel === droughtLabels[DroughtLevel.NoDrought];
-    const zone2Ok = z2.terrainType === terrainLabels[TerrainType.Foothills] &&
-      z2.vegetation === vegetationLabels[Vegetation.Grass] &&
-      (z2.droughtLevel === droughtLabels[DroughtLevel.MildDrought] ||
-        z2.droughtLevel === droughtLabels[DroughtLevel.MediumDrought]);
-    return zone1Ok && zone2Ok;
+    return correctZonePair(z1, z2) || correctZonePair(z2, z1);
   },
 };
 
@@ -261,6 +283,40 @@ const DefaultVars: SimPropImpl<WildfireReading, WildfireDefaults> = {
   },
 };
 
+// Per the sheet (tab 34): any wind parameter set distinct from the default.
+// Deliberately strict, and deliberately NOT the complement of DefaultVars above:
+// Sam's 2026-08-20 ruling is that each wind rule resolves in the student's favor,
+// so DefaultVars keeps its tolerance (a near-default run still counts as default)
+// while this one has none (the smallest deliberate change still counts as a
+// change). "Any small change should be accepted", per the sheet's Details cell.
+// The consequence is an overlap, not a bug: a sub-tolerance nudge satisfies both.
+// Mirrors setWind (factor-variables.ts), comparing speed and direction
+// independently so a direction change registers even at zero magnitude.
+const WindSet: SimPropImpl<WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  evaluate: (reading, defaults) => {
+    if (!reading.wind || !defaults?.wind) return false;
+    return reading.wind.speed !== defaults.wind.speed ||
+      reading.wind.direction !== defaults.wind.direction;
+  },
+};
+
+// Per the sheet (tab 34): vegetation / drought level set distinct from the
+// default in any zone. Run-scoped twins of the setVegetation / setDroughtLevel
+// factor variables, sharing anyZoneDiffers so the two stay in step. Note this
+// does NOT fail closed on a zone-count mismatch the way DefaultVars does: the
+// helper skips defaults entries the reading has no counterpart for, which is the
+// literal reading of the sheet's "set distinct from the default value for any zone".
+const VegetationSet: SimPropImpl<WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  evaluate: (reading, defaults) => anyZoneDiffers(reading.zones, defaults?.zones, "vegetation"),
+};
+
+const DroughtLevelSet: SimPropImpl<WildfireReading, WildfireDefaults> = {
+  defaultValue: false,
+  evaluate: (reading, defaults) => anyZoneDiffers(reading.zones, defaults?.zones, "droughtLevel"),
+};
+
 // Per the sheet (tab 54): every zone's vegetation is at its config-sourced
 // default. Compares against the WM-27 deriveWildfireDefaults() output — the
 // config is the source of truth, so no hard-coded sheet constant (per CA-3).
@@ -314,6 +370,9 @@ export const simProps: Record<string, SimPropImpl<WildfireReading, WildfireDefau
   UniformZoneSettings,
   Fireline,
   DefaultVars,
+  WindSet,
+  VegetationSet,
+  DroughtLevelSet,
   DefaultVegetations,
   SevereDroughts,
   Helitack,

@@ -105,14 +105,19 @@ export const tourMap: Record<string, Record<number, TourFactory>> = {
   "34": {
     2: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
     3: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
+    // 34/4 duplicates 34/3 because both terminate on the Setup panel, which is
+    // where both the drought slider and the wind dial live (terrain-panel.tsx).
+    // No entry for 34/5: it is the success category and has no tour.
+    4: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
   },
-  // 35 — vegetation/terrain tours. Per visualFeedback, 35/2 and 35/3 terminate on the
-  // Setup-panel Next button; 35/4 and 35/5 terminate on the Setup panel; 35/6 is the
-  // conditional spark step.
+  // 35 — vegetation/terrain tours. Per visualFeedback, 35/2 and 35/4 terminate on the
+  // Setup-panel Next button; 35/3 and 35/5 terminate on the Setup panel; 35/6 is the
+  // conditional spark step. 3 and 4 swapped targets in the 2026-08-20 re-extract;
+  // no test can see it, since the step count and testids are unchanged either way.
   "35": {
     2: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-next")],
-    3: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-next")],
-    4: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
+    3: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
+    4: () => [anchor("restart-button"), anchor("terrain-button"), anchor("terrain-next")],
     5: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
     6: (ctx) => [anchor("restart-button"), conditionalSparkStep(ctx)],
   },

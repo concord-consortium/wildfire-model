@@ -232,7 +232,7 @@ export const factorVariables: Record<string, FactorVariableImpl<unknown, Wildfir
 
 // Helpers ===
 
-function anyZoneDiffers(
+export function anyZoneDiffers(
   zones: WildfireZone[] | undefined,
   defaultZones: WildfireDefaults["zones"],
   field: "terrainType" | "vegetation" | "droughtLevel",

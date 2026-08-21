@@ -42,7 +42,7 @@ On accepting a new log data event, only those categories greater than the previo
 
 ## The Range of Factor Variable
 
-Some factor variables concern properties of only one simulation run, and some a relationship between two successive ones.  Generally, there may be a factor that involve relations among multiple successive simulation runs.  Let us call such number of successive simulation runs the "range".  The range of a typical factor variable is only 1 or 2, and so it is computationally effective to update such factor variables on consuming a new log event.  (From 23 through 35, all factor variables are range 1.  Some range 2 factor variables are anticipated for old version activities 43 through 47.)
+Some factor variables concern properties of only one simulation run, and some a relationship between two successive ones.  Generally, there may be a factor that involve relations among multiple successive simulation runs.  Let us call such number of successive simulation runs the "range".  The range of a typical factor variable is only 1 or 2, and so it is computationally effective to update such factor variables on consuming a new log event.  (All factor variables in this document are range 1 with some exceptions (uniqueWindValuesUsed and uniqueNonZeroWindValuesUsed in 24 and triedAllVegetations in 34); some range 2 factor variables would have appeared for old (= pre-May-2026) version activities 43 through 47.)
 
 ## WITH
 
@@ -90,7 +90,7 @@ While all operators may be familiar, WITH may not be.  Here is the definition.
 
 **meaning:** There is one simulation run with unique vegetation per zone and non-uniform drought levels. and there is one simulation run with wind set.  The first run and the second run may be distinct.  The firs run must satisfy the two condition (vegetation and drought levels) at the same time.
 
-**closing remark:** In the future, a factor variable may represent more than one simulation runs.  For (semi-hypothetical) example, "ranTwoSimsWithWindCOV",  "ranSimPausedContinued", or "ranThreeSimsWithWindCOV", could be a factor variable, although a three-run factor variable may be highly unlikely while a two-run factor variable seems quite possible.  For such a factor variable with range > 1, any props defined for it will be the properties of a multiple successive simulation runs, not a single simulation run.
+**closing remark:** Some factor variables concern properties of only one simulation run, and some a relationship between two successive ones.  Generally, there may be a factor that involve relations among multiple successive simulation runs.  Let us call such number of successive simulation runs the "range".  The range of a typical factor variable is only 1 or 2, and so it is computationally effective to update such factor variables on consuming a new log event.  (All factor variables in this document are range 1 with some exceptions (uniqueWindValuesUsed and uniqueNonZeroWindValuesUsed in 24 and triedAllVegetations in 34); some range 2 factor variables would have appeared for old (= pre-May-2026) version activities 43 through 47.)
 
 ## PRECEDENCE
 
@@ -100,6 +100,40 @@ While all operators may be familiar, WITH may not be.  Here is the definition.
 
 **iii:** <log-data-pseud-code-expression> is a "normal" unary/binary/relational expression based on <var-w-prop-expression>'s and operators.
 
-**Note 1:** The precedence of operators (like AND and OR appearing together) is not defined yet (did not need any yet; so we are free to choose any convention).
+**Note 1:** The precedence of operators (like AND and OR appearing together, and/or AND or OR occuring multiple times): left associative, 'AND' first (= high precedence) than 'OR'.
 
-**Note 2:** The NOT operator applies to <prop-id> or <var-w-prop-expression> without any parenthesis.  If NOT applies to a binary expression, then a parenthesis is necessary (such a case occurred in the "24" sheet).
+**Note 2:** The NOT operator applies to <prop-id> or <var-w-prop-expression> without any parenthesis.  NOT has a higher precedence than AND.   If NOT is to apply to a binary expression, then the whole binary expression must be parenthesized (see the "45" sheet, for an example).
+
+## RELATIONS
+
+**New Column (2026-08-19):** Certain constraints are expressed in "RELATIONS" columns.  We anticipate that these relations form a DAG in the most general use case (a cyclic case may be entertained theoretically, but seems unwanted or unnecessary).
+
+## Motivation
+
+To help with finding logical "black holes" or doing a full coverage test.  Also, to help with the process of writing pseudo-codes.
+
+## Definition
+
+For each factor variable or sim prop, possible pair-wise relations are given.  Multiple pair-wise relations ("edges" in DAG lingo), if they occur (so far none at the time of this writing), are delimited by ';'.  Each pair-wise relation is a string that contains a single "->".  The string that comes before "->" is the source node name (if blank, it is the factor name or the sim prop name for that row) or a relational expression (e.g., "(uniqueWindValuesUsed.size > 1)", see tab "24"). and the string that comes after '->" is the target node name.
+
+All pairwise relations can be gathered to form a DAG.
+
+Any path or subpath in the DAG means the path of an automatic flow of TRUE.
+
+For example, consider "A->B->C".  If B is true, then C is necessarily true.  If A is true, then B is necessarily true, and C is also necessarily true.
+
+At the same time, any path or subpath in the DAG means an automatic backflow of FALSE.
+
+For example, consider "A->B->C".  If B is false, then A is necessarily false.  If C is false, then B is necessarily false and A is necessarily false.
+
+## Automatic Relation
+
+Any sim prop has an automatic relation "->ranSimulation" and this must be included in the DAG.  (This automatic relation is not explicitly given in any table, but implied.)  There are no other implicit automatic relations except derived rules (e.g., A->C given two rules A->B, B->C).
+
+## How to Use
+
+Let's say that we are doing a coverage test to detect and plug any unfortuante logical black holes.  First, we can identify all boolean units that go into the calculation of the pseudo-codes.  If there are N such boolean units, in principle we need to try 2^N cases to do the full coverage test, if we do not consider any relations.  So, now, the second thing to do is to prepare a table expressing all automatic flows of TRUE and all automatic backflows of FALSE.   Now, as we are cheking all possible combinations of all the TRUE FALSE cases of the boolean units identified, the number of cases to examine will be significantly less than 2^N  if we apply the contraints expressed in the table.  (And we will be testing less fake cases, or even no fake cases if we are lucky; but some fake cases are ok since the goal is to observe no logical black holes.)
+
+## Connection to Run Profile Test
+
+The above is more of a theoretical approach to finding logical holes.  A more empiricial approach is to take the real simulation and let the computer mock-try all possible combinations of runs.  Such an empirical approach is very valuable of course, as our experiences prove.  On the other hand, the theoretical approach is cheaper and simpler to run and will always provide a complete (or over-complete) test.  The two approaches can also be mutually beneficial.  The theoretical approach can provide an indicator to the empirical approach about the completeness of the test (i.e., can tell it when it can stop safely).  Conversely, it is possible that the tabulated relations are incomplete and thus the empirical approach can never produce certain theoretical boolean setting, which can be identified as a fake case, which can then be examined for theoretical insight (like discovering a hard to find constraint).

@@ -23,27 +23,41 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
 2. Setup button outlined; coach mark points to Setup button
 3. Next button on the Setup panel outlined; coach mark points to Next button`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
+2. Hazbot: Click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Set one zone to forest and the other zone to forest with suppression. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation AND NOT setAnyVar",
     },
     {
       id: 3,
-      studentAction: "Ran the simulation with terrain, drought or wind changed but without assigning forest with and without suppression to each zone",
-      feedback: `Hazbot: Let’s focus on **forests with and without suppression** in the vegetation settings.
+      studentAction: "Ran the simulation with different terrains between the zones",
+      feedback: `Hazbot: To compare forest types, make sure **both zones have mountains. Do not change the terrain.**
+[Show me]`,
+      visualFeedback: `1. Restart button outlined; coach mark points to Restart button
+2. Setup button outlined; coach mark points to Setup button
+3. Setup panel outlined; coach mark points to Setup panel`,
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
+2. Hazbot: Click the **Setup** button. (Step 2 of 3)
+3. Hazbot: Click each zone and make sure the terrain is mountains in both zones. Then run the model again. (Step 3 of 3)
+[Got it!]`,
+      expression: "setAnyVar AND ranSimulation WITH NOT UniformTerrainTypes",
+    },
+    {
+      id: 4,
+      studentAction: "Ran the simulation with the same terrain in both zones but without assigning forest with and without suppression to each zone",
+      feedback: `Hazbot: Let’s focus on **forests with and without suppression** in the vegetation settings. Also, check the same drought level in each zone.
 [Show me]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Next button on the Setup panel outlined; coach mark points to Next button`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
-3. Hazbot: Set one zone to forest and the other zone to forest with suppression. Then run the model again. (Step 3 of 3)
+2. Hazbot: Click the **Setup** button. (Step 2 of 3)
+3. Hazbot: Set one zone to forest and the other zone to forest with suppression. And check the same drought in both zones. Then run the model again. (Step 3 of 3)
 [Got it!]`,
-      expression: "setAnyVar AND ranSimulation WITH NOT ForestWAWOSuppression",
+      expression: "setAnyVar AND ranSimulation WITH UniformTerrainTypes AND NOT ForestWAWOSuppression",
     },
     {
-      id: 4,
+      id: 5,
       studentAction: "Ran the simulation with forest and forest with suppression assigned but with different drought levels between the zones",
       feedback: `Hazbot: To compare forest types, make sure the both zones have the **same drought level**!
 [Show me]`,
@@ -51,24 +65,10 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
+2. Hazbot: Click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Click each zone and make sure the drought is the same. Then run the model again. (Step 3 of 3)
 [Got it!]`,
-      expression: "ranSimulation WITH ForestWAWOSuppression AND NOT UniformDroughtLevels",
-    },
-    {
-      id: 5,
-      studentAction: "Ran the simulation with forest with and without suppression assigned but different terrains between the zones",
-      feedback: `Hazbot: To compare forest types, make sure **both zones have mountains.**
-[Show me]`,
-      visualFeedback: `1. Restart button outlined; coach mark points to Restart button
-2. Setup button outlined; coach mark points to Setup button
-3. Setup panel outlined; coach mark points to Setup panel`,
-      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
-3. Hazbot: Click each zone and make sure the terrain is the same. Then run the model again. (Step 3 of 3)
-[Got it!]`,
-      expression: "ranSimulation WITH ForestWAWOSuppression AND NOT UniformTerrainTypes",
+      expression: "ranSimulation WITH UniformTerrainTypes AND ForestWAWOSuppression AND NOT UniformDroughtLevels",
     },
     {
       id: 6,
@@ -82,7 +82,7 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 2)
 2. Hazbot: Place one **Spark** in Zone 1 and one **Spark** in Zone 2, then run the model again. (Step 2 of 2)
 [Got it!]`,
-      expression: "ranSimulation WITH ForestWAWOSuppression AND UniformTerrainTypes AND UniformDroughtLevels AND NOT OneSparkPerZone",
+      expression: "ranSimulation WITH UniformTerrainTypes AND ForestWAWOSuppression AND UniformDroughtLevels AND NOT OneSparkPerZone",
     },
     {
       id: 7,
@@ -90,7 +90,7 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
       feedback: `Hazbot: Great job! You’re ready to answer the questions below.
 [Hooray!]`,
       visualFeedback: "Confetti animation or subtle celebratory visual",
-      expression: "ranSimulation WITH ForestWAWOSuppression AND UniformTerrainTypes AND UniformDroughtLevels AND OneSparkPerZone",
+      expression: "ranSimulation WITH UniformTerrainTypes AND ForestWAWOSuppression AND UniformDroughtLevels AND OneSparkPerZone",
     }
   ],
   factorVariables: [
@@ -128,7 +128,7 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
       name: "setWind",
       definition: "There is at least one \"SimulationStarted\" event for which the wind value was set distinct from the default value for any zone.",
       logEvents: ["SimulationStarted->wind.speed", "wind.direction", "wind.scaleFactor"],
-      details: "Wind is set globally (for all zones).  For the default values, read the \"SIMINIT\" sheet.  If the magnitude is 0, then the direction has no effect and must be ignored.  So set the direction to null, if the magnitude is 0.  Here, the \"magnitude\" means the wind speed as displayed in the simulation (like \"10\" as in \"10 MPH\").  In the log data, the magnitude data entails two fields \"wind.speed\" and \"wind.scaleFactor\".  The \"magnitude\" is computed as \"wind.speed\" / \"wind.scaleFactor\".",
+      details: "Wind is set globally (for all zones).  For the default values, read the \"SIMINIT\" sheet.   Allow this variable to evalue to true when direction is set away from the default value even if the magnitude was set to zero.  Here, the \"magnitude\" means the wind speed as displayed in the simulation (like \"10\" as in \"10 MPH\").  In the log data, the magnitude data entails two fields \"wind.speed\" and \"wind.scaleFactor\".  The \"magnitude\" is computed as \"wind.speed\" / \"wind.scaleFactor\". Any small change should be accepted.",
     },
     {
       name: "setAnyVar",

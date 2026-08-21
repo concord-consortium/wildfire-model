@@ -24,11 +24,11 @@ export const ruleSet24: RuleSet<WildfireDefaults> = {
 3. Next button on the Setup panel outlined; coach mark points to Next button
 4. Wind section of Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 4)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 4)
+2. Hazbot: Click the **Setup** button. (Step 2 of 4)
 3. Hazbot: Click the **Next** button. (Step 3 of 4)
 4. Change the **Wind Direction** and **Wind Speed**. Then run the model again. (Step 4 of 4)
 [Got it!]`,
-      expression: "uniqueNonZeroWindValuesUsed.size == 0 AND NOT setAnyZoneVar AND ranSimulation",
+      expression: "NOT (uniqueNonZeroWindValuesUsed.size > 0) AND NOT setAnyZoneVar AND ranSimulation",
     },
     {
       id: 3,
@@ -40,11 +40,11 @@ export const ruleSet24: RuleSet<WildfireDefaults> = {
 3. Next button on the Setup panel outlined; coach mark points to Next button
 4. Wind section of Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 4)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 4)
+2. Hazbot: Click the **Setup** button. (Step 2 of 4)
 3. Hazbot: Click the **Next** button. (Step 3 of 4)
 4. Change the **Wind Direction** and **Wind Speed**. Then run the model again. (Step 4 of 4)
 [Got it!]`,
-      expression: "uniqueNonZeroWindValuesUsed.size == 0 AND setAnyZoneVar",
+      expression: "NOT (uniqueNonZeroWindValuesUsed.size > 0) AND setAnyZoneVar",
     },
     {
       id: 4,
@@ -56,7 +56,7 @@ export const ruleSet24: RuleSet<WildfireDefaults> = {
 3. Next button on the Setup panel outlined; coach mark points to Next button
 4. Wind section of Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 4)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 4)
+2. Hazbot: Click the **Setup** button. (Step 2 of 4)
 3. Hazbot: Click the **Next** button. (Step 3 of 4)
 4. Change the **Wind Direction** and **Wind Speed**. Then run the model again. (Step 4 of 4)
 [Got it!]`,

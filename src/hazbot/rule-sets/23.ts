@@ -23,10 +23,10 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
-3. Hazbot: Click each zone to change its drought conditions to match the instructions. Then run the model again. (Step 3 of 3)
+2. Hazbot: Click the **Setup** button. (Step 2 of 3)
+3. Hazbot: Adjust the controls so the zones match the photos. (Step 3 of 3)
 [Got it!]`,
-      expression: "NOT setAnyZoneVar AND ranSimulation",
+      expression: "ranSimulation AND NOT setAnyZoneVar",
     },
     {
       id: 3,
@@ -37,7 +37,7 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
-2. Hazbot: Now click the **Setup** button. (Step 2 of 3)
+2. Hazbot: Click the **Setup** button. (Step 2 of 3)
 3. Hazbot: Adjust the controls so the zones match the photos. (Step 3 of 3)
 [Got it!]`,
       expression: "setAnyZoneVar AND ranSimulation WITH NOT CorrectZoneSetup",
@@ -106,7 +106,7 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
       name: "CorrectZoneSetup",
       definition: "Simulation prop for whether all zones were correctly set up.",
       logEvents: ["SimulationStarted->zones.<i>.terrainType", "SimulationStarted->zones.<i>.vegetation", "SimulationStarted->zones.<i>.droughtLevel"],
-      details: "The correct zone settings for this activity are as follows. For zone 1 (i=0): terrainType \"Foothills\", vegetation \"Grass\", and droughtLevel \"No Drought\".  For zone 2 (i=1): terrainType \"Foothills\", vegetation \"Grass\", and droughtLevel \"Mild Drought\" or \"Medium Drought\".",
+      details: "The correct zone settings for this activity are as follows. For zone 1 (i=0): terrainType \"Foothills\" or \"Plains\"; vegetation \"Grass\" or \"Shrub\" and droughtLevel \"Mild Drought\" or \"Medium Drought\".  For zone 2 (i=1): terrainType same as zone 1 or \"Foothills\", vegetation same as zone 1, and droughtLevel \"No Drought\" or \"Mild Drought\" under the condition that it must be edifferent from the zone 1 drought level.  Lastly, for every allowed setting defined thus far, get a new setting by swapping zone 1 and zone 2, and the new setting is still allowed.",
     }
   ],
 };
