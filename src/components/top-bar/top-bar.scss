@@ -9,6 +9,27 @@
   font-size: 17px;
   color: #797979;
 
+  // Exploratory build tag, shown only when ?texturedTerrain=true. The blue is
+  // #0D5AA7, which measures 6.9:1 on this bar's white background — comfortably
+  // past the 4.5:1 WCAG AA floor for normal-size text.
+  .versionTag {
+    flex: 1;
+    font-size: 16px;
+    color: #0D5AA7;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+
+    strong {
+      font-weight: 700;
+    }
+  }
+
+  // The date deliberately stays regular weight.
+  .versionDate {
+    font-weight: 400;
+  }
+
   .textButton {
     margin-right: 16px;
     &:first-child {
