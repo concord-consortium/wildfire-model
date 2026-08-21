@@ -3,7 +3,7 @@ import { Engine, PARSE_ERROR_SENTINEL } from "../engine";
 import { BaseReading } from "../types";
 import { AnalysisEngineContext } from "./context";
 import {
-  computeMatchedCategoryForEngine, evaluateLeaf, makeRenderCtx, LeafTruth,
+  computeCategorySelectionForEngine, evaluateLeaf, makeRenderCtx, LeafTruth,
 } from "../evaluator";
 import { evaluateFactorVarForRender, evaluateSimPropForRender } from "../safely-evaluate-impl";
 
@@ -15,6 +15,17 @@ export interface HookReturn<TReading extends BaseReading = BaseReading, TDefault
   // reading exists yet (sim-props are per-reading; no reading = no meaningful value).
   simPropValues: Record<string, boolean | null>;
   matchedCategory: number | null;
+  // `categoryCurrent` is null both when the activity has no window and when the window
+  // matched nothing. `categoryUsed` is what the student-facing feedback is selected from
+  // and what the highlighted category row shows.
+  categoryCurrent: number | null;
+  categoryUsed: number | null;
+  // The HOST's own description of the window it chose, or null. A display string, not a
+  // signal: `label` is optional, so a host that supplies a selector and no label reads
+  // null here while having a perfectly good window. Window presence is
+  // `engine.readingsWindow` plus a non-null selection, which is what the sidebar gates
+  // on. Telling the two null causes of `categoryCurrent` apart would need its own field.
+  categoryWindowLabel: string | null;
   perCategoryTruth: Record<number, LeafTruth>;
 }
 
@@ -55,7 +66,11 @@ function computeView<TR extends BaseReading, TD>(
   });
 
   // matchedCategory + perCategoryTruth short-circuit when !isActive (per EXT-9).
-  const matchedCategory = computeMatchedCategoryForEngine(engine);
+  // One call, so the sidebar cannot disagree with the number hazbot-button shows the
+  // student: both read the same computeCategorySelectionForEngine.
+  const { best: matchedCategory, current: categoryCurrent, used: categoryUsed, label } =
+    computeCategorySelectionForEngine(engine);
+  const categoryWindowLabel = label ?? null;
   const perCategoryTruth: Record<number, LeafTruth> = {};
   if (engine.isActive && engine.ruleSet) {
     const ctx = makeRenderCtx(engine.readings, defaults, engine.factorVariables, engine.simProps);
@@ -66,7 +81,10 @@ function computeView<TR extends BaseReading, TD>(
     });
   }
 
-  return { engine, appRulesVersion, factorVariableValues, simPropValues, matchedCategory, perCategoryTruth };
+  return {
+    engine, appRulesVersion, factorVariableValues, simPropValues,
+    matchedCategory, categoryCurrent, categoryUsed, categoryWindowLabel, perCategoryTruth,
+  };
 }
 
 export function useAnalysisEngine<TReading extends BaseReading = BaseReading, TDefaults = unknown>(): HookReturn<TReading, TDefaults> {

@@ -30,8 +30,13 @@ export interface SidebarProps {
   diagnostics?: SidebarDiagnostic[];
 }
 
+const fmtCategory = (id: number | null) => (id === null ? "n/a" : String(id));
+
 export const Sidebar: React.FC<SidebarProps> = ({ title, diagnostics }) => {
-  const { engine, appRulesVersion, factorVariableValues, simPropValues, matchedCategory, perCategoryTruth } = useAnalysisEngine();
+  const {
+    engine, appRulesVersion, factorVariableValues, simPropValues,
+    matchedCategory, categoryCurrent, categoryUsed, categoryWindowLabel, perCategoryTruth,
+  } = useAnalysisEngine();
   const ruleSetId = engine.ruleSet?.id ?? engine.requestedRuleSetId ?? "(none)";
 
   return (
@@ -77,12 +82,42 @@ export const Sidebar: React.FC<SidebarProps> = ({ title, diagnostics }) => {
 
       <ErrorsPanel errors={engine.errors} readings={engine.readings} />
 
+      {/* Gated on the engine having a window, not on it having a rule set: a host that
+          supplies no selector must see this sidebar unchanged rather than get its one
+          category value relabeled `best` beside a `current` row for a concept it does
+          not have. Nor is a non-null label the right gate — wildfire installs the
+          selector unconditionally, and on its one range_cc 0 activity the selector
+          returns null, where a walker needs to SEE `current: n/a` with the highlight
+          back on `best`. */}
+      {engine.readingsWindow && engine.ruleSet && (
+        <div className="hazbot-sidebar-section">
+          <div className="hazbot-sidebar-section-title">Category</div>
+          <div className="hazbot-sidebar-entry"><strong>best:</strong> {fmtCategory(matchedCategory)}</div>
+          <div className="hazbot-sidebar-entry">
+            <strong>current:</strong> {fmtCategory(categoryCurrent)}
+            {categoryWindowLabel && <span className="hazbot-sidebar-muted"> · {categoryWindowLabel}</span>}
+          </div>
+          <div className="hazbot-sidebar-entry hazbot-sidebar-category-used">
+            <strong>used:</strong> {fmtCategory(categoryUsed)}
+          </div>
+          {/* Said on screen because a walker would otherwise read the panels below as a
+              derivation of the numbers above: the highlighted `used` row can carry a ✗. */}
+          <div className="hazbot-sidebar-entry hazbot-sidebar-muted">
+            Truth icons, expression coloring and Factor Variables below are computed over
+            the full session and describe <strong>best</strong>, not <strong>current</strong>.
+          </div>
+        </div>
+      )}
+
+      {/* CategoriesPanel's `matchedCategory` prop is its "which row is highlighted"
+          input, and the row to highlight is the one the feedback came from, so it is fed
+          `used`. Not renamed: every existing consumer and test names it. */}
       {engine.ruleSet && (
         <CategoriesPanel
           categories={engine.ruleSet.categories as Array<{
             id: number; studentAction: string; feedback: string; visualFeedback: string; expression: string;
           }>}
-          matchedCategory={matchedCategory}
+          matchedCategory={categoryUsed}
           perCategoryTruth={perCategoryTruth}
           parsedExpressions={engine.parsedExpressions}
           isActive={engine.isActive}
