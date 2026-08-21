@@ -115,7 +115,7 @@ For each tab ID:
 }
 ```
 
-Multiple categories can match simultaneously — the engine picks the **highest-numbered ✓** as the matched feedback ([engine/evaluator.ts `computeMatchedCategoryFloor`](../../src/hazbot/engine/evaluator.ts)). Verify the *highest* ✓ is the expected category, not just the first.
+Multiple categories can match simultaneously, and the **highest-numbered ✓** rule ([engine/evaluator.ts `computeMatchedCategoryFloor`](../../src/hazbot/engine/evaluator.ts)) describes the **`best`** row of the sidebar's Category block only. It does **not** describe `current` or `used`: those are evaluated over the last `range_cc` canonical runs, while the ✓/✗ icons are computed over the whole session. The category the student is actually shown is `used`, and on a session whose last run is weaker than an earlier one that row can carry a ✗. Read the Category block's three values rather than inferring the answer from the icons; the highlighted category row follows `used`.
 
 ### Driving setup
 
@@ -181,7 +181,7 @@ Re-run this validation pass whenever rule-sets are regenerated from the source s
 
 **Driving the browser walk (WM-51, 2026-08-20).** All 56 reachable categories across the 11 tabs were confirmed against the sidebar's matched-category row. Four things cost real time and are worth knowing before repeating it:
 
-- **A full page navigation per probe**, not Restart or Reload. Readings accumulate across both and the matched category is a monotone floor, so consecutive probes in one session return the previous probe's floor.
+- **A full page navigation per probe**, not Restart or Reload. Readings accumulate across both and **`best`** is a monotone floor, so consecutive probes in one session return the previous probe's floor. This is what makes the fresh navigation necessary; it is not true of `current`, which is windowed and drops back on its own, so a walk that only reads `current` can mislead you into thinking the accumulation stopped.
 - **Several presets already default a zone to the value you would reach for as "changed"**: zone 0 on `defaultTwoZone` is already Medium Drought, and zone 0 on the app default is already Forest. Mutating to those is a silent no-op that looks exactly like a classification bug. Read `window.sim.zones` first.
 - **A helitack only registers while the run is live.** `window.test.placeHelitackInZone` during a pause does nothing to `usedHelitack`, because the `Helitack` modifier in `translate.ts` requires an open run start.
 - **A fire line only registers on resume.** The `Fireline` sim-prop reads `reading.fireLineMarkers` off the run-start snapshot, and placing a fire line pauses the run, so the markers reach the reading on the resume `SimulationStarted` and `canonical-runs.ts` merges them forward into the same run. Place the fire line, then press Start again, then read.

@@ -207,6 +207,7 @@ export const APP_RULES_VERSION = 2; // was 1
 Bump per Req 20's policy:
 - **Editorial-only edits** (typo fixes in feedback text, no semantic change): no bump required.
 - **Semantic changes** (new categories, new factor variables, expression structure changes, defaults-value changes that affect matching): bump.
+- **Evaluation-semantics changes** (a change in how the existing expressions are evaluated, such as the windowed `category.current` that selects the student-facing feedback): bump. The sheet is untouched but the category a given session resolves to changes, which is exactly what the version marks. Bump in the commit that changes the semantics, not in a later docs commit: the repo deploys per-branch builds, so a mid-branch state is reachable, and a session logged from one would otherwise be indistinguishable from a session under the previous version's rules.
 
 The new version surfaces in the `AnalysisEngineActivated` log payload (see [LOGGED-EVENTS.md](../LOGGED-EVENTS.md#hazbot)) so dataset consumers can correlate session data with the rule-set version it was evaluated against.
 
