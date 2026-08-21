@@ -144,6 +144,13 @@ function enumerateStates(shapeCount: number, depth: number): number[][] {
 
 const glyph = (category: number | null) => (category === null ? "-" : String(category));
 
+// An upward move onto the top category is `current === top` with `best` anything else.
+// Comparing glyphs rather than Number()-coercing them matters: a null match glyphs as
+// "-", and Number("-") is NaN, so every numeric comparison against it is false. No tab
+// produces a null today, but a future rule set that did would silently skip the bar.
+const movedOntoTop = (best: string, current: string, top: number) =>
+  current === String(top) && best !== String(top);
+
 describe.each(Object.keys(BASELINES))("windowed sweep — tab %s", (tabId) => {
   const { depth, rangeCc, top, best: baseline } = BASELINES[tabId];
   const fixture = TAB_FIXTURES.filter((f) => f.id === tabId)[0];
@@ -173,7 +180,7 @@ describe.each(Object.keys(BASELINES))("windowed sweep — tab %s", (tabId) => {
   let upwardCount = 0;
   bestSeries.forEach((b, i) => {
     if (b !== currentSeries[i]) movedCount++;
-    if (Number(currentSeries[i]) > Number(b)) upwardCount++;
+    if (b !== "-" && currentSeries[i] !== "-" && Number(currentSeries[i]) > Number(b)) upwardCount++;
   });
   // eslint-disable-next-line no-console
   console.log(`tab ${tabId}: ${movedCount} of ${states.length} moved, ${upwardCount} upward, `
@@ -208,9 +215,9 @@ describe.each(Object.keys(BASELINES))("windowed sweep — tab %s", (tabId) => {
   it("never moves upward onto the highest category", () => {
     const offenders: string[] = [];
     names.forEach((name, i) => {
-      const b = Number(bestSeries[i]);
-      const c = Number(currentSeries[i]);
-      if (c > b && c === top) offenders.push(`${name}: best ${b} -> current ${c}`);
+      if (movedOntoTop(bestSeries[i], currentSeries[i], top)) {
+        offenders.push(`${name}: best ${bestSeries[i]} -> current ${currentSeries[i]}`);
+      }
     });
     expect(offenders).toEqual([]);
   });
@@ -221,5 +228,4 @@ describe.each(Object.keys(BASELINES))("windowed sweep — tab %s", (tabId) => {
   it("reaches more than one category", () => {
     expect(new Set(bestSeries).size).toBeGreaterThan(1);
   });
-
 });

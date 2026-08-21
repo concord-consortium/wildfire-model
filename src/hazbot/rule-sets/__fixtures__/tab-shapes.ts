@@ -95,8 +95,12 @@ const changedIncorrectZones23 = [
 const oneSpark23 = [{ x: 0, y: 0, zoneIdx: 0 }];
 const sparksPerZone23 = [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }];
 
+// Annotated rather than asserted: every WildfireDefaults field is optional, so an
+// `as` cast would silently accept a misspelled key.
+const defaults23: WildfireDefaults = { zones: defaultZones23, wind: noWind };
+
 export const vars23 = {
-  defaults: { zones: defaultZones23, wind: noWind } as WildfireDefaults,
+  defaults: defaults23,
   correctZones: correctZones23,
   changedIncorrectZones: changedIncorrectZones23,
   sparksPerZone: sparksPerZone23,
@@ -212,8 +216,10 @@ const sparksPerZone32 = [
   { x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }, { x: 2, y: 0, zoneIdx: 2 },
 ];
 
+const defaults32: WildfireDefaults = { zones: defaultZones32, wind: noWind };
+
 export const vars32 = {
-  defaults: { zones: defaultZones32, wind: noWind } as WildfireDefaults,
+  defaults: defaults32,
   uniqueVegUniformDrought: uniqueVegUniformDrought32,
   uniqueVegNonUniformDrought: uniqueVegNonUniformDrought32,
   droughtChangedNotUniqueVeg: droughtChangedNotUniqueVeg32,
@@ -255,8 +261,10 @@ const changedNotForest33: WildfireZone[] = [
 ];
 const sparksPerZone33 = [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }];
 
+const defaults33: WildfireDefaults = { zones: defaultZones33, wind: noWind };
+
 export const vars33 = {
-  defaults: { zones: defaultZones33, wind: noWind } as WildfireDefaults,
+  defaults: defaults33,
   forestWWUniformDrought: forestWWUniformDrought33,
   forestWWNonUniformDrought: forestWWNonUniformDrought33,
   changedNotForest: changedNotForest33,
@@ -294,8 +302,10 @@ const droughtChanged34 = zones34(["Shrub", "Shrub", "Shrub"], "Severe Drought");
 const vegAndDroughtChanged34 = zones34(["Forest", "Shrub", "Shrub"], "Severe Drought");
 const changedWind34 = { speed: 9, direction: 90 };
 
+const defaults34: WildfireDefaults = { zones: defaultZones34, wind: noWind };
+
 export const vars34 = {
-  defaults: { zones: defaultZones34, wind: noWind } as WildfireDefaults,
+  defaults: defaults34,
   changedWind: changedWind34,
   vegChanged: vegChanged34,
   droughtChanged: droughtChanged34,
@@ -353,8 +363,10 @@ const uniformDroughtNoForest35: WildfireZone[] = [
 ];
 const sparksPerZone35 = [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }];
 
+const defaults35: WildfireDefaults = { zones: defaultZones35, wind: noWind };
+
 export const vars35 = {
-  defaults: { zones: defaultZones35, wind: noWind } as WildfireDefaults,
+  defaults: defaults35,
   forestWW: forestWW35,
   forestWWNonUniformDrought: forestWWNonUniformDrought35,
   forestWWNonUniformTerrain: forestWWNonUniformTerrain35,
@@ -389,9 +401,11 @@ const defaultZones42: WildfireZone[] = [
 const defaultWind42 = { speed: 10, direction: 270.5 };
 const changedWind42 = { speed: 25, direction: 90 };
 
+const defaults42: WildfireDefaults = { zones: defaultZones42, wind: defaultWind42 };
+
 export const vars42 = {
   changedWind: changedWind42,
-  defaults: { zones: defaultZones42, wind: defaultWind42 } as WildfireDefaults,
+  defaults: defaults42,
 };
 
 export const tab42: TabFixture = {
@@ -420,10 +434,12 @@ const changedZones45: WildfireZone[] = [
 ];
 const fireLine45 = [{ x: 0.1, y: 0.2 }, { x: 0.3, y: 0.2 }];
 
+const defaults45: WildfireDefaults = { zones: defaultZones45, wind: defaultWind45 };
+
 export const vars45 = {
   changedZones: changedZones45,
   fireLine: fireLine45,
-  defaults: { zones: defaultZones45, wind: defaultWind45 } as WildfireDefaults,
+  defaults: defaults45,
 };
 
 export const tab45: TabFixture = {
@@ -452,10 +468,12 @@ const changedZones47: WildfireZone[] = [
 ];
 const fireLine47 = [{ x: 0.1, y: 0.2 }, { x: 0.3, y: 0.2 }];
 
+const defaults47: WildfireDefaults = { zones: defaultZones47, wind: defaultWind47 };
+
 export const vars47 = {
   changedZones: changedZones47,
   fireLine: fireLine47,
-  defaults: { zones: defaultZones47, wind: defaultWind47 } as WildfireDefaults,
+  defaults: defaults47,
 };
 
 export const tab47: TabFixture = {
@@ -487,11 +505,13 @@ const vegChangedNotSevere54: WildfireZone[] = [
 ];
 const fireLine54 = [{ x: 0.1, y: 0.2 }, { x: 0.3, y: 0.2 }];
 
+const defaults54: WildfireDefaults = { zones: defaultZones54, wind: defaultWind54 };
+
 export const vars54 = {
   severeZones: severeZones54,
   vegChangedNotSevere: vegChangedNotSevere54,
   fireLine: fireLine54,
-  defaults: { zones: defaultZones54, wind: defaultWind54 } as WildfireDefaults,
+  defaults: defaults54,
 };
 
 // Tab 54's axis is SEVERITY, not the default-vs-changed of 45 and 47. Its cats 3 and 4

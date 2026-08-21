@@ -432,6 +432,11 @@ export function makeReadingsWindow(
     // current 1, so `current ?? best` in hazbot-button and in the sidebar both select 1 and
     // the student is told to scroll up and run the model they just ran twice.
     if (rangeCc === 0) return null;
+    // As shipped: one canonical-run walk, not three. `canonicalRunStartIndices` yields
+    // both the trim point and the total run count, and the covered count is
+    // `min(rangeCc, total)` by construction of the trim, so neither of the two
+    // `canonicalRunReadings` folds below is needed. The emitted labels are identical,
+    // which `run-window.test.ts` pins by enumerating all twelve of them.
     const start = canonicalRunWindowStart(readings, rangeCc);
     const slice = readings.slice(start);
     const covered = canonicalRunReadings(slice).length;
@@ -854,6 +859,13 @@ One exported record per tab, carrying its `defaults`, the per-reading fields its
 `startReading` fills in, its named zone/spark/tool constants, and a `shapes` array naming
 that tab's axis set. **The fixture is data only: no builders, no functions.**
 
+As shipped, each tab exports two things: the `TabFixture` itself (`tab23`, `tab25`, …) and
+a `vars23` / `vars25` / … bag holding exactly the named constants that tab's own test file
+reads. The bag exists because every tab names its constants the same way (`defaultZones`,
+`sparksPerZone`, `fireLine`), so ten flat exports would collide; the tab file destructures
+what it needs in one line and its test bodies are untouched. Constants no tab file reads
+stay module-private, reachable through `tab<N>.base` for the sweep.
+
 ```ts
 export interface TabShape {
   name: string;                        // e.g. "correct/perZone", used in failure messages
@@ -887,6 +899,13 @@ mkReading("SimulationStarted", at, { ...fixture.base, ...shape.reading })
 `mkReading("SimulationStarted", opts.at ?? 100, { <per-tab base fields>, ...opts })` and
 nothing more. `topoReading` (`25.test.ts:64`) is `startReading` plus two literals
 (`heightmapMaxElevation: 20000`, `tpiMarginFraction: 0.02`), which belong in `base`.
+**Amended during implementation**: they ship on the two topography *shapes*
+(`perZoneMid`, `topBottom`) instead. Putting them in `base` would make tab 25's own
+`startReading` carry them too, leaving `topoReading` a no-op wrapper that adds nothing;
+carrying them on the shapes keeps `base` equal to the tab's own `startReading` literal,
+which is the property the fidelity gate rests on, and still needs only one builder. Tab
+25's measured series is unchanged either way, since `SparksAtTopAndBottom` needs per-spark
+`tpi` arrays and a shape without them evaluates false regardless.
 `zones(veg, drought)` (`34.test.ts:44`) is a zone-array constructor, not a reading builder
 at all (it satisfies neither the parameter nor the return type of
 `(opts?: Partial<WildfireReading>) => WildfireReading`, so a `builders` record could not have
@@ -962,7 +981,7 @@ may land on a ruleset's highest category id, and the two named sequences are pin
 silent revert to `min(best, current)` fails CI.
 
 **Files affected**:
-- `src/hazbot/rule-sets/test-helpers.ts`: an optional `readingsWindow` on `makeWildfireEngine`, plus a `matchCurrentAgainst` sibling to `matchAgainst`
+- `src/hazbot/rule-sets/test-helpers.ts`: an optional `readingsWindow` on `makeWildfireEngine`, plus a `matchCurrentAgainst` sibling to `matchAgainst`. **Landed one commit earlier, in Derive**, because `run-window.test.ts` needs both to drive its tab-24 and tab-47 cases through the production path; duplicating them there and deleting the copy here would have been the only alternative
 - `src/hazbot/rule-sets/current-category-sweep.test.ts`: new
 - `src/hazbot/rule-sets/current-category-regression.test.ts`: new (or one file; see the note below)
 
@@ -1019,17 +1038,24 @@ export function makeWildfireEngine(
   // the same deferred-reference shape engine-singleton.ts uses with its module-level
   // `cached` and generate-replay-fixture.js uses with its own const. Forced by the
   // derivation reading parsedExpressions, which does not exist while opts is assembled.
-  let engine: Engine<WildfireReading, WildfireDefaults>;
   const opts: EngineOpts<WildfireReading, WildfireDefaults> = {
     /* …existing fields… */
     ...(windowed
       ? { readingsWindow: makeReadingsWindow(() => deriveRangeCc(categoryExpressions(engine))) }
       : {}),
   };
-  engine = new Engine<WildfireReading, WildfireDefaults>(opts);
+  const engine = new Engine<WildfireReading, WildfireDefaults>(opts);
   return engine;
 }
 ```
+
+**Amended during implementation (lint).** An earlier draft of this snippet declared
+`let engine` *above* `opts` and assigned it below. That trips this repo's `prefer-const`
+rule as an eslint **error**, since the binding is assigned exactly once. The
+declared-below-`opts` `const` form above compiles and lints cleanly: the reference inside
+the selector's thunk is in a function body, so TS does not treat it as a use-before-
+declaration, and the thunk only runs after the constructor has returned. The same
+`const`-below-`opts` form is used in `replay-fixture.test.ts`.
 
 so the sweep calls `makeWildfireEngine(ruleSet, defaults, true)`.
 
