@@ -104,6 +104,20 @@ describe("evaluator — WITH binding", () => {
     expect(result.candidateEvaluations).toHaveLength(2);
   });
 
+  // The sidebar reports the bound witness as "Matched on reading #N" and colors the
+  // WITH's sim-prop leaves against it, so a walker asking "which run satisfied this?"
+  // should be pointed at the latest one, not the first.
+  it("binds the LAST qualifying witness when several qualify, with the same value", () => {
+    const r1 = { ...mkReading("SimulationStarted", 1), payload: { hasOneSpark: true } } as TR;
+    const r2 = { ...mkReading("SimulationStarted", 2), payload: { hasOneSpark: false } } as TR;
+    const r3 = { ...mkReading("SimulationStarted", 3), payload: { hasOneSpark: true } } as TR;
+    const ctx = makeCtx([r1, r2, r3], { ranSimulation: ranSimulationImpl }, { OneSparkPerZone: oneSparkSim });
+    const result = evaluateWith("ranSimulation", { kind: "sim-prop-leaf", name: "OneSparkPerZone" }, ctx);
+    expect(result.value).toBe(true);
+    expect(result.boundReading?.at).toBe(3);
+    expect(result.candidateEvaluations.map((c) => c.propResult)).toEqual([true, false, true]);
+  });
+
   it("evaluates false with empty witnesses (no SimulationStarted readings yet)", () => {
     const ctx = makeCtx([], { ranSimulation: ranSimulationImpl }, { OneSparkPerZone: oneSparkSim });
     const result = evaluateWith("ranSimulation", { kind: "sim-prop-leaf", name: "OneSparkPerZone" }, ctx);

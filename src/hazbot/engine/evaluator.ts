@@ -143,7 +143,10 @@ export function evaluateWith<TR extends BaseReading, TD>(
   for (const w of witnesses) {
     const propResult = evaluatePropExpr(propExpr, w, ctx);
     candidates.push({ reading: w, propResult });
-    if (propResult && bound === undefined) bound = w;
+    // The MOST RECENT qualifying witness, not the earliest. Truth is unaffected (the
+    // return is `bound !== undefined`); only the witness the sidebar reports as
+    // "Matched on reading #N" and colors propTruth against changes.
+    if (propResult) bound = w;
   }
   return { value: bound !== undefined, boundReading: bound, candidateEvaluations: candidates };
 }
