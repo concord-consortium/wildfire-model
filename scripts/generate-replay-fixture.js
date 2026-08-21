@@ -13,7 +13,9 @@ const path = require("path");
 require("ts-node/register/transpile-only");
 
 const { Engine } = require("../src/hazbot/engine/engine");
-const { computeMatchedCategoryForEngine } = require("../src/hazbot/engine/evaluator");
+const { categoryExpressions, computeCategorySelectionForEngine } = require("../src/hazbot/engine/evaluator");
+const { deriveRangeCc } = require("../src/hazbot/wildfire/range-cc");
+const { makeReadingsWindow } = require("../src/hazbot/wildfire/run-window");
 const { factorVariables } = require("../src/hazbot/wildfire/factor-variables");
 const { simProps } = require("../src/hazbot/wildfire/sim-props");
 const { temporalVariables } = require("../src/hazbot/wildfire/temporal-variables");
@@ -63,6 +65,9 @@ const scenario = [
 
 const events = scenario.map((e) => ({ ...e, at: tick() }));
 
+// The fixture engine is constructed directly rather than through getAnalysisEngine, so
+// the window selector is supplied here and identically on the test side. The thunk is
+// deferred because the derivation reads parsedExpressions, which the constructor fills.
 const engine = new Engine({
   ruleSet: ruleSets["25"],
   requestedRuleSetId: "25",
@@ -71,11 +76,21 @@ const engine = new Engine({
   temporalVariables,
   translate,
   runStartTriggers: ["SimulationStarted"],
+  readingsWindow: makeReadingsWindow(() => deriveRangeCc(categoryExpressions(engine))),
 });
 const matchedCategoryHistory = [];
+const currentCategoryHistory = [];
+const categoryUsedHistory = [];
 for (const event of events) {
   engine.consume(event);
-  matchedCategoryHistory.push(computeMatchedCategoryForEngine(engine));
+  // All three series come from one call, through the same selection the component and
+  // the sidebar use, so the fixture pins the shipped rule rather than a copy of it.
+  // `best` is exactly what computeMatchedCategoryForEngine returned before, so
+  // matchedCategoryHistory is unchanged.
+  const { best, current, used } = computeCategorySelectionForEngine(engine);
+  matchedCategoryHistory.push(best);
+  currentCategoryHistory.push(current);
+  categoryUsedHistory.push(used);
 }
 
 // Scoped key-sorting on the top-level maps vulnerable to insertion-order
@@ -135,6 +150,8 @@ const expected = {
   observed: sortKeys(engine.observed),
   temporalValues: sortKeys(engine.temporalValues),
   matchedCategoryHistory,
+  currentCategoryHistory,
+  categoryUsedHistory,
 };
 
 const fixturesDir = path.resolve(__dirname, "../src/hazbot/wildfire/__fixtures__");

@@ -5,7 +5,7 @@
 
 import { Engine, EngineOpts } from "./engine";
 import { BaseReading, ConsumedEvent, FactorVariableImpl, RuleSet, TemporalVariableImpl } from "./types";
-import { computeMatchedCategoryForEngine } from "./evaluator";
+import { computeCurrentCategoryForEngine, computeMatchedCategoryForEngine } from "./evaluator";
 
 type TR = BaseReading;
 type TD = unknown;
@@ -51,6 +51,9 @@ function makeOpts(): EngineOpts<TR, TD> {
       return { kind: "no-op" };
     },
     runStartTriggers: ["SimulationStarted"],
+    // A window expressed with no notion of a "run": the substrate has none, and a host
+    // that is not wildfire is the case this API has to keep working for.
+    readingsWindow: (readings) => ({ readings: readings.slice(-1) }),
     temporalVariables: { chartTabOpen: chartTabOpen as TemporalVariableImpl<unknown> },
   };
 }
@@ -71,11 +74,15 @@ describe("Engine — replay determinism (R18a)", () => {
 
     const matchedA: (number | null)[] = [];
     const matchedB: (number | null)[] = [];
+    const currentA: (number | null)[] = [];
+    const currentB: (number | null)[] = [];
     for (const event of events) {
       engineA.consume(event);
       matchedA.push(computeMatchedCategoryForEngine(engineA));
+      currentA.push(computeCurrentCategoryForEngine(engineA)?.category ?? null);
       engineB.consume(event);
       matchedB.push(computeMatchedCategoryForEngine(engineB));
+      currentB.push(computeCurrentCategoryForEngine(engineB)?.category ?? null);
     }
 
     // The sessionId differs across engine instances by design; compare structural state.
@@ -88,5 +95,6 @@ describe("Engine — replay determinism (R18a)", () => {
     expect(engineA.temporalValues).toEqual(engineB.temporalValues);
     expect(engineA.observed).toEqual(engineB.observed);
     expect(matchedA).toEqual(matchedB);
+    expect(currentA).toEqual(currentB);
   });
 });
