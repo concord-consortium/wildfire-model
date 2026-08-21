@@ -290,7 +290,7 @@ export const tab33: TabFixture = {
 
 const terrains34 = ["Mountains", "Foothills", "Plains"];
 // Keeps each zone's fixed terrain; vegetation and drought vary. Private to this module:
-// only its outputs are shared, and 34.test.ts keeps its own copy for its local cases.
+// only its outputs are shared, which 34.test.ts takes from `vars34` rather than rebuilding.
 function zones34(veg: [string, string, string], drought = "Mild Drought"): WildfireZone[] {
   return [0, 1, 2].map((i) => ({
     terrainType: terrains34[i], vegetation: veg[i], droughtLevel: drought,

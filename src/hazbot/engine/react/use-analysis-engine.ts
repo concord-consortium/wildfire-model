@@ -22,9 +22,12 @@ export interface HookReturn<TReading extends BaseReading = BaseReading, TDefault
   categoryUsed: number | null;
   // The HOST's own description of the window it chose, or null. A display string, not a
   // signal: `label` is optional, so a host that supplies a selector and no label reads
-  // null here while having a perfectly good window. Window presence is
-  // `engine.readingsWindow` plus a non-null selection, which is what the sidebar gates
-  // on. Telling the two null causes of `categoryCurrent` apart would need its own field.
+  // null here while having a perfectly good window. Window presence is the selector's
+  // presence, `engine.readingsWindow` alone, which is what the sidebar gates on: a
+  // selector that returns null for this activity still renders the block, so the walker
+  // sees `current: n/a` with the highlight back on `best` (tab 24's range_cc 0 case)
+  // rather than no block at all. Telling the two null causes of `categoryCurrent` apart
+  // would need its own field.
   categoryWindowLabel: string | null;
   perCategoryTruth: Record<number, LeafTruth>;
 }
