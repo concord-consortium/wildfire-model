@@ -1,6 +1,7 @@
 import { ruleSet42 } from "./42";
 import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
-import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/types";
+import { tab42, vars42 } from "./__fixtures__/tab-shapes";
+import { WildfireReading } from "../wildfire/types";
 
 // Tab 42 categories (regenerated from the 2026-05-22 sheet; Cat 100 dropped):
 //   1: NOT ranSimulation
@@ -11,17 +12,10 @@ import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/typ
 
 // SIMINIT defaults for tab 42: 2 zones (Foothills/Grass/Medium Drought,
 // Foothills/Shrub/Mild Drought), wind magnitude 10 / direction 270.5.
-const defaultZones: WildfireZone[] = [
-  { terrainType: "Foothills", vegetation: "Grass", droughtLevel: "Medium Drought" },
-  { terrainType: "Foothills", vegetation: "Shrub", droughtLevel: "Mild Drought" },
-];
-const defaultWind = { speed: 10, direction: 270.5 };
-const defaults: WildfireDefaults = { zones: defaultZones, wind: defaultWind };
+const { defaults, changedWind } = vars42;
 
 function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
-  return mkReading("SimulationStarted", opts.at ?? 100, {
-    zones: defaultZones, sparks: [], wind: defaultWind, ...opts,
-  });
+  return mkReading("SimulationStarted", opts.at ?? 100, { ...tab42.base, ...opts });
 }
 
 describe("ruleSet 42 — per-rule-set behavior sweep", () => {
@@ -31,7 +25,7 @@ describe("ruleSet 42 — per-rule-set behavior sweep", () => {
   });
   it("(b) ran sim with a changed wind → cat 2 (setAnyVar)", () => {
     const e = makeWildfireEngine(ruleSet42, defaults);
-    expect(matchAgainst(ruleSet42, e, [startReading({ wind: { speed: 25, direction: 90 } })])).toBe(2);
+    expect(matchAgainst(ruleSet42, e, [startReading({ wind: changedWind })])).toBe(2);
   });
   it("(c) highest single-true — ran sim with no changes → cat 3", () => {
     const e = makeWildfireEngine(ruleSet42, defaults);
@@ -47,7 +41,7 @@ describe("ruleSet 42 — per-rule-set behavior sweep", () => {
     // run now reaches cat 3. Do not "restore" the old expectation of 2: it was
     // the soft-lock, not a stability guarantee.
     const e = makeWildfireEngine(ruleSet42, defaults);
-    const r0 = startReading({ wind: { speed: 25, direction: 90 } });
+    const r0 = startReading({ wind: changedWind });
     expect(matchAgainst(ruleSet42, e, [r0])).toBe(2);
     expect(matchAgainst(ruleSet42, e, [r0, startReading({ at: 200 })])).toBe(3);
   });
@@ -57,7 +51,7 @@ describe("ruleSet 42 — R9 per-category coverage", () => {
   const e = () => makeWildfireEngine(ruleSet42, defaults);
   it("cat 1 — no run", () => expect(matchAgainst(ruleSet42, e(), [])).toBe(1));
   it("cat 2 — ran with a changed variable", () =>
-    expect(matchAgainst(ruleSet42, e(), [startReading({ wind: { speed: 25, direction: 90 } })])).toBe(2));
+    expect(matchAgainst(ruleSet42, e(), [startReading({ wind: changedWind })])).toBe(2));
   it("cat 3 — ran with no changes", () =>
     expect(matchAgainst(ruleSet42, e(), [startReading()])).toBe(3));
 });

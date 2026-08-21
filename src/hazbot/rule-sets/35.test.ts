@@ -1,6 +1,7 @@
 import { ruleSet35 } from "./35";
 import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
-import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/types";
+import { tab35, vars35 } from "./__fixtures__/tab-shapes";
+import { WildfireReading } from "../wildfire/types";
 
 // Tab 35 categories (regenerated from the 2026-08-20 sheet; Cat 100 dropped):
 //   1: NOT ranSimulation
@@ -29,43 +30,12 @@ import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/typ
 // No stub-gated category — the (e) shape is N/A.
 
 // SIMINIT defaults for tab 35: 2 zones Mountains / Shrub / Mild Drought, wind 0/0.
-const defaultZone: WildfireZone = { terrainType: "Mountains", vegetation: "Shrub", droughtLevel: "Mild Drought" };
-const defaultZones = [defaultZone, defaultZone];
-const defaults: WildfireDefaults = { zones: defaultZones, wind: { speed: 0, direction: 0 } };
-
-// One zone Forest, the other Forest With Suppression → ForestWAWOSuppression true.
-const forestWW: WildfireZone[] = [
-  { terrainType: "Mountains", vegetation: "Forest", droughtLevel: "Mild Drought" },
-  { terrainType: "Mountains", vegetation: "Forest With Suppression", droughtLevel: "Mild Drought" },
-];
-const forestWWNonUniformDrought: WildfireZone[] = [
-  { terrainType: "Mountains", vegetation: "Forest", droughtLevel: "Mild Drought" },
-  { terrainType: "Mountains", vegetation: "Forest With Suppression", droughtLevel: "Severe Drought" },
-];
-const forestWWNonUniformTerrain: WildfireZone[] = [
-  { terrainType: "Mountains", vegetation: "Forest", droughtLevel: "Mild Drought" },
-  { terrainType: "Foothills", vegetation: "Forest With Suppression", droughtLevel: "Mild Drought" },
-];
-// A var changed (drought), terrain left uniform, no forest-with/without-suppression
-// pairing → cat 4 under the new table.
-const changedNotForest: WildfireZone[] = [
-  { terrainType: "Mountains", vegetation: "Shrub", droughtLevel: "Severe Drought" },
-  { terrainType: "Mountains", vegetation: "Shrub", droughtLevel: "Mild Drought" },
-];
-// The state that used to match NO category: uniform terrain, UNIFORM drought, and no
-// forest pairing, with a var still changed (vegetation off its Shrub default) so the
-// setAnyVar guard is satisfied. Note the uniform drought — changedNotForest above has
-// two different droughts and so was always covered, by the old cat 4 as well as the new.
-const uniformDroughtNoForest: WildfireZone[] = [
-  { terrainType: "Mountains", vegetation: "Forest", droughtLevel: "Mild Drought" },
-  { terrainType: "Mountains", vegetation: "Forest", droughtLevel: "Mild Drought" },
-];
-const sparksPerZone = [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }];
+const {
+  defaults, forestWW, forestWWNonUniformDrought, forestWWNonUniformTerrain, changedNotForest, uniformDroughtNoForest, sparksPerZone,
+} = vars35;
 
 function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
-  return mkReading("SimulationStarted", opts.at ?? 100, {
-    zones: defaultZones, sparks: [], wind: { speed: 0, direction: 0 }, ...opts,
-  });
+  return mkReading("SimulationStarted", opts.at ?? 100, { ...tab35.base, ...opts });
 }
 
 describe("ruleSet 35 — per-rule-set behavior sweep", () => {

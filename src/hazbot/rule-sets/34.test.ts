@@ -1,6 +1,7 @@
 import { ruleSet34 } from "./34";
 import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
-import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/types";
+import { tab34, vars34 } from "./__fixtures__/tab-shapes";
+import { WildfireReading } from "../wildfire/types";
 
 // Tab 34 categories (regenerated from the 2026-08-20 sheet; Cat 100 dropped):
 //   1: NOT ranSimulation
@@ -32,30 +33,10 @@ import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/typ
 // Plains, all Shrub / Mild Drought, wind 0/0. ("Foothills" is the terrainLabels
 // value the reading carries; terrainDisplayLabels renders it as "Hills", and only
 // that display map changed.)
-const defaultZones: WildfireZone[] = [
-  { terrainType: "Mountains", vegetation: "Shrub", droughtLevel: "Mild Drought" },
-  { terrainType: "Foothills", vegetation: "Shrub", droughtLevel: "Mild Drought" },
-  { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Mild Drought" },
-];
-const defaults: WildfireDefaults = { zones: defaultZones, wind: { speed: 0, direction: 0 } };
-const changedWind = { speed: 9, direction: 90 };
-
-// Zone builder keeping each zone's fixed terrain; vegetation and drought vary.
-function zones(veg: [string, string, string], drought = "Mild Drought"): WildfireZone[] {
-  const terrains = ["Mountains", "Foothills", "Plains"];
-  return [0, 1, 2].map((i) => ({
-    terrainType: terrains[i], vegetation: veg[i], droughtLevel: drought,
-  }));
-}
-
-const vegChanged = zones(["Forest", "Shrub", "Shrub"]);
-const droughtChanged = zones(["Shrub", "Shrub", "Shrub"], "Severe Drought");
-const vegAndDroughtChanged = zones(["Forest", "Shrub", "Shrub"], "Severe Drought");
+const { defaults, changedWind, vegChanged, droughtChanged, vegAndDroughtChanged } = vars34;
 
 function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
-  return mkReading("SimulationStarted", opts.at ?? 100, {
-    zones: defaultZones, sparks: [], wind: { speed: 0, direction: 0 }, ...opts,
-  });
+  return mkReading("SimulationStarted", opts.at ?? 100, { ...tab34.base, ...opts });
 }
 
 describe("ruleSet 34 — per-rule-set behavior sweep", () => {

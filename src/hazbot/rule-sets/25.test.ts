@@ -1,5 +1,6 @@
 import { ruleSet25 } from "./25";
 import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
+import { tab25, vars25 } from "./__fixtures__/tab-shapes";
 import { simProps } from "../wildfire/sim-props";
 import { WildfireReading } from "../wildfire/types";
 
@@ -21,41 +22,13 @@ import { WildfireReading } from "../wildfire/types";
 // (UniformZoneSettings compares zones to each other), so it omits `defaults`.
 
 // SIMINIT defaults for tab 25: 2 zones Mountains / Shrub / Mild Drought.
-const uniformZones = [
-  { vegetation: "Shrub", droughtLevel: "Mild Drought" },
-  { vegetation: "Shrub", droughtLevel: "Mild Drought" },
-];
-const nonUniformZones = [
-  { vegetation: "Shrub", droughtLevel: "Mild Drought" },
-  { vegetation: "Forest", droughtLevel: "Mild Drought" },
-];
-const oneSpark = [{ x: 0, y: 0, zoneIdx: 0 }];
-const twoSparksSameZone = [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 0 }];
-const oneSparkPerZone = [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }];
-
-// Topography fixtures for the cats 4/5/6 readings. heightmapMaxElevation × the
-// margin fraction scales the predicate's margin (0.02 × 20000 = 400 ft); the
-// ridge / valley TPI arrays clear it, the mid-slope arrays do not. The fraction
-// is pinned on every topoReading (below) so these rule-set tests stay stable if
-// SparksAtTopAndBottom's DEFAULT_TPI_MARGIN_FRACTION is later retuned.
-const HEIGHTMAP_MAX = 20000;
-const TPI_MARGIN_FRACTION = 0.02;
-// One spark per zone: zone 0 on a ridge (positive TPI at every scale), zone 1 in
-// a valley (negative TPI at every scale).
-const sparksTopBottom = [
-  { x: 0, y: 0, zoneIdx: 0, tpi: [3000, 2000, 1500] },
-  { x: 1, y: 0, zoneIdx: 1, tpi: [-3000, -2000, -1500] },
-];
-// One spark per zone, both mid-slope (TPI ~ 0 -> NOT top/bottom).
-const sparksPerZoneMid = [
-  { x: 0, y: 0, zoneIdx: 0, tpi: [200, -100, 50] },
-  { x: 1, y: 0, zoneIdx: 1, tpi: [-150, 100, 0] },
-];
+const {
+  uniformZones, nonUniformZones, oneSpark, twoSparksSameZone, oneSparkPerZone,
+  HEIGHTMAP_MAX, TPI_MARGIN_FRACTION, sparksTopBottom, sparksPerZoneMid,
+} = vars25;
 
 function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
-  return mkReading("SimulationStarted", opts.at ?? 100, {
-    zones: uniformZones, sparks: [], wind: { speed: 0, direction: 0 }, ...opts,
-  });
+  return mkReading("SimulationStarted", opts.at ?? 100, { ...tab25.base, ...opts });
 }
 
 // startReading + the topography fields the SparksAtTopAndBottom predicate needs.
