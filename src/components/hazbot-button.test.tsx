@@ -35,15 +35,23 @@ const mockCreateEngine = createCoachmarksEngine as unknown as jest.Mock;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 let cmOpts: any;
-let cm: { highlight: jest.Mock; destroy: jest.Mock };
+let cm: { highlight: jest.Mock; drive: jest.Mock; destroy: jest.Mock };
 
 function renderWithStores(stores = createStores()) {
   return { stores, ...render(<Provider stores={stores}><HazbotButton /></Provider>) };
 }
 
 // A minimal analysis engine: the panel reads engine.ruleSet.categories[].feedback.
-function engineWith(categories: { id: number; feedback: string }[]) {
-  return { ruleSet: { categories } } as unknown as ReturnType<typeof getAnalysisEngine>;
+// NOTE for ladder fixtures: the HIGHEST id is the top category, whose level 2 is the
+// rule-set's `repeatFeedback` rather than its own Round columns. A fixture holding only
+// the category under test silently makes it the top one and pins it at level 1, so any
+// Round-column case needs a higher-id filler category.
+function engineWith(
+  categories: { id: number; feedback: string; feedbackRound2?: string; feedbackRound3?: string }[],
+  repeatFeedback?: { id: number; studentAction: string; feedback: string },
+  id?: string,
+) {
+  return { ruleSet: { id, categories, repeatFeedback } } as unknown as ReturnType<typeof getAnalysisEngine>;
 }
 
 // Open the panel: click the button, then let the panel's open-after-scale-up
@@ -65,7 +73,7 @@ function lastHighlightSpec() {
 }
 
 beforeEach(() => {
-  cm = { highlight: jest.fn(), destroy: jest.fn() };
+  cm = { highlight: jest.fn(), drive: jest.fn(), destroy: jest.fn() };
   // Default: no engine — matches the pre-engine state the WM-6 tests below rely on.
   mockGetEngine.mockReset().mockReturnValue(undefined);
   mockSelection.mockReset().mockReturnValue(selection(null));
@@ -361,7 +369,7 @@ describe("Hazbot walk-through tour", () => {
     const driven = engines[1].drive.mock.calls[0][0];
     expect(driven).toHaveLength(3); // 23/2 is a 3-step tour
     expect(logSpy).toHaveBeenCalledWith(
-      "HazbotShowMeClicked", { ruleSetId: "23", categoryId: 2, stepCount: 3 },
+      "HazbotShowMeClicked", { ruleSetId: "23", categoryId: 2, stepCount: 3, feedbackLevel: 1 },
     );
   });
 
@@ -392,7 +400,7 @@ describe("Hazbot walk-through tour", () => {
     act(() => { engines[1].opts.onHighlightStarted(undefined, {}, { state: { activeIndex: 2 } }); });
     act(() => { engines[1].opts.onDestroyed(); });
     expect(logSpy).toHaveBeenCalledWith(
-      "HazbotTourCompleted", { ruleSetId: "23", categoryId: 2, lastStepIndex: 2 },
+      "HazbotTourCompleted", { ruleSetId: "23", categoryId: 2, lastStepIndex: 2, feedbackLevel: 1 },
     );
     expect(logSpy).not.toHaveBeenCalledWith("HazbotTourDismissed", expect.anything());
     expect(stores.ui.showHazbotFeedback).toBe(false);
@@ -407,7 +415,7 @@ describe("Hazbot walk-through tour", () => {
     act(() => { engines[1].opts.onCancelRequested(); });
     expect(engines[1].destroy).toHaveBeenCalled();
     expect(logSpy).toHaveBeenCalledWith(
-      "HazbotTourDismissed", { ruleSetId: "23", categoryId: 2, lastStepIndex: 1 },
+      "HazbotTourDismissed", { ruleSetId: "23", categoryId: 2, lastStepIndex: 1, feedbackLevel: 1 },
     );
     expect(logSpy).not.toHaveBeenCalledWith("HazbotTourCompleted", expect.anything());
   });
@@ -432,5 +440,202 @@ describe("Hazbot walk-through tour", () => {
     act(() => { engines[0].opts.onDestroyed(); });
     expect(engines).toHaveLength(1); // no tour
     expect(logSpy).not.toHaveBeenCalledWith("HazbotShowMeClicked", expect.anything());
+  });
+});
+
+describe("Hazbot feedback levels", () => {
+  // Closing through ×/Escape rather than the bare onDestroyed the feedback-panel block
+  // uses: on a coaching category onDestroyed alone IS the [Show me] activation and
+  // launches a tour, so the second press of a ladder walk would never happen.
+  const dismiss = () => {
+    act(() => { cmOpts.onCancelRequested(); });
+    act(() => { cmOpts.onDestroyed(); });
+  };
+
+  // A coaching category with a full ladder, plus a higher-id filler so the category
+  // under test is not the top one.
+  const fullLadder = () => engineWith([
+    {
+      id: 2,
+      feedback: "Hazbot: Level one\n[Show me]",
+      feedbackRound2: "Hazbot: Level two\n[Show me]",
+      feedbackRound3: "Hazbot: Level three\n[Okay]",
+    },
+    { id: 9, feedback: "Hazbot: Top\n[Hooray!]" },
+  ]);
+
+  // log()'s payload parameter is typed `object`, so the payloads are widened once here
+  // rather than casting at each assertion.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const payloads = (logSpy: jest.SpyInstance, name: string): any[] => logSpy.mock.calls
+    .filter((c) => c[0] === name).map((c) => c[1]);
+
+  const shownLevels = (logSpy: jest.SpyInstance) =>
+    payloads(logSpy, "HazbotFeedbackShown").map((p) => [p.feedbackLevel, p.source]);
+
+  it("walks level 1, 2, 3 and then repeats level 3", () => {
+    const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    mockGetEngine.mockReturnValue(fullLadder());
+    mockSelection.mockReturnValue(selection(2));
+    const { stores } = renderWithStores();
+
+    const bodies: string[] = [];
+    for (let i = 0; i < 4; i++) {
+      openPanel();
+      bodies.push(lastHighlightSpec().popover.description);
+      dismiss();
+    }
+    expect(bodies).toEqual(["Level one", "Level two", "Level three", "Level three"]);
+    expect(shownLevels(logSpy)).toEqual([
+      [1, "level1"], [2, "round2"], [3, "round3"], [3, "round3"],
+    ]);
+    expect(stores.ui.hazbotFeedbackLevels.get(2)).toBe(3);
+    expect(stores.ui.hazbotLastFeedbackShown).toEqual({ level: 3, source: "round3" });
+  });
+
+  it("serves the top category's repeat click from the rule-set's repeat feedback", () => {
+    const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    mockGetEngine.mockReturnValue(engineWith(
+      [
+        { id: 1, feedback: "Hazbot: Middle\n[Okay]" },
+        {
+          id: 5,
+          feedback: "Hazbot: Great job!\n[Hooray!]",
+          feedbackRound2: "Hazbot: Fill-down two\n[Okay]",
+          feedbackRound3: "Hazbot: Fill-down three\n[Okay]",
+        },
+      ],
+      { id: 100, studentAction: "Re-clicked", feedback: "Hazbot: Keep going!\n[Got it!]" },
+    ));
+    mockSelection.mockReturnValue(selection(5));
+    renderWithStores();
+
+    const bodies: string[] = [];
+    for (let i = 0; i < 3; i++) {
+      openPanel();
+      bodies.push(lastHighlightSpec().popover.description);
+      dismiss();
+    }
+    // The category's own Round 2/3 content is never reached.
+    expect(bodies).toEqual(["Great job!", "Keep going!", "Keep going!"]);
+    expect(shownLevels(logSpy)).toEqual([
+      [1, "level1"], [2, "category100"], [2, "category100"],
+    ]);
+  });
+
+  it("repeats level 1 for a category with no Round content", () => {
+    const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    mockGetEngine.mockReturnValue(engineWith([
+      { id: 2, feedback: "Hazbot: Only one\n[Okay]" },
+      { id: 9, feedback: "Hazbot: Top\n[Hooray!]" },
+    ]));
+    mockSelection.mockReturnValue(selection(2));
+    renderWithStores();
+
+    for (let i = 0; i < 3; i++) { openPanel(); dismiss(); }
+    expect(shownLevels(logSpy)).toEqual([[1, "level1"], [1, "level1"], [1, "level1"]]);
+  });
+
+  it("tracks levels per category, so leaving and returning resumes where it left off", () => {
+    jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    mockGetEngine.mockReturnValue(engineWith([
+      { id: 2, feedback: "Hazbot: Two one\n[Okay]", feedbackRound2: "Hazbot: Two two\n[Okay]" },
+      { id: 3, feedback: "Hazbot: Three one\n[Okay]", feedbackRound2: "Hazbot: Three two\n[Okay]" },
+      { id: 9, feedback: "Hazbot: Top\n[Hooray!]" },
+    ]));
+    mockSelection.mockReturnValue(selection(2));
+    const { stores } = renderWithStores();
+
+    openPanel();
+    expect(lastHighlightSpec().popover.description).toBe("Two one");
+    dismiss();
+    mockSelection.mockReturnValue(selection(3));
+    openPanel();
+    expect(lastHighlightSpec().popover.description).toBe("Three one");
+    dismiss();
+    mockSelection.mockReturnValue(selection(2));
+    openPanel();
+    expect(lastHighlightSpec().popover.description).toBe("Two two");
+    dismiss();
+
+    expect(Array.from(stores.ui.hazbotFeedbackLevels.entries())).toEqual([[2, 2], [3, 1]]);
+  });
+
+  it("does not spend a level for a second press while the popover is already open", () => {
+    const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    mockGetEngine.mockReturnValue(fullLadder());
+    mockSelection.mockReturnValue(selection(2));
+    const { stores } = renderWithStores();
+
+    openPanel();
+    openPanel(); // the flag is already true, so the effect never re-runs
+    expect(shownLevels(logSpy)).toEqual([[1, "level1"]]);
+    expect(logSpy.mock.calls.filter((c) => c[0] === "HazbotButtonClicked")).toHaveLength(2);
+    expect(stores.ui.hazbotFeedbackLevels.get(2)).toBe(1);
+  });
+
+  it("never logs a level above the number of strings the category carries", () => {
+    const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    mockGetEngine.mockReturnValue(engineWith([
+      { id: 2, feedback: "Hazbot: One\n[Okay]", feedbackRound2: "Hazbot: Two\n[Okay]" },
+      { id: 9, feedback: "Hazbot: Top\n[Hooray!]" },
+    ]));
+    mockSelection.mockReturnValue(selection(2));
+    renderWithStores();
+
+    for (let i = 0; i < 5; i++) { openPanel(); dismiss(); }
+    const levels = shownLevels(logSpy).map(([level]) => level);
+    expect(Math.max(...levels)).toBe(2);
+  });
+
+  describe("the level's own action token gates the walk-through", () => {
+    // Rule-set 23 category 2 is a real coaching category, so buildTour returns a tour
+    // for it and the token gate is the only thing that can suppress the launch.
+    const gateEngine = (level1: string, round2?: string, round3?: string) => engineWith(
+      [
+        { id: 2, feedback: level1, feedbackRound2: round2, feedbackRound3: round3 },
+        { id: 9, feedback: "Hazbot: Top\n[Hooray!]" },
+      ],
+      undefined,
+      "23",
+    );
+
+    const openAndActivate = () => {
+      openPanel();
+      act(() => { cmOpts.onDestroyed(); }); // the [Show me] activation route
+    };
+
+    beforeEach(() => {
+      mockSelection.mockReturnValue(selection(2));
+    });
+
+    it("launches at level 1 and again at level 2, then not at level 3", () => {
+      const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+      mockGetEngine.mockReturnValue(gateEngine(
+        "Hazbot: Level one\n[Show me]",
+        "Hazbot: Level two\n[Show me]",
+        "Hazbot: Level three\n[Okay]",
+      ));
+      renderWithStores();
+
+      openAndActivate();
+      act(() => { cmOpts.onDestroyed(); });        // finish the tour
+      openAndActivate();
+      act(() => { cmOpts.onDestroyed(); });
+      openAndActivate();                            // level 3 is [Okay]: no tour
+
+      const launches = payloads(logSpy, "HazbotShowMeClicked").map((p) => p.feedbackLevel);
+      expect(launches).toEqual([1, 2]);
+    });
+
+    it("matches the token case-insensitively and ignores surrounding whitespace", () => {
+      const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+      mockGetEngine.mockReturnValue(gateEngine("Hazbot: Level one\n[ Show Me ]"));
+      renderWithStores();
+      openAndActivate();
+      expect(logSpy).toHaveBeenCalledWith("HazbotShowMeClicked", expect.objectContaining({
+        feedbackLevel: 1,
+      }));
+    });
   });
 });
