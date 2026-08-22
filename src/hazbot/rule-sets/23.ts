@@ -73,10 +73,6 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with correct setups and one spark in each zone",
       feedback: `Hazbot: Great job! You’re ready to answer the questions below.
 [Hooray!]`,
-      feedbackRound2: `Hazbot: Go down and look at the questions you need to answer.
-[Okay]`,
-      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
-[Okay]`,
       visualFeedback: "Celebratory visual: Hazbot doffs his helmet and confetti falls out!",
       expression: "ranSimulation WITH CorrectZoneSetup AND OneSparkPerZone",
     }
