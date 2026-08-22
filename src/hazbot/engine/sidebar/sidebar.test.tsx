@@ -611,3 +611,110 @@ describe("Sidebar — Category summary (best / current / used)", () => {
     expect(matchedRow()).toMatch(/Ran it/);
   });
 });
+
+describe("Sidebar — category feedback levels", () => {
+  // The HIGHEST id is the top category, so every fixture below needs a filler above the
+  // row under test whenever that row should render UNLABELED, and the row that should
+  // render labeled has to be the highest id, not merely the one named "top".
+  const levelRuleSet = (
+    opts: { topRounds?: boolean; repeat?: boolean } = {},
+  ): RuleSet<TestDefaults> => ({
+    id: "levels",
+    categories: [
+      {
+        id: 1, studentAction: "Middle", feedback: "Middle one", visualFeedback: "",
+        feedbackRound2: "Middle two", feedbackRound3: "Middle three",
+        expression: "ranSimulation",
+      },
+      {
+        id: 2, studentAction: "Top", feedback: "Top one", visualFeedback: "",
+        feedbackRound2: opts.topRounds ? "Top two" : undefined,
+        feedbackRound3: opts.topRounds ? "Top three" : undefined,
+        expression: "ranSimulation",
+      },
+    ],
+    factorVariables: [{ name: "ranSimulation", definition: "", logEvents: [], details: "" }],
+    repeatFeedback: opts.repeat
+      ? { id: 100, studentAction: "Re-clicked", feedback: "Keep going!" }
+      : undefined,
+  });
+
+  const renderLevels = (ruleSet: RuleSet<TestDefaults>) => {
+    const engine = new Engine<TestReading, TestDefaults>({
+      ruleSet,
+      factorVariables: { ranSimulation: ranSimulationImpl },
+      simProps: {},
+      translate: noopTranslate,
+      runStartTriggers: ["Triggered"],
+    });
+    const Wrapper = wrap(engine);
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
+  };
+
+  // Clicking the studentAction text bubbles to the row's onClick, the same route the
+  // existing category-detail cases use.
+  const expandRow = (studentAction: string) => {
+    act(() => { screen.getByText(studentAction).click(); });
+  };
+
+  it("renders a middle category's Round rows unlabeled", () => {
+    renderLevels(levelRuleSet({ topRounds: true, repeat: true }));
+    expandRow("Middle");
+    expect(screen.getByText("Feedback (level 2):")).toBeInTheDocument();
+    expect(screen.getByText("Feedback (level 3):")).toBeInTheDocument();
+  });
+
+  it("labels the top category's Round rows 'not shown' and explains what replaces them", () => {
+    renderLevels(levelRuleSet({ topRounds: true, repeat: true }));
+    expandRow("Top");
+    expect(screen.getByText("Feedback (level 2, not shown):")).toBeInTheDocument();
+    expect(screen.getByText("Feedback (level 3, not shown):")).toBeInTheDocument();
+    expect(screen.getByText(/uses the rule-set's repeat feedback/)).toBeInTheDocument();
+  });
+
+  // The label is gated on the top category alone, matching the selection rule; only the
+  // muted explanation's wording depends on a repeat-feedback row existing.
+  it("still labels the top category 'not shown' without a repeat-feedback row", () => {
+    renderLevels(levelRuleSet({ topRounds: true }));
+    expandRow("Top");
+    expect(screen.getByText("Feedback (level 2, not shown):")).toBeInTheDocument();
+    expect(screen.getByText(/carries no repeat feedback/)).toBeInTheDocument();
+  });
+
+  it("omits the Round rows entirely for a category with no Round content", () => {
+    renderLevels(levelRuleSet({ repeat: true }));
+    expandRow("Top");
+    expect(screen.queryByText(/Feedback \(level 2/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Feedback \(level 3/)).not.toBeInTheDocument();
+  });
+
+  it("renders the repeat feedback once per rule-set", () => {
+    renderLevels(levelRuleSet({ repeat: true }));
+    expect(screen.getAllByText("Repeat after success (category 100):")).toHaveLength(1);
+    expect(screen.getByText("Keep going!")).toBeInTheDocument();
+  });
+
+  it("renders no repeat-feedback row when the rule-set carries none", () => {
+    renderLevels(levelRuleSet());
+    expect(screen.queryByText(/Repeat after success/)).not.toBeInTheDocument();
+  });
+
+  it("renders a host-supplied feedback-level diagnostic", () => {
+    const engine = new Engine<TestReading, TestDefaults>({
+      ruleSet: makeRuleSet(),
+      factorVariables: { ranSimulation: ranSimulationImpl },
+      simProps: {},
+      translate: noopTranslate,
+      runStartTriggers: ["Triggered"],
+    });
+    const Wrapper = wrap(engine);
+    const diagnostics = [
+      { label: "Feedback levels", value: "2→3" },
+      { label: "Last shown", value: "level 3 (round3)" },
+    ];
+    render(<Wrapper><Sidebar title="Hazbot" diagnostics={diagnostics} /></Wrapper>);
+    expect(screen.getByText(/Feedback levels/)).toBeInTheDocument();
+    expect(screen.getByText(/2→3/)).toBeInTheDocument();
+    expect(screen.getByText(/level 3 \(round3\)/)).toBeInTheDocument();
+  });
+});

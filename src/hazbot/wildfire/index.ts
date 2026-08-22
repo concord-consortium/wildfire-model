@@ -4,6 +4,7 @@ export {
   getDerivedRangeCc,
   getRequestedPresetInfo,
   buildPresetDiagnostics,
+  buildFeedbackLevelDiagnostics,
 } from "./engine-singleton";
 export type { RequestedPresetInfo } from "./engine-singleton";
 export { selectFeedback } from "./feedback-levels";
