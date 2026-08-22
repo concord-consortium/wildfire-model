@@ -35,12 +35,19 @@ export interface RuleSet<TDefaults = unknown> {
   id: string;                       // tab name, e.g. "23"
   categories: Category[];           // ordered lowest-to-highest by id
   factorVariables: FactorVariableDef[];
+  // The sheet's category-100 row: the feedback shown on a repeat click after the
+  // student has already reached the tab's top category. Feedback-mechanism data,
+  // never a matchable category, since its expression cannot parse. Optional, so
+  // every hand-built RuleSet literal keeps compiling.
+  repeatFeedback?: { id: number; studentAction: string; feedback: string };
 }
 
 export interface Category {
   id: number;
   studentAction: string;
   feedback: string;
+  feedbackRound2?: string;          // sheet column G, "Notes for Round 2"
+  feedbackRound3?: string;          // sheet column H, "Notes for Round 3"
   visualFeedback: string;
   arrowText?: string;
   expression: string;

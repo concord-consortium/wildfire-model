@@ -19,6 +19,10 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with default setup values only",
       feedback: `Hazbot: Looks like you haven’t changed the **Setup** yet. I can help!
 [Show me]`,
+      feedbackRound2: `Hazbot: Go up and look at the instructions under "Fire Supression Investigation" again.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
@@ -33,6 +37,10 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with other zone setup variables changed but without assigning forest with and without suppression",
       feedback: `Hazbot: Don't forget to compare the two types of forest. I can help!
 [Show me]`,
+      feedbackRound2: `Hazbot: Go up and look at the model hint again.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
@@ -47,6 +55,10 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with zones with forest and forest w/ suppression, and a spark not placed in each zone",
       feedback: `Hazbot: I do not see a spark in each zone. Let’s put one in each so you can compare wildfire spread.
 [Show me]`,
+      feedbackRound2: `Hazbot: Go down and look at the questions you need to answer.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Coach mark (no pointer) centered top
      - If 2 sparks were placed, do not outline the Spark button.
@@ -61,6 +73,10 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with zones with forest and forest w/ suppression, a spark placed in each zone, but different drought between the zones",
       feedback: `Hazbot: To compare forest types, make sure the drought level is the same in each zone!
 [Show me]`,
+      feedbackRound2: `Hazbot: Go down and look at the questions you need to answer.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
@@ -141,4 +157,10 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
       details: "The droughtLevel values for all zones (i=0, 1) must be identical.",
     }
   ],
+  repeatFeedback: {
+    id: 100,
+    studentAction: "Student repeats run after success and wants more feedback from Hazbot",
+    feedback: `Hazbot: Great job on this investigation! Keep working through the activity!
+[Got it!]`,
+  },
 };

@@ -19,6 +19,10 @@ export const ruleSet34: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation(s) with default setup values only",
       feedback: `Hazbot: Looks like you haven’t changed the **Setup** yet. What conditions do you think will produce a **high intensity fire**?
 [Show me]`,
+      feedbackRound2: `Hazbot: Go up and look at the instructions under "Fire Intensity Investigation" again.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: `0. Arrow pointing to the Intensity scale
 2. Restart button outlined; coach mark points to Restart button
 3. Setup button outlined; coach mark points to Setup button
@@ -34,6 +38,10 @@ export const ruleSet34: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation, with drought or wind changed but vegetation unchanged.",
       feedback: `Hazbot: Keep experimenting! Try different types of vegetation to produce an even more **high intensity fire**?
 [Show me]`,
+      feedbackRound2: `Hazbot: Go up and look at the model hint again.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: `0. Arrow pointing to the Intensity scale
 1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
@@ -49,6 +57,10 @@ export const ruleSet34: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation, with vegetation changed but not wind or drought changed.",
       feedback: `Hazbot: Great job experimenting with different types of vegetation. Try changing the drought level or wind to produce an even more **high intensity fire!**
 [Show me]`,
+      feedbackRound2: `Hazbot: Go down and look at the questions you need to answer.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: `0. Arrow pointing to the Intensity scale
 1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
@@ -94,4 +106,10 @@ export const ruleSet34: RuleSet<WildfireDefaults> = {
       details: "Wind is set globally (for all zones).  For the default values, read the \"SIMINIT\" sheet.   Allow this sim prop to evalue to true when direction is set away from the default value even if the magnitude was set to zero.  Here, the \"magnitude\" means the wind speed as displayed in the simulation (like \"10\" as in \"10 MPH\").  In the log data, the magnitude data entails two fields \"wind.speed\" and \"wind.scaleFactor\".  The \"magnitude\" is computed as \"wind.speed\" / \"wind.scaleFactor\".  Any small change should be accepted.",
     }
   ],
+  repeatFeedback: {
+    id: 100,
+    studentAction: "Student repeats run after success and wants more feedback from Hazbot",
+    feedback: `Hazbot: Great job on this investigation! Keep working through the activity!
+[Got it!]`,
+  },
 };

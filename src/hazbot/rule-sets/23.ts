@@ -19,6 +19,10 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with only default values.",
       feedback: `Hazbot: Looks like you haven’t changed the **Setup** yet. I can help!
 [Show me]`,
+      feedbackRound2: `Hazbot: Go up and look at the instructions under "Drought Investigation" again.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
@@ -33,6 +37,10 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with incorrect zone setup values",
       feedback: `Hazbot: Hmm, it looks like your zone setups do not match the photos. Let's change that so we can compare zones!
 [Show me]`,
+      feedbackRound2: `Hazbot: Go up and look at the model hint again.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
@@ -47,6 +55,10 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with correct zone setups but without one spark in each zone.",
       feedback: `Hazbot: I don't see a spark in each zone. Let's make sure that **both zones** have one spark!
 [Show me]`,
+      feedbackRound2: `Hazbot: Go down and look at the questions you need to answer.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Coach mark (no pointer) centered top
      - If 2 sparks were placed, do not outline the Spark button.
@@ -61,6 +73,10 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with correct setups and one spark in each zone",
       feedback: `Hazbot: Great job! You’re ready to answer the questions below.
 [Hooray!]`,
+      feedbackRound2: `Hazbot: Go down and look at the questions you need to answer.
+[Okay]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: "Celebratory visual: Hazbot doffs his helmet and confetti falls out!",
       expression: "ranSimulation WITH CorrectZoneSetup AND OneSparkPerZone",
     }
@@ -109,4 +125,10 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
       details: "The correct zone settings for this activity are as follows. For zone 1 (i=0): terrainType \"Foothills\" or \"Plains\"; vegetation \"Grass\" or \"Shrub\" and droughtLevel \"Mild Drought\" or \"Medium Drought\".  For zone 2 (i=1): terrainType same as zone 1 or \"Foothills\", vegetation same as zone 1, and droughtLevel \"No Drought\" or \"Mild Drought\" under the condition that it must be edifferent from the zone 1 drought level.  Lastly, for every allowed setting defined thus far, get a new setting by swapping zone 1 and zone 2, and the new setting is still allowed.",
     }
   ],
+  repeatFeedback: {
+    id: 100,
+    studentAction: "Student repeats run after success and wants more feedback from Hazbot",
+    feedback: `Hazbot: Great job on this investigation! Keep working through the activity!
+[Got it!]`,
+  },
 };
