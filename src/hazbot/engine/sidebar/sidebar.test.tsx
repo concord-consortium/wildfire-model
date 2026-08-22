@@ -516,3 +516,98 @@ describe("Sidebar — diagnostics slot (WM-27 Requirement 13)", () => {
     expect(screen.queryByText("Diagnostics")).not.toBeInTheDocument();
   });
 });
+
+describe("Sidebar — Category summary (best / current / used)", () => {
+  // Three categories so `used` can sit either side of `best`. Cat 3 is the one a
+  // trailing window can reach that the full history cannot, because `usedTool` is true
+  // over the whole session and false over the last reading alone.
+  const toolImpl: FactorVariableImpl<boolean, TestReading, TestDefaults> = {
+    defaultValue: false,
+    compute: (readings) => {
+      const hits = readings.filter((r) => r.foo === "tool");
+      return { value: hits.length > 0, witnesses: hits };
+    },
+  };
+  const ruleSet: RuleSet<TestDefaults> = {
+    id: "tab1",
+    categories: [
+      { id: 1, studentAction: "Did not run", feedback: "", visualFeedback: "", expression: "NOT ranSimulation" },
+      { id: 2, studentAction: "Ran it", feedback: "", visualFeedback: "", expression: "ranSimulation" },
+      {
+        id: 3, studentAction: "Ran it clean", feedback: "", visualFeedback: "",
+        expression: "ranSimulation AND NOT usedTool",
+      },
+    ],
+    factorVariables: [
+      { name: "ranSimulation", definition: "", logEvents: [], details: "" },
+      { name: "usedTool", definition: "", logEvents: [], details: "" },
+    ],
+  };
+
+  function makeEngine(
+    readingsWindow?: EngineOpts<TestReading, TestDefaults>["readingsWindow"],
+  ): Engine<TestReading, TestDefaults> {
+    const engine = new Engine<TestReading, TestDefaults>({
+      ruleSet,
+      factorVariables: { ranSimulation: ranSimulationImpl, usedTool: toolImpl },
+      simProps: {},
+      translate: noopTranslate,
+      runStartTriggers: ["Triggered"],
+      readingsWindow,
+    });
+    // Run 1 used a tool, run 2 did not: best is 2, the last-reading window reaches 3.
+    engine.readings = [
+      { triggeredBy: "Triggered", at: 1, sessionId: "s", temporalHistory: [], foo: "tool" },
+      { triggeredBy: "Triggered", at: 2, sessionId: "s", temporalHistory: [] },
+    ];
+    return engine;
+  }
+
+  const renderSidebar = (engine: Engine<TestReading, TestDefaults>) => {
+    const Wrapper = wrap(engine);
+    render(<Wrapper><Sidebar title="Hazbot" /></Wrapper>);
+  };
+
+  // eslint-disable-next-line testing-library/no-node-access
+  const matchedRow = () => document.querySelector(".hazbot-sidebar-category-matched")?.textContent;
+
+  // The value sits in a text node beside the <strong> label, so the row's own text is what
+  // carries "best: 2". One helper keeps the node access (and its disable) in a single place.
+  // eslint-disable-next-line testing-library/no-node-access
+  const rowText = (label: RegExp) => screen.getByText(label).parentElement?.textContent ?? "";
+
+  it("renders no Category block at all for an engine with no window selector", () => {
+    renderSidebar(makeEngine());
+    expect(screen.queryByText("Category")).not.toBeInTheDocument();
+    expect(screen.queryByText(/best:/)).not.toBeInTheDocument();
+    expect(screen.getByText(/Categories/)).toBeInTheDocument();
+  });
+
+  it("renders best, current, used and the window label when a selector is present", () => {
+    renderSidebar(makeEngine((readings) => ({ readings: readings.slice(-1), label: "last 1 of 2 runs" })));
+    expect(screen.getByText("Category")).toBeInTheDocument();
+    expect(rowText(/best:/)).toContain("best: 2");
+    expect(rowText(/current:/)).toContain("current: 3");
+    expect(rowText(/used:/)).toContain("used: 3");
+    expect(screen.getByText(/last 1 of 2 runs/)).toBeInTheDocument();
+  });
+
+  it("puts the highlight on `used` when the window is above `best`", () => {
+    renderSidebar(makeEngine((readings) => ({ readings: readings.slice(-1) })));
+    expect(matchedRow()).toMatch(/Ran it clean/);
+  });
+
+  it("puts the highlight on `used` when the window is below `best`", () => {
+    renderSidebar(makeEngine(() => ({ readings: [] })));
+    expect(rowText(/best:/)).toContain("best: 2");
+    expect(rowText(/current:/)).toContain("current: 1");
+    expect(matchedRow()).toMatch(/Did not run/);
+  });
+
+  it("shows current: n/a with the highlight back on best when the selector returns null", () => {
+    renderSidebar(makeEngine(() => null));
+    expect(rowText(/current:/)).toContain("current: n/a");
+    expect(rowText(/used:/)).toContain("used: 2");
+    expect(matchedRow()).toMatch(/Ran it/);
+  });
+});

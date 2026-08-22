@@ -1,7 +1,8 @@
 import { ruleSet47 } from "./47";
 import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
+import { tab47, vars47 } from "./__fixtures__/tab-shapes";
 import { factorVariables } from "../wildfire/factor-variables";
-import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/types";
+import { WildfireReading } from "../wildfire/types";
 
 // Tab 47 categories (regenerated from the 2026-05-22 sheet; Cat 100 dropped):
 //   1: NOT ranSimulation
@@ -25,25 +26,10 @@ import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/typ
 
 // SIMINIT defaults for tab 47: 3 zones (Mountains/Forest/Mild Drought,
 // Foothills/Shrub/Medium Drought, Plains/Shrub/Medium Drought), wind 30 / 265.
-const defaultZones: WildfireZone[] = [
-  { terrainType: "Mountains", vegetation: "Forest", droughtLevel: "Mild Drought" },
-  { terrainType: "Foothills", vegetation: "Shrub", droughtLevel: "Medium Drought" },
-  { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Medium Drought" },
-];
-const defaultWind = { speed: 30, direction: 265 };
-const defaults: WildfireDefaults = { zones: defaultZones, wind: defaultWind };
-// A zone changed from default → DefaultVars false.
-const changedZones: WildfireZone[] = [
-  { terrainType: "Mountains", vegetation: "Forest", droughtLevel: "Severe Drought" },
-  { terrainType: "Foothills", vegetation: "Shrub", droughtLevel: "Medium Drought" },
-  { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Medium Drought" },
-];
-const fireLine = [{ x: 0.1, y: 0.2 }, { x: 0.3, y: 0.2 }];
+const { defaults, changedZones, fireLine } = vars47;
 
 function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
-  return mkReading("SimulationStarted", opts.at ?? 100, {
-    zones: defaultZones, sparks: [], fireLineMarkers: [], wind: defaultWind, ...opts,
-  });
+  return mkReading("SimulationStarted", opts.at ?? 100, { ...tab47.base, ...opts });
 }
 const defaultNoFireline = () => startReading();
 const defaultWithFireline = (at = 200) => startReading({ at, fireLineMarkers: fireLine });

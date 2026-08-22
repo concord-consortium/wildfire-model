@@ -1,6 +1,7 @@
 import { ruleSet54 } from "./54";
 import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
-import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/types";
+import { tab54, vars54 } from "./__fixtures__/tab-shapes";
+import { WildfireReading } from "../wildfire/types";
 
 // Tab 54 categories (regenerated from the 2026-05-22 sheet; Cat 100 dropped):
 //   1: NOT ranSimulation
@@ -21,31 +22,10 @@ import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/typ
 
 // SIMINIT defaults for tab 54: 3 zones Shrub / No Drought (terrains
 // Mountains / Foothills / Plains), wind magnitude 10 / direction 165.
-const defaultZones: WildfireZone[] = [
-  { terrainType: "Mountains", vegetation: "Shrub", droughtLevel: "No Drought" },
-  { terrainType: "Foothills", vegetation: "Shrub", droughtLevel: "No Drought" },
-  { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "No Drought" },
-];
-const defaultWind = { speed: 10, direction: 165 };
-const defaults: WildfireDefaults = { zones: defaultZones, wind: defaultWind };
-const terrains = ["Mountains", "Foothills", "Plains"];
-
-// Default vegetation (all Shrub) with every zone at Severe Drought.
-const severeZones: WildfireZone[] = terrains.map((t) => ({
-  terrainType: t, vegetation: "Shrub", droughtLevel: "Severe Drought",
-}));
-// Vegetation changed off default, drought left below severe → cat 2.
-const vegChangedNotSevere: WildfireZone[] = [
-  { terrainType: "Mountains", vegetation: "Forest", droughtLevel: "No Drought" },
-  { terrainType: "Foothills", vegetation: "Shrub", droughtLevel: "No Drought" },
-  { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "No Drought" },
-];
-const fireLine = [{ x: 0.1, y: 0.2 }, { x: 0.3, y: 0.2 }];
+const { defaults, severeZones, vegChangedNotSevere, fireLine } = vars54;
 
 function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
-  return mkReading("SimulationStarted", opts.at ?? 100, {
-    zones: defaultZones, sparks: [], fireLineMarkers: [], wind: defaultWind, ...opts,
-  });
+  return mkReading("SimulationStarted", opts.at ?? 100, { ...tab54.base, ...opts });
 }
 const severeNoFireline = (at = 100) => startReading({ at, zones: severeZones });
 const severeWithFireline = (at = 200) => startReading({ at, zones: severeZones, fireLineMarkers: fireLine });

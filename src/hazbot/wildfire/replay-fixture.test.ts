@@ -4,7 +4,9 @@ declare const require: (id: string) => unknown;
 const { readFileSync } = require("fs") as { readFileSync: (path: string, encoding: string) => string };
 // eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const { resolve } = require("path") as { resolve: (...paths: string[]) => string };
-import { Engine, computeMatchedCategoryForEngine, EngineOpts } from "../engine";
+import { categoryExpressions, computeCategorySelectionForEngine, Engine, EngineOpts } from "../engine";
+import { deriveRangeCc } from "./range-cc";
+import { makeReadingsWindow } from "./run-window";
 import { factorVariables } from "./factor-variables";
 import { simProps } from "./sim-props";
 import { temporalVariables } from "./temporal-variables";
@@ -17,6 +19,8 @@ interface FixtureExpected {
   observed: Record<string, boolean>;
   temporalValues: Record<string, unknown>;
   matchedCategoryHistory: (number | null)[];
+  currentCategoryHistory: (number | null)[];
+  categoryUsedHistory: (number | null)[];
 }
 
 // Engine generates a fresh sessionId per instance; strip it from both sides
@@ -33,6 +37,9 @@ describe("ruleset 25 — replay fixture regression (R18c)", () => {
     const eventsFile = JSON.parse(readFileSync(resolve(fixturesDir, "events.json"), "utf8"));
     const expectedFile = JSON.parse(readFileSync(resolve(fixturesDir, "expected.json"), "utf8")) as FixtureExpected;
 
+    // `engine` below is closed over by the selector's thunk before it exists, and read
+    // only after the constructor returns, since the derivation needs parsedExpressions.
+    // Same deferred-reference shape as engine-singleton.ts and the generator script.
     const opts: EngineOpts<WildfireReading, WildfireDefaults> = {
       ruleSet: ruleSets["25"],
       requestedRuleSetId: "25",
@@ -41,15 +48,21 @@ describe("ruleset 25 — replay fixture regression (R18c)", () => {
       temporalVariables,
       translate,
       runStartTriggers: ["SimulationStarted"],
+      readingsWindow: makeReadingsWindow(() => deriveRangeCc(categoryExpressions(engine))),
       ...(eventsFile.initialTemporalValues !== undefined
         ? { initialTemporalValues: eventsFile.initialTemporalValues }
         : {}),
     };
     const engine = new Engine<WildfireReading, WildfireDefaults>(opts);
     const matchedCategoryHistory: (number | null)[] = [];
+    const currentCategoryHistory: (number | null)[] = [];
+    const categoryUsedHistory: (number | null)[] = [];
     for (const event of eventsFile.events) {
       engine.consume(event);
-      matchedCategoryHistory.push(computeMatchedCategoryForEngine(engine));
+      const { best, current, used } = computeCategorySelectionForEngine(engine);
+      matchedCategoryHistory.push(best);
+      currentCategoryHistory.push(current);
+      categoryUsedHistory.push(used);
     }
 
     // Pre-round-trip the engine output before comparing. Symmetric with the
@@ -63,6 +76,8 @@ describe("ruleset 25 — replay fixture regression (R18c)", () => {
     expect(roundTrip(engine.observed)).toEqual(expectedFile.observed);
     expect(roundTrip(engine.temporalValues)).toEqual(expectedFile.temporalValues);
     expect(matchedCategoryHistory).toEqual(expectedFile.matchedCategoryHistory);
+    expect(currentCategoryHistory).toEqual(expectedFile.currentCategoryHistory);
+    expect(categoryUsedHistory).toEqual(expectedFile.categoryUsedHistory);
 
     // R1 JSON-safe canary — `undefined` survives toEqual against itself but is
     // stripped by JSON.stringify symmetrically. Catch any reducer producing

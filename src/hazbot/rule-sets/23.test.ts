@@ -1,9 +1,7 @@
 import { ruleSet23 } from "./23";
 import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
-import { WildfireDefaults, WildfireReading } from "../wildfire/types";
-import {
-  TerrainType, terrainLabels, Vegetation, vegetationLabels, DroughtLevel, droughtLabels,
-} from "../../types";
+import { tab23, vars23 } from "./__fixtures__/tab-shapes";
+import { WildfireReading } from "../wildfire/types";
 
 // Tab 23 categories (regenerated from the 2026-05-22 sheet; the Cat 100
 // feedback-mechanism row is dropped by the extractor):
@@ -15,40 +13,10 @@ import {
 // No stub-gated category — the (e) shape is N/A.
 
 // SIMINIT defaults for tab 23: 2 zones Plains / Shrub / Mild Drought, wind 0/0.
-const defaultZone = {
-  terrainType: terrainLabels[TerrainType.Plains],
-  vegetation: vegetationLabels[Vegetation.Shrub],
-  droughtLevel: droughtLabels[DroughtLevel.MildDrought],
-};
-const defaultZones = [defaultZone, defaultZone];
-const defaults: WildfireDefaults = { zones: defaultZones, wind: { speed: 0, direction: 0 } };
-
-// The sheet-defined "correct zone setup" (CorrectZoneSetup, tab 23 R16):
-//   zone 1 = Foothills / Grass / No Drought; zone 2 = Foothills / Grass / Mild Drought.
-// Built through the label maps so a src/types.ts relabeling tracks automatically.
-const correctZones = [
-  {
-    terrainType: terrainLabels[TerrainType.Foothills],
-    vegetation: vegetationLabels[Vegetation.Grass],
-    droughtLevel: droughtLabels[DroughtLevel.NoDrought],
-  },
-  {
-    terrainType: terrainLabels[TerrainType.Foothills],
-    vegetation: vegetationLabels[Vegetation.Grass],
-    droughtLevel: droughtLabels[DroughtLevel.MildDrought],
-  },
-];
-// Changed from default but NOT the correct setup (zone-1 drought bumped to Severe).
-const changedIncorrectZones = [
-  { ...defaultZone, droughtLevel: droughtLabels[DroughtLevel.SevereDrought] },
-  defaultZone,
-];
-const sparksPerZone = [{ x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }];
+const { defaults, correctZones, changedIncorrectZones, sparksPerZone } = vars23;
 
 function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
-  return mkReading("SimulationStarted", opts.at ?? 100, {
-    zones: defaultZones, sparks: [], wind: { speed: 0, direction: 0 }, ...opts,
-  });
+  return mkReading("SimulationStarted", opts.at ?? 100, { ...tab23.base, ...opts });
 }
 
 describe("ruleSet 23 — per-rule-set behavior sweep", () => {

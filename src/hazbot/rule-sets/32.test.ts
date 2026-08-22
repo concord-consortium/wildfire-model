@@ -1,6 +1,7 @@
 import { ruleSet32 } from "./32";
 import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
-import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/types";
+import { tab32, vars32 } from "./__fixtures__/tab-shapes";
+import { WildfireReading } from "../wildfire/types";
 
 // Tab 32 categories (regenerated from the 2026-08-20 sheet; Cat 100 dropped):
 //   1: NOT ranSimulation
@@ -15,35 +16,12 @@ import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/typ
 // gained the `UniformDroughtLevels` conjunct that makes it disjoint from cat 4.
 
 // SIMINIT defaults for tab 32: 3 zones Plains / Grass / Mild Drought, wind 0/0.
-const defaultZone: WildfireZone = { terrainType: "Plains", vegetation: "Grass", droughtLevel: "Mild Drought" };
-const defaultZones = [defaultZone, defaultZone, defaultZone];
-const defaults: WildfireDefaults = { zones: defaultZones, wind: { speed: 0, direction: 0 } };
-
-// Three distinct vegetations, one per zone → UniqueVegetationPerZone true.
-const uniqueVegUniformDrought: WildfireZone[] = [
-  { terrainType: "Plains", vegetation: "Grass", droughtLevel: "Mild Drought" },
-  { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Mild Drought" },
-  { terrainType: "Plains", vegetation: "Forest", droughtLevel: "Mild Drought" },
-];
-const uniqueVegNonUniformDrought: WildfireZone[] = [
-  { terrainType: "Plains", vegetation: "Grass", droughtLevel: "Mild Drought" },
-  { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Mild Drought" },
-  { terrainType: "Plains", vegetation: "Forest", droughtLevel: "Severe Drought" },
-];
-// Drought changed but vegetation left at default (all Grass) → not unique veg.
-const droughtChangedNotUniqueVeg: WildfireZone[] = [
-  { terrainType: "Plains", vegetation: "Grass", droughtLevel: "Severe Drought" },
-  { terrainType: "Plains", vegetation: "Grass", droughtLevel: "Mild Drought" },
-  { terrainType: "Plains", vegetation: "Grass", droughtLevel: "Mild Drought" },
-];
-const sparksPerZone = [
-  { x: 0, y: 0, zoneIdx: 0 }, { x: 1, y: 0, zoneIdx: 1 }, { x: 2, y: 0, zoneIdx: 2 },
-];
+const {
+  defaults, uniqueVegUniformDrought, uniqueVegNonUniformDrought, droughtChangedNotUniqueVeg, sparksPerZone,
+} = vars32;
 
 function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
-  return mkReading("SimulationStarted", opts.at ?? 100, {
-    zones: defaultZones, sparks: [], wind: { speed: 0, direction: 0 }, ...opts,
-  });
+  return mkReading("SimulationStarted", opts.at ?? 100, { ...tab32.base, ...opts });
 }
 
 describe("ruleSet 32 — per-rule-set behavior sweep", () => {

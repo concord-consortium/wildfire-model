@@ -5,7 +5,7 @@ import { HazbotButton, parseFeedback } from "./hazbot-button";
 import { createStores } from "../models/stores";
 import * as logModule from "../log";
 import { getAnalysisEngine } from "../hazbot/wildfire";
-import { computeMatchedCategoryForEngine } from "../hazbot/engine";
+import { computeCategorySelectionForEngine } from "../hazbot/engine";
 import { createCoachmarksEngine } from "@concord-consortium/coachmarks";
 
 // The coachmarks engine and the analysis-engine reads are mocked: these unit tests
@@ -17,13 +17,20 @@ jest.mock("../hazbot/wildfire", () => ({
   ...jest.requireActual("../hazbot/wildfire"),
   getAnalysisEngine: jest.fn(),
 }));
+// computeCategorySelectionForEngine, not computeMatchedCategoryForEngine: the component
+// reads the selection, and the selection reaches the floor through evaluator.ts's own
+// local binding rather than through this barrel, so overriding the floor here is inert.
 jest.mock("../hazbot/engine", () => ({
   ...jest.requireActual("../hazbot/engine"),
-  computeMatchedCategoryForEngine: jest.fn(),
+  computeCategorySelectionForEngine: jest.fn(),
 }));
 
 const mockGetEngine = getAnalysisEngine as unknown as jest.Mock;
-const mockMatched = computeMatchedCategoryForEngine as unknown as jest.Mock;
+const mockSelection = computeCategorySelectionForEngine as unknown as jest.Mock;
+// Most cases only care which category the feedback comes from, so they stub a selection
+// whose window matched nothing and let `used` fall back to `best`.
+const selection = (best: number | null, current: number | null = null) =>
+  ({ best, current, used: current ?? best });
 const mockCreateEngine = createCoachmarksEngine as unknown as jest.Mock;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -61,7 +68,7 @@ beforeEach(() => {
   cm = { highlight: jest.fn(), destroy: jest.fn() };
   // Default: no engine — matches the pre-engine state the WM-6 tests below rely on.
   mockGetEngine.mockReset().mockReturnValue(undefined);
-  mockMatched.mockReset();
+  mockSelection.mockReset().mockReturnValue(selection(null));
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mockCreateEngine.mockReset().mockImplementation((opts: any) => { cmOpts = opts; return cm; });
 });
@@ -108,10 +115,11 @@ it("click clears the pulse and logs HazbotButtonClicked (no engine → panel no-
   fireEvent.click(screen.getByTestId("hazbot-button"));
   // No engine in jsdom, so the panel can't open: handleClick sets the flag, then
   // the guarded effect clears it back (so the button never sticks "Large"). The
-  // pulse is acknowledged and the click logs matchedCategory: null.
+  // pulse is acknowledged and the click logs all three category fields as null.
   expect(stores.ui.showHazbotFeedback).toBe(false);
   expect(stores.ui.hazbotPulseArmed).toBe(false);
-  expect(logSpy).toHaveBeenCalledWith("HazbotButtonClicked", { matchedCategory: null });
+  expect(logSpy).toHaveBeenCalledWith("HazbotButtonClicked",
+    { matchedCategory: null, categoryUsed: null, categoryCurrent: null });
 });
 
 it("blinks on the AP-79 schedule (fake timers + fixed random)", () => {
@@ -161,13 +169,14 @@ describe("Hazbot feedback panel", () => {
   // The click also calls log(), which routes through the analysis engine's
   // consume(); the fake engine here has no consume(), and logging is irrelevant to
   // these tests, so no-op it.
-  beforeEach(() => { jest.spyOn(logModule, "log").mockImplementation(() => undefined); });
+  let logSpy: jest.SpyInstance;
+  beforeEach(() => { logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined); });
 
   it("opens a coach mark with the matched category's parsed feedback and token label", () => {
     mockGetEngine.mockReturnValue(
       engineWith([{ id: 1, feedback: "Hazbot: **Remember**, you need to run the model.\n[Okay]" }]),
     );
-    mockMatched.mockReturnValue(1);
+    mockSelection.mockReturnValue(selection(1));
     renderWithStores();
     openPanel();
 
@@ -178,6 +187,38 @@ describe("Hazbot feedback panel", () => {
     const spec = lastHighlightSpec();
     expect(spec.popover.description).toBe("**Remember**, you need to run the model.");
     expect(spec.popover.side).toBe("top");
+  });
+
+  // The component must render and log from `used` in BOTH directions, neither re-deriving
+  // the choice nor clamping it to `best`. The rule that produces `used` is stubbed here
+  // and pinned in evaluator.test.ts.
+  const windowCategories = [
+    { id: 2, feedback: "Hazbot: Try changing a variable.\n[Okay]" },
+    { id: 3, feedback: "Hazbot: Nice, now add a fire line.\n[Okay]" },
+    { id: 4, feedback: "Hazbot: Compare the two runs.\n[Okay]" },
+    { id: 5, feedback: "Hazbot: Great job!\n[Hooray!]" },
+  ];
+
+  it("shows and logs the windowed category when it is below the best one", () => {
+    mockGetEngine.mockReturnValue(engineWith(windowCategories));
+    mockSelection.mockReturnValue({ best: 5, current: 4, used: 4 });
+    renderWithStores();
+    openPanel();
+
+    expect(logSpy).toHaveBeenCalledWith("HazbotButtonClicked",
+      { matchedCategory: 5, categoryUsed: 4, categoryCurrent: 4 });
+    expect(lastHighlightSpec().popover.description).toBe("Compare the two runs.");
+  });
+
+  it("shows and logs the windowed category when it is above the best one", () => {
+    mockGetEngine.mockReturnValue(engineWith(windowCategories));
+    mockSelection.mockReturnValue({ best: 2, current: 3, used: 3 });
+    renderWithStores();
+    openPanel();
+
+    expect(logSpy).toHaveBeenCalledWith("HazbotButtonClicked",
+      { matchedCategory: 2, categoryUsed: 3, categoryCurrent: 3 });
+    expect(lastHighlightSpec().popover.description).toBe("Nice, now add a fire line.");
   });
 
   it("does not open when there is no engine / matched category, and resets the flag", () => {
@@ -191,7 +232,7 @@ describe("Hazbot feedback panel", () => {
 
   it("resets ui.showHazbotFeedback on dismiss via onDestroyed (fires on all routes)", () => {
     mockGetEngine.mockReturnValue(engineWith([{ id: 1, feedback: "Hazbot: hi [Okay]" }]));
-    mockMatched.mockReturnValue(1);
+    mockSelection.mockReturnValue(selection(1));
     const { stores } = renderWithStores();
     openPanel();
     expect(stores.ui.showHazbotFeedback).toBe(true);
@@ -201,7 +242,7 @@ describe("Hazbot feedback panel", () => {
 
   it("routes ×/Escape (onCancelRequested) through engine.destroy()", () => {
     mockGetEngine.mockReturnValue(engineWith([{ id: 1, feedback: "Hazbot: hi [Okay]" }]));
-    mockMatched.mockReturnValue(1);
+    mockSelection.mockReturnValue(selection(1));
     renderWithStores();
     openPanel();
     act(() => { cmOpts.onCancelRequested(); });
@@ -213,7 +254,7 @@ describe("Hazbot feedback panel", () => {
       { id: 1, feedback: "Hazbot: Cat one [Okay]" },
       { id: 2, feedback: "Hazbot: Cat two [Show me]" },
     ]));
-    mockMatched.mockReturnValue(1);
+    mockSelection.mockReturnValue(selection(1));
     renderWithStores();
 
     openPanel();
@@ -221,7 +262,7 @@ describe("Hazbot feedback panel", () => {
     expect(cmOpts.doneBtnText).toBe("Okay");
 
     act(() => { cmOpts.onDestroyed(); });
-    mockMatched.mockReturnValue(2);
+    mockSelection.mockReturnValue(selection(2));
     openPanel();
     expect(lastHighlightSpec().popover.description).toBe("Cat two");
     expect(cmOpts.doneBtnText).toBe("Show me");
@@ -229,7 +270,7 @@ describe("Hazbot feedback panel", () => {
 
   it("suppresses the pulse halo while the coach mark is open, even if a run re-arms it", () => {
     mockGetEngine.mockReturnValue(engineWith([{ id: 1, feedback: "Hazbot: hi [Okay]" }]));
-    mockMatched.mockReturnValue(1);
+    mockSelection.mockReturnValue(selection(1));
     const { stores } = renderWithStores();
     const wrap = () => screen.getByTestId("hazbot-button-wrap");
     openPanel(); // clears the arm and opens the coach mark (showHazbotFeedback = true)
@@ -245,7 +286,7 @@ describe("Hazbot feedback panel", () => {
 
   it("toggles the .coached Large-state class with ui.showHazbotFeedback", () => {
     mockGetEngine.mockReturnValue(engineWith([{ id: 1, feedback: "Hazbot: hi [Okay]" }]));
-    mockMatched.mockReturnValue(1);
+    mockSelection.mockReturnValue(selection(1));
     renderWithStores();
     const wrap = () => screen.getByTestId("hazbot-button-wrap");
     expect(wrap().className).not.toMatch(/coached/);
@@ -257,7 +298,7 @@ describe("Hazbot feedback panel", () => {
 
   it("suppresses the robot avatar badge on the intro popover (showAvatar: false)", () => {
     mockGetEngine.mockReturnValue(engineWith([{ id: 1, feedback: "Hazbot: hi [Okay]" }]));
-    mockMatched.mockReturnValue(1);
+    mockSelection.mockReturnValue(selection(1));
     renderWithStores();
     openPanel();
     expect(cmOpts.showAvatar).toBe(false);
@@ -285,7 +326,7 @@ describe("Hazbot walk-through tour", () => {
   beforeEach(() => {
     engines = [];
     mockGetEngine.mockReset().mockReturnValue(coachingEngine());
-    mockMatched.mockReset().mockReturnValue(2);
+    mockSelection.mockReset().mockReturnValue(selection(2));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockCreateEngine.mockReset().mockImplementation((opts: any) => {
       const e = { opts, highlight: jest.fn(), drive: jest.fn(), destroy: jest.fn() };

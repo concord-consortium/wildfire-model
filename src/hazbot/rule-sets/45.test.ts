@@ -1,6 +1,7 @@
 import { ruleSet45 } from "./45";
 import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
-import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/types";
+import { tab45, vars45 } from "./__fixtures__/tab-shapes";
+import { WildfireReading } from "../wildfire/types";
 
 // Tab 45 categories (regenerated from the 2026-05-22 sheet; Cat 100 dropped):
 //   1: NOT ranSimulation
@@ -19,25 +20,10 @@ import { WildfireDefaults, WildfireReading, WildfireZone } from "../wildfire/typ
 
 // SIMINIT defaults for tab 45: 3 zones Shrub / No Drought (terrains
 // Mountains / Foothills / Plains), wind magnitude 20 / direction 100.
-const defaultZones: WildfireZone[] = [
-  { terrainType: "Mountains", vegetation: "Shrub", droughtLevel: "No Drought" },
-  { terrainType: "Foothills", vegetation: "Shrub", droughtLevel: "No Drought" },
-  { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "No Drought" },
-];
-const defaultWind = { speed: 20, direction: 100 };
-const defaults: WildfireDefaults = { zones: defaultZones, wind: defaultWind };
-// A zone changed from default → DefaultVars false.
-const changedZones: WildfireZone[] = [
-  { terrainType: "Mountains", vegetation: "Shrub", droughtLevel: "Severe Drought" },
-  { terrainType: "Foothills", vegetation: "Shrub", droughtLevel: "No Drought" },
-  { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "No Drought" },
-];
-const fireLine = [{ x: 0.1, y: 0.2 }, { x: 0.3, y: 0.2 }];
+const { defaults, changedZones, fireLine } = vars45;
 
 function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
-  return mkReading("SimulationStarted", opts.at ?? 100, {
-    zones: defaultZones, sparks: [], fireLineMarkers: [], wind: defaultWind, ...opts,
-  });
+  return mkReading("SimulationStarted", opts.at ?? 100, { ...tab45.base, ...opts });
 }
 
 describe("ruleSet 45 — per-rule-set behavior sweep", () => {

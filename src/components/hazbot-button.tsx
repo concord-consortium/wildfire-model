@@ -3,11 +3,11 @@ import { observer } from "mobx-react";
 import Button from "@mui/material/Button";
 import { useStores } from "../use-stores";
 import { log } from "../log";
-import { getAnalysisEngine } from "../hazbot/wildfire";
+import { getAnalysisEngine, WildfireDefaults, WildfireReading } from "../hazbot/wildfire";
 import { buildTour } from "../hazbot/wildfire/build-tour";
 import { tourData } from "../hazbot/wildfire/tour-data.generated";
 import { TourContext } from "../hazbot/wildfire/tour-map";
-import { computeMatchedCategoryForEngine } from "../hazbot/engine";
+import { CategorySelection, computeCategorySelectionForEngine, Engine } from "../hazbot/engine";
 import { createCoachmarksEngine, EngineHandle, EngineStep } from "@concord-consortium/coachmarks";
 import { SimulationModel } from "../models/simulation";
 import HazbotBack from "../assets/bottom-bar/hazbot-back.svg";
@@ -16,6 +16,13 @@ import HazbotBlinks from "../assets/bottom-bar/hazbot-blinks.svg";
 
 import "@concord-consortium/coachmarks/styles/hazbot";
 import css from "./hazbot-button.scss";
+
+// The selection rule itself lives in the substrate, since the sidebar and the
+// replay-fixture generator read it too. All this adds is the no-engine case, which the
+// substrate cannot express because it takes an Engine.
+const NO_ENGINE: CategorySelection = { best: null, current: null, used: null };
+const readCategories = (engine: Engine<WildfireReading, WildfireDefaults> | undefined) =>
+  (engine ? computeCategorySelectionForEngine(engine) : NO_ENGINE);
 
 // Shared coach-mark arrow geometry for both the intro popover and the tour, matching
 // the Zeplin design (strokeWidth 3 = the hazbot theme's 3px popover border).
@@ -49,8 +56,8 @@ export function parseFeedback(raw: string): { body: string; label: string } {
 // The Hazbot Analysis button (bottom bar), a MobX `observer` child of BottomBar.
 // Clicking it opens the coach-mark feedback panel (the effect below) and logs the
 // matched category. It reads the engine directly (getAnalysisEngine() +
-// computeMatchedCategoryForEngine()) rather than the reactive useAnalysisEngine() hook,
-// since the matched category is only needed at click/open time, not live while open.
+// computeCategorySelectionForEngine()) rather than the reactive useAnalysisEngine()
+// hook, since the category is only needed at click/open time, not live while open.
 export const HazbotButton = observer(function HazbotButton() {
   const { ui, simulation } = useStores();
 
@@ -116,7 +123,7 @@ export const HazbotButton = observer(function HazbotButton() {
     if (!ui.showHazbotFeedback || !avatarRef.current) return;
     setTourActive(false); // fresh open starts in the intro (enlarged-robot) state
     const engine = getAnalysisEngine();
-    const matched = engine ? computeMatchedCategoryForEngine(engine) : null;
+    const { used: matched } = readCategories(engine);
     const ruleSetId = engine?.ruleSet?.id ?? null;
     const feedback =
       engine?.ruleSet?.categories.find((c) => c.id === matched)?.feedback ?? "";
@@ -242,8 +249,10 @@ export const HazbotButton = observer(function HazbotButton() {
     // otherwise the click would mutate the matched category it just reported. We read
     // matchedCategory BEFORE log() so the payload reflects pre-click state.
     const engine = getAnalysisEngine();
-    const matchedCategory = engine ? computeMatchedCategoryForEngine(engine) : null;
-    log("HazbotButtonClicked", { matchedCategory });
+    const { best, current, used } = readCategories(engine);
+    // matchedCategory keeps meaning `best`, so the longitudinal series is unbroken;
+    // categoryUsed is the category the student was actually shown.
+    log("HazbotButtonClicked", { matchedCategory: best, categoryUsed: used, categoryCurrent: current });
   };
 
   // Wrapper state classes: `ready` (pulse halo), `coached` (intro enlarged-robot,

@@ -1,10 +1,11 @@
 import { parse } from "./parser";
 import {
   EvalCtx, evaluateExpr, evaluateLeaf, evaluateWith,
-  highestTrueAt, computeMatchedCategoryFloor,
+  highestTrueAt, computeMatchedCategoryFloor, computeCurrentCategoryForEngine,
+  computeCategorySelectionForEngine, categoryExpressions,
 } from "./evaluator";
-import { CachedAst } from "./engine";
-import { BaseReading, FactorVariableImpl, RuleSet, SimPropImpl } from "./types";
+import { CachedAst, Engine } from "./engine";
+import { BaseReading, FactorVariableImpl, RuleSet, SimPropImpl, WindowSelection } from "./types";
 import {
   evaluateFactorVarForRender, evaluateSimPropForRender,
 } from "./safely-evaluate-impl";
@@ -101,6 +102,20 @@ describe("evaluator — WITH binding", () => {
     expect(result.value).toBe(true);
     expect(result.boundReading?.at).toBe(1);
     expect(result.candidateEvaluations).toHaveLength(2);
+  });
+
+  // The sidebar reports the bound witness as "Matched on reading #N" and colors the
+  // WITH's sim-prop leaves against it, so a walker asking "which run satisfied this?"
+  // should be pointed at the latest one, not the first.
+  it("binds the LAST qualifying witness when several qualify, with the same value", () => {
+    const r1 = { ...mkReading("SimulationStarted", 1), payload: { hasOneSpark: true } } as TR;
+    const r2 = { ...mkReading("SimulationStarted", 2), payload: { hasOneSpark: false } } as TR;
+    const r3 = { ...mkReading("SimulationStarted", 3), payload: { hasOneSpark: true } } as TR;
+    const ctx = makeCtx([r1, r2, r3], { ranSimulation: ranSimulationImpl }, { OneSparkPerZone: oneSparkSim });
+    const result = evaluateWith("ranSimulation", { kind: "sim-prop-leaf", name: "OneSparkPerZone" }, ctx);
+    expect(result.value).toBe(true);
+    expect(result.boundReading?.at).toBe(3);
+    expect(result.candidateEvaluations.map((c) => c.propResult)).toEqual([true, false, true]);
   });
 
   it("evaluates false with empty witnesses (no SimulationStarted readings yet)", () => {
@@ -216,5 +231,139 @@ describe("evaluator — highestTrueAt + computeMatchedCategoryFloor", () => {
     ];
     const floor = computeMatchedCategoryFloor(ruleSet, asts(), buildCtx, readings);
     expect(floor).toBe(2);
+  });
+});
+
+describe("evaluator — readings window (category.current)", () => {
+  const toolImpl: FactorVariableImpl<boolean, TR, TD> = {
+    defaultValue: false,
+    compute: (readings) => {
+      const hits = readings.filter((r) => Boolean((r.payload as { tool?: boolean } | undefined)?.tool));
+      return { value: hits.length > 0, witnesses: hits };
+    },
+  };
+
+  const windowRuleSet: RuleSet<TD> = {
+    id: "window-test",
+    factorVariables: [
+      { name: "ranSimulation", definition: "", logEvents: [], details: "" },
+      { name: "usedTool", definition: "", logEvents: [], details: "" },
+    ],
+    categories: [
+      { id: 1, studentAction: "", feedback: "", visualFeedback: "", expression: "NOT ranSimulation" },
+      { id: 2, studentAction: "", feedback: "", visualFeedback: "", expression: "ranSimulation" },
+      { id: 3, studentAction: "", feedback: "", visualFeedback: "", expression: "ranSimulation AND NOT usedTool" },
+    ],
+  };
+
+  function makeEngine(
+    readings: TR[],
+    readingsWindow?: (rs: TR[]) => WindowSelection<TR> | null,
+  ): Engine<TR, TD> {
+    const engine = new Engine<TR, TD>({
+      ruleSet: windowRuleSet,
+      factorVariables: { ranSimulation: ranSimulationImpl, usedTool: toolImpl },
+      simProps: {},
+      translate: () => ({ kind: "no-op" }),
+      readingsWindow,
+    });
+    engine.readings = readings;
+    return engine;
+  }
+
+  // Run 1 used a tool, run 2 did not. The floor over the full history is 2 (cat 3 is
+  // false at every prefix once the tool reading is in) while the last-run window,
+  // seeing no tool, reaches 3. That pair is `current` above `best`.
+  const toolThenClean: TR[] = [
+    { ...mkReading("SimulationStarted", 1), payload: { tool: true } } as TR,
+    mkReading("SimulationStarted", 2),
+  ];
+  const lastOne = (rs: TR[]): WindowSelection<TR> => ({ readings: rs.slice(-1) });
+
+  it("returns null when the engine has no selector", () => {
+    expect(computeCurrentCategoryForEngine(makeEngine(toolThenClean))).toBeNull();
+  });
+
+  it("returns null for an inactive engine even with a selector", () => {
+    const engine = new Engine<TR, TD>({
+      requestedRuleSetId: "window-test",
+      factorVariables: {},
+      simProps: {},
+      translate: () => ({ kind: "no-op" }),
+      readingsWindow: lastOne,
+    });
+    expect(engine.isActive).toBe(false);
+    expect(computeCurrentCategoryForEngine(engine)).toBeNull();
+  });
+
+  // A null selection is not an empty window: category 1 is `NOT ranSimulation`, so
+  // falling through to an empty-window evaluation would answer 1 here (the case the
+  // empty-window test below pins) for a student who has run the simulation twice.
+  it("returns null when the selector returns null", () => {
+    expect(computeCurrentCategoryForEngine(makeEngine(toolThenClean, () => null))).toBeNull();
+  });
+
+  it("returns the highest category true over the slice and passes the label through", () => {
+    const engine = makeEngine(toolThenClean, (rs) => ({ readings: rs.slice(-1), label: "last run" }));
+    expect(computeCurrentCategoryForEngine(engine)).toEqual({ category: 3, label: "last run" });
+  });
+
+  it("does not apply the monotone floor within the window", () => {
+    const cleanThenTool: TR[] = [
+      mkReading("SimulationStarted", 1),
+      { ...mkReading("SimulationStarted", 2), payload: { tool: true } } as TR,
+    ];
+    const engine = makeEngine(cleanThenTool, (rs) => ({ readings: rs }));
+    expect(computeCurrentCategoryForEngine(engine)?.category).toBe(2);
+    expect(computeMatchedCategoryFloor(
+      windowRuleSet, engine.parsedExpressions,
+      (slice) => makeCtx(slice, { ranSimulation: ranSimulationImpl, usedTool: toolImpl }),
+      cleanThenTool,
+    )).toBe(3);
+  });
+
+  it("evaluates the empty-prefix state for an empty window rather than throwing", () => {
+    const engine = makeEngine(toolThenClean, () => ({ readings: [] }));
+    expect(computeCurrentCategoryForEngine(engine)).toEqual({ category: 1, label: undefined });
+  });
+
+  it("computeCategorySelectionForEngine takes `used` from `current` when it is below `best`", () => {
+    const engine = makeEngine(toolThenClean, () => ({ readings: [], label: "empty" }));
+    expect(computeCategorySelectionForEngine(engine))
+      .toEqual({ best: 2, current: 1, used: 1, label: "empty" });
+  });
+
+  // The case a min(best, current) revert would break.
+  it("computeCategorySelectionForEngine takes `used` from `current` when it is above `best`", () => {
+    const engine = makeEngine(toolThenClean, lastOne);
+    expect(computeCategorySelectionForEngine(engine))
+      .toEqual({ best: 2, current: 3, used: 3, label: undefined });
+  });
+
+  it("computeCategorySelectionForEngine falls back to `best` when the selector returns null", () => {
+    const engine = makeEngine(toolThenClean, () => null);
+    expect(computeCategorySelectionForEngine(engine))
+      .toEqual({ best: 2, current: null, used: 2, label: undefined });
+  });
+});
+
+describe("evaluator — categoryExpressions", () => {
+  it("returns the parsed AST per category id and omits parse failures", () => {
+    const engine = new Engine<TR, TD>({
+      ruleSet: {
+        id: "parse-test",
+        factorVariables: [{ name: "ranSimulation", definition: "", logEvents: [], details: "" }],
+        categories: [
+          { id: 1, studentAction: "", feedback: "", visualFeedback: "", expression: "ranSimulation" },
+          { id: 2, studentAction: "", feedback: "", visualFeedback: "", expression: "AND OR" },
+        ],
+      },
+      factorVariables: { ranSimulation: ranSimulationImpl },
+      simProps: {},
+      translate: () => ({ kind: "no-op" }),
+    });
+    const exprs = categoryExpressions(engine);
+    expect(Array.from(exprs.keys())).toEqual([1]);
+    expect(exprs.get(1)).toEqual({ kind: "boolean-leaf", name: "ranSimulation" });
   });
 });

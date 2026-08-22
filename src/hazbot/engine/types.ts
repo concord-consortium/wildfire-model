@@ -108,3 +108,15 @@ export class EngineConstructionError extends Error {
     Object.setPrototypeOf(this, EngineConstructionError.prototype);
   }
 }
+
+// What a host's readings-window selector returns. The substrate is host-app-agnostic
+// and cannot know what a "run" is, so the host decides which suffix of the readings
+// `category.current` is evaluated over and describes that choice in its own vocabulary.
+export interface WindowSelection<TReading extends BaseReading> {
+  // The readings to evaluate over. A suffix of the array passed in, though the
+  // substrate does not require that.
+  readings: TReading[];
+  // Free-text host description of the window, rendered verbatim by the dev sidebar
+  // (wildfire supplies e.g. "range_cc 2 · 2 of 3 runs"). Never parsed by the substrate.
+  label?: string;
+}
