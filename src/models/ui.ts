@@ -31,6 +31,13 @@ export class UIModel {
   // Start and on the click that opens feedback. A Fire Line pause does NOT set
   // it (mid-intervention), so the pulse stays off during a fire-line pause.
   @observable public hazbotPulseArmed = false;
+  // Category id -> the highest feedback level shown for that category in this page
+  // session. Nothing inside a run resets it: a category the student returns to resumes
+  // where it left off rather than replaying level 1. Cleared wholesale by Clear All and
+  // by window.test.resetHazbotFeedbackLevels().
+  @observable public hazbotFeedbackLevels = new Map<number, number>();
+  // The level and source last displayed, for the dev sidebar's readout only.
+  @observable public hazbotLastFeedbackShown?: { level: number; source: string } = undefined;
 
   constructor() {
     makeObservable(this);

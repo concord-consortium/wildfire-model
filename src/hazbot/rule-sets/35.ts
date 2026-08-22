@@ -19,6 +19,10 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with default setup values only",
       feedback: `Hazbot: Click **Setup** and change the conditions to compare forest with and without suppression. Then run the model again.
 [Show me]`,
+      feedbackRound2: `Hazbot: Go up and look at the instructions under "Tree Survival Investigation" again.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Next button on the Setup panel outlined; coach mark points to Next button`,
@@ -33,6 +37,10 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with different terrains between the zones",
       feedback: `Hazbot: To compare forest types, make sure **both zones have mountains. Do not change the terrain.**
 [Show me]`,
+      feedbackRound2: `Hazbot: Go up and look at the instructions under "Tree Survival Investigation" again.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
@@ -47,6 +55,10 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with the same terrain in both zones but without assigning forest with and without suppression to each zone",
       feedback: `Hazbot: Let’s focus on **forests with and without suppression** in the vegetation settings. Also, check the same drought level in each zone.
 [Show me]`,
+      feedbackRound2: `Hazbot: Go up and look at the instructions under "Tree Survival Investigation" again.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Next button on the Setup panel outlined; coach mark points to Next button`,
@@ -61,6 +73,10 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with forest and forest with suppression assigned but with different drought levels between the zones",
       feedback: `Hazbot: To compare forest types, make sure the both zones have the **same drought level**!
 [Show me]`,
+      feedbackRound2: `Hazbot: Go up and look at the model hint again.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Setup button outlined; coach mark points to Setup button
 3. Setup panel outlined; coach mark points to Setup panel`,
@@ -75,6 +91,10 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with forest with and without suppression, same drought and terrain types between zones, but without a spark in each zone",
       feedback: `Hazbot: I don’t see a **spark in both zones.** Add one spark to each so you can compare wildfire spread.
 [Show me]`,
+      feedbackRound2: `Hazbot: Go down and look at the questions you need to answer.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Coach mark (no pointer) centered top
      - If 2 sparks were placed, do not outline the Spark button.
@@ -161,4 +181,10 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
       details: "The terrainType values for all zones (i=0, 1) must be identical.",
     }
   ],
+  repeatFeedback: {
+    id: 100,
+    studentAction: "Student repeats run after success and wants more feedback from Hazbot",
+    feedback: `Hazbot: Great job on this investigation! Keep working through the activity!
+[Got it!]`,
+  },
 };

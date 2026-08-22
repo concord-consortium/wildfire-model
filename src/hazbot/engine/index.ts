@@ -17,6 +17,7 @@ export { currentTemporal } from "./temporal";
 export type { EngineOpts } from "./engine";
 export type { Expression } from "./parser";
 export { ParseError } from "./parser";
+export { topCategoryId } from "./top-category";
 export { ENGINE_VERSION } from "./version";
 export { AnalysisEngineProvider, useAnalysisEngine } from "./react";
 export type { AnalysisEngineProviderProps, HookReturn } from "./react";

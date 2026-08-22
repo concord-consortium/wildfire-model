@@ -76,9 +76,10 @@ All model coordinates are in feet. Normalized coordinates (x, y) are relative to
 |-------|-----------|------|
 | `AnalysisEngineActivated` | `{ engineVersion: string, appRulesVersion: string \| number, ruleSetId: string, rangeCc: number }` | Once per page load, only when the Hazbot analysis engine is active (the URL provides `?hazbotRules=<id>` AND that id resolves to a known rule set AND load-time validation passes). Payload identifies the engine and rule-set version pair the session ran against. No `sessionId` in the payload — the engine surfaces its own session id via `engine.sessionId` for sidebar display only (per Req 20). `rangeCc` is the activity's derived window size: how many trailing canonical runs `categoryCurrent` is evaluated over. It is the disambiguator for a null `categoryCurrent` on `HazbotButtonClicked`, which has two causes that otherwise log identically: `rangeCc: 0` means the activity has no window at all (tab 24 is the only one today), and any positive value means the window matched no category. The value is derived from the rule set's expressions rather than authored, so it cannot be recovered after the fact. Sessions from `appRulesVersion` 6 onward carry it. |
 | `HazbotButtonClicked` | `{ matchedCategory: number \| null, categoryUsed: number \| null, categoryCurrent: number \| null }` | User clicks the Hazbot Analysis button (rendered only on Hazbot-enabled pages with a loaded rule-set). **`matchedCategory` keeps its original meaning**: the monotone floor over the whole session, i.e. the best the student ever did. It is unchanged by `appRulesVersion` 6, so the series is comparable across the boundary. `categoryCurrent` is the highest category true at the end of the last `rangeCc` canonical runs, and `categoryUsed` is `categoryCurrent ?? matchedCategory`: the category the student was actually shown. All three carry `null` explicitly when nothing matches; `categoryCurrent` is additionally null when the activity has no window (see `rangeCc` on `AnalysisEngineActivated`). The click is a deliberate no-op inside the engine (unhandled in `translate.ts`), so it does not mutate the categories it reports (per WM-6). |
-| `HazbotShowMeClicked` | `{ ruleSetId: string \| null, categoryId: number \| null, stepCount: number }` | User activates the `[Show me]` button on a coaching category's intro popover, launching the visual-feedback walk-through (WM-17). `stepCount` is the number of steps in the launched tour. Like the other Hazbot events, a deliberate engine no-op (unhandled in `translate.ts`). See the `categoryId` note below the table. |
-| `HazbotTourCompleted` | `{ ruleSetId: string \| null, categoryId: number \| null, lastStepIndex: number }` | User finishes the walk-through via the terminal `[Got it!]` button (the tour engine's `onDestroyed` fires without a preceding cancel). `lastStepIndex` is the 0-based index of the last step shown. Deliberate engine no-op. See the `categoryId` note below the table. |
-| `HazbotTourDismissed` | `{ ruleSetId: string \| null, categoryId: number \| null, lastStepIndex: number }` | User closes or Escapes the walk-through before the end (the tour engine's `onCancelRequested` fires). `lastStepIndex` is the 0-based index of the step shown when dismissed. Deliberate engine no-op. See the `categoryId` note below the table. |
+| `HazbotFeedbackShown` | `{ ruleSetId: string \| null, categoryId: number \| null, feedbackLevel: number, source: "level1" \| "round2" \| "round3" \| "category100" }` | The Hazbot popover actually opened, carrying the string it displayed. `feedbackLevel` is 1, 2 or 3, capped at how many strings the category carries. `source` names which string that is, which the level alone cannot: on a tab's top category, level 2 is the rule-set's category-100 repeat feedback rather than a Round 2 column. Emitted once per opened popover, never for a press that opened nothing. Deliberate engine no-op. See the two notes below the table. |
+| `HazbotShowMeClicked` | `{ ruleSetId: string \| null, categoryId: number \| null, stepCount: number, feedbackLevel: number \| null }` | User activates the `[Show me]` button on a coaching category's intro popover, launching the visual-feedback walk-through (WM-17). `stepCount` is the number of steps in the launched tour. `feedbackLevel` is the level of the popover the student activated from: the tour can now be re-offered from level 2, and its content is the same walk-through either way, so this is what separates a first coaching from a repeat one. Like the other Hazbot events, a deliberate engine no-op (unhandled in `translate.ts`). See the `categoryId` note below the table. |
+| `HazbotTourCompleted` | `{ ruleSetId: string \| null, categoryId: number \| null, lastStepIndex: number, feedbackLevel: number \| null }` | User finishes the walk-through via the terminal `[Got it!]` button (the tour engine's `onDestroyed` fires without a preceding cancel). `lastStepIndex` is the 0-based index of the last step shown. `feedbackLevel` is the level the tour was launched from. Deliberate engine no-op. See the `categoryId` note below the table. |
+| `HazbotTourDismissed` | `{ ruleSetId: string \| null, categoryId: number \| null, lastStepIndex: number, feedbackLevel: number \| null }` | User closes or Escapes the walk-through before the end (the tour engine's `onCancelRequested` fires). `lastStepIndex` is the 0-based index of the step shown when dismissed. `feedbackLevel` is the level the tour was launched from. Deliberate engine no-op. See the `categoryId` note below the table. |
 
 ### `categoryId` on the tour events (`appRulesVersion` 6 onward)
 
@@ -93,3 +94,59 @@ makes a NOT-guarded lower category true that was false over the full session. A
 `categoryId` above `matchedCategory` is documented behavior, not corrupt data.
 
 Before `appRulesVersion` 6, `categoryId` on these three events was `matchedCategory`.
+
+### `feedbackLevel` is not monotonic within a session (`appRulesVersion` 7 onward)
+
+A category's level rises with each opened popover and is reset wholesale by two routes, so
+a later `HazbotFeedbackShown` on the same `categoryId` can carry a *lower* `feedbackLevel`
+than an earlier one. The routes are Clear All and ending the page session
+(`TopBarReloadButtonClicked`, or any navigation, since the levels live in memory only).
+Restart does **not** reset them. A drop with neither of those before it is a new page
+session, not corrupt data.
+
+Segment on **`SimulationReloaded`**, which Clear All logs unconditionally. It also logs
+`SimulationEnded` with `reason: "SimulationReloaded"`, but only when a run was in progress,
+and levels can be populated before any run at all, since category 1 (`NOT ranSimulation`)
+matches from the first click of the session. A reset before the first run therefore emits
+no `SimulationEnded`, and an analysis keyed on that event alone will miss it.
+
+### `HazbotButtonClicked` versus `HazbotFeedbackShown` (`appRulesVersion` 7 onward)
+
+The two series answer different questions and are not interchangeable.
+
+**Presses that opened no popover at all** are the gap between them: count
+`HazbotButtonClicked` minus `HazbotFeedbackShown` over a session. **Three things produce
+that gap and the log does not distinguish them**, so read it with the other two in mind
+rather than as a single behavior.
+
+The common one is a press while the popover is already open: the button has no disabled
+state and the open flag is already true, so the press registers and displays nothing. The
+second is a press that resolves no feedback to show, when the rule-set failed to load or no
+category matched; the component clears its own flag and returns without opening. That one is
+not a stray event but a per-press condition, so it contributes a gap on *every* press of the
+session, which is the shape to check for before reading a large gap as repeated pressing. The
+third is a press whose open is pre-empted by teardown inside the roughly 400ms the intro
+waits for the robot's grow transition, which needs the component to unmount in that window.
+
+**Presses that showed the student nothing new** leave *no* gap, because a repeat click on an
+exhausted category still opens a popover and still emits `HazbotFeedbackShown`. Find them as
+consecutive `HazbotFeedbackShown` events on the same `categoryId` carrying the same
+`feedbackLevel` and `source`. A fully populated category logs 1, 2, 3, 3, so the fourth click
+is a silent repeat; on rule-sets 42, 45, 47 and 54, whose middle categories carry no level 2
+or 3, the same category logs 1, 1, 1 across three clicks that all showed the same words.
+
+**Presses that spent a level without the student taking the help** are the pairs of consecutive
+`HazbotFeedbackShown` events on the same `categoryId` with **no** `HazbotShowMeClicked` between
+them, counted only where the **earlier event's own level offered the walk-through**. The level
+advances whenever the popover opens, however it is dismissed, so a student who closes a coaching
+popover with × or Escape has spent that level without seeing it.
+
+Restrict on the level that was displayed, not on the category. Whether a walk-through is offered
+is decided by the action token of the string actually shown (`[Show me]` offers it, anything else
+does not), and on a coaching category that token differs by level: as the content ships at
+`appRulesVersion` 7, levels 1 and 2 carry `[Show me]` and level 3 carries `[Okay]`. A query keyed
+on the category alone therefore counts every level-3 repeat as a dismissal, since nothing was
+offered there to activate. On `[Okay]` and `[Hooray!]` categories nothing is offered at any level,
+so the absence means nothing there either. Segment the pairs on the reset routes above as well: a
+pair spanning a reset reads level 3 then level 1, which is a fresh escalation rather than a
+dismissal.
