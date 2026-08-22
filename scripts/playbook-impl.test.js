@@ -84,7 +84,7 @@ describe("renderPlaybook", () => {
 
 /* eslint-enable testing-library/render-result-naming-convention */
 
-describe("renderPlaybook — the WM-46 feedback-level lines", () => {
+describe("renderPlaybook — the feedback-level lines (WM-46)", () => {
   // A middle category (2), the top category (4) carrying Round content it can never
   // reach, and a repeat-feedback row.
   const withRounds = (repeatFeedback) => {

@@ -112,7 +112,7 @@ describe("rule-sets/index — R5 load gate", () => {
 // A re-extraction regression gate rather than a unit test: a category-100 leak takes the
 // rule-set to zero readings, so this is the difference between a red suite and an activity
 // that silently records nothing.
-describe("rule-sets/index — WM-46 feedback-mechanism data", () => {
+describe("rule-sets/index — feedback-mechanism data (WM-46)", () => {
   it("every committed rule-set carries a repeatFeedback slot", () => {
     for (const [id, rs] of Object.entries(ruleSets)) {
       expect(`${id}: ${rs.repeatFeedback?.id}`).toBe(`${id}: 100`);

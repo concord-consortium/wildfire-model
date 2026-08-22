@@ -187,7 +187,7 @@ describe("extract-impl: hostile-content escape coverage", () => {
   });
 });
 
-describe("extract-impl: emitted-TS round trip for the WM-46 fields", () => {
+describe("extract-impl: emitted-TS round trip for the Round 2/3 and repeat-feedback fields", () => {
   it("compiles a module carrying repeatFeedback and the two Round fields", () => {
     const sheets = [{
       sheet: "88",
@@ -213,7 +213,7 @@ describe("extract-impl: emitted-TS round trip for the WM-46 fields", () => {
   });
 });
 
-describe("normalizeFeedback (WM-46 R1a)", () => {
+describe("normalizeFeedback — the Round-cell fixups (WM-46)", () => {
   it("is a no-op on a well-formed column C cell", () => {
     expect(normalizeFeedback("Hazbot: Try this!\n[Show me]")).toBe("Hazbot: Try this!\n[Show me]");
   });
@@ -260,7 +260,7 @@ describe("parseActionToken", () => {
   });
 });
 
-describe("parseTab, Round 2/3 columns (WM-46 R1, R1a)", () => {
+describe("parseTab — the Round 2/3 columns (WM-46)", () => {
   const sheet = (round2, round3) => ([
     ["#", "Student Action", "Hazbot Feedback", "Visual Feedback", "Notes for Round 2",
       "Notes for Round 3", "Pseudocode for Rules"],
@@ -306,7 +306,7 @@ describe("parseTab, Round 2/3 columns (WM-46 R1, R1a)", () => {
   });
 });
 
-describe("parseTab, the category-100 row (WM-46 R4b, R4c)", () => {
+describe("parseTab — the category-100 row (WM-46)", () => {
   const sheet = [
     ["#", "Student Action", "Hazbot Feedback", "Visual Feedback", "Pseudocode for Rules"],
     [1, "Ran it", "Good!\n[Okay]", "", "ranSimulation"],

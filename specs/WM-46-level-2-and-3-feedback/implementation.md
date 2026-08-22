@@ -2,7 +2,7 @@
 
 **Jira**: https://concord-consortium.atlassian.net/browse/WM-46
 **Requirements Spec**: [requirements.md](requirements.md)
-**Status**: **In Development**
+**Status**: **Implemented** (all four steps committed on `WM-46-level-2-and-3-feedback`)
 
 ## How this plan was verified
 
@@ -1368,6 +1368,51 @@ Finally, `docs/hazbot-update-workflow.md` §7 folds its semantic and evaluation-
 one statement that also reaches **feedback-selection** semantics, which is what this branch changes,
 keeping the placement rule WM-45's bullet already carries (bump in the commit that changes the
 semantics, not in a later docs commit). Without this, R8 asserts a bump no written policy authorizes.
+
+## Execution notes: where the shipped code differs from the plan above
+
+All four steps were implemented, verified and committed. Six places where what shipped is not
+byte-for-byte what this document specifies are recorded here so a re-read does not "correct" them
+back. Nothing in the design moved; every item is either forced by a toolchain constraint or the
+applied resolution of a per-step `/cc-code-review` finding.
+
+- **`hazbot-button.tsx` imports `selectFeedback` from the wildfire barrel, not from the module.**
+  Step 2's hunk writes `import { selectFeedback } from "../hazbot/wildfire/feedback-levels";`, but
+  the same step also adds the export to `src/hazbot/wildfire/index.ts`, and with a deep import that
+  export has no consumer. Every other export in that barrel has a through-barrel consumer, so the
+  dead one reads as an oversight. The barrel import is safe in both test files that matter:
+  `hazbot-button.test.tsx`'s barrel mock spreads `jest.requireActual`, and `app.test.tsx` mocks
+  `./bottom-bar`, so it never renders the button at all. Verified: 872 tests under `src/` pass.
+
+- **The `hazbot-button.test.tsx` map assertion uses `Array.from`, not a spread.** `tsconfig.json`
+  sets `target: "es5"` with no `downlevelIteration`, so `[...map.entries()]` is a compile error
+  (`TS2802`), and the suite fails to run rather than failing an assertion. `Array.from(...)` is what
+  `buildFeedbackLevelDiagnostics` already uses, and it type-checks because `lib` includes `es2017`.
+
+- **Step 1's two category-100 `parseTab` cases were merged into one.** The step adds a
+  `does NOT land in categories` case beside the existing `drops a category row with id >= 100`, which
+  is the same assertion twice; and the existing case's *name* became false, since this step is what
+  stops dropping the row. The existing case was renamed
+  `keeps a category row with id >= 100 out of categories` and the new duplicate dropped.
+
+- **`parseActionToken` gained its own test block.** Step 1 exports it "for tests" but specifies no
+  case for it, leaving the export dead. It is what the level-aware Round 2 default and the whole
+  unknown-token warning key off, and its regex has to stay in step with `parseFeedback` in
+  `hazbot-button.tsx`, so it is covered directly: trailing token, trailing whitespace, no token, and
+  a bracketed phrase that is not at the end.
+
+- **Step 4's sidebar TEST hit lint too, in two rules the targeted execution pass did not reach.**
+  That pass fixed `react/jsx-closing-tag-location` in `sidebar.tsx`. In `sidebar.test.tsx`, expanding
+  a category row via `.closest("[role=button]")` trips `testing-library/no-node-access`, and a
+  multi-line `<Sidebar>` element inside `render(...)` trips the same closing-tag rule. Both are fixed
+  the way the file already does it: click the studentAction text (the click bubbles to the row's
+  `onClick`, which is what `:60`'s existing detail-panel case does), and bind the `diagnostics` array
+  to a local before the single-line `render`.
+
+- **`app.tsx`'s rewritten comment drops its trailing `See Self-Review SE12.`** Step 2 asks for the
+  comment to be updated to say the binding is a function; the rewritten comment states that
+  constraint in full on its own, so the pointer into a spec's self-review section adds nothing a
+  reader of that file can reach.
 
 ## Delivery notes: what to tell the PIs
 

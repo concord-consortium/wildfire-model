@@ -699,7 +699,9 @@ describe("Sidebar — category feedback levels", () => {
     expect(screen.queryByText(/Repeat after success/)).not.toBeInTheDocument();
   });
 
-  it("renders a host-supplied feedback-level diagnostic", () => {
+  // Both the populated readout and its zero state: "(none)" is a rendered row, not an
+  // absent section, so a walker can tell a cleared map from a broken sidebar.
+  const renderWithDiagnostics = (diagnostics: { label: string; value: string }[]) => {
     const engine = new Engine<TestReading, TestDefaults>({
       ruleSet: makeRuleSet(),
       factorVariables: { ranSimulation: ranSimulationImpl },
@@ -708,11 +710,20 @@ describe("Sidebar — category feedback levels", () => {
       runStartTriggers: ["Triggered"],
     });
     const Wrapper = wrap(engine);
-    const diagnostics = [
+    render(<Wrapper><Sidebar title="Hazbot" diagnostics={diagnostics} /></Wrapper>);
+  };
+
+  it("renders the feedback-level readout's (none) zero state as a row", () => {
+    renderWithDiagnostics([{ label: "Feedback levels", value: "(none)" }]);
+    expect(screen.getByText(/Feedback levels/)).toBeInTheDocument();
+    expect(screen.getByText(/\(none\)/)).toBeInTheDocument();
+  });
+
+  it("renders a host-supplied feedback-level diagnostic", () => {
+    renderWithDiagnostics([
       { label: "Feedback levels", value: "2→3" },
       { label: "Last shown", value: "level 3 (round3)" },
-    ];
-    render(<Wrapper><Sidebar title="Hazbot" diagnostics={diagnostics} /></Wrapper>);
+    ]);
     expect(screen.getByText(/Feedback levels/)).toBeInTheDocument();
     expect(screen.getByText(/2→3/)).toBeInTheDocument();
     expect(screen.getByText(/level 3 \(round3\)/)).toBeInTheDocument();
