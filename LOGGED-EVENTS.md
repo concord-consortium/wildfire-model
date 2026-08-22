@@ -99,19 +99,34 @@ Before `appRulesVersion` 6, `categoryId` on these three events was `matchedCateg
 
 A category's level rises with each opened popover and is reset wholesale by two routes, so
 a later `HazbotFeedbackShown` on the same `categoryId` can carry a *lower* `feedbackLevel`
-than an earlier one. The routes are Clear All (which also logs `SimulationEnded` with
-`reason: "SimulationReloaded"`) and ending the page session (`TopBarReloadButtonClicked`,
-or any navigation, since the levels live in memory only). Restart does **not** reset them.
-A drop with neither of those events before it is a new page session, not corrupt data.
+than an earlier one. The routes are Clear All and ending the page session
+(`TopBarReloadButtonClicked`, or any navigation, since the levels live in memory only).
+Restart does **not** reset them. A drop with neither of those before it is a new page
+session, not corrupt data.
+
+Segment on **`SimulationReloaded`**, which Clear All logs unconditionally. It also logs
+`SimulationEnded` with `reason: "SimulationReloaded"`, but only when a run was in progress,
+and levels can be populated before any run at all, since category 1 (`NOT ranSimulation`)
+matches from the first click of the session. A reset before the first run therefore emits
+no `SimulationEnded`, and an analysis keyed on that event alone will miss it.
 
 ### `HazbotButtonClicked` versus `HazbotFeedbackShown` (`appRulesVersion` 7 onward)
 
 The two series answer different questions and are not interchangeable.
 
 **Presses that opened no popover at all** are the gap between them: count
-`HazbotButtonClicked` minus `HazbotFeedbackShown` over a session. This is one situation
-only, a press while the popover is already open. The button has no disabled state and the
-open flag is already true, so the press registers and displays nothing.
+`HazbotButtonClicked` minus `HazbotFeedbackShown` over a session. **Three things produce
+that gap and the log does not distinguish them**, so read it with the other two in mind
+rather than as a single behavior.
+
+The common one is a press while the popover is already open: the button has no disabled
+state and the open flag is already true, so the press registers and displays nothing. The
+second is a press that resolves no feedback to show, when the rule-set failed to load or no
+category matched; the component clears its own flag and returns without opening. That one is
+not a stray event but a per-press condition, so it contributes a gap on *every* press of the
+session, which is the shape to check for before reading a large gap as repeated pressing. The
+third is a press whose open is pre-empted by teardown inside the roughly 400ms the intro
+waits for the robot's grow transition, which needs the component to unmount in that window.
 
 **Presses that showed the student nothing new** leave *no* gap, because a repeat click on an
 exhausted category still opens a popover and still emits `HazbotFeedbackShown`. Find them as
@@ -122,7 +137,16 @@ or 3, the same category logs 1, 1, 1 across three clicks that all showed the sam
 
 **Presses that spent a level without the student taking the help** are the pairs of consecutive
 `HazbotFeedbackShown` events on the same `categoryId` with **no** `HazbotShowMeClicked` between
-them. The level advances whenever the popover opens, however it is dismissed, so a student who
-closes a coaching popover with × or Escape has spent that level without seeing the walk-through.
-This applies only to coaching categories, whose action token is `[Show me]`; on `[Okay]` and
-`[Hooray!]` categories there is nothing to activate, so the absence means nothing.
+them, counted only where the **earlier event's own level offered the walk-through**. The level
+advances whenever the popover opens, however it is dismissed, so a student who closes a coaching
+popover with × or Escape has spent that level without seeing it.
+
+Restrict on the level that was displayed, not on the category. Whether a walk-through is offered
+is decided by the action token of the string actually shown (`[Show me]` offers it, anything else
+does not), and on a coaching category that token differs by level: as the content ships at
+`appRulesVersion` 7, levels 1 and 2 carry `[Show me]` and level 3 carries `[Okay]`. A query keyed
+on the category alone therefore counts every level-3 repeat as a dismissal, since nothing was
+offered there to activate. On `[Okay]` and `[Hooray!]` categories nothing is offered at any level,
+so the absence means nothing there either. Segment the pairs on the reset routes above as well: a
+pair spanning a reset reads level 3 then level 1, which is a fresh escalation rather than a
+dismissal.
