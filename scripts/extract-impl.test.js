@@ -306,6 +306,34 @@ describe("parseTab — the Round 2/3 columns (WM-46)", () => {
   });
 });
 
+// Column C's token decides whether a coaching category offers its walk-through at all,
+// and it carries no default to fall back on. Both failures below otherwise leave a
+// valid-looking rule-set whose tour silently never opens.
+describe("parseTab — the column C action token (WM-46)", () => {
+  const sheet = (feedback) => [
+    ["#", "Student Action", "Hazbot Feedback", "Visual Feedback", "Pseudocode for Rules"],
+    [2, "Ran it", feedback, "", "ranSimulation"],
+  ];
+  it("warns on a token outside the authored set", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    parseTab("xx", sheet("Coach me!\n[Show me!]"));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("outside the authored set"));
+    warn.mockRestore();
+  });
+  it("warns on a cell that carries no token", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    parseTab("xx", sheet("Coach me!"));
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("carries no action token"));
+    warn.mockRestore();
+  });
+  it("stays silent on an authored token", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
+    parseTab("xx", sheet("Coach me!\n[Show me]"));
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+});
+
 describe("parseTab — the category-100 row (WM-46)", () => {
   const sheet = [
     ["#", "Student Action", "Hazbot Feedback", "Visual Feedback", "Pseudocode for Rules"],
@@ -332,9 +360,12 @@ describe("parseTab — the category-100 row (WM-46)", () => {
     expect(warn).toHaveBeenCalledWith(expect.stringContaining("outside the authored set"));
     warn.mockRestore();
   });
-  it("does not invent a token for a repeat-feedback cell that carries none", () => {
+  it("does not invent a token for a repeat-feedback cell that carries none, but warns", () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => {});
     const parsed = parseTab("xx", [sheet[0], sheet[1],
       [100, "Re-clicked Hazbot", "Answer them!", "", "-- no pseudo code --"]]);
     expect(parsed.repeatFeedback.feedback).toBe("Hazbot: Answer them!");
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining("carries no action token"));
+    warn.mockRestore();
   });
 });

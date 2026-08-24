@@ -92,7 +92,7 @@ function parseTab(sheetName, rows) {
       // same token check the Round columns get. No default token: the
       // `Hazbot: …\n[Token]` convention already exists for this cell on all 11 tabs, so a
       // blank here is an authoring error to surface rather than an absence to fill in.
-      warnOnUnknownToken(sheetName, id, "Repeat feedback", repeat);
+      warnOnActionToken(sheetName, id, "Repeat feedback", repeat);
       repeatFeedback = {
         id,
         studentAction: String(row[colIdx.studentAction] ?? ""),
@@ -109,6 +109,11 @@ function parseTab(sheetName, rows) {
       visualFeedback: String(row[colIdx.visualFeedback] ?? ""),
       expression: String(row[colIdx.expression] ?? "").trim(),
     };
+    // Column C's token does two jobs beyond labeling its own button: it is the Round 2
+    // default below, and it is the gate on whether level 1 offers the walk-through at all
+    // (offersTour in hazbot-button.tsx). Neither is defaulted, so it is checked before
+    // being used.
+    if (feedback) warnOnActionToken(sheetName, id, "Feedback", feedback);
     // The Round cells are authored as bare sentences, so they are normalized into the
     // same shape column C uses. The default token is level-aware: a tokenless Round 2
     // cell on a coaching category re-offers the walk-through, everything else is terminal.
@@ -117,14 +122,14 @@ function parseTab(sheetName, rows) {
     if (colIdx.round2 !== undefined) {
       const r2 = normalizeFeedback(String(row[colIdx.round2] ?? ""), coaching ? level1Token : "Okay");
       if (r2) {
-        warnOnUnknownToken(sheetName, id, "Round 2", r2);
+        warnOnActionToken(sheetName, id, "Round 2", r2);
         cat.feedbackRound2 = r2;
       }
     }
     if (colIdx.round3 !== undefined) {
       const r3 = normalizeFeedback(String(row[colIdx.round3] ?? ""), "Okay");
       if (r3) {
-        warnOnUnknownToken(sheetName, id, "Round 3", r3);
+        warnOnActionToken(sheetName, id, "Round 3", r3);
         cat.feedbackRound3 = r3;
       }
     }
@@ -216,7 +221,7 @@ function parseLogEvents(s) {
   return s.split(/[,;\n]/).map((x) => x.trim()).filter(Boolean);
 }
 
-// The authored action tokens. A Round 2/3 cell carrying anything else is warned about at
+// The authored action tokens. A displayed cell carrying anything else is warned about at
 // extraction, since the token decides whether a level re-offers the coach-mark
 // walk-through and a near-miss would ship silently.
 const AUTHORED_TOKENS = ["show me", "okay", "hooray!", "got it!"];
@@ -247,9 +252,22 @@ function normalizeFeedback(s, defaultToken) {
   return text;
 }
 
-function warnOnUnknownToken(sheetName, id, columnLabel, text) {
+// Every check on a displayed cell's action token. Two ways to get it wrong: a token
+// outside the authored set, and no token at all in a cell normalizeFeedback leaves
+// undefaulted (column C and the feedback-mechanism row). Both land in the same place,
+// since parseActionToken returns "" for a near-miss the same as for an absence, and both
+// retire the coach-mark walk-through for that level. Nothing downstream catches either:
+// a tour that never opens looks exactly like a category that never had one.
+function warnOnActionToken(sheetName, id, columnLabel, text) {
   const token = parseActionToken(text);
-  if (token && !AUTHORED_TOKENS.includes(token.toLowerCase())) {
+  if (!token) {
+    console.warn(
+      `[extract] tab ${sheetName} category ${id}: ${columnLabel} carries no action token. ` +
+      `Expected a trailing "[Token]" from the authored set (${AUTHORED_TOKENS.join(", ")}).`,
+    );
+    return;
+  }
+  if (!AUTHORED_TOKENS.includes(token.toLowerCase())) {
     console.warn(
       `[extract] tab ${sheetName} category ${id}: ${columnLabel} action token ` +
       `"[${token}]" is outside the authored set (${AUTHORED_TOKENS.join(", ")}). ` +
