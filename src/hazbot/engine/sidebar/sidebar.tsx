@@ -290,7 +290,7 @@ const CategoryRow: React.FC<{
             <div className="hazbot-sidebar-muted">
               {hasRepeatFeedback
                 ? "Not shown: a repeat click on the top category uses the rule-set's repeat feedback, listed at the end of this panel."
-                : "Not shown: a repeat click on the top category never reaches these, and this rule-set carries no repeat feedback."}
+                : "Not shown: a repeat click on the top category never reaches these, and this rule-set carries no repeat feedback, so it repeats level 1."}
             </div>
           )}
           <div>

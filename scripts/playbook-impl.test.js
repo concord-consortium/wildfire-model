@@ -128,8 +128,8 @@ describe("renderPlaybook — the feedback-level lines (WM-46)", () => {
   it("still labels the top category 'not shown' without a repeat-feedback row", () => {
     const md = renderPlaybook(withRounds(undefined), parse);
     expect(md).toContain("- **Feedback (level 2, not shown)**: Hazbot: Top two [Okay]" +
-      " (the top category's repeat click is served by the rule-set's repeat feedback," +
-      " which this rule-set does not carry)");
+      " (a repeat click on the top category never reaches these, and this rule-set carries" +
+      " no repeat feedback, so it repeats level 1)");
     expect(md).not.toContain("Feedback (repeat click after success)");
   });
 

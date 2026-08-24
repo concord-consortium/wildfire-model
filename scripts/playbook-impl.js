@@ -38,7 +38,8 @@ function renderPlaybook(ruleSet, parse) {
     const roundLabel = (n) => (top ? `level ${n}, not shown` : `level ${n}`);
     const roundNote = !top ? ""
       : ruleSet.repeatFeedback ? " (superseded by the repeat-click line below)"
-        : " (the top category's repeat click is served by the rule-set's repeat feedback, which this rule-set does not carry)";
+        : " (a repeat click on the top category never reaches these, and this rule-set carries" +
+          " no repeat feedback, so it repeats level 1)";
     if (cat.feedbackRound2) {
       lines.push(`- **Feedback (${roundLabel(2)})**: ${oneLine(cat.feedbackRound2)}${roundNote}`);
     }
