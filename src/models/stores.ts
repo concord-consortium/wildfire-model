@@ -68,8 +68,7 @@ const createTestHelpers = (simulation: SimulationModel, ui: UIModel) => {
     // so a validation walk can check level 3 on one category and then move to the next
     // without redoing Terrain Setup.
     resetHazbotFeedbackLevels() {
-      ui.hazbotFeedbackLevels.clear();
-      ui.hazbotLastFeedbackShown = undefined;
+      ui.resetHazbotFeedback();
     },
     placeSparkInZone(zoneIdx: number) {
       const b = zoneBounds(zoneIdx);

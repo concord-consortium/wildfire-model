@@ -78,7 +78,7 @@ window.test.placeSparkInZone(1)      // spark at zone 1 center
 window.test.placeFireLineInZone(0)   // two markers spanning zone 0 width (forms a line at zone center)
 window.test.placeHelitackInZone(1)   // helitack drop at zone 1 center; also emits the `Helitack` log event so the Hazbot engine sees the drop (WM-28)
 window.test.zoneBounds(0)            // { minX, maxX, minY, maxY, centerX, centerY } in model ft
-window.test.resetHazbotFeedbackLevels() // clear every category's Hazbot feedback level, so the next click on each shows level 1 again (WM-46)
+window.test.resetHazbotFeedbackLevels() // clear every category's Hazbot feedback level, so the next click on each shows level 1 again; also closes an open Hazbot popover (WM-46)
 ```
 
 These compute zone extents from `simulation.cells[].zoneIdx`, so they work across any preset (2-zone, 3-zone, custom `zoneIndex`).

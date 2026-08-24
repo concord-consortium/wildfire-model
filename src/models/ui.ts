@@ -33,13 +33,24 @@ export class UIModel {
   @observable public hazbotPulseArmed = false;
   // Category id -> the highest feedback level shown for that category in this page
   // session. Nothing inside a run resets it: a category the student returns to resumes
-  // where it left off rather than replaying level 1. Cleared wholesale by Clear All and
-  // by window.test.resetHazbotFeedbackLevels().
+  // where it left off rather than replaying level 1. Cleared wholesale by
+  // resetHazbotFeedback().
   @observable public hazbotFeedbackLevels = new Map<number, number>();
   // The level and source last displayed, for the dev sidebar's readout only.
   @observable public hazbotLastFeedbackShown?: { level: number; source: string } = undefined;
 
   constructor() {
     makeObservable(this);
+  }
+
+  // Clear All and window.test.resetHazbotFeedbackLevels() both come through here.
+  // Lowering showHazbotFeedback first is load-bearing, not tidiness: it is the sole
+  // dependency of the Hazbot button's effect, so lowering it runs that effect's
+  // cleanup, which cancels an open deferred by the avatar's scale-up. Without it a
+  // press made just before the reset lands its level back into the map afterwards.
+  public resetHazbotFeedback() {
+    this.showHazbotFeedback = false;
+    this.hazbotFeedbackLevels.clear();
+    this.hazbotLastFeedbackShown = undefined;
   }
 }

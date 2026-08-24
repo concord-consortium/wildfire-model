@@ -588,6 +588,30 @@ describe("Hazbot feedback levels", () => {
     expect(Math.max(...levels)).toBe(2);
   });
 
+  it("cancels a deferred open when a reset lands before the popover appears", () => {
+    const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    mockGetEngine.mockReturnValue(fullLadder());
+    mockSelection.mockReturnValue(selection(2));
+    const { stores } = renderWithStores();
+    stores.ui.hazbotFeedbackLevels.set(2, 2);
+
+    jest.useFakeTimers();
+    try {
+      // The press schedules the open on the avatar's transitionend and on the 400ms
+      // fallback; the reset (Clear All / window.test) arrives while both are pending.
+      fireEvent.click(screen.getByTestId("hazbot-button"));
+      act(() => { stores.ui.resetHazbotFeedback(); });
+      act(() => { jest.advanceTimersByTime(400); });
+    } finally {
+      jest.useRealTimers();
+    }
+
+    expect(cm.highlight).not.toHaveBeenCalled();
+    expect(stores.ui.hazbotFeedbackLevels.size).toBe(0);
+    expect(stores.ui.hazbotLastFeedbackShown).toBeUndefined();
+    expect(logSpy).not.toHaveBeenCalledWith("HazbotFeedbackShown", expect.anything());
+  });
+
   describe("the level's own action token gates the walk-through", () => {
     // Rule-set 23 category 2 is a real coaching category, so buildTour returns a tour
     // for it and the token gate is the only thing that can suppress the launch.
