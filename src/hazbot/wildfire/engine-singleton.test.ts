@@ -1,6 +1,6 @@
 import {
   getAnalysisEngine, buildAnalysisEngineActivatedPayload, APP_RULES_VERSION,
-  getDerivedRangeCc, getRequestedPresetInfo, buildPresetDiagnostics,
+  getDerivedRangeCc, getRequestedPresetInfo, buildPresetDiagnostics, buildFeedbackLevelDiagnostics,
 } from "./index";
 import { _resetAnalysisEngineForTests } from "./engine-singleton";
 import { ENGINE_VERSION } from "../engine";
@@ -252,5 +252,34 @@ describe("getDerivedRangeCc", () => {
     _resetAnalysisEngineForTests();
     setUrl("?hazbotRules=45");
     expect(getDerivedRangeCc()).toBe(2);
+  });
+});
+
+describe("buildFeedbackLevelDiagnostics", () => {
+  // Always at least one row, unlike buildPresetDiagnostics: an empty level map is a state
+  // a validation walker needs to read, so the section must not vanish when it is cleared.
+  it("returns a (none) row for an empty or absent level map", () => {
+    expect(buildFeedbackLevelDiagnostics(new Map())).toEqual([
+      { label: "Feedback levels", value: "(none)" },
+    ]);
+    expect(buildFeedbackLevelDiagnostics(undefined)).toEqual([
+      { label: "Feedback levels", value: "(none)" },
+    ]);
+  });
+
+  it("lists the levels in ascending category order regardless of insertion order", () => {
+    const levels = new Map([[5, 1], [2, 3]]);
+    expect(buildFeedbackLevelDiagnostics(levels)).toEqual([
+      { label: "Feedback levels", value: "2→3, 5→1" },
+    ]);
+  });
+
+  it("adds the last-shown row only when a level has been displayed", () => {
+    const levels = new Map([[2, 2]]);
+    expect(buildFeedbackLevelDiagnostics(levels)).toHaveLength(1);
+    expect(buildFeedbackLevelDiagnostics(levels, { level: 2, source: "round2" })).toEqual([
+      { label: "Feedback levels", value: "2→2" },
+      { label: "Last shown", value: "level 2 (round2)" },
+    ]);
   });
 });

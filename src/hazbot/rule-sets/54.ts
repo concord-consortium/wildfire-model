@@ -80,4 +80,10 @@ export const ruleSet54: RuleSet<WildfireDefaults> = {
       details: "The values of droughtLevel for all three zones must be set to \"Severe Drought\".  Here, only non-resuming SimulationStarted events need be considered as resuming Simulation events do not change drought levels.",
     }
   ],
+  repeatFeedback: {
+    id: 100,
+    studentAction: "Student repeats run after success and wants more feedback from Hazbot",
+    feedback: `Hazbot: Make sure you have answered all the questions on this page!
+[Got it!]`,
+  },
 };

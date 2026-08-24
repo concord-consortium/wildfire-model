@@ -565,6 +565,21 @@ describe("BottomBar Hazbot button (WM-6)", () => {
     expect(wrap().className).not.toMatch(/ready/);
   });
 
+  it("Reload (Clear All) clears the Hazbot feedback levels; Restart leaves them alone", async () => {
+    seedState(stores, 5); // Ended: both Restart and Reload are enabled
+    stores.ui.hazbotFeedbackLevels.set(2, 3);
+    stores.ui.hazbotLastFeedbackShown = { level: 3, source: "round3" };
+    render(<Provider stores={stores}><BottomBar /></Provider>);
+
+    await userEvent.click(screen.getByTestId("restart-button"));
+    expect(stores.ui.hazbotFeedbackLevels.get(2)).toBe(3);
+    expect(stores.ui.hazbotLastFeedbackShown).toEqual({ level: 3, source: "round3" });
+
+    await userEvent.click(screen.getByTestId("reload-button"));
+    expect(stores.ui.hazbotFeedbackLevels.size).toBe(0);
+    expect(stores.ui.hazbotLastFeedbackShown).toBeUndefined();
+  });
+
   it("natural burnout arms the pulse via the simulationEnded reaction", () => {
     seedRunning();
     render(<Provider stores={stores}><BottomBar /></Provider>);

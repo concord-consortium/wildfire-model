@@ -345,6 +345,10 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       });
     }
     this.stores.chartStore.reset();
+    // Reload (Clear All) clears Hazbot's per-category feedback levels too, so a full
+    // restart cannot open on "I'm all out of ideas". The top bar's refresh icon already
+    // does this for free by reloading the page; this is what makes the two agree.
+    ui.resetHazbotFeedback();
     cancelFireLinePlacement(simulation, ui, "reload");
     ui.interaction = null;
     simulation.reload();

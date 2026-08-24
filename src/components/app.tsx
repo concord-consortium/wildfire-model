@@ -17,7 +17,10 @@ import { log } from "../log";
 import Shutterbug from "shutterbug";
 import { AnalysisEngineProvider } from "../hazbot/engine";
 import { Sidebar } from "../hazbot/engine/sidebar";
-import { APP_RULES_VERSION, getAnalysisEngine, getRequestedPresetInfo, buildPresetDiagnostics } from "../hazbot/wildfire";
+import {
+  APP_RULES_VERSION, getAnalysisEngine, getRequestedPresetInfo, buildPresetDiagnostics,
+  buildFeedbackLevelDiagnostics,
+} from "../hazbot/wildfire";
 
 import css from "./app.scss";
 import { useCustomCursor } from "./use-custom-cursors";
@@ -121,6 +124,17 @@ export const AppComponent = observer(function WrappedComponent() {
   // AND the engine constructed (per FE-4 / R9-2 — Provider mounts iff Sidebar mounts).
   const showHazbotSidebar = hazbotSidebar && engine !== undefined;
   const showAnyRightSidebar = logMonitor || showHazbotSidebar;
+  // The preset half is undefined without ?preset; the level half always has at least one
+  // row, so it is spread directly and in production the section renders whenever the
+  // sidebar is mounted. The length guard still matters for a host that supplies neither
+  // half. Reading the level map here is what subscribes this observer to it.
+  const buildDiagnostics = () => {
+    const rows = [
+      ...(buildPresetDiagnostics(getRequestedPresetInfo()) ?? []),
+      ...buildFeedbackLevelDiagnostics(ui.hazbotFeedbackLevels, ui.hazbotLastFeedbackShown),
+    ];
+    return rows.length > 0 ? rows : undefined;
+  };
   return (
     <div style={showAnyRightSidebar ? { display: "flex", width: "100%", height: "100%" } : { width: "100%", height: "100%" }}>
       {showAnyRightSidebar
@@ -128,13 +142,13 @@ export const AppComponent = observer(function WrappedComponent() {
         : content
       }
       {logMonitor && <LogMonitor logFilePrefix="wildfire-log-events" />}
-      {/* `diagnostics` is computed here, inside the existing sidebar-mount branch —
-          NOT as a top-level const in the component body — so the getUrlConfig()
-          scan it entails runs only when the sidebar mounts, not on every render
-          for production users with ?hazbotSidebar unset. See Self-Review SE12. */}
+      {/* `buildDiagnostics` is a top-level const, but it BINDS a function: its body,
+          including the getUrlConfig() scan inside getRequestedPresetInfo(), runs only at
+          the call site below, inside the sidebar-mount branch. So the scan still costs
+          production users with ?hazbotSidebar unset nothing. */}
       {showHazbotSidebar && engine && (
         <AnalysisEngineProvider engine={engine} appRulesVersion={APP_RULES_VERSION}>
-          <Sidebar title="Hazbot" diagnostics={buildPresetDiagnostics(getRequestedPresetInfo())} />
+          <Sidebar title="Hazbot" diagnostics={buildDiagnostics()} />
         </AnalysisEngineProvider>
       )}
     </div>

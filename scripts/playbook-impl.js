@@ -3,6 +3,11 @@
 
 const PLAYBOOK_HEADER = "> **AUTO-GENERATED — DO NOT EDIT — re-run `scripts/generate-hazbot-validation-playbook.js`**\n\n";
 
+// The same top-category rule the app's feedback selection and the dev sidebar use, rather
+// than a third copy of it. Resolved through ts-node, which the generator registers before
+// requiring this module, and through ts-jest in playbook-impl.test.js.
+const { topCategoryId } = require("../src/hazbot/engine/top-category");
+
 // Renders a per-rule-set validation playbook in markdown, using the substrate's
 // parsed Expression AST + the rule-set's factor-variable definitions.
 function renderPlaybook(ruleSet, parse) {
@@ -24,6 +29,30 @@ function renderPlaybook(ruleSet, parse) {
   for (const cat of ruleSet.categories) {
     lines.push(`### Category ${cat.id}: ${oneLine(cat.studentAction)}\n`);
     if (cat.feedback) lines.push(`- **Feedback**: ${oneLine(cat.feedback)}`);
+    // The level 2 / level 3 strings a repeat click shows, omitted where the tab carries no
+    // Round columns. On the top category those columns are unreachable whatever the
+    // rule-set carries, matching the selection rule's unconditional early return, so the
+    // "not shown" label is gated on `top` ALONE; only the note naming the replacement is
+    // gated on a repeat-feedback row existing.
+    const top = cat.id === topCategoryId(ruleSet);
+    const roundLabel = (n) => (top ? `level ${n}, not shown` : `level ${n}`);
+    const roundNote = !top ? ""
+      : ruleSet.repeatFeedback ? " (superseded by the repeat-click line below)"
+        : " (a repeat click on the top category never reaches these, and this rule-set carries" +
+          " no repeat feedback, so it repeats level 1)";
+    if (cat.feedbackRound2) {
+      lines.push(`- **Feedback (${roundLabel(2)})**: ${oneLine(cat.feedbackRound2)}${roundNote}`);
+    }
+    if (cat.feedbackRound3) {
+      lines.push(`- **Feedback (${roundLabel(3)})**: ${oneLine(cat.feedbackRound3)}${roundNote}`);
+    }
+    if (top && ruleSet.repeatFeedback) {
+      lines.push(
+        `- **Feedback (repeat click after success)**: ${oneLine(ruleSet.repeatFeedback.feedback)}` +
+        ` (from the sheet's category ${ruleSet.repeatFeedback.id} row, which replaces any` +
+        ` Round 2/3 content on this category)`,
+      );
+    }
     lines.push(`- **Expression**: \`${cat.expression}\``);
     lines.push("- **Logical breakdown**:");
     let ast;

@@ -187,3 +187,25 @@ export function buildPresetDiagnostics(
     status: presetInfo.recognized ? "match" : "no-match",
   }];
 }
+
+// The feedback-level readout for the dev sidebar's Diagnostics section. UI-store state
+// only (the level map, plus the last level/source displayed), so it stays readable from
+// AppComponent, which observes the stores and not the engine.
+export function buildFeedbackLevelDiagnostics(
+  levels: Map<number, number> | undefined,
+  lastShown?: { level: number; source: string } | undefined,
+): SidebarDiagnostic[] {
+  // Always at least one row, including the empty case: on a Hazbot page the level map
+  // always has a meaningful value, and "nothing shown yet, the next click is level 1
+  // everywhere" is a state a walker needs to read, most sharply right after
+  // window.test.resetHazbotFeedbackLevels().
+  const entries = !levels || levels.size === 0 ? "(none)" : Array.from(levels.entries())
+    .sort((a, b) => a[0] - b[0])
+    .map(([id, level]) => `${id}→${level}`)
+    .join(", ");
+  const rows: SidebarDiagnostic[] = [{ label: "Feedback levels", value: entries }];
+  if (lastShown) {
+    rows.push({ label: "Last shown", value: `level ${lastShown.level} (${lastShown.source})` });
+  }
+  return rows;
+}

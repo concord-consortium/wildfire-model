@@ -15,8 +15,15 @@ jest.mock("@concord-consortium/log-monitor", () => ({
   LogMonitor: () => <div data-testid="log-monitor-mock" />,
   createLogWrapper: (fn: unknown) => fn,
 }));
+// The mock captures `diagnostics` rather than ignoring props: it is the only way this
+// file can tell an undefined diagnostics array from an empty or a populated one, since
+// the real Sidebar is never rendered here.
+const sidebarDiagnostics = jest.fn();
 jest.mock("../hazbot/engine/sidebar", () => ({
-  Sidebar: () => <div data-testid="hazbot-sidebar-mock" />,
+  Sidebar: (props: { diagnostics?: unknown }) => {
+    sidebarDiagnostics(props.diagnostics);
+    return <div data-testid="hazbot-sidebar-mock" />;
+  },
 }));
 jest.mock("shutterbug", () => ({ enable: jest.fn(), disable: jest.fn() }));
 jest.mock("./use-custom-cursors", () => ({ useCustomCursor: jest.fn() }));
@@ -47,16 +54,22 @@ jest.mock("../hazbot/wildfire", () => ({
   // Defaults to undefined → no diagnostics; buildPresetDiagnostics's own logic
   // is covered directly in engine-singleton.test.ts.
   buildPresetDiagnostics: jest.fn(),
+  // This barrel mock has no jest.requireActual spread, so the real builder never runs
+  // here. A bare jest.fn() returning undefined would collapse the composition to
+  // undefined and make the positive case below indistinguishable from the negative one.
+  buildFeedbackLevelDiagnostics: jest.fn(() => [{ label: "Feedback levels", value: "(none)" }]),
 }));
 
 // AppComponent re-reads `getUrlConfig()` on every render, so per-test mock updates
 // take effect on the next renderApp() call — no module-isolation gymnastics needed.
 import { AppComponent } from "./app";
+import { buildPresetDiagnostics, buildFeedbackLevelDiagnostics } from "../hazbot/wildfire";
 
 describe("AppComponent — Hazbot sidebar mount truth table", () => {
   beforeEach(() => {
     mockGetEngine.mockReset();
     mockUrlConfig.mockReset().mockReturnValue({ logMonitor: false, hazbotSidebar: false });
+    sidebarDiagnostics.mockReset();
   });
 
   function renderApp() {
@@ -101,5 +114,25 @@ describe("AppComponent — Hazbot sidebar mount truth table", () => {
     mockGetEngine.mockReturnValue(undefined);
     renderApp();
     expect(screen.queryByTestId("hazbot-sidebar-mock")).not.toBeInTheDocument();
+  });
+
+  // What this file can prove is the COMPOSITION: both builders are called and their rows
+  // concatenated, and the length guard still yields undefined when both come back empty.
+  // That the level builder always returns at least one row is engine-singleton.test.ts's.
+  it("hands the level rows to Sidebar even with no requested preset", () => {
+    mockUrlConfig.mockReturnValue({ logMonitor: false, hazbotSidebar: true });
+    mockGetEngine.mockReturnValue({ isActive: true, sessionId: "abc" });
+    (buildPresetDiagnostics as jest.Mock).mockReturnValueOnce(undefined);
+    renderApp();
+    expect(sidebarDiagnostics).toHaveBeenCalledWith([{ label: "Feedback levels", value: "(none)" }]);
+  });
+
+  it("hands Sidebar undefined, not an empty array, when neither builder returns rows", () => {
+    mockUrlConfig.mockReturnValue({ logMonitor: false, hazbotSidebar: true });
+    mockGetEngine.mockReturnValue({ isActive: true, sessionId: "abc" });
+    (buildPresetDiagnostics as jest.Mock).mockReturnValueOnce(undefined);
+    (buildFeedbackLevelDiagnostics as jest.Mock).mockReturnValueOnce([]);
+    renderApp();
+    expect(sidebarDiagnostics).toHaveBeenCalledWith(undefined);
   });
 });

@@ -58,6 +58,7 @@ function parseTab(sheetName, rows) {
   const ruleEndIdx = fvHeaderIdx > 0 ? fvHeaderIdx : rows.length;
 
   const categories = [];
+  let repeatFeedback;
   for (let i = ruleHeaderIdx + 1; i < ruleEndIdx; i++) {
     const row = rows[i];
     const idCell = row[colIdx.id];
@@ -82,15 +83,56 @@ function parseTab(sheetName, rows) {
         `marker disagree — check the sheet's category numbering.`,
       );
     }
-    if (id >= 100) continue;
+    if (id >= 100) {
+      // The feedback-mechanism row is kept as rule-set data in its own slot, never as a
+      // category: its expression cannot parse, and one unparseable category takes the
+      // whole rule-set to zero readings.
+      const repeat = normalizeFeedback(String(row[colIdx.feedback] ?? ""));
+      // This string is displayed (level 2 on every tab's top category), so it gets the
+      // same token check the Round columns get. No default token: the
+      // `Hazbot: …\n[Token]` convention already exists for this cell on all 11 tabs, so a
+      // blank here is an authoring error to surface rather than an absence to fill in.
+      warnOnActionToken(sheetName, id, "Repeat feedback", repeat);
+      repeatFeedback = {
+        id,
+        studentAction: String(row[colIdx.studentAction] ?? ""),
+        feedback: repeat,
+      };
+      continue;
+    }
 
+    const feedback = normalizeFeedback(String(row[colIdx.feedback] ?? ""));
     const cat = {
       id,
       studentAction: String(row[colIdx.studentAction] ?? ""),
-      feedback: normalizeFeedback(String(row[colIdx.feedback] ?? "")),
+      feedback,
       visualFeedback: String(row[colIdx.visualFeedback] ?? ""),
       expression: String(row[colIdx.expression] ?? "").trim(),
     };
+    // Column C's token does two jobs beyond labeling its own button: it is the Round 2
+    // default below, and it is the gate on whether level 1 offers the walk-through at all
+    // (offersTour in hazbot-button.tsx). Neither is defaulted, so it is checked before
+    // being used.
+    if (feedback) warnOnActionToken(sheetName, id, "Feedback", feedback);
+    // The Round cells are authored as bare sentences, so they are normalized into the
+    // same shape column C uses. The default token is level-aware: a tokenless Round 2
+    // cell on a coaching category re-offers the walk-through, everything else is terminal.
+    const level1Token = parseActionToken(feedback);
+    const coaching = level1Token.toLowerCase() === "show me";
+    if (colIdx.round2 !== undefined) {
+      const r2 = normalizeFeedback(String(row[colIdx.round2] ?? ""), coaching ? level1Token : "Okay");
+      if (r2) {
+        warnOnActionToken(sheetName, id, "Round 2", r2);
+        cat.feedbackRound2 = r2;
+      }
+    }
+    if (colIdx.round3 !== undefined) {
+      const r3 = normalizeFeedback(String(row[colIdx.round3] ?? ""), "Okay");
+      if (r3) {
+        warnOnActionToken(sheetName, id, "Round 3", r3);
+        cat.feedbackRound3 = r3;
+      }
+    }
     if (colIdx.arrowText !== undefined) {
       const arrow = String(row[colIdx.arrowText] ?? "").trim();
       if (arrow) cat.arrowText = arrow;
@@ -123,7 +165,7 @@ function parseTab(sheetName, rows) {
     }
   }
 
-  return { id: sheetName, categories, factorVariables };
+  return { id: sheetName, categories, factorVariables, repeatFeedback };
 }
 
 function mapRuleColumnIndices(header) {
@@ -138,6 +180,8 @@ function mapRuleColumnIndices(header) {
   // Tab 23 uses "Text to Go with Coach Marks" between visualFeedback and pseudocode;
   // earlier sheet revisions called this "Text to Go with Arrows". Match both.
   const arrowIdx = findCol("text to go with coach marks", "text to go with arrows", "coach marks");
+  const round2Idx = findCol("notes for round 2", "round 2");
+  const round3Idx = findCol("notes for round 3", "round 3");
   return {
     id: findCol("category", "#"),
     studentAction: findCol("student action"),
@@ -145,6 +189,11 @@ function mapRuleColumnIndices(header) {
     feedback: findCol("feedback to student", "hazbot feedback", "feedback"),
     visualFeedback: findCol("visual feedback"),
     arrowText: arrowIdx >= 0 ? arrowIdx : undefined,
+    // Columns G / H, "Notes for Round 2" / "Notes for Round 3". Present on 7 of the 11
+    // tabs; undefined where the tab carries no such column, the same optional-column
+    // shape arrowText uses.
+    round2: round2Idx >= 0 ? round2Idx : undefined,
+    round3: round3Idx >= 0 ? round3Idx : undefined,
     expression: findCol("pseudocode"),
   };
 }
@@ -172,10 +221,59 @@ function parseLogEvents(s) {
   return s.split(/[,;\n]/).map((x) => x.trim()).filter(Boolean);
 }
 
-// Collapse accidental "Hazbot: Hazbot: …" prefixes that crept into sheet content
-// so they don't reach the user-facing feedback string.
-function normalizeFeedback(s) {
-  return s.replace(/^(?:Hazbot:\s*){2,}/, "Hazbot: ");
+// The authored action tokens. A displayed cell carrying anything else is warned about at
+// extraction, since the token decides whether a level re-offers the coach-mark
+// walk-through and a near-miss would ship silently.
+const AUTHORED_TOKENS = ["show me", "okay", "hooray!", "got it!"];
+
+// The trailing bracket token, read with the same regex parseFeedback uses at render
+// (hazbot-button.tsx). Returns "" when the string carries none.
+function parseActionToken(s) {
+  const m = String(s).match(/\[([^\]]+)\]\s*$/);
+  return m ? m[1].trim() : "";
+}
+
+// Normalize a feedback cell into the `Hazbot: <text>\n[Token]` shape the renderer parses.
+// Four jobs, all no-ops on the committed column C content: strip a stray leading double
+// quote, collapse accidental "Hazbot: Hazbot: …" prefixes, prepend the prefix when the
+// cell lacks it, and append `defaultToken` when the cell carries no token. `defaultToken`
+// is omitted for column C and for the feedback-mechanism row, so a missing token there is
+// left alone rather than invented.
+function normalizeFeedback(s, defaultToken) {
+  let text = String(s ?? "").trim();
+  // Strip the stray leading quote ONLY when the cell holds an odd number of quotes, i.e.
+  // the leading one is unterminated. A cell that opens with a legitimate quoted phrase
+  // keeps it: that is how this sheet names activity sections.
+  if ((text.match(/"/g) || []).length % 2 === 1) text = text.replace(/^\s*"\s*/, "");
+  if (!text) return "";
+  text = text.replace(/^(?:Hazbot:\s*){2,}/, "Hazbot: ");
+  if (!/^Hazbot:/i.test(text)) text = `Hazbot: ${text}`;
+  if (defaultToken && !parseActionToken(text)) text = `${text}\n[${defaultToken}]`;
+  return text;
+}
+
+// Every check on a displayed cell's action token. Two ways to get it wrong: a token
+// outside the authored set, and no token at all in a cell normalizeFeedback leaves
+// undefaulted (column C and the feedback-mechanism row). Both land in the same place,
+// since parseActionToken returns "" for a near-miss the same as for an absence, and both
+// retire the coach-mark walk-through for that level. Nothing downstream catches either:
+// a tour that never opens looks exactly like a category that never had one.
+function warnOnActionToken(sheetName, id, columnLabel, text) {
+  const token = parseActionToken(text);
+  if (!token) {
+    console.warn(
+      `[extract] tab ${sheetName} category ${id}: ${columnLabel} carries no action token. ` +
+      `Expected a trailing "[Token]" from the authored set (${AUTHORED_TOKENS.join(", ")}).`,
+    );
+    return;
+  }
+  if (!AUTHORED_TOKENS.includes(token.toLowerCase())) {
+    console.warn(
+      `[extract] tab ${sheetName} category ${id}: ${columnLabel} action token ` +
+      `"[${token}]" is outside the authored set (${AUTHORED_TOKENS.join(", ")}). ` +
+      `Only "[Show me]" re-offers the coach-mark walk-through.`,
+    );
+  }
 }
 
 // === Emission ===
@@ -194,20 +292,36 @@ function emitTabModule(parsed) {
     `  factorVariables: [\n` +
     parsed.factorVariables.map(emitFactorVar).join(",\n") +
     `\n  ],\n` +
+    emitRepeatFeedback(parsed.repeatFeedback) +
     `};\n`;
 }
 
 function emitCategory(cat) {
   const arrowLine = cat.arrowText !== undefined ? `      arrowText: ${tsString(cat.arrowText)},\n` : "";
+  const round2Line = cat.feedbackRound2 !== undefined ? `      feedbackRound2: ${tsString(cat.feedbackRound2)},\n` : "";
+  const round3Line = cat.feedbackRound3 !== undefined ? `      feedbackRound3: ${tsString(cat.feedbackRound3)},\n` : "";
   return (
     `    {\n` +
     `      id: ${cat.id},\n` +
     `      studentAction: ${tsString(cat.studentAction)},\n` +
     `      feedback: ${tsString(cat.feedback)},\n` +
+    round2Line +
+    round3Line +
     `      visualFeedback: ${tsString(cat.visualFeedback)},\n` +
     arrowLine +
     `      expression: ${tsString(cat.expression)},\n` +
     `    }`
+  );
+}
+
+function emitRepeatFeedback(rf) {
+  if (!rf) return "";
+  return (
+    `  repeatFeedback: {\n` +
+    `    id: ${rf.id},\n` +
+    `    studentAction: ${tsString(rf.studentAction)},\n` +
+    `    feedback: ${tsString(rf.feedback)},\n` +
+    `  },\n`
   );
 }
 
@@ -291,4 +405,6 @@ module.exports = {
   emitTabModule,
   emitIndex,
   tsString,
+  normalizeFeedback,
+  parseActionToken,
 };

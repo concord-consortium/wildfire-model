@@ -83,3 +83,62 @@ describe("renderPlaybook", () => {
 });
 
 /* eslint-enable testing-library/render-result-naming-convention */
+
+describe("renderPlaybook — the feedback-level lines (WM-46)", () => {
+  // A middle category (2), the top category (4) carrying Round content it can never
+  // reach, and a repeat-feedback row.
+  const withRounds = (repeatFeedback) => {
+    const rs = fixtureRuleSet();
+    rs.categories[1].feedbackRound2 = "Hazbot: Middle two\n[Show me]";
+    rs.categories[1].feedbackRound3 = "Hazbot: Middle three\n[Okay]";
+    rs.categories[3].feedbackRound2 = "Hazbot: Top two\n[Okay]";
+    rs.categories[3].feedbackRound3 = "Hazbot: Top three\n[Okay]";
+    rs.repeatFeedback = repeatFeedback;
+    return rs;
+  };
+  const repeat = { id: 100, studentAction: "Re-clicked", feedback: "Hazbot: Keep going!\n[Got it!]" };
+
+  it("labels a middle category's Round lines as reachable levels", () => {
+    const md = renderPlaybook(withRounds(repeat), parse);
+    expect(md).toContain("- **Feedback (level 2)**: Hazbot: Middle two [Show me]");
+    expect(md).toContain("- **Feedback (level 3)**: Hazbot: Middle three [Okay]");
+  });
+
+  it("labels the top category's Round lines 'not shown' and says what supersedes them", () => {
+    const md = renderPlaybook(withRounds(repeat), parse);
+    expect(md).toContain(
+      "- **Feedback (level 2, not shown)**: Hazbot: Top two [Okay] (superseded by the repeat-click line below)");
+    expect(md).toContain(
+      "- **Feedback (level 3, not shown)**: Hazbot: Top three [Okay] (superseded by the repeat-click line below)");
+  });
+
+  it("renders the repeat-click line once, on the top category", () => {
+    const md = renderPlaybook(withRounds(repeat), parse);
+    expect(md.match(/Feedback \(repeat click after success\)/g)).toHaveLength(1);
+    expect(md).toContain(
+      "- **Feedback (repeat click after success)**: Hazbot: Keep going! [Got it!]" +
+      " (from the sheet's category 100 row, which replaces any Round 2/3 content on this category)");
+    // On the top category's own section, after its level-3 line.
+    const topSection = md.slice(md.indexOf("### Category 4"));
+    expect(topSection).toContain("Feedback (repeat click after success)");
+  });
+
+  // The label is gated on the top category alone, matching the selection rule's
+  // unconditional early return; only the explanation names the replacement.
+  it("still labels the top category 'not shown' without a repeat-feedback row", () => {
+    const md = renderPlaybook(withRounds(undefined), parse);
+    expect(md).toContain("- **Feedback (level 2, not shown)**: Hazbot: Top two [Okay]" +
+      " (a repeat click on the top category never reaches these, and this rule-set carries" +
+      " no repeat feedback, so it repeats level 1)");
+    expect(md).not.toContain("Feedback (repeat click after success)");
+  });
+
+  it("adds only the repeat-click line to a rule-set with no Round content", () => {
+    const rs = fixtureRuleSet();
+    rs.repeatFeedback = repeat;
+    const md = renderPlaybook(rs, parse);
+    expect(md).not.toContain("Feedback (level 2");
+    expect(md).not.toContain("Feedback (level 3");
+    expect(md.match(/Feedback \(repeat click after success\)/g)).toHaveLength(1);
+  });
+});

@@ -3,7 +3,8 @@ import { useAnalysisEngine } from "../react";
 import { renderError } from "../error-rendering";
 import { ENGINE_VERSION } from "../version";
 import { ExpressionRenderer } from "./expression-renderer";
-import { BaseReading, EngineError, SimPropImpl } from "../types";
+import { BaseReading, Category, EngineError, RuleSet, SimPropImpl } from "../types";
+import { topCategoryId } from "../top-category";
 import "./sidebar.css";
 
 function formatTimestamp(at: number): string {
@@ -114,9 +115,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ title, diagnostics }) => {
           `used`. Not renamed: every existing consumer and test names it. */}
       {engine.ruleSet && (
         <CategoriesPanel
-          categories={engine.ruleSet.categories as Array<{
-            id: number; studentAction: string; feedback: string; visualFeedback: string; expression: string;
-          }>}
+          categories={engine.ruleSet.categories}
+          repeatFeedback={engine.ruleSet.repeatFeedback}
           matchedCategory={categoryUsed}
           perCategoryTruth={perCategoryTruth}
           parsedExpressions={engine.parsedExpressions}
@@ -177,12 +177,20 @@ const TemporalVariablesPanel: React.FC<{
 };
 
 const CategoriesPanel: React.FC<{
-  categories: { id: number; studentAction: string; feedback: string; visualFeedback: string; expression: string }[];
+  categories: Category[];
+  repeatFeedback: RuleSet["repeatFeedback"];
   matchedCategory: number | null;
   perCategoryTruth: Record<number, Parameters<typeof ExpressionRenderer>[0]["tree"]>;
   parsedExpressions: Map<number, unknown>;
   isActive: boolean;
-}> = ({ categories, matchedCategory, perCategoryTruth, parsedExpressions, isActive }) => {
+}> = ({ categories, repeatFeedback, matchedCategory, perCategoryTruth, parsedExpressions, isActive }) => {
+  // The top category's Round 2/3 rows, where the sheet carries them, are unreachable and
+  // are labeled rather than shown as reachable. `roundsSuperseded` is gated on the top
+  // category ALONE, exactly as the selection rule is: it early-returns for the top
+  // category whether or not a repeat-feedback row exists, so the rows are unreachable
+  // either way. `hasRepeatFeedback` gates only the muted explanation, which names the
+  // row it points at.
+  const topId = topCategoryId({ categories });
   return (
     <div className="hazbot-sidebar-section">
       <div className="hazbot-sidebar-section-title">Categories</div>
@@ -193,6 +201,8 @@ const CategoriesPanel: React.FC<{
           <CategoryRow
             key={cat.id}
             cat={cat}
+            roundsSuperseded={cat.id === topId}
+            hasRepeatFeedback={repeatFeedback !== undefined}
             truth={truth}
             ast={parsedExpressions.get(cat.id)}
             matched={matched}
@@ -200,6 +210,15 @@ const CategoriesPanel: React.FC<{
           />
         );
       })}
+      {/* Rule-set data rather than category data, so it renders once, AFTER the rows, in
+          the position it occupies in the ladder: the feedback a repeat click shows once
+          the student has reached the top category. */}
+      {repeatFeedback && (
+        <div className="hazbot-sidebar-entry">
+          <strong>Repeat after success (category {repeatFeedback.id}):</strong>{" "}
+          <span style={{ whiteSpace: "pre-wrap" }}>{repeatFeedback.feedback}</span>
+        </div>
+      )}
     </div>
   );
 };
@@ -209,12 +228,14 @@ const CategoriesPanel: React.FC<{
 // message) + visualFeedback (visual cue description) + the parsed AST + WITH witness
 // detail (single open state covers all of these).
 const CategoryRow: React.FC<{
-  cat: { id: number; studentAction: string; feedback: string; visualFeedback: string; expression: string };
+  cat: Category;
+  roundsSuperseded: boolean;
+  hasRepeatFeedback: boolean;
   truth: Parameters<typeof ExpressionRenderer>[0]["tree"] | undefined;
   ast: unknown;
   matched: boolean;
   isActive: boolean;
-}> = ({ cat, truth, ast, matched, isActive }) => {
+}> = ({ cat, roundsSuperseded, hasRepeatFeedback, truth, ast, matched, isActive }) => {
   const [open, setOpen] = React.useState(false);
   // Icon + class are computed from the row's truth state (or suppressed when
   // inactive). The class drives green/red coloring per CSS — same palette as
@@ -253,6 +274,25 @@ const CategoryRow: React.FC<{
       {open && (
         <div className="hazbot-sidebar-category-detail">
           <div><strong>Feedback:</strong> <span style={{ whiteSpace: "pre-wrap" }}>{cat.feedback}</span></div>
+          {cat.feedbackRound2 && (
+            <div>
+              <strong>Feedback (level 2{roundsSuperseded ? ", not shown" : ""}):</strong>{" "}
+              <span style={{ whiteSpace: "pre-wrap" }}>{cat.feedbackRound2}</span>
+            </div>
+          )}
+          {cat.feedbackRound3 && (
+            <div>
+              <strong>Feedback (level 3{roundsSuperseded ? ", not shown" : ""}):</strong>{" "}
+              <span style={{ whiteSpace: "pre-wrap" }}>{cat.feedbackRound3}</span>
+            </div>
+          )}
+          {roundsSuperseded && (cat.feedbackRound2 || cat.feedbackRound3) && (
+            <div className="hazbot-sidebar-muted">
+              {hasRepeatFeedback
+                ? "Not shown: a repeat click on the top category uses the rule-set's repeat feedback, listed at the end of this panel."
+                : "Not shown: a repeat click on the top category never reaches these, and this rule-set carries no repeat feedback, so it repeats level 1."}
+            </div>
+          )}
           <div>
             <strong>Visual feedback:</strong>{" "}
             {cat.visualFeedback

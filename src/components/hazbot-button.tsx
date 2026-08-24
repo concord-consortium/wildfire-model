@@ -3,7 +3,7 @@ import { observer } from "mobx-react";
 import Button from "@mui/material/Button";
 import { useStores } from "../use-stores";
 import { log } from "../log";
-import { getAnalysisEngine, WildfireDefaults, WildfireReading } from "../hazbot/wildfire";
+import { getAnalysisEngine, selectFeedback, WildfireDefaults, WildfireReading } from "../hazbot/wildfire";
 import { buildTour } from "../hazbot/wildfire/build-tour";
 import { tourData } from "../hazbot/wildfire/tour-data.generated";
 import { TourContext } from "../hazbot/wildfire/tour-map";
@@ -125,8 +125,12 @@ export const HazbotButton = observer(function HazbotButton() {
     const engine = getAnalysisEngine();
     const { used: matched } = readCategories(engine);
     const ruleSetId = engine?.ruleSet?.id ?? null;
-    const feedback =
-      engine?.ruleSet?.categories.find((c) => c.id === matched)?.feedback ?? "";
+    // Which of the category's up-to-three strings this press shows. The level is READ
+    // here (the string it names drives parseFeedback / buildTour / the tour's done label
+    // below) but only COMMITTED when the popover actually opens: see openOnce.
+    const shownLevel = matched != null ? (ui.hazbotFeedbackLevels.get(matched) ?? 0) : 0;
+    const selected = selectFeedback(engine?.ruleSet, matched, shownLevel);
+    const feedback = selected?.feedback ?? "";
     if (!feedback) {
       // Nothing to show (no engine / no matched category / empty feedback). Clear
       // the flag so the button doesn't stay stuck in its "Large" coached state and
@@ -135,6 +139,9 @@ export const HazbotButton = observer(function HazbotButton() {
       return;
     }
     const { body, label } = parseFeedback(feedback);
+    // The level's own action token decides whether it re-offers the walk-through, so an
+    // author can say "this level coaches again" by typing [Show me] into the cell.
+    const offersTour = label.trim().toLowerCase() === "show me";
     const avatar = avatarRef.current;
 
     // Build the tour up front (read live sim state once). null → non-coaching category.
@@ -152,7 +159,9 @@ export const HazbotButton = observer(function HazbotButton() {
     let cleanup = false;
 
     const openTour = (steps: EngineStep[]) => {
-      log("HazbotShowMeClicked", { ruleSetId, categoryId: matched, stepCount: steps.length });
+      log("HazbotShowMeClicked", {
+        ruleSetId, categoryId: matched, stepCount: steps.length, feedbackLevel: selected?.level ?? null,
+      });
       setTourActive(true);
       let lastStepIndex = 0;
       tourEngine = createCoachmarksEngine({
@@ -170,13 +179,17 @@ export const HazbotButton = observer(function HazbotButton() {
         onHighlightStarted: (_el, _step, { state }) => { lastStepIndex = state.activeIndex; },
         onCancelRequested: () => {
           tourCancelled = true;
-          log("HazbotTourDismissed", { ruleSetId, categoryId: matched, lastStepIndex });
+          log("HazbotTourDismissed", {
+            ruleSetId, categoryId: matched, lastStepIndex, feedbackLevel: selected?.level ?? null,
+          });
           tourEngine?.destroy();
         },
         onDestroyed: () => {
           // Completed ONLY on a terminal Done click: not cancelled (×/Escape), not cleanup.
           if (!tourCancelled && !cleanup) {
-            log("HazbotTourCompleted", { ruleSetId, categoryId: matched, lastStepIndex });
+            log("HazbotTourCompleted", {
+              ruleSetId, categoryId: matched, lastStepIndex, feedbackLevel: selected?.level ?? null,
+            });
           }
           if (!cleanup) { phase = "done"; ui.showHazbotFeedback = false; setTourActive(false); }
         },
@@ -196,7 +209,7 @@ export const HazbotButton = observer(function HazbotButton() {
         onCancelRequested: () => { introCancelled = true; intro?.destroy(); },
         onDestroyed: () => {
           // Launch the tour ONLY on a real Show-me activation (not ×/Escape, not cleanup).
-          if (phase === "intro" && !introCancelled && !cleanup && tour) {
+          if (phase === "intro" && !introCancelled && !cleanup && tour && offersTour) {
             phase = "tour";
             openTour(tour);
           } else if (!cleanup) {
@@ -220,6 +233,17 @@ export const HazbotButton = observer(function HazbotButton() {
     const openOnce = () => {
       if (opened) return; // whichever trigger fires first wins; the other no-ops
       opened = true;
+      // Commit the level HERE, not at the top of the effect: the effect body also runs
+      // for presses that never open a popover (teardown inside this 400ms window, or a
+      // category with no feedback), and a level spent on nothing shown is the same defect
+      // a click-site counter has.
+      if (matched != null && selected) {
+        ui.hazbotFeedbackLevels.set(matched, selected.level);
+        ui.hazbotLastFeedbackShown = { level: selected.level, source: selected.source };
+        log("HazbotFeedbackShown", {
+          ruleSetId, categoryId: matched, feedbackLevel: selected.level, source: selected.source,
+        });
+      }
       openIntro();
     };
     const onTransitionEnd = (e: TransitionEvent) => {

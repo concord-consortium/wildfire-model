@@ -26,21 +26,24 @@ export const createStores = (): IStores => {
   //   ]
   // })
   const simulation = new SimulationModel();
+  // Constructed here rather than in the returned literal: the test helpers below need
+  // the same UIModel the stores hold.
+  const ui = new UIModel();
   (window as any).sim = simulation;
   (window as any).DroughtLevel = DroughtLevel;
   (window as any).Vegetation = Vegetation;
   (window as any).TerrainType = TerrainType;
-  (window as any).test = createTestHelpers(simulation);
+  (window as any).test = createTestHelpers(simulation, ui);
   return {
     simulation,
-    ui: new UIModel(),
+    ui,
     chartStore: new ChartStore()
   };
 };
 
 // Test helpers exposed on window.test so Playwright / browser-console tests can place sparks,
 // fire-line endpoints, and helitack drops by zone index without simulating canvas raycasts.
-const createTestHelpers = (simulation: SimulationModel) => {
+const createTestHelpers = (simulation: SimulationModel, ui: UIModel) => {
   const zoneBounds = (zoneIdx: number) => {
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity, count = 0;
     for (const cell of simulation.cells) {
@@ -61,6 +64,12 @@ const createTestHelpers = (simulation: SimulationModel) => {
     };
   };
   return {
+    // Reset Hazbot's per-category feedback levels without a page reload or a Clear All,
+    // so a validation walk can check level 3 on one category and then move to the next
+    // without redoing Terrain Setup.
+    resetHazbotFeedbackLevels() {
+      ui.resetHazbotFeedback();
+    },
     placeSparkInZone(zoneIdx: number) {
       const b = zoneBounds(zoneIdx);
       if (!b) throw new Error(`No cells found for zoneIdx=${zoneIdx}`);
