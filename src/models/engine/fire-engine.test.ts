@@ -87,6 +87,24 @@ describe("FireEngine", () => {
     expect(engine.fireDidStop).toBe(true);
   });
 
+  it("burns out a burning cell whose ignition time a fire line erased", () => {
+    const engine = new FireEngine(generateCells(), wind, sparks, config);
+    engine.updateFire(1440);
+    const burning = engine.cells.filter(c => c.fireState === FireState.Burning);
+    expect(burning.length).toBeGreaterThan(0);
+    // What simulation.buildFireLine() does to a cell the student draws over: it erases
+    // the ignition time so nothing can reach the cell, without touching a fire already
+    // burning there. `time - Infinity` never exceeds burnTime, so without the guard
+    // these cells burn forever and the run never ends.
+    burning.forEach(c => { c.isFireLine = true; c.ignitionTime = Infinity; });
+    engine.updateFire(1440 * 2);
+    burning.forEach(c => expect(c.fireState).toEqual(FireState.Burnt));
+    engine.updateFire(1440 * 6);
+    engine.updateFire(1440 * 7);
+    expect(engine.cells.filter(c => c.isBurningOrWillBurn).length).toEqual(0);
+    expect(engine.fireDidStop).toBe(true);
+  });
+
   it("should mark unburnt islands cell and remove this flag from cells are directly under the spark", () => {
     const generateCellsWithUnburntIsland = () => {
       const res = [];

@@ -580,17 +580,13 @@ describe("BottomBar Hazbot button (WM-6)", () => {
     expect(screen.queryByTestId("hazbot-button")).toBeNull();
   });
 
-  it("Start → Pause (manual) arms the pulse; clicking the button clears it and sets showHazbotFeedback", async () => {
+  it("Start → Pause (manual) does NOT arm the pulse: the run is paused, not over", async () => {
     seedRunning();
     render(<Provider stores={stores}><BottomBar /></Provider>);
     // Manual pause (Start→Pause toggle).
     await userEvent.click(screen.getByTestId("start-button"));
     expect(stores.simulation.simulationRunning).toBe(false);
-    expect(stores.ui.hazbotPulseArmed).toBe(true);
-    // Clicking the Hazbot button clears the pulse and opens feedback.
-    await userEvent.click(screen.getByTestId("hazbot-button"));
     expect(stores.ui.hazbotPulseArmed).toBe(false);
-    expect(stores.ui.showHazbotFeedback).toBe(true);
   });
 
   it("Start → Fire Line pause does NOT arm the pulse (mid-intervention exclusion)", async () => {
@@ -603,11 +599,11 @@ describe("BottomBar Hazbot button (WM-6)", () => {
   });
 
   it("Restart after a completed run hides the pulse via the simulationStarted guard", async () => {
-    // Completed-run state: started, not running, armed (e.g. after a manual Stop).
+    // Completed-run state: started, not running, the fire out, and armed.
     stores.simulation.sparks.push(new Vector2(50000, 50000));
     stores.simulation.simulationStarted = true;
     stores.simulation.simulationRunning = false;
-    (stores.simulation as any).engine = mockEngine();
+    (stores.simulation as any).engine = mockEngine({ fireDidStop: true });
     stores.ui.hazbotPulseArmed = true;
     render(<Provider stores={stores}><BottomBar /></Provider>);
     // Pulse visible (armed && started && !running) — the `ready` class gates the
@@ -636,7 +632,7 @@ describe("BottomBar Hazbot button (WM-6)", () => {
     expect(stores.ui.hazbotLastFeedbackShown).toBeUndefined();
   });
 
-  it("natural burnout arms the pulse via the simulationEnded reaction", () => {
+  it("natural burnout arms the pulse, and clicking the button clears it and opens feedback", async () => {
     seedRunning();
     render(<Provider stores={stores}><BottomBar /></Provider>);
     expect(stores.ui.hazbotPulseArmed).toBe(false);
@@ -650,6 +646,10 @@ describe("BottomBar Hazbot button (WM-6)", () => {
       stores.simulation.simulationRunning = false;
     });
     expect(stores.ui.hazbotPulseArmed).toBe(true);
+    // The button is back, and clicking it acknowledges the run and opens the feedback.
+    await userEvent.click(screen.getByTestId("hazbot-button"));
+    expect(stores.ui.hazbotPulseArmed).toBe(false);
+    expect(stores.ui.showHazbotFeedback).toBe(true);
   });
 
   // The bar lockout covers the model controls in .mainContainer only. The
@@ -660,5 +660,63 @@ describe("BottomBar Hazbot button (WM-6)", () => {
     await userEvent.click(screen.getByTestId("hazbot-button"));
     expect(stores.ui.showHazbotFeedback).toBe(true);
     expect(stores.ui.showTerrainUI).toBe(true);
+  });
+
+  // One case per route out of the running state: handleStart's pause branch,
+  // handleFireLine and handleRestart's discard are each driven through the real
+  // control. The natural end is not: engine is not observable, so only
+  // simulationRunning carries the reactivity edge and the case has to mirror tick() by
+  // hand, the same shape as the pulse test above it.
+  describe("disabled for the duration of a run (WM-31)", () => {
+    const hazbot = () => screen.getByTestId("hazbot-button");
+
+    it("stays disabled through a manual Pause, which leaves the run in progress", async () => {
+      seedRunning();
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      expect(hazbot()).toBeDisabled();
+      await userEvent.click(screen.getByTestId("start-button"));
+      expect(stores.simulation.simulationRunning).toBe(false);
+      expect(hazbot()).toBeDisabled();
+    });
+
+    it("stays disabled through a Fire Line intervention (the tool pauses the run)", async () => {
+      seedRunning();
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      expect(hazbot()).toBeDisabled();
+      // handleFireLine stops the run when the tool is ARMED, before any marker is
+      // placed, so this is the earliest point in the intervention.
+      await userEvent.click(screen.getByTestId("fireline-button"));
+      expect(stores.simulation.simulationRunning).toBe(false);
+      expect(hazbot()).toBeDisabled();
+    });
+
+    it("stays disabled through a Helitack drop, which does not pause the run", async () => {
+      seedRunning();
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      await userEvent.click(screen.getByTestId("helitack-button"));
+      expect(stores.simulation.simulationRunning).toBe(true);
+      expect(hazbot()).toBeDisabled();
+    });
+
+    it("is re-enabled when the fire burns out on its own", () => {
+      seedRunning();
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      expect(hazbot()).toBeDisabled();
+      // Mirrors production tick(): the engine reports fireDidStop, then the flag falls.
+      act(() => {
+        (stores.simulation as any).engine = mockEngine({ fireDidStop: true });
+        stores.simulation.simulationRunning = false;
+      });
+      expect(hazbot()).not.toBeDisabled();
+    });
+
+    it("is re-enabled by a mid-run Restart, which discards the run", async () => {
+      seedRunning();
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      expect(hazbot()).toBeDisabled();
+      await userEvent.click(screen.getByTestId("restart-button"));
+      expect(stores.simulation.simulationRunning).toBe(false);
+      expect(hazbot()).not.toBeDisabled();
+    });
   });
 });

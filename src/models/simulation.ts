@@ -143,6 +143,14 @@ export class SimulationModel {
     return this.simulationStarted && !this.simulationRunning && !!this.engine?.fireDidStop;
   }
 
+  // True from the first Start until the fire stops burning, pauses included: a run the
+  // student paused is still a run in progress. Restart and Reload clear
+  // simulationStarted, so they end it too. Reads simulationEnded and therefore carries
+  // the same reactivity contract: simulationRunning is what moves.
+  @computed public get runInProgress() {
+    return this.simulationStarted && !this.simulationEnded;
+  }
+
   @computed public get setupEnabled() {
     return !this.simulationStarted;
   }

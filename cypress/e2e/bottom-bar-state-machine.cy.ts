@@ -2,17 +2,19 @@
 //
 // Browser-level regression guard for the bottom-bar lifecycle state machine.
 // Covers each of the eight states by driving the real bottom-bar in a running
-// app, asserting the HTML `disabled` attribute; states 1-7 follow the Zeplin
-// matrix, and state 8 (the Setup-open lockout) has no artboard. Catches
-// full-page reactivity wiring breaks, @observer-decoration regressions, and
-// build-tooling failures that the React-Testing-Library tests in
-// bottom-bar.test.tsx can't.
+// app, asserting the HTML `disabled` attribute of all eight controls; states 1-7
+// follow the Zeplin matrix, and state 8 (the Setup-open lockout) has no artboard.
+// Catches full-page reactivity wiring breaks, @observer-decoration regressions, and
+// build-tooling failures that the React-Testing-Library tests in bottom-bar.test.tsx
+// can't.
 //
-// Does NOT cover visual styling regressions (opacity, grayscale). Those rules
-// live in src/components/icon-button.scss (`&:disabled, &.Mui-disabled`) and
-// are currently verified by manual browser inspection against the Zeplin spec
-// — there is no automated assertion of the rendered styles. A future
-// Zeplin-driven visual-regression pass would close that gap.
+// The one rendered style it does assert is the Hazbot button's disabled opacity,
+// which cannot be checked in Jest: SCSS modules resolve through identity-obj-proxy
+// there, so no real CSS is applied and a computed-opacity assertion would read ""
+// and pass against any implementation. The icon-button disabled rules
+// (src/components/icon-button.scss, `&:disabled, &.Mui-disabled`) are still verified
+// only by manual browser inspection against the Zeplin spec. A future Zeplin-driven
+// visual-regression pass would close that gap.
 //
 // Uses inline `cy.get("[data-testid='...']")` selectors rather than the
 // BottomBar helper class so each `it` block reads top-to-bottom without
@@ -43,6 +45,7 @@ interface AppDebugHooks {
     setupChanged: boolean;
     dataReady: boolean;
     engine?: { fireDidStop: boolean };
+    tick(timeStep: number): void;
   };
   test: {
     placeSparkInZone(zoneIdx: number): void;
@@ -52,11 +55,16 @@ interface AppDebugHooks {
 }
 const debugHooks = (win: Window) => win as unknown as AppDebugHooks;
 
-const APP_URL = "/?preset=plainsTwoZone";
+// hazbotRules=23 is part of the shared URL rather than only the Hazbot describe's: the
+// Hazbot button mounts under `{hazbotEngine?.ruleSet && ...}` (bottom-bar.tsx), so
+// without a loaded rule-set the state matrix below would assert against an element that
+// does not exist. The cost is that these cases now depend on rule-set 23 validating at
+// load; the pulse describe at the bottom already carried that.
+const APP_URL = "/?preset=plainsTwoZone&hazbotRules=23";
 
 const expectButtonStates = (states: {
   setup: boolean; spark: boolean; reload: boolean; restart: boolean;
-  startStop: boolean; fireLine: boolean; helitack: boolean;
+  startStop: boolean; fireLine: boolean; helitack: boolean; hazbot: boolean;
 }) => {
   cy.get("[data-testid='terrain-button']").should(states.setup ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='spark-button']").should(states.spark ? "not.be.disabled" : "be.disabled");
@@ -65,6 +73,23 @@ const expectButtonStates = (states: {
   cy.get("[data-testid='start-button']").should(states.startStop ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='fireline-button']").should(states.fireLine ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='helitack-button']").should(states.helitack ? "not.be.disabled" : "be.disabled");
+  cy.get("[data-testid='hazbot-button']").should(states.hazbot ? "not.be.disabled" : "be.disabled");
+};
+
+// Burn the fire out without waiting for the run to play in real time. updateFire()
+// spreads to the burning cells' neighbors once per call whatever the time step, so a
+// large step advances one spread generation per tick; tick() then clears
+// simulationRunning itself the moment the engine reports fireDidStop, which is the
+// production edge the Hazbot button and the ready pulse both hang off.
+const burnOutFire = () => {
+  cy.window().then((win: Window) => {
+    const { sim } = debugHooks(win);
+    for (let i = 0; i < 2000 && !sim.engine?.fireDidStop; i++) {
+      sim.tick(60);
+    }
+  });
+  cy.window().its("sim.engine.fireDidStop").should("eq", true);
+  cy.window().its("sim.simulationRunning").should("eq", false);
 };
 
 // MUI Slider's hidden range input is covered by the thumb span, so cy.click /
@@ -95,7 +120,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     expectButtonStates({
       setup: true, spark: true,
       reload: false, restart: false, startStop: false,
-      fireLine: false, helitack: false,
+      fireLine: false, helitack: false, hazbot: true,
     });
   });
 
@@ -111,7 +136,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     expectButtonStates({
       setup: true, spark: true,
       reload: true, restart: false, startStop: false,
-      fireLine: false, helitack: false,
+      fireLine: false, helitack: false, hazbot: true,
     });
   });
 
@@ -120,18 +145,18 @@ describe("Bottom-bar state machine (WM-24)", () => {
     expectButtonStates({
       setup: true, spark: true,
       reload: true, restart: false, startStop: true,
-      fireLine: false, helitack: false,
+      fireLine: false, helitack: false, hazbot: true,
     });
   });
 
-  it("state 4 (Running): Setup/Spark disabled; Restart/Start/Fireline/Helitack enabled", () => {
+  it("state 4 (Running): Setup/Spark/Hazbot disabled; Restart/Start/Fireline/Helitack enabled", () => {
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     cy.get("[data-testid='start-button']").click();
     cy.window().its("sim.simulationRunning").should("eq", true);
     expectButtonStates({
       setup: false, spark: false,
       reload: true, restart: true, startStop: true,
-      fireLine: true, helitack: true,
+      fireLine: true, helitack: true, hazbot: false,
     });
   });
 
@@ -151,7 +176,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     expectButtonStates({
       setup: false, spark: false,
       reload: true, restart: true, startStop: false,
-      fireLine: false, helitack: false,
+      fireLine: false, helitack: false, hazbot: true,
     });
   });
 
@@ -163,7 +188,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     expectButtonStates({
       setup: true, spark: true,
       reload: true, restart: false, startStop: true,
-      fireLine: false, helitack: false,
+      fireLine: false, helitack: false, hazbot: true,
     });
   });
 
@@ -173,12 +198,13 @@ describe("Bottom-bar state machine (WM-24)", () => {
     cy.window().its("sim.simulationRunning").should("eq", true);
     cy.get("[data-testid='fireline-button']").click();
     // Arming pauses the model and leaves the tool live as its own cancel toggle;
-    // every other tool disables its button while armed.
+    // every other tool disables its button while armed. Hazbot stays disabled: the
+    // pause is mid-intervention and the run is still in progress (WM-31).
     cy.window().its("sim.simulationRunning").should("eq", false);
     expectButtonStates({
       setup: false, spark: false,
       reload: true, restart: true, startStop: true,
-      fireLine: true, helitack: true,
+      fireLine: true, helitack: true, hazbot: false,
     });
     // Clicking it again disarms, and the button stays available.
     cy.get("[data-testid='fireline-button']").click();
@@ -202,45 +228,44 @@ describe("Bottom-bar state machine (WM-24)", () => {
     expectButtonStates({
       setup: true, spark: true,
       reload: false, restart: false, startStop: false,
-      fireLine: false, helitack: false,
+      fireLine: false, helitack: false, hazbot: true,
     });
   });
 
   // State 8: SetupOpen — the wizard locks the model controls, so Cancel and
   // Next/Create are the only ways out. Setup stays enabled and its click is inert.
-  it("state 8 (SetupOpen): only Setup stays enabled; Spark/Reload/Start locked out", () => {
+  it("state 8 (SetupOpen): Setup and Hazbot stay enabled; Spark/Reload/Start locked out", () => {
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     // Assert the pre-state first: from SparkPlaced all three are live, which is
     // what makes the post-open assertion below able to fail.
     expectButtonStates({
       setup: true, spark: true,
       reload: true, restart: false, startStop: true,
-      fireLine: false, helitack: false,
+      fireLine: false, helitack: false, hazbot: true,
     });
     cy.get("[data-testid='terrain-button']").click();
     cy.get("[data-testid='terrain-header']").should("be.visible");
     expectButtonStates({
       setup: true, spark: false,
       reload: false, restart: false, startStop: false,
-      fireLine: false, helitack: false,
+      fireLine: false, helitack: false, hazbot: true,
     });
   });
 });
 
 // WM-6 Hazbot Analysis button. The one assertion jsdom can't truly exercise:
 // the @observer button re-rendering the ready/pulse state across a live
-// Start → Stop run, then clearing it on click. All other arm/clear/gating/blink
+// Start → burnout run, then clearing it on click. All other arm/clear/gating/blink
 // logic is covered by the fast Jest tests in src/components/hazbot-button.test.tsx
 // and bottom-bar.test.tsx; this proves the full-page reactivity wiring.
 describe("Hazbot button pulse (WM-6)", () => {
-  const HAZBOT_URL = "/?preset=plainsTwoZone&hazbotRules=23";
 
   beforeEach(() => {
-    cy.visit(HAZBOT_URL);
+    cy.visit(APP_URL);
     cy.window().its("sim.dataReady").should("eq", true);
   });
 
-  it("renders with a loaded rule-set, pulses after a manual Stop, and clears on click", () => {
+  it("renders with a loaded rule-set, pulses once the fire is out, and clears on click", () => {
     // Button is present on a Hazbot-enabled page with a loaded rule-set. The
     // ready/pulse state is the `ready` class on the wrapper (it gates the
     // box-shadow pulse animation on the button).
@@ -249,15 +274,54 @@ describe("Hazbot button pulse (WM-6)", () => {
     // app (e.g. `...--ready--...`), so match the class attribute rather than an
     // exact class token.
     cy.get("[data-testid='hazbot-button-wrap']").invoke("attr", "class").should("not.match", /ready/);
-    // Place a spark, Start, then manual Stop → the pulse arms (ready state).
+    // Place a spark, Start, then let the fire burn out → the pulse arms (ready state).
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     cy.get("[data-testid='start-button']").click();
     cy.window().its("sim.simulationRunning").should("eq", true);
-    cy.get("[data-testid='start-button']").click();   // Stop
+    // A manual Pause leaves the run in progress, so it arms nothing (WM-31).
+    cy.get("[data-testid='start-button']").click();   // Pause
     cy.window().its("sim.simulationRunning").should("eq", false);
+    cy.get("[data-testid='hazbot-button-wrap']").invoke("attr", "class").should("not.match", /ready/);
+    cy.get("[data-testid='start-button']").click();   // resume
+    burnOutFire();
     cy.get("[data-testid='hazbot-button-wrap']").invoke("attr", "class").should("match", /ready/);
     // Clicking the Hazbot button clears the pulse.
     cy.get("[data-testid='hazbot-button']").click();
     cy.get("[data-testid='hazbot-button-wrap']").invoke("attr", "class").should("not.match", /ready/);
+  });
+
+  // The disabled attribute is asserted in the state matrix above too; what only a
+  // browser can check is the rendered 35%. The project's MUI theme
+  // (src/material-ui-theme.tsx) fades a disabled button to 0.25, so an implementation
+  // that ships the `disabled` prop without the opacity override passes every Jest case
+  // and still renders the wrong button.
+  it("fades to the Zeplin 35% (not the theme's 0.25) for the duration of a run", () => {
+    cy.get("[data-testid='hazbot-button']").should("have.css", "opacity", "1");
+    cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
+    cy.get("[data-testid='start-button']").click();
+    cy.window().its("sim.simulationRunning").should("eq", true);
+    cy.get("[data-testid='hazbot-button']")
+      .should("be.disabled")
+      .and("have.css", "opacity", "0.35");
+    // The robot stays (that is what separates this state from the tour's fade), and the
+    // Button back keeps its fill and border. border-top-width is 1px, not the declared
+    // 1.5px: Chrome floors a sub-pixel border at devicePixelRatio 1, which is what
+    // Cypress runs at.
+    cy.get("[data-testid='hazbot-back']").should("be.visible");
+    cy.get("[data-testid='hazbot-button']")
+      .should("have.css", "background-color", "rgb(193, 218, 255)")
+      .and("have.css", "border-top-width", "1px");
+    // Pausing does not bring it back: a paused run is still a run (WM-31).
+    cy.get("[data-testid='start-button']").click();
+    cy.window().its("sim.simulationRunning").should("eq", false);
+    cy.get("[data-testid='hazbot-button']")
+      .should("be.disabled")
+      .and("have.css", "opacity", "0.35");
+    // The fire going out is what brings it back.
+    cy.get("[data-testid='start-button']").click();   // resume
+    burnOutFire();
+    cy.get("[data-testid='hazbot-button']")
+      .should("not.be.disabled")
+      .and("have.css", "opacity", "1");
   });
 });

@@ -109,11 +109,10 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     // wired for the Playwright fullscreen-variant walkthrough.
     (window as any).test.__bottomBarRef = this;
 
-    // WM-6: arm the Hazbot pulse on natural burnout. simulationEnded is a
-    // computed (started && !running && fireDidStop); arming from this distinct
-    // observable (not bare !simulationRunning) is what excludes the Fire Line
-    // pause and the manual-Stop-vs-burnout ambiguity. Manual Stop is armed in
-    // handleStart instead.
+    // WM-6: arm the Hazbot pulse when the run ends. simulationEnded is a computed
+    // (started && !running && fireDidStop), which is the same state that re-enables the
+    // Hazbot button, so the pulse and the button agree: a pause by either route leaves
+    // the run in progress and arms nothing.
     const { simulation, ui } = this.stores;
     this.hazbotPulseReactionDisposer = reaction(
       () => simulation.simulationEnded,
@@ -264,10 +263,6 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     const { ui, simulation } = this.stores;
     if (simulation.simulationRunning) {
       simulation.stop();
-      // WM-6: a manual Stop counts as "a run completed" and arms the ready pulse.
-      // (A Fire Line pause also calls simulation.stop() but does NOT arm — see
-      // handleFireLine — so the pulse stays off mid-intervention.)
-      ui.hazbotPulseArmed = true;
       log("SimulationStopped", {
         outcome: simulation.getOutcomeData(this.stores.chartStore)
       });
