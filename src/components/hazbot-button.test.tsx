@@ -41,6 +41,27 @@ function renderWithStores(stores = createStores()) {
   return { stores, ...render(<Provider stores={stores}><HazbotButton /></Provider>) };
 }
 
+// The run lifecycle in store terms. The button reads simulation.runInProgress
+// (`simulationStarted && !simulationEnded`), and simulationEnded reads the engine, which
+// is not observable: simulationRunning carries the reactivity edge, so the engine is
+// assigned before the flag falls, mirroring production tick(). A pause leaves
+// fireDidStop false, which is what keeps the run in progress.
+type TestStores = ReturnType<typeof createStores>;
+const startRun = (stores: TestStores) => act(() => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (stores.simulation as any).engine = { fireDidStop: false };
+  stores.simulation.simulationStarted = true;
+  stores.simulation.simulationRunning = true;
+});
+const pauseRun = (stores: TestStores) => act(() => {
+  stores.simulation.simulationRunning = false;
+});
+const burnOut = (stores: TestStores) => act(() => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (stores.simulation as any).engine = { fireDidStop: true };
+  stores.simulation.simulationRunning = false;
+});
+
 // A minimal analysis engine: the panel reads engine.ruleSet.categories[].feedback.
 // NOTE for ladder fixtures: the HIGHEST id is the top category, whose level 2 is the
 // rule-set's `repeatFeedback` rather than its own Round columns. A fixture holding only
@@ -98,21 +119,21 @@ it("renders the avatar layers + two-line label", () => {
   expect(screen.queryByTestId("hazbot-blinks")).toBeNull();
 });
 
-it("shows the ready/pulse state only when armed && started && !running", () => {
+it("shows the ready/pulse state only when armed && started && the run is over", () => {
   const { stores } = renderWithStores();
   // The pulse is a box-shadow animation gated by the `ready` class on the WRAPPER
   // div (identity-obj-proxy makes css.ready === "ready", so the className contains
   // it literally).
   const wrap = () => screen.getByTestId("hazbot-button-wrap");
   expect(wrap().className).not.toMatch(/ready/);
-  act(() => {
-    stores.simulation.simulationStarted = true;
-    stores.simulation.simulationRunning = false;
-    stores.ui.hazbotPulseArmed = true;
-  });
+  act(() => { stores.ui.hazbotPulseArmed = true; });
+  startRun(stores);
+  burnOut(stores);
   expect(wrap().className).toMatch(/ready/);
-  // A run in progress hides the pulse.
-  act(() => { stores.simulation.simulationRunning = true; });
+  // A run in progress hides the pulse, and a pause is still a run in progress.
+  startRun(stores);
+  expect(wrap().className).not.toMatch(/ready/);
+  pauseRun(stores);
   expect(wrap().className).not.toMatch(/ready/);
 });
 
@@ -281,13 +302,13 @@ describe("Hazbot feedback panel", () => {
     mockSelection.mockReturnValue(selection(1));
     const { stores } = renderWithStores();
     const wrap = () => screen.getByTestId("hazbot-button-wrap");
+    // A run that has already ended, so the pulse is suppressed by the open panel rather
+    // than by the run gate: leave the run in progress and the case cannot fail.
+    startRun(stores);
+    burnOut(stores);
     openPanel(); // clears the arm and opens the coach mark (showHazbotFeedback = true)
-    // Simulate a run ending mid-coach-mark, which re-arms the pulse.
-    act(() => {
-      stores.simulation.simulationStarted = true;
-      stores.simulation.simulationRunning = false;
-      stores.ui.hazbotPulseArmed = true;
-    });
+    // Simulate the end of that run re-arming the pulse under the open coach mark.
+    act(() => { stores.ui.hazbotPulseArmed = true; });
     expect(stores.ui.showHazbotFeedback).toBe(true);
     expect(wrap().className).not.toMatch(/ready/); // suppressed while the panel is open
   });
@@ -667,39 +688,60 @@ describe("Hazbot feedback levels", () => {
   });
 });
 
-// The pause routes themselves (Pause press, Fire Line, natural burnout, Restart) are
-// driven through the real bottom-bar controls in bottom-bar.test.tsx; these cover what
-// the button does with the flag.
-describe("Disabled while the model runs (WM-31)", () => {
+// The routes out of the running state (Pause press, Fire Line, natural burnout, Restart)
+// are driven through the real bottom-bar controls in bottom-bar.test.tsx; these cover
+// what the button does with the flag.
+describe("Disabled for the duration of a run (WM-31)", () => {
   const button = () => screen.getByTestId("hazbot-button");
   const wrap = () => screen.getByTestId("hazbot-button-wrap");
 
-  it("disables the button while running and re-enables when the flag clears", () => {
+  it("disables the button from Start until the fire is out, pauses included", () => {
     const { stores } = renderWithStores();
     expect(button()).not.toBeDisabled();
-    act(() => { stores.simulation.simulationRunning = true; });
+    startRun(stores);
     expect(button()).toBeDisabled();
     expect(wrap().className).toMatch(/runDisabled/);
-    act(() => { stores.simulation.simulationRunning = false; });
+    // A pause leaves the run in progress, which is the point of the gate.
+    pauseRun(stores);
+    expect(button()).toBeDisabled();
+    expect(wrap().className).toMatch(/runDisabled/);
+    // Resumed, because a fire can only go out while it is burning: simulationRunning is
+    // what carries the edge into simulationEnded.
+    startRun(stores);
+    burnOut(stores);
     expect(button()).not.toBeDisabled();
     expect(wrap().className).not.toMatch(/runDisabled/);
   });
 
-  it("a mid-run click does not open the panel or log", () => {
+  it("re-enables when a Restart discards the run before the fire is out", () => {
+    const { stores } = renderWithStores();
+    startRun(stores);
+    expect(button()).toBeDisabled();
+    // What restart() does to the flags: the fire never stopped, so simulationStarted is
+    // the term that ends the run.
+    act(() => {
+      stores.simulation.simulationRunning = false;
+      stores.simulation.simulationStarted = false;
+    });
+    expect(button()).not.toBeDisabled();
+  });
+
+  it("a click during a pause does not open the panel or log", () => {
     const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
     const { stores } = renderWithStores();
-    act(() => { stores.simulation.simulationRunning = true; });
+    startRun(stores);
+    pauseRun(stores);
     fireEvent.click(button());
     expect(stores.ui.showHazbotFeedback).toBe(false);
     expect(logSpy).not.toHaveBeenCalledWith("HazbotButtonClicked", expect.anything());
   });
 
-  it("pauses the blink cycle while running and restarts it from the top afterwards", () => {
+  it("pauses the blink cycle for the run and restarts it from the top afterwards", () => {
     jest.useFakeTimers();
     jest.spyOn(Math, "random").mockReturnValue(0); // idle = 1000ms exactly
     const { stores } = renderWithStores();
     act(() => { jest.advanceTimersByTime(900); });
-    act(() => { stores.simulation.simulationRunning = true; });
+    startRun(stores);
     // t = 1000, the exact tick an un-suspended loop would close the eyes on. Land
     // anywhere else in the cycle and eyes-open is what an un-suspended loop shows too,
     // so the assertion would read the same against both implementations.
@@ -708,9 +750,9 @@ describe("Disabled while the model runs (WM-31)", () => {
     act(() => { jest.advanceTimersByTime(4900); });
     expect(screen.queryByTestId("hazbot-blinks")).toBeNull();
     expect(screen.getByTestId("hazbot-eyes")).toBeInTheDocument();
-    // The run ends: the cycle restarts from a full idle rather than resuming the 100ms
-    // that were left on the clock.
-    act(() => { stores.simulation.simulationRunning = false; });
+    // The fire goes out: the cycle restarts from a full idle rather than resuming the
+    // 100ms that were left on the clock.
+    burnOut(stores);
     act(() => { jest.advanceTimersByTime(999); });
     expect(screen.queryByTestId("hazbot-blinks")).toBeNull();
     act(() => { jest.advanceTimersByTime(1); });
@@ -724,7 +766,7 @@ describe("Disabled while the model runs (WM-31)", () => {
     const { stores } = renderWithStores();
     act(() => { jest.advanceTimersByTime(1000); });          // eyes closed
     expect(screen.getByTestId("hazbot-blinks")).toBeInTheDocument();
-    act(() => { stores.simulation.simulationRunning = true; });
+    startRun(stores);
     expect(screen.queryByTestId("hazbot-blinks")).toBeNull(); // not frozen mid-blink
     jest.useRealTimers();
   });
@@ -734,8 +776,6 @@ describe("Run-start coach-mark teardown (WM-31)", () => {
   beforeEach(useCoachingEngine);
 
   const wrap = () => screen.getByTestId("hazbot-button-wrap");
-  const startRun = (stores: ReturnType<typeof createStores>) =>
-    act(() => { stores.simulation.simulationRunning = true; });
 
   it("hides an open intro popover and logs it as phase intro", () => {
     const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
@@ -791,7 +831,7 @@ describe("Run-start coach-mark teardown (WM-31)", () => {
     openPanel();
     activateShowMe();
     startRun(stores);
-    act(() => { stores.simulation.simulationRunning = false; });
+    burnOut(stores);
     // The coach mark does not come back on its own when the run ends: nothing reopens
     // the panel and no third engine is created. The student has to click.
     expect(stores.ui.showHazbotFeedback).toBe(false);

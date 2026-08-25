@@ -378,6 +378,62 @@ describe("SimulationModel", () => {
     });
   });
 
+  // The predicate the Hazbot button reads (WM-31): a run is in progress from Start until
+  // the fire is out, so both pause routes sit on the in-progress side.
+  describe("runInProgress", () => {
+    const createSim = () => new SimulationModel({
+      modelWidth: 100000,
+      modelHeight: 100000,
+      gridWidth: 5,
+      sparks: [[50000, 50000]],
+      zoneIndex: [[0]],
+      elevation: [[0]],
+      unburntIslands: [[1]],
+      unburntIslandProbability: 1,
+      riverData: null,
+    });
+
+    it("is false before the first Start", async () => {
+      const sim = createSim();
+      await sim.dataReadyPromise;
+      expect(sim.runInProgress).toBe(false);
+    });
+
+    it("is true while running and stays true across a pause", async () => {
+      const sim = createSim();
+      await sim.dataReadyPromise;
+      sim.start();
+      try {
+        expect(sim.runInProgress).toBe(true);
+      } finally {
+        // Also the Fire Line route: handleFireLine pauses through the same stop().
+        sim.stop();
+      }
+      expect(sim.simulationRunning).toBe(false);
+      expect(sim.runInProgress).toBe(true);
+    });
+
+    it("is false once the fire is out", async () => {
+      const sim = createSim();
+      await sim.dataReadyPromise;
+      sim.start();
+      // Stub updateFire so the manual fireDidStop flip survives the tick, the same
+      // shape the simulationEnded cases above use.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (sim.engine as any).updateFire = function () { this.fireDidStop = true; };
+      sim.tick(1);
+      expect(sim.runInProgress).toBe(false);
+    });
+
+    it("is false after a mid-run Restart discards the run", async () => {
+      const sim = createSim();
+      await sim.dataReadyPromise;
+      sim.start();
+      sim.restart();
+      expect(sim.runInProgress).toBe(false);
+    });
+  });
+
   describe("reloadEnabled", () => {
     const createSim = () => new SimulationModel({
       modelWidth: 100000,

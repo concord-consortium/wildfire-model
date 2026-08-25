@@ -45,6 +45,7 @@ interface AppDebugHooks {
     setupChanged: boolean;
     dataReady: boolean;
     engine?: { fireDidStop: boolean };
+    tick(timeStep: number): void;
   };
   test: {
     placeSparkInZone(zoneIdx: number): void;
@@ -73,6 +74,22 @@ const expectButtonStates = (states: {
   cy.get("[data-testid='fireline-button']").should(states.fireLine ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='helitack-button']").should(states.helitack ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='hazbot-button']").should(states.hazbot ? "not.be.disabled" : "be.disabled");
+};
+
+// Burn the fire out without waiting for the run to play in real time. updateFire()
+// spreads to the burning cells' neighbors once per call whatever the time step, so a
+// large step advances one spread generation per tick; tick() then clears
+// simulationRunning itself the moment the engine reports fireDidStop, which is the
+// production edge the Hazbot button and the ready pulse both hang off.
+const burnOutFire = () => {
+  cy.window().then((win: Window) => {
+    const { sim } = debugHooks(win);
+    for (let i = 0; i < 2000 && !sim.engine?.fireDidStop; i++) {
+      sim.tick(60);
+    }
+  });
+  cy.window().its("sim.engine.fireDidStop").should("eq", true);
+  cy.window().its("sim.simulationRunning").should("eq", false);
 };
 
 // MUI Slider's hidden range input is covered by the thumb span, so cy.click /
@@ -181,12 +198,13 @@ describe("Bottom-bar state machine (WM-24)", () => {
     cy.window().its("sim.simulationRunning").should("eq", true);
     cy.get("[data-testid='fireline-button']").click();
     // Arming pauses the model and leaves the tool live as its own cancel toggle;
-    // every other tool disables its button while armed.
+    // every other tool disables its button while armed. Hazbot stays disabled: the
+    // pause is mid-intervention and the run is still in progress (WM-31).
     cy.window().its("sim.simulationRunning").should("eq", false);
     expectButtonStates({
       setup: false, spark: false,
       reload: true, restart: true, startStop: true,
-      fireLine: true, helitack: true, hazbot: true,
+      fireLine: true, helitack: true, hazbot: false,
     });
     // Clicking it again disarms, and the button stays available.
     cy.get("[data-testid='fireline-button']").click();
@@ -237,7 +255,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
 
 // WM-6 Hazbot Analysis button. The one assertion jsdom can't truly exercise:
 // the @observer button re-rendering the ready/pulse state across a live
-// Start → Stop run, then clearing it on click. All other arm/clear/gating/blink
+// Start → burnout run, then clearing it on click. All other arm/clear/gating/blink
 // logic is covered by the fast Jest tests in src/components/hazbot-button.test.tsx
 // and bottom-bar.test.tsx; this proves the full-page reactivity wiring.
 describe("Hazbot button pulse (WM-6)", () => {
@@ -247,7 +265,7 @@ describe("Hazbot button pulse (WM-6)", () => {
     cy.window().its("sim.dataReady").should("eq", true);
   });
 
-  it("renders with a loaded rule-set, pulses after a manual Stop, and clears on click", () => {
+  it("renders with a loaded rule-set, pulses once the fire is out, and clears on click", () => {
     // Button is present on a Hazbot-enabled page with a loaded rule-set. The
     // ready/pulse state is the `ready` class on the wrapper (it gates the
     // box-shadow pulse animation on the button).
@@ -256,12 +274,16 @@ describe("Hazbot button pulse (WM-6)", () => {
     // app (e.g. `...--ready--...`), so match the class attribute rather than an
     // exact class token.
     cy.get("[data-testid='hazbot-button-wrap']").invoke("attr", "class").should("not.match", /ready/);
-    // Place a spark, Start, then manual Stop → the pulse arms (ready state).
+    // Place a spark, Start, then let the fire burn out → the pulse arms (ready state).
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     cy.get("[data-testid='start-button']").click();
     cy.window().its("sim.simulationRunning").should("eq", true);
-    cy.get("[data-testid='start-button']").click();   // Stop
+    // A manual Pause leaves the run in progress, so it arms nothing (WM-31).
+    cy.get("[data-testid='start-button']").click();   // Pause
     cy.window().its("sim.simulationRunning").should("eq", false);
+    cy.get("[data-testid='hazbot-button-wrap']").invoke("attr", "class").should("not.match", /ready/);
+    cy.get("[data-testid='start-button']").click();   // resume
+    burnOutFire();
     cy.get("[data-testid='hazbot-button-wrap']").invoke("attr", "class").should("match", /ready/);
     // Clicking the Hazbot button clears the pulse.
     cy.get("[data-testid='hazbot-button']").click();
@@ -272,7 +294,7 @@ describe("Hazbot button pulse (WM-6)", () => {
   // browser can check is the rendered 35%. MUI fades a disabled button to 0.25 on its
   // own, so an implementation that ships the `disabled` prop without the opacity
   // override passes every Jest case and still renders the wrong button.
-  it("fades to the Zeplin 35% (not MUI's 0.25) while the model runs", () => {
+  it("fades to the Zeplin 35% (not MUI's 0.25) for the duration of a run", () => {
     cy.get("[data-testid='hazbot-button']").should("have.css", "opacity", "1");
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     cy.get("[data-testid='start-button']").click();
@@ -288,9 +310,15 @@ describe("Hazbot button pulse (WM-6)", () => {
     cy.get("[data-testid='hazbot-button']")
       .should("have.css", "background-color", "rgb(193, 218, 255)")
       .and("have.css", "border-top-width", "1px");
-    // Pausing brings it back: Hazbot is available any time the model is not running.
+    // Pausing does not bring it back: a paused run is still a run (WM-31).
     cy.get("[data-testid='start-button']").click();
     cy.window().its("sim.simulationRunning").should("eq", false);
+    cy.get("[data-testid='hazbot-button']")
+      .should("be.disabled")
+      .and("have.css", "opacity", "0.35");
+    // The fire going out is what brings it back.
+    cy.get("[data-testid='start-button']").click();   // resume
+    burnOutFire();
     cy.get("[data-testid='hazbot-button']")
       .should("not.be.disabled")
       .and("have.css", "opacity", "1");

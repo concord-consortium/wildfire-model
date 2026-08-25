@@ -61,9 +61,9 @@ export function parseFeedback(raw: string): { body: string; label: string } {
 export const HazbotButton = observer(function HazbotButton() {
   const { ui, simulation } = useStores();
 
-  // The button is unavailable while the model runs: Hazbot's feedback is about what a
-  // run produced.
-  const running = simulation.simulationRunning;
+  // The button is unavailable for the whole of a run, pauses included: Hazbot's feedback
+  // is about what a run produced, and a paused run is still in progress.
+  const runInProgress = simulation.runInProgress;
 
   // Random blink (AP-79): local presentation state, no store/engine coupling. A
   // recursive setTimeout cycle; the `mounted` ref prevents setBlink after unmount.
@@ -73,7 +73,7 @@ export const HazbotButton = observer(function HazbotButton() {
   const [blink, setBlink] = useState(false);
   const mounted = useRef(true);
   useEffect(() => {
-    if (running) {
+    if (runInProgress) {
       setBlink(false);
       return;
     }
@@ -93,7 +93,7 @@ export const HazbotButton = observer(function HazbotButton() {
     };
     loop();
     return () => { mounted.current = false; clearTimeout(timeout); };
-  }, [running]);
+  }, [runInProgress]);
 
   // Ready/pulse predicate. The simulationStarted term keeps the pulse off in the
   // pre-run / terrain-setup state and auto-hides a stale arm after Restart/Reload
@@ -102,7 +102,7 @@ export const HazbotButton = observer(function HazbotButton() {
   // (intro or tour) — a run ending mid-coach-mark re-arms the pulse, which would
   // otherwise throb under the open panel; it resumes once the panel closes.
   const pulsing =
-    ui.hazbotPulseArmed && simulation.simulationStarted && !running &&
+    ui.hazbotPulseArmed && simulation.simulationStarted && !runInProgress &&
     !ui.showHazbotFeedback;
 
   // Coach-mark feedback panel — a two-engine lifecycle (WM-17). When
@@ -269,11 +269,11 @@ export const HazbotButton = observer(function HazbotButton() {
       // Programmatic teardown: set `cleanup` BEFORE destroying so neither engine's
       // onDestroyed launches a tour or logs a Completed/Dismissed event.
       cleanup = true;
-      // The `intro || tourEngine` term is not redundant with the running gate: this
+      // The `intro || tourEngine` term is not redundant with the run gate: this
       // cleanup is registered BEFORE the popover opens (openOnce is deferred to the
       // avatar's transitionend, with a 400ms fallback), so a run started in that window
       // would otherwise log a coach mark that was never displayed.
-      if (simulation.simulationRunning && (intro || tourEngine)) {
+      if (simulation.runInProgress && (intro || tourEngine)) {
         log("HazbotCoachMarkHiddenByRun", {
           ruleSetId,
           categoryId: matched,
@@ -296,10 +296,10 @@ export const HazbotButton = observer(function HazbotButton() {
   // setTourActive(false) sits on the `cleanup`-skipped branch and would otherwise leave
   // the flag set for the whole run.
   useEffect(() => {
-    if (!running) return;
+    if (!runInProgress) return;
     ui.showHazbotFeedback = false;
     setTourActive(false);
-  }, [running, ui]);
+  }, [runInProgress, ui]);
 
   const handleClick = () => {
     ui.showHazbotFeedback = true;          // the effect above renders the panel off this flag
@@ -319,8 +319,8 @@ export const HazbotButton = observer(function HazbotButton() {
 
   // Wrapper state classes: `ready` (pulse halo), `coached` (intro enlarged-robot,
   // intro only), `noHazbot` (faded button while the tour runs), `runDisabled` (faded
-  // button while the model runs). coached and noHazbot are mutually exclusive — see
-  // the effect. `noHazbot` is conjoined with the panel flag so the state cannot be
+  // button while a run is in progress). coached and noHazbot are mutually exclusive (see
+  // the effect). `noHazbot` is conjoined with the panel flag so the state cannot be
   // reached while the panel is closed: it carries pointer-events:none and no `disabled`
   // attribute, so a stale tourActive would leave the button unclickable.
   const wrapClassName = [
@@ -328,7 +328,7 @@ export const HazbotButton = observer(function HazbotButton() {
     pulsing ? css.ready : "",
     (ui.showHazbotFeedback && !tourActive) ? css.coached : "",
     (ui.showHazbotFeedback && tourActive) ? css.noHazbot : "",
-    running ? css.runDisabled : "",
+    runInProgress ? css.runDisabled : "",
   ].filter(Boolean).join(" ");
 
   return (
@@ -352,7 +352,7 @@ export const HazbotButton = observer(function HazbotButton() {
         onMouseDown={(e) => e.preventDefault()}
         disableRipple={true}
         disableTouchRipple={true}
-        disabled={running}
+        disabled={runInProgress}
       >
         <span className={css.inner}>
           <span className={css.avatar} ref={avatarRef}>
