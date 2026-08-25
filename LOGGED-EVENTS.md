@@ -42,8 +42,8 @@ All model coordinates are in feet. Normalized coordinates (x, y) are relative to
 
 | Event | Parameters | When |
 |-------|-----------|------|
-| `TerrainPanelButtonClicked` | — | User opens/closes Terrain Setup |
-| `TerrainPanelClosed` | — | User closes Terrain Setup via X button |
+| `TerrainPanelButtonClicked` | — | User clicks the Setup button: opens Terrain Setup, or no-ops when it is already open. Not an open count: a click on the already-open button logs too. |
+| `TerrainPanelClosed` | `{ reason: "cancel", changed: boolean, panel: "zones" \| "conditions" \| "wind", reachedWind: boolean }` | User leaves Terrain Setup without saving, via the Cancel button. `changed` is true when the wizard held an edit that was discarded. `panel` is the panel they left **from**, not the step number shown on screen, which differs between the master model and the activities. `reachedWind` is whether they ever got to the wind panel during this visit, which is not the same question: Previous and a zone-info-tile click both walk a student back off it, so `panel: "conditions"` with `reachedWind: true` is a normal reading. With the bottom bar's model controls locked while the wizard is open, this is the only close-without-commit route, so a `reason` other than `"cancel"` does not occur today; the parameter marks the boundary against older logs, which carry no parameters at all. |
 | `TerrainPanelSettingsSaved` | — | User clicks Create in Terrain Setup |
 | `TerrainPanelZoneChanged` | `{ zone }` | User switches zone tab in Terrain Setup |
 | `TerrainPanelNextButtonClicked` | — | User clicks Next in Terrain Setup |
