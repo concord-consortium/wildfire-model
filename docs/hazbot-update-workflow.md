@@ -67,7 +67,7 @@ Diff every contract cell against the base branch:
 ```sh
 python3 - <<'EOF'
 import re, subprocess
-TABS = ["23","24","25","32","33","34","35","42","45","47","54"]
+TABS = ["23","24","25","32","33","34","35","41","44","46"]
 def rows(src):
     out, cur = {}, None
     for line in src.split("\n"):

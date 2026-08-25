@@ -146,15 +146,15 @@ export const tourData: Record<string, Record<number, TourData>> = {
       { text: "Place one **Spark** in Zone 1 and one **Spark** in Zone 2, then run the model again." },
     ] },
   },
-  "42": {
+  "41": {
     2: { stepCount: 2, doneLabel: "Got it!", steps: [
-      { text: "First, **Reload** your model." },
-      { text: "Click to **Start** to run the model!" },
+      { text: "First, click **Clear All** to reset your model." },
+      { text: "Click **Start** to run the model!" },
     ] },
   },
-  "45": {
+  "44": {
     2: { stepCount: 2, doneLabel: "Got it!", steps: [
-      { text: "First, **Reload** your model." },
+      { text: "First, click **Clear All** to reset your model." },
       { text: "Click **Start** to run the model!" },
     ] },
     3: { stepCount: 2, doneLabel: "Got it!", steps: [
@@ -162,9 +162,9 @@ export const tourData: Record<string, Record<number, TourData>> = {
       { text: "Add both a **Fireline** and a **Helitack** while the model is running. Click **Start** to begin!" },
     ] },
   },
-  "47": {
+  "46": {
     2: { stepCount: 2, doneLabel: "Got it!", steps: [
-      { text: "First, **Reload** your model." },
+      { text: "First, click **Clear All** to reset your model." },
       { text: "Click **Start** to run the model!" },
     ] },
     3: { stepCount: 2, doneLabel: "Got it!", steps: [
@@ -174,17 +174,6 @@ export const tourData: Record<string, Record<number, TourData>> = {
     4: { stepCount: 2, doneLabel: "Got it!", steps: [
       { text: "First, **Restart** your model." },
       { text: "Click **Start** to run the model!" },
-    ] },
-  },
-  "54": {
-    2: { stepCount: 3, doneLabel: "Got it!", steps: [
-      { text: "First, **Restart** your model." },
-      { text: "Click the **Setup** button." },
-      { text: "Change the drought in each zone to **severe**! Then run the model again." },
-    ] },
-    3: { stepCount: 2, doneLabel: "Got it!", steps: [
-      { text: "First, **Restart** your model." },
-      { text: "Add both a **Fireline** and a **Helitack** while the model is running. Click **Start** to begin!" },
     ] },
   },
 };

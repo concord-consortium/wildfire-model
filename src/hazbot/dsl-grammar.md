@@ -102,7 +102,7 @@ While all operators may be familiar, WITH may not be.  Here is the definition.
 
 **Note 1:** The precedence of operators (like AND and OR appearing together, and/or AND or OR occuring multiple times): left associative, 'AND' first (= high precedence) than 'OR'.
 
-**Note 2:** The NOT operator applies to <prop-id> or <var-w-prop-expression> without any parenthesis.  NOT has a higher precedence than AND.   If NOT is to apply to a binary expression, then the whole binary expression must be parenthesized (see the "45" sheet, for an example).
+**Note 2:** The NOT operator applies to <prop-id> or <var-w-prop-expression> without any parenthesis.  NOT has a higher precedence than AND.   If NOT is to apply to a binary expression, then the whole binary expression must be parenthesized (see the "44" sheet, for an example).
 
 ## RELATIONS
 

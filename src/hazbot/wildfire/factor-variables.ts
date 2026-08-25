@@ -191,7 +191,7 @@ const triedAllVegetations: FactorVariableImpl<boolean, WildfireReading, Wildfire
   },
 };
 
-// Per the sheet (tab 45): some run drew a fire line. True if any
+// Per the sheet (tab 44): some run drew a fire line. True if any
 // SimulationStarted reading carries >= 2 fire-line markers.
 const usedFireline: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,
@@ -203,7 +203,7 @@ const usedFireline: FactorVariableImpl<boolean, WildfireReading, WildfireDefault
   },
 };
 
-// Per the sheet (tab 45): some run dropped a helitack. True if any
+// Per the sheet (tab 44): some run dropped a helitack. True if any
 // SimulationStarted reading is flagged in-run (requirements.md R4).
 const usedHelitack: FactorVariableImpl<boolean, WildfireReading, WildfireDefaults> = {
   defaultValue: false,

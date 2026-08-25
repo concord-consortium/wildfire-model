@@ -132,7 +132,7 @@ describe("wildfire factor variables", () => {
   });
 
   describe("usedFireline", () => {
-    // Per tab 45 sheet (R9): some run drew a fire line (fireLineMarkers length
+    // Per tab 44 sheet (R9): some run drew a fire line (fireLineMarkers length
     // >= 2). The Fire Line tool is disabled until a run starts, so the first
     // run's snapshot is always empty and a drawn line shows up only in a later
     // SimulationStarted reading (R6a) — exercised here as a multi-run sequence.

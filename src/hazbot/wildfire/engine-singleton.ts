@@ -98,8 +98,8 @@ export function getAnalysisEngine(): Engine<WildfireReading, WildfireDefaults> |
 export function _resetAnalysisEngineForTests(): void {
   cached = undefined;
   init = "uninit";
-  // Without this a test that builds a tab-24 engine, resets, then builds a tab-45 one
-  // keeps range_cc 0, so tab 45's selector returns null and every windowed assertion
+  // Without this a test that builds a tab-24 engine, resets, then builds a tab-44 one
+  // keeps range_cc 0, so tab 44's selector returns null and every windowed assertion
   // in the file passes vacuously against `best`.
   rangeCcMemo = undefined;
 }

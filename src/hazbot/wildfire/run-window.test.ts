@@ -1,5 +1,5 @@
 import { ruleSet24 } from "../rule-sets/24";
-import { ruleSet47 } from "../rule-sets/47";
+import { ruleSet46 } from "../rule-sets/46";
 import {
   makeWildfireEngine, matchAgainst, matchCurrentAgainst, mkReading,
 } from "../rule-sets/test-helpers";
@@ -7,7 +7,7 @@ import { canonicalRunReadings } from "./canonical-runs";
 import { canonicalRunWindowStart, makeReadingsWindow } from "./run-window";
 import { WildfireDefaults, WildfireReading, WildfireZone } from "./types";
 
-// Tab 47's SIMINIT defaults, matching 47.test.ts. range_cc is 2 there, so the window is
+// Tab 46's SIMINIT defaults, matching 46.test.ts. range_cc is 2 there, so the window is
 // the last two canonical runs, which is what makes the folded-run cases visible.
 const defaultZones: WildfireZone[] = [
   { terrainType: "Mountains", vegetation: "Forest", droughtLevel: "Mild Drought" },
@@ -25,7 +25,7 @@ const start = (at: number, opts: Partial<WildfireReading> = {}) =>
 const stopped = (at: number) => mkReading("SimulationStopped", at);
 const ended = (at: number) => mkReading("SimulationEnded", at);
 
-const engine47 = () => makeWildfireEngine(ruleSet47, defaults, true);
+const engine46 = () => makeWildfireEngine(ruleSet46, defaults, true);
 
 // Clean run, then a paused run carrying a helitack on its first start, then a fire-line
 // run. Three canonical runs, the middle one folded.
@@ -54,7 +54,7 @@ function rawStartTrim(readings: WildfireReading[], rangeCc: number): number {
 // timestamp would compute it, so the naive answers can be compared against the real one.
 function categoryFrom(readings: WildfireReading[], startIndex: number): number | null {
   return matchCurrentAgainst(
-    makeWildfireEngine(ruleSet47, defaults, true),
+    makeWildfireEngine(ruleSet46, defaults, true),
     readings.slice(startIndex),
   );
 }
@@ -69,9 +69,9 @@ describe("canonicalRunWindowStart", () => {
     expect(canonicalRunWindowStart(cleanPausedFireline, 2)).toBe(2);
   });
 
-  it("gives a window that classifies tab 47 as 4 where a raw-start trim gives 5", () => {
-    expect(matchAgainst(ruleSet47, engine47(), cleanPausedFireline)).toBe(5);
-    expect(matchCurrentAgainst(engine47(), cleanPausedFireline)).toBe(4);
+  it("gives a window that classifies tab 46 as 4 where a raw-start trim gives 5", () => {
+    expect(matchAgainst(ruleSet46, engine46(), cleanPausedFireline)).toBe(5);
+    expect(matchCurrentAgainst(engine46(), cleanPausedFireline)).toBe(4);
     expect(categoryFrom(cleanPausedFireline, rawStartTrim(cleanPausedFireline, 2))).toBe(5);
   });
 
@@ -87,7 +87,7 @@ describe("canonicalRunWindowStart", () => {
   });
 
   it("gives 5 on the paused-then-clean mirror where a raw-start trim gives 3", () => {
-    expect(matchCurrentAgainst(engine47(), pausedThenClean)).toBe(5);
+    expect(matchCurrentAgainst(engine46(), pausedThenClean)).toBe(5);
     expect(categoryFrom(pausedThenClean, rawStartTrim(pausedThenClean, 2))).toBe(3);
   });
 
@@ -101,7 +101,7 @@ describe("canonicalRunWindowStart", () => {
   it("evaluates a one-run session on a two-run window", () => {
     const oneRun = [start(100, { fireLineMarkers: fireLine }), ended(110)];
     expect(canonicalRunWindowStart(oneRun, 2)).toBe(0);
-    expect(matchCurrentAgainst(engine47(), oneRun)).toBe(4);
+    expect(matchCurrentAgainst(engine46(), oneRun)).toBe(4);
   });
 
   it("keeps an unfinished newest run inside the window", () => {
@@ -112,7 +112,7 @@ describe("canonicalRunWindowStart", () => {
     expect(unfinished.some((r) => r.triggeredBy === "SimulationEnded" && r.at > 110)).toBe(false);
     expect(canonicalRunReadings(unfinished.slice(canonicalRunWindowStart(unfinished, 2))))
       .toHaveLength(2);
-    expect(matchCurrentAgainst(engine47(), unfinished)).toBe(5);
+    expect(matchCurrentAgainst(engine46(), unfinished)).toBe(5);
   });
 });
 

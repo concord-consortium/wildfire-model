@@ -21,8 +21,8 @@ import { simProps } from "../wildfire/sim-props";
 // gate constructs each engine without one.
 //
 // Stub-warning distribution: the engine emits one stub-warning per *referenced*
-// stub per rule-set engine. Helitack / usedHelitack (referenced by 45/47/54 and
-// 45 respectively) were implemented in WM-28, and SparksAtTopAndBottom (ruleset
+// stub per rule-set engine. Helitack / usedHelitack (referenced by 44/46 and
+// 44 respectively) were implemented in WM-28, and SparksAtTopAndBottom (ruleset
 // 25) in WM-15, so no rule set emits a stub-warning today.
 const expectedStubWarnings: Record<string, string[]> = {
   "23": [],
@@ -32,10 +32,9 @@ const expectedStubWarnings: Record<string, string[]> = {
   "33": [],
   "34": [],
   "35": [],
-  "42": [],
-  "45": [],
-  "47": [],
-  "54": [],
+  "41": [],
+  "44": [],
+  "46": [],
 };
 
 function collectErrors(ruleSetId: string): EngineError[] {
@@ -48,9 +47,9 @@ function collectErrors(ruleSetId: string): EngineError[] {
 }
 
 describe("rule-sets/index — R5 load gate", () => {
-  it("exports all 11 rule-sets (R4)", () => {
+  it("exports all 10 rule-sets (R4)", () => {
     expect(Object.keys(ruleSets).sort()).toEqual(
-      ["23", "24", "25", "32", "33", "34", "35", "42", "45", "47", "54"],
+      ["23", "24", "25", "32", "33", "34", "35", "41", "44", "46"],
     );
   });
 
@@ -65,8 +64,9 @@ describe("rule-sets/index — R5 load gate", () => {
   // set fails loudly. A name appearing here after a re-extract means some tab
   // stopped using it; a name disappearing means a tab started.
   const expectedUnreferenced = [
-    "GraphOpen", "setDroughtLevel", "setTerrainType", "setVegetation", "setWind",
-    "simulationRuns", "triedAllVegetations", "usedOneSparkPerZone",
+    "DefaultVegetations", "GraphOpen", "SevereDroughts", "setDroughtLevel",
+    "setTerrainType", "setVegetation", "setWind", "simulationRuns",
+    "triedAllVegetations", "usedOneSparkPerZone",
   ];
 
   it("references exactly the expected set of factor variables and sim-props", () => {

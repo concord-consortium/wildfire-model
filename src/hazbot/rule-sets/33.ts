@@ -19,7 +19,7 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with default setup values only",
       feedback: `Hazbot: Looks like you haven’t changed the **Setup** yet. I can help!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the instructions under "Fire Supression Investigation" again.
+      feedbackRound2: `Hazbot: Go up and look at the instructions under "Fire Suppression Investigation" again.
 [Show me]`,
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,

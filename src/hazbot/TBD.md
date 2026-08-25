@@ -30,7 +30,7 @@ defaults are always complete and 32–35 load. There is no longer a
 ## 2. Stubbed factor variables / sim-props — RESOLVED (WM-15, WM-28)
 
 There are no remaining `isStub: true` impls; the engine emits no `stub-warning`
-for any of the 11 rule-sets.
+for any of the 10 rule-sets.
 
 - `SparksAtTopAndBottom` was implemented in WM-15 (ruleset 25 now reaches its
   Cat 6 success state).
@@ -40,19 +40,19 @@ for any of the 11 rule-sets.
   run-start reading by a translate `modifier` (a third engine substrate result
   kind, chosen over reworking the trigger-state-change-overlap guard); the
   `Helitack` sim-prop reads it per-run and `usedHelitack` aggregates across
-  runs, mirroring `Fireline` / `usedFireline`. Tabs 45/47/54 were re-validated
+  runs, mirroring `Fireline` / `usedFireline`. Tabs 44 and 46 were re-validated
   (Jest per-category coverage plus a Playwright MCP walk); see the WM-28 spec.
 
 ---
 
 ## 3. Missing rule-sets entirely — RESOLVED (WM-18)
 
-All four previously-missing placeholder tabs (42, 45, 47, 54) were extracted
-from the 2026-05-22 workbook in WM-18 and are now loadable. `EXCLUDED_TABS` in
-`scripts/extract-impl.js` is empty — the only auto-skipped tabs are the
-non-rule-set ones (`README` / `SIMINIT`), detected by the absence of a
-category block. The stale `43` tab reference (a renumbering artifact —
-activity 4 page 3's rule-set is now numbered `42`) has been cleaned up.
+Every rule-set tab in the workbook is extracted except one. The Act 4 and Act 5
+tabs carry the numbers 41, 44 and 46; the workbook's eleventh rule-set tab, 55,
+is Act 5.5, which is a performance assessment page and so gets no Hazbot, and it
+is named in `EXCLUDED_TABS` in `scripts/extract-impl.js`. The other auto-skipped
+tabs are the non-rule-set ones (`README` / `SIMINIT`), detected by the absence of
+a category block rather than by that list.
 
 ---
 
@@ -72,11 +72,11 @@ Items where the source data should be corrected before the next re-extract:
   paired-reading primitive in the DSL today (see §6). Either downgrade the
   sheet's spec to single-reading, or extend the DSL.
 - **Typos that don't currently break anything but should be fixed at
-  source.** As of the 2026-06-02 re-extract, `"SimualtionStarted"` and
-  `"whiel"` have been corrected at source and no longer appear. Still
-  outstanding: `"neecessarily"` (multiple — 23/24/32/35/42.ts) and
-  `"magitude"` / `"magnituide"` (24/33/34/35/42.ts). These are in Details
-  prose only, not parsed by the engine, but they survive re-extracts.
+  source — RESOLVED.** `"SimualtionStarted"` and `"whiel"` were corrected
+  at source in the 2026-06-02 re-extract, and `"neecessarily"`,
+  `"magitude"` and `"magnituide"` in the 2026-08-25 one. No extracted
+  rule-set carries any of them. They were in Details prose only, never
+  parsed by the engine.
 - **Tab 35 Cat 2 shadowing — RESOLVED, and the guard has since moved
   (2026-08-20 workbook).** Cat 2 is `ranSimulation AND NOT setAnyVar`; Cat 3 was
   originally `ranSimulation WITH NOT ForestWAWOSuppression`, which any default run

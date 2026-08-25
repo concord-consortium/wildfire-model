@@ -81,6 +81,22 @@ All model coordinates are in feet. Normalized coordinates (x, y) are relative to
 | `HazbotTourCompleted` | `{ ruleSetId: string \| null, categoryId: number \| null, lastStepIndex: number, feedbackLevel: number \| null }` | User finishes the walk-through via the terminal `[Got it!]` button (the tour engine's `onDestroyed` fires without a preceding cancel). `lastStepIndex` is the 0-based index of the last step shown. `feedbackLevel` is the level the tour was launched from. Deliberate engine no-op. See the `categoryId` note below the table. |
 | `HazbotTourDismissed` | `{ ruleSetId: string \| null, categoryId: number \| null, lastStepIndex: number, feedbackLevel: number \| null }` | User closes or Escapes the walk-through before the end (the tour engine's `onCancelRequested` fires). `lastStepIndex` is the 0-based index of the step shown when dismissed. `feedbackLevel` is the level the tour was launched from. Deliberate engine no-op. See the `categoryId` note below the table. |
 
+### Rule-set ids renumbered (`appRulesVersion` 8 onward)
+
+`ruleSetId` is a join key on `AnalysisEngineActivated`, `HazbotFeedbackShown`,
+`HazbotShowMeClicked`, `HazbotTourCompleted` and `HazbotTourDismissed`, and the same page
+carries a different value either side of this boundary. From `appRulesVersion` 8, tabs 42,
+45 and 47 are **41, 44 and 46**; the pages are unchanged, so the two series join end to end
+on the mapping. Sessions cannot be told apart by payload alone, so segment on
+`appRulesVersion`.
+
+**54 has no successor.** Act 5.5 is a performance assessment and its Hazbot was removed by
+curriculum decision, so that series is closed as of this version rather than sparse: the
+sessions already logged under 54 are the complete set, and the absence of later ones is not
+missing data. The workbook still carries the tab as 55, but it is excluded from extraction,
+and a page requesting an id with no rule-set renders no Hazbot button and logs no
+`AnalysisEngineActivated` at all.
+
 ### `categoryId` on the tour events (`appRulesVersion` 6 onward)
 
 On `HazbotShowMeClicked`, `HazbotTourCompleted` and `HazbotTourDismissed`, `categoryId` is
@@ -88,7 +104,7 @@ the category the feedback was selected from, i.e. `categoryUsed`, which **may di
 `matchedCategory` in either direction**.
 
 Lower is the common case and the point of the change: the student is coached on the run
-they just made rather than on their best run. Higher is rare. It occurs only on tab 45,
+they just made rather than on their best run. Higher is rare. It occurs only on tab 44,
 only as 2 to 3, and never reaches a celebration category; it happens when a trailing window
 makes a NOT-guarded lower category true that was false over the full session. A
 `categoryId` above `matchedCategory` is documented behavior, not corrupt data.
@@ -132,8 +148,7 @@ waits for the robot's grow transition, which needs the component to unmount in t
 exhausted category still opens a popover and still emits `HazbotFeedbackShown`. Find them as
 consecutive `HazbotFeedbackShown` events on the same `categoryId` carrying the same
 `feedbackLevel` and `source`. A fully populated category logs 1, 2, 3, 3, so the fourth click
-is a silent repeat; on rule-sets 42, 45, 47 and 54, whose middle categories carry no level 2
-or 3, the same category logs 1, 1, 1 across three clicks that all showed the same words.
+is a silent repeat.
 
 **Presses that spent a level without the student taking the help** are the pairs of consecutive
 `HazbotFeedbackShown` events on the same `categoryId` with **no** `HazbotShowMeClicked` between
@@ -144,7 +159,7 @@ popover with × or Escape has spent that level without seeing it.
 Restrict on the level that was displayed, not on the category. Whether a walk-through is offered
 is decided by the action token of the string actually shown (`[Show me]` offers it, anything else
 does not), and on a coaching category that token differs by level: as the content ships at
-`appRulesVersion` 7, levels 1 and 2 carry `[Show me]` and level 3 carries `[Okay]`. A query keyed
+`appRulesVersion` 8, levels 1 and 2 carry `[Show me]` and level 3 carries `[Okay]`. A query keyed
 on the category alone therefore counts every level-3 repeat as a dismissal, since nothing was
 offered there to activate. On `[Okay]` and `[Hooray!]` categories nothing is offered at any level,
 so the absence means nothing there either. Segment the pairs on the reset routes above as well: a

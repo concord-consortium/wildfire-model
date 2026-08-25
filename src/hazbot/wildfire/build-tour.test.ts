@@ -54,7 +54,7 @@ describe("buildTour", () => {
   });
 
   it("anchor steps target controls by data-testid selector", () => {
-    const tour = buildTour("42", 2, { sparkZoneCount: 0 })!;
+    const tour = buildTour("41", 2, { sparkZoneCount: 0 })!;
     expect(asAny(tour[0]).target).toBe('[data-testid="reload-button"]');
     expect(asAny(tour[1]).target).toBe('[data-testid="start-button"]');
   });

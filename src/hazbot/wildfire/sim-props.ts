@@ -226,14 +226,14 @@ const UniformZoneSettings: SimPropImpl<WildfireReading, WildfireDefaults> = {
   },
 };
 
-// Per the sheet (tabs 45/47/54): this run drew a fire line. A fire line needs
+// Per the sheet (tabs 44/46/55): this run drew a fire line. A fire line needs
 // two endpoints, so the SimulationStarted snapshot carries >= 2 markers.
 const Fireline: SimPropImpl<WildfireReading, WildfireDefaults> = {
   defaultValue: false,
   evaluate: (reading) => (reading.fireLineMarkers?.length ?? 0) >= 2,
 };
 
-// Per the sheet (tabs 45/47): all adjustable variables (vegetation, drought,
+// Per the sheet (tabs 44/46): all adjustable variables (vegetation, drought,
 // wind) are at default. Wind is matched with tolerance — +/-2 MPH magnitude,
 // +/-20 degrees angle — because the wind UI is a continuous control. The
 // tolerances are sheet-authored constants; this impl is NOT regenerated on
@@ -317,7 +317,7 @@ const DroughtLevelSet: SimPropImpl<WildfireReading, WildfireDefaults> = {
   evaluate: (reading, defaults) => anyZoneDiffers(reading.zones, defaults?.zones, "droughtLevel"),
 };
 
-// Per the sheet (tab 54): every zone's vegetation is at its config-sourced
+// Per the sheet (tab 55): every zone's vegetation is at its config-sourced
 // default. Compares against the WM-27 deriveWildfireDefaults() output — the
 // config is the source of truth, so no hard-coded sheet constant (per CA-3).
 const DefaultVegetations: SimPropImpl<WildfireReading, WildfireDefaults> = {
@@ -335,7 +335,7 @@ const DefaultVegetations: SimPropImpl<WildfireReading, WildfireDefaults> = {
   },
 };
 
-// Per the sheet (tab 54): every zone is at Severe Drought. Compares against
+// Per the sheet (tab 55): every zone is at Severe Drought. Compares against
 // droughtLabels[DroughtLevel.SevereDrought] (src/types.ts) — the enum label is
 // the source of truth, so no hard-coded sheet constant (per CA-3). The
 // SimulationStarted payload sets zones[].droughtLevel = droughtLabels[…]
@@ -349,7 +349,7 @@ const SevereDroughts: SimPropImpl<WildfireReading, WildfireDefaults> = {
   },
 };
 
-// Per the sheet (tabs 45/47/54): this run dropped a helitack. The translate
+// Per the sheet (tabs 44/46/55): this run dropped a helitack. The translate
 // modifier records it on the run-start reading; effectiveness is not measured
 // (requirements.md R1), mirroring Fireline above.
 const Helitack: SimPropImpl<WildfireReading, WildfireDefaults> = {
