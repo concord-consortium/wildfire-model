@@ -25,6 +25,12 @@ context("Test First Page In Terrain Setup", () => {
       terrain.verifyRadioButtonChecked(0);
       terrain.verifyRadioButtonUnchecked(1);
       terrain.getPrevButton().should("not.exist")
+      // Jest computes no styles, so the fill-less Cancel and the footer gap are
+      // only observable here.
+      terrain.getCancelButton()
+        .should("have.css", "background-color", "rgba(0, 0, 0, 0)")
+        .and("have.css", "border-color", "rgb(121, 121, 121)");
+      terrain.getNextButton().should("have.css", "margin-left", "8px");
       terrain.getNextButton().should("be.visible").click();
       terrain.getStepIcon().should("exist").and("contain", "2");
       terrain.getInstructions().should("exist").and("contain", "Adjust conditions in each zone");

@@ -235,7 +235,8 @@ describe("setupChanged", () => {
     expect(stores.simulation.setupChanged).toBe(false);
   });
 
-  it("(d) change drought, close via X — setupChanged stays false (no side effect on cancel)", async () => {
+  // eslint-disable-next-line max-len
+  it("(d) change drought, Cancel — the simulation keeps its pre-open values [no-commit-on-cancel canary]", async () => {
     render(
       <Provider stores={stores}>
         <TerrainPanel />
@@ -244,8 +245,16 @@ describe("setupChanged", () => {
     // eslint-disable-next-line testing-library/no-node-access
     const droughtSlider = screen.getByTestId("drought-slider").querySelector("input")!;
     fireEvent.change(droughtSlider, { target: { value: "3" } });
-    await userEvent.click(screen.getByTestId("terrain-panel-close"));
+    await userEvent.click(screen.getByTestId("terrain-cancel"));
+    // Read the simulation's own values back: setupChanged alone cannot fail on a
+    // commit-on-cancel regression, because updateZones never writes that flag.
+    expect(stores.simulation.zones[0].droughtLevel).toBe(2);
+    expect(stores.simulation.zones[1].droughtLevel).toBe(1);
+    expect(stores.simulation.zonesCount).toBe(2);
+    expect(stores.simulation.wind.speed).toBe(0);
+    expect(stores.simulation.wind.direction).toBe(0);
     expect(stores.simulation.setupChanged).toBe(false);
+    expect(stores.ui.showTerrainUI).toBe(false);
   });
 
   it("(e) start from setupChanged=true, Create with no changes — setupChanged stays true", async () => {

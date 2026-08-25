@@ -107,8 +107,8 @@ export class TerrainSetup {
     }
     this.getTerrainTypes().eq(optionIndex);
   }
-  closeTerrainSetupComponent() {
-    return cy.get(".terrain-panel--closeButton--__wildfire-v1__").click();
+  getCancelButton() {
+    return cy.get('[data-testid="terrain-cancel"]');
   }
   
   //Zones Count Selector
