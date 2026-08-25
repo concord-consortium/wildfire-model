@@ -398,6 +398,16 @@ describe("BottomBar edge cases", () => {
       expect(stores.ui.interaction).toBeNull();
     });
 
+    it("Setup-during-PlaceSpark: the wizard never opens over an armed tool", async () => {
+      // The wizard is a small floating panel, not a full-screen overlay, so an armed
+      // Spark would still reach the map around it.
+      stores.ui.interaction = Interaction.PlaceSpark;
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      await userEvent.click(screen.getByTestId("terrain-button"));
+      expect(stores.ui.interaction).toBeNull();
+      expect(stores.ui.showTerrainUI).toBe(true);
+    });
+
     it("Restart-during-DrawFireLine: ui.interaction cleared post-Restart", async () => {
       stores.simulation.sparks.push(new Vector2(50000, 50000));
       stores.simulation.simulationStarted = true;

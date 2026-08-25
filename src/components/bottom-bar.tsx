@@ -387,6 +387,9 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   public handleTerrain = () => {
     const { ui } = this.stores;
+    // Disarm any placement tool on the way in: the wizard is a small floating panel
+    // rather than a full-screen overlay, so an armed Spark would still reach the map around it.
+    ui.interaction = null;
     ui.showTerrainUI = true;
     log("TerrainPanelButtonClicked");
   };
