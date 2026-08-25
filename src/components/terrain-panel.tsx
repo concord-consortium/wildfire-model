@@ -108,7 +108,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
       reason: "cancel",
       changed,
       panel: panelNames[currentPanel],
-      reachedWind: maxPanelRef.current === WIND_PANEL
+      reachedWind: maxPanelRef.current >= WIND_PANEL
     });
   };
 
@@ -150,8 +150,10 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
       // Delay zones count change until user clicks "Next" button, as it might lead to some unavoidable user setup loss.
       applyZonesCountChange();
     }
-    setCurrentPanel(val => val + 1);
-    maxPanelRef.current = Math.max(maxPanelRef.current, currentPanel + 1);
+    setCurrentPanel(val => {
+      maxPanelRef.current = Math.max(maxPanelRef.current, val + 1);
+      return val + 1;
+    });
     log("TerrainPanelNextButtonClicked");
   };
 
@@ -272,9 +274,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
           {
             currentPanel === 0 &&
             <div className={css.panel}>
-              <div className={css.zones.lengthSelector}>
-                <ZonesCountSelector zonesCount={zonesCount} onChange={handleZonesCountChange} />
-              </div>
+              <ZonesCountSelector zonesCount={zonesCount} onChange={handleZonesCountChange} />
               <div className={css.buttonContainer}>
                 {renderCancelButton()}
                 <Button className={css.continueButton} onClick={showNextPanel} data-testid="terrain-next">
@@ -290,7 +290,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
               renderZones(
                 zones,
                 selectedZone,
-                currentPanel === 2,
+                currentPanel === WIND_PANEL,
                 zones.length,
                 handleZoneChange
               )
@@ -345,7 +345,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
             </div>
           }
           {
-            currentPanel === 2 &&
+            currentPanel === WIND_PANEL &&
             <div className={css.panel}>
               <div className={css.terrainSelector}>
                 <div className={css.terrainTypeLabels}>{renderZoneTerrainTypeLabels()}</div>
