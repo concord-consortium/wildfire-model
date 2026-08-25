@@ -1,11 +1,12 @@
 // cypress/e2e/bottom-bar-state-machine.cy.ts
 //
-// Browser-level regression guard for the WM-24 bottom-bar lifecycle state
-// machine. Covers each of the seven states by driving the real bottom-bar in
-// a running app, asserting the HTML `disabled` attribute per the Zeplin
-// matrix. Catches full-page reactivity wiring breaks, @observer-decoration
-// regressions, and build-tooling failures that the React-Testing-Library
-// tests in bottom-bar.test.tsx can't.
+// Browser-level regression guard for the bottom-bar lifecycle state machine.
+// Covers each of the eight states by driving the real bottom-bar in a running
+// app, asserting the HTML `disabled` attribute; states 1-7 follow the Zeplin
+// matrix, and state 8 (the Setup-open lockout) has no artboard. Catches
+// full-page reactivity wiring breaks, @observer-decoration regressions, and
+// build-tooling failures that the React-Testing-Library tests in
+// bottom-bar.test.tsx can't.
 //
 // Does NOT cover visual styling regressions (opacity, grayscale). Those rules
 // live in src/components/icon-button.scss (`&:disabled, &.Mui-disabled`) and

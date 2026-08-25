@@ -8,7 +8,8 @@ interface IProps {
   buttonText?: string;
   onClick?: (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => void;
   disabled?: boolean;
-  // Persistent highlight for a tool that is armed and awaiting input on the map.
+  // Persistent highlight for a control whose mode is currently on: a placement tool
+  // that is armed, or the Setup button while its wizard is open.
   selected?: boolean;
   dataTest?: string;
 }
