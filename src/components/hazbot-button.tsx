@@ -61,11 +61,22 @@ export function parseFeedback(raw: string): { body: string; label: string } {
 export const HazbotButton = observer(function HazbotButton() {
   const { ui, simulation } = useStores();
 
+  // The button is unavailable while the model runs: Hazbot's feedback is about what a
+  // run produced.
+  const running = simulation.simulationRunning;
+
   // Random blink (AP-79): local presentation state, no store/engine coupling. A
   // recursive setTimeout cycle; the `mounted` ref prevents setBlink after unmount.
+  // Suspended for the duration of a run, restarting from the top of the loop
+  // afterwards. setBlink(false) on the way in holds the eyes open rather than
+  // freezing on whatever frame the run began in.
   const [blink, setBlink] = useState(false);
   const mounted = useRef(true);
   useEffect(() => {
+    if (running) {
+      setBlink(false);
+      return;
+    }
     mounted.current = true;
     let timeout: ReturnType<typeof setTimeout>;
     const loop = () => {
@@ -82,7 +93,7 @@ export const HazbotButton = observer(function HazbotButton() {
     };
     loop();
     return () => { mounted.current = false; clearTimeout(timeout); };
-  }, []);
+  }, [running]);
 
   // Ready/pulse predicate. The simulationStarted term keeps the pulse off in the
   // pre-run / terrain-setup state and auto-hides a stale arm after Restart/Reload
@@ -91,7 +102,7 @@ export const HazbotButton = observer(function HazbotButton() {
   // (intro or tour) — a run ending mid-coach-mark re-arms the pulse, which would
   // otherwise throb under the open panel; it resumes once the panel closes.
   const pulsing =
-    ui.hazbotPulseArmed && simulation.simulationStarted && !simulation.simulationRunning &&
+    ui.hazbotPulseArmed && simulation.simulationStarted && !running &&
     !ui.showHazbotFeedback;
 
   // Coach-mark feedback panel — a two-engine lifecycle (WM-17). When
@@ -280,13 +291,15 @@ export const HazbotButton = observer(function HazbotButton() {
   };
 
   // Wrapper state classes: `ready` (pulse halo), `coached` (intro enlarged-robot,
-  // intro only), `noHazbot` (faded button while the tour runs). coached and noHazbot
-  // are mutually exclusive — see the effect.
+  // intro only), `noHazbot` (faded button while the tour runs), `runDisabled` (faded
+  // button while the model runs). coached and noHazbot are mutually exclusive — see
+  // the effect.
   const wrapClassName = [
     css.hazbotButtonWrap,
     pulsing ? css.ready : "",
     (ui.showHazbotFeedback && !tourActive) ? css.coached : "",
     tourActive ? css.noHazbot : "",
+    running ? css.runDisabled : "",
   ].filter(Boolean).join(" ");
 
   return (
@@ -310,6 +323,7 @@ export const HazbotButton = observer(function HazbotButton() {
         onMouseDown={(e) => e.preventDefault()}
         disableRipple={true}
         disableTouchRipple={true}
+        disabled={running}
       >
         <span className={css.inner}>
           <span className={css.avatar} ref={avatarRef}>

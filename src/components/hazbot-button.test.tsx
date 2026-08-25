@@ -663,3 +663,66 @@ describe("Hazbot feedback levels", () => {
     });
   });
 });
+
+// The pause routes themselves (Pause press, Fire Line, natural burnout, Restart) are
+// driven through the real bottom-bar controls in bottom-bar.test.tsx; these cover what
+// the button does with the flag.
+describe("Disabled while the model runs (WM-31)", () => {
+  const button = () => screen.getByTestId("hazbot-button");
+  const wrap = () => screen.getByTestId("hazbot-button-wrap");
+
+  it("disables the button while running and re-enables when the flag clears", () => {
+    const { stores } = renderWithStores();
+    expect(button()).not.toBeDisabled();
+    act(() => { stores.simulation.simulationRunning = true; });
+    expect(button()).toBeDisabled();
+    expect(wrap().className).toMatch(/runDisabled/);
+    act(() => { stores.simulation.simulationRunning = false; });
+    expect(button()).not.toBeDisabled();
+    expect(wrap().className).not.toMatch(/runDisabled/);
+  });
+
+  it("a mid-run click does not open the panel or log", () => {
+    const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    const { stores } = renderWithStores();
+    act(() => { stores.simulation.simulationRunning = true; });
+    fireEvent.click(button());
+    expect(stores.ui.showHazbotFeedback).toBe(false);
+    expect(logSpy).not.toHaveBeenCalledWith("HazbotButtonClicked", expect.anything());
+  });
+
+  it("pauses the blink cycle while running and restarts it from the top afterwards", () => {
+    jest.useFakeTimers();
+    jest.spyOn(Math, "random").mockReturnValue(0); // idle = 1000ms exactly
+    const { stores } = renderWithStores();
+    act(() => { jest.advanceTimersByTime(900); });
+    act(() => { stores.simulation.simulationRunning = true; });
+    // t = 1000, the exact tick an un-suspended loop would close the eyes on. Land
+    // anywhere else in the cycle and eyes-open is what an un-suspended loop shows too,
+    // so the assertion would read the same against both implementations.
+    act(() => { jest.advanceTimersByTime(100); });
+    expect(screen.queryByTestId("hazbot-blinks")).toBeNull();
+    act(() => { jest.advanceTimersByTime(4900); });
+    expect(screen.queryByTestId("hazbot-blinks")).toBeNull();
+    expect(screen.getByTestId("hazbot-eyes")).toBeInTheDocument();
+    // The run ends: the cycle restarts from a full idle rather than resuming the 100ms
+    // that were left on the clock.
+    act(() => { stores.simulation.simulationRunning = false; });
+    act(() => { jest.advanceTimersByTime(999); });
+    expect(screen.queryByTestId("hazbot-blinks")).toBeNull();
+    act(() => { jest.advanceTimersByTime(1); });
+    expect(screen.getByTestId("hazbot-blinks")).toBeInTheDocument();
+    jest.useRealTimers();
+  });
+
+  it("holds the eyes open if the run starts mid-blink", () => {
+    jest.useFakeTimers();
+    jest.spyOn(Math, "random").mockReturnValue(0);
+    const { stores } = renderWithStores();
+    act(() => { jest.advanceTimersByTime(1000); });          // eyes closed
+    expect(screen.getByTestId("hazbot-blinks")).toBeInTheDocument();
+    act(() => { stores.simulation.simulationRunning = true; });
+    expect(screen.queryByTestId("hazbot-blinks")).toBeNull(); // not frozen mid-blink
+    jest.useRealTimers();
+  });
+});

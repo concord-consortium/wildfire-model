@@ -661,4 +661,61 @@ describe("BottomBar Hazbot button (WM-6)", () => {
     expect(stores.ui.showHazbotFeedback).toBe(true);
     expect(stores.ui.showTerrainUI).toBe(true);
   });
+
+  // One case per route out of the running state: handleStart's pause branch,
+  // handleFireLine and handleRestart's discard are each driven through the real
+  // control. The natural end is not: engine is not observable, so only
+  // simulationRunning carries the reactivity edge and the case has to mirror tick() by
+  // hand, the same shape as the pulse test above it.
+  describe("disabled while the model runs (WM-31)", () => {
+    const hazbot = () => screen.getByTestId("hazbot-button");
+
+    it("is disabled while running and re-enabled by a manual Pause", async () => {
+      seedRunning();
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      expect(hazbot()).toBeDisabled();
+      await userEvent.click(screen.getByTestId("start-button"));
+      expect(hazbot()).not.toBeDisabled();
+    });
+
+    it("is re-enabled by a Fire Line intervention (the tool pauses the run)", async () => {
+      seedRunning();
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      expect(hazbot()).toBeDisabled();
+      // handleFireLine stops the run when the tool is ARMED, before any marker is
+      // placed, so the button comes back at the click.
+      await userEvent.click(screen.getByTestId("fireline-button"));
+      expect(stores.simulation.simulationRunning).toBe(false);
+      expect(hazbot()).not.toBeDisabled();
+    });
+
+    it("stays disabled through a Helitack drop, which does not pause the run", async () => {
+      seedRunning();
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      await userEvent.click(screen.getByTestId("helitack-button"));
+      expect(stores.simulation.simulationRunning).toBe(true);
+      expect(hazbot()).toBeDisabled();
+    });
+
+    it("is re-enabled when the fire burns out on its own", () => {
+      seedRunning();
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      expect(hazbot()).toBeDisabled();
+      // Mirrors production tick(): the engine reports fireDidStop, then the flag falls.
+      act(() => {
+        (stores.simulation as any).engine = mockEngine({ fireDidStop: true });
+        stores.simulation.simulationRunning = false;
+      });
+      expect(hazbot()).not.toBeDisabled();
+    });
+
+    it("is re-enabled by a mid-run Restart, which discards the run", async () => {
+      seedRunning();
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+      expect(hazbot()).toBeDisabled();
+      await userEvent.click(screen.getByTestId("restart-button"));
+      expect(stores.simulation.simulationRunning).toBe(false);
+      expect(hazbot()).not.toBeDisabled();
+    });
+  });
 });
