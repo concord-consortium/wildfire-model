@@ -173,7 +173,12 @@ export class FireEngine {
         this.fireDidStop = false; // fire still going on
       }
       const ignitionTime = cell.ignitionTime;
-      if (cell.fireState === FireState.Burning && time - ignitionTime > cell.burnTime) {
+      // A burning cell with no ignition time left can never satisfy the burn-time test
+      // below, so it is finished rather than burning: `time - Infinity` is -Infinity.
+      // Building a fire line over a cell that is already alight is what produces one, and
+      // without this term it burns forever and fireDidStop never becomes true.
+      const ignitionErased = ignitionTime === Infinity;
+      if (cell.fireState === FireState.Burning && (ignitionErased || time - ignitionTime > cell.burnTime)) {
         newFireStateData[i] = FireState.Burnt;
         if (cell.canSurviveFire && Math.random() < this.fireSurvivalProbability) {
           cell.isFireSurvivor = true;

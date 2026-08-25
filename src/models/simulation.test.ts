@@ -1,5 +1,6 @@
 import { SimulationModel } from "./simulation";
 import { ChartStore } from "./chart-store";
+import { FireState } from "./cell";
 
 describe("SimulationModel", () => {
   it("should let user add fire line after model reset", async () => {
@@ -422,6 +423,27 @@ describe("SimulationModel", () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (sim.engine as any).updateFire = function () { this.fireDidStop = true; };
       sim.tick(1);
+      expect(sim.runInProgress).toBe(false);
+    });
+
+    it("is false after a fire line is built over a cell that is already burning", async () => {
+      const sim = createSim();
+      await sim.dataReadyPromise;
+      sim.start();
+      sim.tick(1440);
+      const burning = sim.cells.filter(c => c.fireState === FireState.Burning);
+      expect(burning.length).toBeGreaterThan(0);
+      // buildFireLine erases the ignition time of every cell it covers, including one
+      // already alight. The engine treats such a cell as finished; without that, the run
+      // holds a cell that burns forever and Hazbot never comes back.
+      const { cellSize } = sim.config;
+      burning.forEach(c => sim.buildFireLine(
+        { x: c.x * cellSize, y: c.y * cellSize }, { x: c.x * cellSize, y: c.y * cellSize }
+      ));
+      for (let day = 2; day <= 10; day++) {
+        sim.tick(1440);
+      }
+      expect(sim.cells.filter(c => c.isBurningOrWillBurn).length).toEqual(0);
       expect(sim.runInProgress).toBe(false);
     });
 

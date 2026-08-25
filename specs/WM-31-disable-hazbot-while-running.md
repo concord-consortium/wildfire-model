@@ -36,6 +36,8 @@ Numbered R27 to R44a, continuing the numbering the interview used.
 - **R44b.** The "Fireline armed" case in the same file asserts `hazbot: false`. Arming the tool pauses the run, so it is the browser-level statement of the pause branch, and it is the case that fails first if the predicate is ever narrowed back to `simulationRunning`.
 - **R44a.** State 8 (SetupOpen) asserts `hazbot: true`, which is WM-42's decision rather than this story's. `simulationRunning` is false while the Setup wizard is open, and WM-42 deliberately locked the model controls in `.mainContainer` while leaving the region controls live. The case title changes with it, since "only Setup stays enabled" stops being true once an eighth control is asserted enabled beside it.
 
+- **R45.** A run must be able to end after a fire line has been drawn over cells that were already burning. `FireEngine.updateFire` treats a `Burning` cell whose `ignitionTime` is `Infinity` as finished and marks it `Burnt`, since `time - Infinity` can never exceed `burnTime`. Two tests, each failing without the term: an engine-level case that erases the ignition time of every burning cell and asserts they burn out and `fireDidStop` follows, and a `runInProgress` case that drives the same thing through `simulation.buildFireLine`.
+
 ## Technical Notes
 
 - **The disabled visual was already half-built, at the same opacity.** Zeplin gives Disabled and No Hazbot Default both `opacity: 0.35`; they differ only in whether the robot is drawn. Disabled keeps the robot, No Hazbot removes it.
@@ -44,6 +46,8 @@ Numbered R27 to R44a, continuing the numbering the interview used.
 - **`simulationRunning` is cleared from three places reached by four UI routes, and only two of them end a run.** `simulation.stop()` serves both pause routes (the Pause press and Fire Line), which leave `runInProgress` true; `tick()` clears the flag on burnout, which is the route that ends a run through `simulationEnded`. Restart is the fourth route and ends the run a different way, by clearing `simulationStarted`: it is a discard rather than a pause, and logs `SimulationEnded` plus `SimulationRestarted` rather than `SimulationStopped`. `handleHelitack` deliberately does not stop the run, so a Helitack drop is not a pause route. Worth knowing downstream: `SimulationRestarted` and `SimulationReloaded` are modifiers in `translate.ts` that close the open run window, so a mid-run Restart changes what the engine reports on the next click as well as re-enabling the button.
 
 - **Only `simulationRunning` carries reactivity into the predicate.** `runInProgress` reads `simulationEnded`, which reads `engine.fireDidStop`, and the engine is not observable. The supported production path is `tick()`, which sets the engine's flag and then clears `simulationRunning` in the same action, so any test seeding a burnout has to assign the stopped engine before flipping the flag, and a test cannot burn a fire out from a paused state without resuming first: the flag is already false, and MobX suppresses a same-value assignment.
+
+- **A fire line drawn over burning cells produced a run that could never end.** `buildFireLine` sets `ignitionTime = Infinity` on every cell it covers but, unlike `setHelitackPoint` three lines away, does not reset a cell that is already `Burning`. Such a cell can never reach the `Burnt` transition, `isBurningOrWillBurn` stays true, and `fireDidStop` is reset to false on every tick. Measured live before the fix: spark, Start, fire line across the flame front, resume, and 5,000 ticks later three cells were still burning with `isFireLine: true` and an infinite ignition time, with nothing else alight. The bug predates this story and only cost the ready pulse; this story is what makes it visible, because a run that never ends is now a Hazbot that never comes back.
 
 - **WM-45's R2a becomes unreachable from the button.** R2a says the newest canonical run counts even when unfinished, so a student who pauses mid-run and asks for analysis is told about the run they are watching. Nothing about the engine changes and the requirement stays true of the data; there is simply no longer a way for a student to ask during a pause. It takes with it the wrinkle R2a recorded, where a fire line drawn during a pause is not in the reading until the student resumes, so a paused student who had just drawn one was told they had not used mitigation.
 
@@ -331,3 +335,14 @@ Numbered R27 to R44a, continuing the numbering the interview used.
 - B) Add a second clear at the Clear All writer.
 
 **Decision**: A. One writer per piece of state; the asymmetry existed because there were two. The closed branch is the panel-closed state sync, which is what `tourActive` mirrors, so every external teardown route is covered by construction rather than by remembering to add a line. Placing it in the effect's cleanup instead also works and there is no unmount hazard either way (React 18.2 makes a `setState` after unmount a silent no-op), but the closed branch reads better. A regression test drives Clear All, reopens, and asserts every committed class value.
+
+---
+
+### Fix the fire-line burnout bug here, or file it?
+**Context**: The predicate change made a pre-existing model bug user-visible: a fire line drawn over burning cells leaves a run that never ends, so Hazbot stays dim until a Restart discards the run.
+**Options considered**:
+- A) Fix it in `FireEngine.updateFire`: a burning cell with no ignition time left is finished.
+- B) Fix it in `buildFireLine`, mirroring `setHelitackPoint`'s `Burning` to `Unburnt` reset.
+- C) File it for Michael or Sam as a model-behavior question.
+
+**Decision**: A, in this PR. C was the default, and what changed it is that A needs no modeling judgment: it does not decide what a fire line does to a fire, it just stops the engine reporting a cell as burning when the cell can never progress. B does carry a modeling claim, that cutting a line through flame puts it out, which is defensible for a water drop and much less so for a cleared strip, and it would leave the same stuck state reachable from any future writer of `ignitionTime`. The acres-burned count is unaffected either way, since the counter increments on the `Unburnt` to `Burning` transition rather than on `Burnt`.
