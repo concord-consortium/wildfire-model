@@ -96,7 +96,7 @@ describe("BottomBar component", () => {
     expect(screen.queryAllByRole("button").length).toEqual(7);
   });
 
-  it("terrain button toggles the display of the terrain dialog", async () => {
+  it("terrain button opens the terrain dialog and a second click leaves it open", async () => {
     render(
       <Provider stores={stores}>
         <BottomBar />
@@ -105,8 +105,10 @@ describe("BottomBar component", () => {
     expect(stores.ui.showTerrainUI).toBe(false);
     await userEvent.click(screen.getByTestId("terrain-button"));
     expect(stores.ui.showTerrainUI).toBe(true);
+    // Cancel and Next/Create are the only ways out, so the Setup button is
+    // open-only: clicking it again must not close the wizard.
     await userEvent.click(screen.getByTestId("terrain-button"));
-    expect(stores.ui.showTerrainUI).toBe(false);
+    expect(stores.ui.showTerrainUI).toBe(true);
   });
 
   it("fireline button is present", () => {
@@ -478,6 +480,50 @@ describe("BottomBar edge cases", () => {
   });
 });
 
+describe("model controls while the Setup wizard is open", () => {
+  let stores = createStores();
+  beforeEach(() => {
+    stores = createStores();
+  });
+
+  // The wizard can only be open before the run starts, so Restart, Fire Line
+  // and Helitack are already disabled by simulationStarted and need no guard.
+  const renderWithWizardOpen = () => {
+    seedState(stores, 3);
+    stores.ui.showTerrainUI = true;
+    render(<Provider stores={stores}><BottomBar /></Provider>);
+  };
+
+  it("disables Spark", () => {
+    renderWithWizardOpen();
+    expectButtonState("spark-button", false);
+  });
+
+  it("disables Reload", () => {
+    renderWithWizardOpen();
+    expectButtonState("reload-button", false);
+  });
+
+  it("disables Start", () => {
+    renderWithWizardOpen();
+    expectButtonState("start-button", false);
+  });
+
+  it("leaves Setup enabled and marks it selected", () => {
+    renderWithWizardOpen();
+    expectButtonState("terrain-button", true);
+    // identity-obj-proxy resolves css.selected, so the class is visible here;
+    // the rendered treatment is asserted in bottom-bar-visuals.cy.ts.
+    expect(screen.getByTestId("terrain-button").className).toContain("selected");
+  });
+
+  it("leaves the wizard open when Setup is clicked", async () => {
+    renderWithWizardOpen();
+    await userEvent.click(screen.getByTestId("terrain-button"));
+    expect(stores.ui.showTerrainUI).toBe(true);
+  });
+});
+
 // WM-6 Hazbot Analysis button integration. The button mounts gated on a LOADED
 // rule-set (getAnalysisEngine()?.ruleSet), so these tests drive the memoized
 // engine singleton via the URL (mirroring engine-singleton.test.ts) and reset it
@@ -594,5 +640,15 @@ describe("BottomBar Hazbot button (WM-6)", () => {
       stores.simulation.simulationRunning = false;
     });
     expect(stores.ui.hazbotPulseArmed).toBe(true);
+  });
+
+  // The bar lockout covers the model controls in .mainContainer only. The
+  // Hazbot button sits in .rightContainer and is not a way out of the wizard.
+  it("still opens feedback while the Setup wizard is open, and leaves the wizard open", async () => {
+    stores.ui.showTerrainUI = true;
+    render(<Provider stores={stores}><BottomBar /></Provider>);
+    await userEvent.click(screen.getByTestId("hazbot-button"));
+    expect(stores.ui.showHazbotFeedback).toBe(true);
+    expect(stores.ui.showTerrainUI).toBe(true);
   });
 });

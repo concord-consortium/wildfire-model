@@ -15,7 +15,6 @@ import { log } from "../log";
 import { useStores } from "../use-stores";
 import { ZonesCountSelector } from "./zones-count-selector";
 import { ISetupSnapshot, captureSimulationSnapshot, setupSnapshotDiffers } from "./setup-snapshot";
-import CloseIcon from "../assets/setup-close.svg";
 
 import css from "./terrain-panel.scss";
 import { Zone } from "../models/zone";
@@ -23,6 +22,8 @@ import { Zone } from "../models/zone";
 const cssClasses = [css.zone1, css.zone2, css.zone3];
 
 const panelClasses = [css.panel0, css.panel1, css.panel2];
+const panelNames = ["zones", "conditions", "wind"];
+const WIND_PANEL = 2;
 const panelInstructions = [
   <>Select the <b>number of zones</b> in your model</>,
   <>Adjust conditions in <b>each zone</b></>,
@@ -42,6 +43,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
   const [windDirection, setWindDirection] = useState<number>(simulation.wind.direction);
   const [selectedZone, setSelectedZone] = useState<number>(ui.terrainUISelectedZone || 0);
   const openSnapshotRef = useRef<ISetupSnapshot | null>(null);
+  const maxPanelRef = useRef<number>(firstPanel);
 
   const zone = zones[selectedZone];
   const displayVegetationType =
@@ -63,6 +65,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
     // Reset internal state when terrain UI is closed
     if (!ui.showTerrainUI) {
       setCurrentPanel(firstPanel);
+      maxPanelRef.current = firstPanel;
       setZonesCount(simulation.zonesCount);
       setZones(simulation.zones.map(z => z.clone()));
       setWindSpeed(simulation.wind.speed);
@@ -95,13 +98,22 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
     }
   }, [simulation, ui.showTerrainUI]);
 
-  const handleClose = () => {
-    ui.showTerrainUI = !ui.showTerrainUI;
-    log("TerrainPanelClosed");
+  const handleCancel = () => {
+    const snapshot = openSnapshotRef.current;
+    const changed = snapshot
+      ? setupSnapshotDiffers(snapshot, { zonesCount, zones, windSpeed, windDirection })
+      : false;
+    ui.showTerrainUI = false;
+    log("TerrainPanelClosed", {
+      reason: "cancel",
+      changed,
+      panel: panelNames[currentPanel],
+      reachedWind: maxPanelRef.current === WIND_PANEL
+    });
   };
 
   const applyAndClose = () => {
-    ui.showTerrainUI = !ui.showTerrainUI;
+    ui.showTerrainUI = false;
     // Diff the open-time snapshot against the local wizard state BEFORE
     // calling the simulation.* mutators. Computing the diff after the mutators
     // run would always see an empty diff because the simulation would now
@@ -139,6 +151,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
       applyZonesCountChange();
     }
     setCurrentPanel(val => val + 1);
+    maxPanelRef.current = Math.max(maxPanelRef.current, currentPanel + 1);
     log("TerrainPanelNextButtonClicked");
   };
 
@@ -212,6 +225,16 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
     }
   };
 
+  const renderCancelButton = () => (
+    <Button
+      className={`${css.continueButton} ${css.cancelButton}`}
+      onClick={handleCancel}
+      data-testid="terrain-cancel"
+    >
+      Cancel
+    </Button>
+  );
+
   const renderZoneTerrainTypeLabels = () => {
     const labels: any[] = [];
     zones.forEach((z, i) => {
@@ -237,18 +260,10 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
       {
         ui.showTerrainUI &&
         <div
-          className={`${css.background} ${cssClasses[selectedZone]} ${panelClasses[currentPanel]}`}
+          className={[css.background, cssClasses[selectedZone], panelClasses[currentPanel]]
+            .filter(Boolean).join(" ")}
           data-testid="terrain-panel-container"
         >
-          <button
-            type="button"
-            className={css.closeButton}
-            data-testid="terrain-panel-close"
-            aria-label="Close setup"
-            onClick={handleClose}
-          >
-            <CloseIcon className={css.closeIcon} />
-          </button>
           <div className={css.header} data-testid="terrain-header"><span>Setup</span></div>
           <div className={css.instructions}>
             <span className={css.setupStepIcon}>{firstPanel === 0 ? currentPanel + 1 : currentPanel}</span>
@@ -261,6 +276,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
                 <ZonesCountSelector zonesCount={zonesCount} onChange={handleZonesCountChange} />
               </div>
               <div className={css.buttonContainer}>
+                {renderCancelButton()}
                 <Button className={css.continueButton} onClick={showNextPanel} data-testid="terrain-next">
                   Next
                 </Button>
@@ -315,6 +331,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
                 </div>
               </div>
               <div className={css.buttonContainer}>
+                {renderCancelButton()}
                 {
                   firstPanel === 0 &&
                   <Button className={css.continueButton} onClick={showPreviousPanel}>
@@ -344,6 +361,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
                 />
               </div>
               <div className={css.buttonContainer}>
+                {renderCancelButton()}
                 <Button className={css.continueButton} onClick={showPreviousPanel}>
                   Previous
                 </Button>

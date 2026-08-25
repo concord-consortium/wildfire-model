@@ -204,6 +204,26 @@ describe("Bottom-bar state machine (WM-24)", () => {
       fireLine: false, helitack: false,
     });
   });
+
+  // State 8: SetupOpen — the wizard locks the model controls, so Cancel and
+  // Next/Create are the only ways out. Setup stays enabled and its click is inert.
+  it("state 8 (SetupOpen): only Setup stays enabled; Spark/Reload/Start locked out", () => {
+    cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
+    // Assert the pre-state first: from SparkPlaced all three are live, which is
+    // what makes the post-open assertion below able to fail.
+    expectButtonStates({
+      setup: true, spark: true,
+      reload: true, restart: false, startStop: true,
+      fireLine: false, helitack: false,
+    });
+    cy.get("[data-testid='terrain-button']").click();
+    cy.get("[data-testid='terrain-header']").should("be.visible");
+    expectButtonStates({
+      setup: true, spark: false,
+      reload: false, restart: false, startStop: false,
+      fireLine: false, helitack: false,
+    });
+  });
 });
 
 // WM-6 Hazbot Analysis button. The one assertion jsdom can't truly exercise:
