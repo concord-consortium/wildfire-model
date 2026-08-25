@@ -14,14 +14,17 @@ merges have landed since (WM-46, WM-42 across two PRs, WM-54), so the absolute p
 describe the tree this work builds on: the Jest baseline is now **982 of 982 across 78 suites** and
 `bottom-bar-state-machine.cy.ts` carries **10** cases before this story adds its eleventh. Every
 `file:line` in both spec files was re-derived against the stacked tree on 2026-08-25; the counts and
-mechanisms below held, the totals did not. Re-run rather than quoting these. What that run established:
+mechanisms below held, the totals did not. Re-run rather than quoting these. The code in the snippets
+below is what shipped; their **comments** are not, having been trimmed in review, so read them for
+structure rather than transcribing them. What that run established:
 
 - **Jest**: 895 passed of 895 (the then-current 879 baseline plus the 16 new cases), no change to the 51
   pre-existing `tsc` errors (all in `node_modules` and `src/charts`) or the 31 pre-existing lint
   warnings, and no new ones.
 - **Cypress**: `bottom-bar-state-machine.cy.ts` 10 passing of 10 with the `APP_URL` change, the
-  eighth control in the matrix, and the new opacity case, in 41s headless (11 of 11 on the current tree,
-  which has gained WM-42's state 8)
+  eighth control in the matrix, and the new opacity case, in 41s headless. Re-measured on the built
+  branch, which has gained WM-42's state 8: **11 of 11** in 44s, and the whole suite **30 of 30 across
+  6 specs**
   (`CI=true npx cypress run --browser chrome`; the config's swiftshader branch covers WebGL, so this
   does not need the interactive `cypress open`).
 - **Mutation checks**: each guard was removed one at a time and the suite re-run, to confirm the new
@@ -331,25 +334,28 @@ const expectButtonStates = (states: {
 The state-4 title changes with it: `state 4 (Running): Setup/Spark/Hazbot disabled;
 Restart/Start/Fireline/Helitack enabled`.
 
-The header comment is rewritten on both counts requirement 44 names. It names no control count, so the
-eighth control adds nothing there; what it does carry is a state count WM-42's eighth state already
-made stale, and a claim that the file makes no assertion about rendered styles, which the new case
-makes false:
+The header comment is rewritten on both counts requirement 44 names, but only one of them was still
+outstanding when this shipped: PR #133 had already corrected the stale state count and split the
+Zeplin attribution between states 1-7 and state 8. So the header edit here adds the control count to
+the first paragraph and replaces the second, whose claim that the file makes no assertion about
+rendered styles the new case makes false. As shipped:
 
 ```ts
-// machine. Covers each of the eight states by driving the real bottom-bar in
-// a running app, asserting the HTML `disabled` attribute of all eight controls
-// per the Zeplin matrix (Hazbot is disabled for the duration of a run, WM-31).
+// app, asserting the HTML `disabled` attribute of all eight controls; states 1-7
+// follow the Zeplin matrix, and state 8 (the Setup-open lockout) has no artboard.
+// Catches full-page reactivity wiring breaks, @observer-decoration regressions, and
+// build-tooling failures that the React-Testing-Library tests in bottom-bar.test.tsx
+// can't.
 ```
 
 ```ts
-// The one rendered style it does assert is the Hazbot button's disabled opacity
-// (WM-31), which cannot be checked in Jest: SCSS modules resolve through
-// identity-obj-proxy there, so no real CSS is applied and a computed-opacity
-// assertion would read "" and pass against any implementation. The icon-button
-// disabled rules (src/components/icon-button.scss, `&:disabled, &.Mui-disabled`)
-// are still verified only by manual browser inspection against the Zeplin spec. A
-// future Zeplin-driven visual-regression pass would close that gap.
+// The one rendered style it does assert is the Hazbot button's disabled opacity,
+// which cannot be checked in Jest: SCSS modules resolve through identity-obj-proxy
+// there, so no real CSS is applied and a computed-opacity assertion would read ""
+// and pass against any implementation. The icon-button disabled rules
+// (src/components/icon-button.scss, `&:disabled, &.Mui-disabled`) are still verified
+// only by manual browser inspection against the Zeplin spec. A future Zeplin-driven
+// visual-regression pass would close that gap.
 ```
 
 The new case, appended to the `Hazbot button pulse (WM-6)` describe:
@@ -1033,8 +1039,8 @@ and run. The tree is back at its then-current 879/879 with no source changes.
 the previous pass:
 
 - **Jest is 895 of 895**, exactly the then-current 879 baseline plus the plan's 16 new cases, with the
-  plan's code and tests transcribed verbatim. On the current master that becomes 998 of 998 against
-  the 982 baseline, unmeasured.
+  plan's code and tests transcribed verbatim. Measured again on the built branch: **998 of 998 across
+  78 suites**, which is the 982 baseline plus the same 16 cases.
 - **`tsc` is unchanged at 51 errors**, before and after, all in `node_modules` and
   `src/charts/components/line-chart.tsx`. `npx eslint` is clean on all changed files and the
   repo-wide warning count holds at 31.
