@@ -185,6 +185,12 @@
       text-transform: none;
       color: $controlText;
 
+      // No fill, so Cancel takes the color of the panel behind it. Two classes, so source
+      // order cannot defeat it; the :hover and :active blocks below still win, as intended.
+      &.cancelButton {
+        background-color: transparent;
+      }
+
       &:hover {
         background-color: $controlGrayLight1;
       }
@@ -193,12 +199,6 @@
         background-color: #757575;
         color: #ffffff;
       }
-    }
-
-    .cancelButton {
-      // No fill, so Cancel takes the color of the panel behind it. Must stay at
-      // this depth and after .continueButton: equal specificity, source order decides.
-      background-color: transparent;
     }
 
     .createButton {

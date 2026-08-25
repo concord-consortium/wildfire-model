@@ -29,8 +29,9 @@
         opacity: 0.5;
       }
     }
-    // .selected holds the pressed treatment while a tool stays armed, which is
-    // otherwise indistinguishable from idle now that armed buttons stay enabled.
+    // .selected holds the pressed treatment while a control's mode is on (a tool armed,
+    // or the Setup wizard open), which is otherwise indistinguishable from idle given
+    // that such buttons stay enabled.
     &:active, &.selected {
       .iconButtonHighlightSvg {
         opacity: 1;
