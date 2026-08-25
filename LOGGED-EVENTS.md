@@ -85,8 +85,9 @@ All model coordinates are in feet. Normalized coordinates (x, y) are relative to
 ### Rule-set ids renumbered (`appRulesVersion` 8 onward)
 
 `ruleSetId` is a join key on `AnalysisEngineActivated`, `HazbotFeedbackShown`,
-`HazbotShowMeClicked`, `HazbotTourCompleted` and `HazbotTourDismissed`, and the same page
-carries a different value either side of this boundary. From `appRulesVersion` 8, tabs 42,
+`HazbotShowMeClicked`, `HazbotTourCompleted`, `HazbotTourDismissed` and
+`HazbotCoachMarkHiddenByRun`, and the same page carries a different value either side of
+this boundary. From `appRulesVersion` 8, tabs 42,
 45 and 47 are **41, 44 and 46**; the pages are unchanged, so the two series join end to end
 on the mapping. Sessions cannot be told apart by payload alone, so segment on
 `appRulesVersion`.

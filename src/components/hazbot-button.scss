@@ -117,10 +117,10 @@
 // asleep. Both keep the Button back's #c1daff fill, 1.5px #797979 border and 10px
 // radius.
 //
-// MUI fades a `disabled` button to 0.25 of its own accord and injects that style after
-// this file, so the disabled override needs the three-class wrapper shape to out-weigh
-// it on specificity: the same source-order battle the fill and border above document,
-// minus the !important.
+// The project's MUI theme (src/material-ui-theme.tsx) fades a `disabled` button to 0.25
+// and injects that style after this file, so the disabled override needs the three-class
+// wrapper shape to out-weigh it on specificity: the same source-order battle the fill and
+// border above document, minus the !important. MUI's own Button sets no opacity.
 .hazbotButtonWrap.noHazbot .hazbotButton,
 .hazbotButtonWrap.runDisabled .hazbotButton {
   opacity: 0.35;

@@ -291,10 +291,11 @@ describe("Hazbot button pulse (WM-6)", () => {
   });
 
   // The disabled attribute is asserted in the state matrix above too; what only a
-  // browser can check is the rendered 35%. MUI fades a disabled button to 0.25 on its
-  // own, so an implementation that ships the `disabled` prop without the opacity
-  // override passes every Jest case and still renders the wrong button.
-  it("fades to the Zeplin 35% (not MUI's 0.25) for the duration of a run", () => {
+  // browser can check is the rendered 35%. The project's MUI theme
+  // (src/material-ui-theme.tsx) fades a disabled button to 0.25, so an implementation
+  // that ships the `disabled` prop without the opacity override passes every Jest case
+  // and still renders the wrong button.
+  it("fades to the Zeplin 35% (not the theme's 0.25) for the duration of a run", () => {
     cy.get("[data-testid='hazbot-button']").should("have.css", "opacity", "1");
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     cy.get("[data-testid='start-button']").click();

@@ -66,33 +66,34 @@ export const HazbotButton = observer(function HazbotButton() {
   const runInProgress = simulation.runInProgress;
 
   // Random blink (AP-79): local presentation state, no store/engine coupling. A
-  // recursive setTimeout cycle; the `mounted` ref prevents setBlink after unmount.
+  // recursive setTimeout cycle; the `blinkActive` ref stops a queued step from calling
+  // setBlink once the cycle is over, whether that is an unmount or a run start.
   // Suspended for the duration of a run, restarting from the top of the loop
   // afterwards. setBlink(false) on the way in holds the eyes open rather than
   // freezing on whatever frame the run began in.
   const [blink, setBlink] = useState(false);
-  const mounted = useRef(true);
+  const blinkActive = useRef(true);
   useEffect(() => {
     if (runInProgress) {
       setBlink(false);
       return;
     }
-    mounted.current = true;
+    blinkActive.current = true;
     let timeout: ReturnType<typeof setTimeout>;
     const loop = () => {
-      if (!mounted.current) return;
+      if (!blinkActive.current) return;
       timeout = setTimeout(() => {
-        if (!mounted.current) return;
+        if (!blinkActive.current) return;
         setBlink(true);                    // eyes closed
         timeout = setTimeout(() => {
-          if (!mounted.current) return;
+          if (!blinkActive.current) return;
           setBlink(false);                 // eyes open, then a short pause before the next blink
           timeout = setTimeout(loop, 80);
         }, 180);
       }, 1000 + Math.random() * 2500);     // random idle before next blink
     };
     loop();
-    return () => { mounted.current = false; clearTimeout(timeout); };
+    return () => { blinkActive.current = false; clearTimeout(timeout); };
   }, [runInProgress]);
 
   // Ready/pulse predicate. The simulationStarted term keeps the pulse off in the
@@ -131,7 +132,13 @@ export const HazbotButton = observer(function HazbotButton() {
   // robot); only the tour swaps to `.noHazbot`.
   const [tourActive, setTourActive] = useState(false);
   useEffect(() => {
-    if (!ui.showHazbotFeedback || !avatarRef.current) return;
+    // The closed branch is the only writer that clears `tourActive` for a panel taken
+    // down from outside the component (a run start, Clear All): the tour engine's own
+    // onDestroyed clears it on the `cleanup`-skipped branch, which a programmatic
+    // teardown never reaches. Clearing it here rather than at each external writer is
+    // what keeps `.noHazbot` off the render that reopens the panel.
+    if (!ui.showHazbotFeedback) { setTourActive(false); return; }
+    if (!avatarRef.current) return;
     setTourActive(false); // fresh open starts in the intro (enlarged-robot) state
     const engine = getAnalysisEngine();
     const { used: matched } = readCategories(engine);
@@ -292,13 +299,11 @@ export const HazbotButton = observer(function HazbotButton() {
 
   // Writing the flag rather than destroying the engines keeps this a no-op when nothing
   // is open, since MobX suppresses a same-value assignment: no reaction, no re-render and
-  // no log. `tourActive` is cleared here because the panel effect's own
-  // setTourActive(false) sits on the `cleanup`-skipped branch and would otherwise leave
-  // the flag set for the whole run.
+  // no log. Lowering the flag is the whole teardown: the panel effect's closed branch
+  // clears `tourActive` from there.
   useEffect(() => {
     if (!runInProgress) return;
     ui.showHazbotFeedback = false;
-    setTourActive(false);
   }, [runInProgress, ui]);
 
   const handleClick = () => {

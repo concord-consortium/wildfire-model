@@ -738,37 +738,43 @@ describe("Disabled for the duration of a run (WM-31)", () => {
 
   it("pauses the blink cycle for the run and restarts it from the top afterwards", () => {
     jest.useFakeTimers();
-    jest.spyOn(Math, "random").mockReturnValue(0); // idle = 1000ms exactly
-    const { stores } = renderWithStores();
-    act(() => { jest.advanceTimersByTime(900); });
-    startRun(stores);
-    // t = 1000, the exact tick an un-suspended loop would close the eyes on. Land
-    // anywhere else in the cycle and eyes-open is what an un-suspended loop shows too,
-    // so the assertion would read the same against both implementations.
-    act(() => { jest.advanceTimersByTime(100); });
-    expect(screen.queryByTestId("hazbot-blinks")).toBeNull();
-    act(() => { jest.advanceTimersByTime(4900); });
-    expect(screen.queryByTestId("hazbot-blinks")).toBeNull();
-    expect(screen.getByTestId("hazbot-eyes")).toBeInTheDocument();
-    // The fire goes out: the cycle restarts from a full idle rather than resuming the
-    // 100ms that were left on the clock.
-    burnOut(stores);
-    act(() => { jest.advanceTimersByTime(999); });
-    expect(screen.queryByTestId("hazbot-blinks")).toBeNull();
-    act(() => { jest.advanceTimersByTime(1); });
-    expect(screen.getByTestId("hazbot-blinks")).toBeInTheDocument();
-    jest.useRealTimers();
+    try {
+      jest.spyOn(Math, "random").mockReturnValue(0); // idle = 1000ms exactly
+      const { stores } = renderWithStores();
+      act(() => { jest.advanceTimersByTime(900); });
+      startRun(stores);
+      // t = 1000, the exact tick an un-suspended loop would close the eyes on. Land
+      // anywhere else in the cycle and eyes-open is what an un-suspended loop shows too,
+      // so the assertion would read the same against both implementations.
+      act(() => { jest.advanceTimersByTime(100); });
+      expect(screen.queryByTestId("hazbot-blinks")).toBeNull();
+      act(() => { jest.advanceTimersByTime(4900); });
+      expect(screen.queryByTestId("hazbot-blinks")).toBeNull();
+      expect(screen.getByTestId("hazbot-eyes")).toBeInTheDocument();
+      // The fire goes out: the cycle restarts from a full idle rather than resuming the
+      // 100ms that were left on the clock.
+      burnOut(stores);
+      act(() => { jest.advanceTimersByTime(999); });
+      expect(screen.queryByTestId("hazbot-blinks")).toBeNull();
+      act(() => { jest.advanceTimersByTime(1); });
+      expect(screen.getByTestId("hazbot-blinks")).toBeInTheDocument();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   it("holds the eyes open if the run starts mid-blink", () => {
     jest.useFakeTimers();
-    jest.spyOn(Math, "random").mockReturnValue(0);
-    const { stores } = renderWithStores();
-    act(() => { jest.advanceTimersByTime(1000); });          // eyes closed
-    expect(screen.getByTestId("hazbot-blinks")).toBeInTheDocument();
-    startRun(stores);
-    expect(screen.queryByTestId("hazbot-blinks")).toBeNull(); // not frozen mid-blink
-    jest.useRealTimers();
+    try {
+      jest.spyOn(Math, "random").mockReturnValue(0);
+      const { stores } = renderWithStores();
+      act(() => { jest.advanceTimersByTime(1000); });          // eyes closed
+      expect(screen.getByTestId("hazbot-blinks")).toBeInTheDocument();
+      startRun(stores);
+      expect(screen.queryByTestId("hazbot-blinks")).toBeNull(); // not frozen mid-blink
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });
 
@@ -860,13 +866,35 @@ describe("Run-start coach-mark teardown (WM-31)", () => {
     openPanel();
     activateShowMe();
     expect(wrap().className).toMatch(/noHazbot/);
-    // Any writer clearing the flag from outside the component tears the tour down
-    // through the effect's cleanup path, which by design skips setTourActive(false) so
-    // neither engine mis-logs. `.noHazbot` carries pointer-events:none and no `disabled`
-    // attribute, so a stale tourActive leaves the button permanently unclickable.
-    act(() => { stores.ui.showHazbotFeedback = false; });
+    // Clear All, the production route into resetHazbotFeedback(). It tears the tour down
+    // through the effect's cleanup path, which by design skips the tour engine's own
+    // setTourActive(false) so neither engine mis-logs. `.noHazbot` carries
+    // pointer-events:none and no `disabled` attribute, so a stale tourActive leaves the
+    // button permanently unclickable.
+    act(() => { stores.ui.resetHazbotFeedback(); });
     expect(wrap().className).not.toMatch(/noHazbot/);
     expect(screen.getByTestId("hazbot-button")).not.toBeDisabled();
+  });
+
+  it("reopening after a Clear All never commits .noHazbot either", () => {
+    jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    const { stores } = renderWithStores();
+    openPanel();
+    activateShowMe();
+    act(() => { stores.ui.resetHazbotFeedback(); });
+    // Same observer technique as the run-route case above: what is asserted is every
+    // committed value across the reopen, not the final one. A tourActive cleared only on
+    // the next open paints one frame of the tour's faded state first.
+    const seen: string[] = [];
+    const observer = new MutationObserver(() => undefined);
+    observer.observe(wrap(), { attributes: true, attributeFilter: ["class"], attributeOldValue: true });
+    openPanel();
+    observer.takeRecords().forEach((r) => seen.push(r.oldValue ?? ""));
+    observer.disconnect();
+    seen.push(wrap().className);
+    expect(seen.length).toBeGreaterThan(1);
+    expect(seen.some((c) => /noHazbot/.test(c))).toBe(false);
+    expect(wrap().className).toMatch(/coached/);
   });
 
   it("logs and clears nothing when a run starts with no coach mark open", () => {
