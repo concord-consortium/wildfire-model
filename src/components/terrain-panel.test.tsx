@@ -369,7 +369,7 @@ describe("setupChanged", () => {
   });
 
   // eslint-disable-next-line max-len
-  it("(i) change zonesCount (2 -> 3), Cancel — the simulation keeps 2 zones", async () => {
+  it("(i) change zonesCount (2 → 3), Cancel — the simulation keeps 2 zones", async () => {
     // Require config.zonesCount === undefined so the wizard starts on the
     // zones-count panel; only the master model can reach it.
     stores.simulation.config.zonesCount = undefined as any;
@@ -390,7 +390,7 @@ describe("setupChanged", () => {
   });
 
   // eslint-disable-next-line max-len
-  it("(i2) change zonesCount (2 -> 3), Next, Cancel — the simulation keeps 2 zones", async () => {
+  it("(i2) change zonesCount (2 → 3), Next, Cancel — the simulation keeps 2 zones", async () => {
     stores.simulation.config.zonesCount = undefined as any;
     // eslint-disable-next-line testing-library/no-container
     const { container } = render(

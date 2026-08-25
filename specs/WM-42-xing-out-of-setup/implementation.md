@@ -122,17 +122,21 @@ and reset beside `setCurrentPanel(firstPanel)` in the close-time reset effect (`
 
 **Delete the close button** (`terrain-panel.tsx:243-251`), the whole `<button data-testid="terrain-panel-close">` element including its `<CloseIcon />` child.
 
-**Add Cancel to each footer.** The same element in all three, leftmost in the container:
+**Add Cancel to each footer**, leftmost in the container. It is one render helper called from all three, beside the file's existing `renderZoneTerrainTypeLabels` and `renderTerrainProperties`, so the className pair, the handler, the testid and the label have one definition:
 
 ```tsx
-                <Button
-                  className={`${css.continueButton} ${css.cancelButton}`}
-                  onClick={handleCancel}
-                  data-testid="terrain-cancel"
-                >
-                  Cancel
-                </Button>
+  const renderCancelButton = () => (
+    <Button
+      className={`${css.continueButton} ${css.cancelButton}`}
+      onClick={handleCancel}
+      data-testid="terrain-cancel"
+    >
+      Cancel
+    </Button>
+  );
 ```
+
+Each footer then opens with `{renderCancelButton()}`.
 
 It must carry `css.continueButton` as well as `css.cancelButton`. That is what supplies the 76 x 28 shell, and it is also what makes the `.continueButton+.continueButton` gap rule apply between Cancel and its neighbor.
 
@@ -142,8 +146,8 @@ Panel 0's footer becomes Cancel then Next. Panel 1's becomes Cancel, then the ex
 
 ```scss
     .cancelButton {
-      // No fill: Cancel picks up the panel color behind it, which differs per
-      // panel. Hover and active come from .continueButton above.
+      // No fill, so Cancel takes the color of the panel behind it. Must stay at
+      // this depth and after .continueButton: equal specificity, source order decides.
       background-color: transparent;
     }
 ```
@@ -183,16 +187,11 @@ It has no callers anywhere in `cypress/`, so it is already dead, and this commit
 **Guard Cancel's fill in the browser, because nothing else can.** The nesting-depth note above says this is the one thing in the story that fails silently if it is written wrong, and it is right: Jest maps SCSS through `identity-obj-proxy` and computes no styles, so a `.cancelButton` rule that loses to `.continueButton` renders Cancel as an ordinary white button with a green suite. The assertion rides inside `terrain-setup.cy.ts`'s existing "Create 3 zone setup using first page display" case, which already has the wizard open on the zone-count panel, so it adds **no new test case and no measurable wall-clock**:
 
 ```ts
-      // WM-42: Cancel's fill-less default depends on .cancelButton sitting at
-      // the same nesting depth as .continueButton and after it -- equal
-      // specificity, source order decides. A shallower rule loses and Cancel
-      // renders white, which looks deliberate and no unit test can see.
+      // Jest computes no styles, so the fill-less Cancel and the footer gap are
+      // only observable here.
       terrain.getCancelButton()
         .should("have.css", "background-color", "rgba(0, 0, 0, 0)")
         .and("have.css", "border-color", "rgb(121, 121, 121)");
-      // The 15px -> 8px footer gap has the same blind spot: it is an artboard
-      // value that no Jest test can see. Cancel is leftmost, so the margin the
-      // rule sets lands on its neighbor.
       terrain.getNextButton().should("have.css", "margin-left", "8px");
 ```
 
@@ -212,8 +211,8 @@ Panel 0 is the right panel for it: its `#dfdfdf` background is where the fill-le
     const droughtSlider = screen.getByTestId("drought-slider").querySelector("input")!;
     fireEvent.change(droughtSlider, { target: { value: "3" } });
     await userEvent.click(screen.getByTestId("terrain-cancel"));
-    // Read the simulation's own values back. Asserting setupChanged alone cannot
-    // fail on a commit-on-cancel regression: updateZones never writes that flag.
+    // Read the simulation's own values back: setupChanged alone cannot fail on a
+    // commit-on-cancel regression, because updateZones never writes that flag.
     expect(stores.simulation.zones[0].droughtLevel).toBe(2);
     expect(stores.simulation.zones[1].droughtLevel).toBe(1);
     expect(stores.simulation.zonesCount).toBe(2);
@@ -286,15 +285,9 @@ One line of it goes into four cases that already stand on the four footer varian
     const threeZonesInput = container.querySelector('input[type="radio"][value="3"]') as HTMLInputElement;
     expect(footerLabels()).toEqual(["Cancel", "Next"]);
     fireEvent.click(threeZonesInput);
-    // Cancel from the zones-count panel itself, before Next applies the count
-    // to the wizard's local state. This is the only case that clicks panel 0's
-    // Cancel button.
     await userEvent.click(screen.getByTestId("terrain-cancel"));
     expect(stores.simulation.zones.length).toBe(2);
     expect(stores.simulation.setupChanged).toBe(false);
-    // The zones panel is the only panel this case can log from, so it is where
-    // the payload's "zones" value is pinned. (k) and (l) pin "conditions" and
-    // (m) pins "wind"; between them a hardcoded panel fails somewhere.
     expect(cancelPayload()).toMatchObject({ panel: "zones", reachedWind: false });
   });
 
@@ -335,8 +328,6 @@ One line of it goes into four cases that already stand on the four footer varian
     const droughtSlider = screen.getByTestId("drought-slider").querySelector("input")!;
     fireEvent.change(droughtSlider, { target: { value: "3" } });
     await goToCreatePanel();
-    // The wind panel's Cancel sits next to Create. This is the only case that
-    // clicks it, and it is the one place a mis-wire would commit instead.
     expect(screen.getByTestId("terrain-wind")).toBeInTheDocument();
     expect(footerLabels()).toEqual(["Cancel", "Previous", "Create"]);
     await userEvent.click(screen.getByTestId("terrain-cancel"));
@@ -418,8 +409,8 @@ One line of it goes into four cases that already stand on the four footer varian
     expect(screen.getByTestId("terrain-wind")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /previous/i }));
     await userEvent.click(screen.getByTestId("terrain-cancel"));
-    // The two fields answer different questions and this is the case where they
-    // disagree: reachedWind is a high-water mark, panel is where they stood.
+    // reachedWind is a high-water mark, panel is where the student stood, so
+    // this is the path where the two disagree.
     expect(cancelPayload()).toMatchObject({ panel: "conditions", reachedWind: true });
   });
 
@@ -432,9 +423,8 @@ One line of it goes into four cases that already stand on the four footer varian
     );
     await goToCreatePanel();
     expect(screen.getByTestId("terrain-wind")).toBeInTheDocument();
-    // Exactly what simulation-info.tsx writes when a zone info tile is clicked.
-    // The tiles stay live while the wizard is open (Requirements), and the write
-    // forces the wizard back to the conditions panel.
+    // What simulation-info.tsx writes when a zone info tile is clicked. The
+    // write forces the wizard back to the conditions panel.
     act(() => { stores.ui.terrainUISelectedZone = 1; });
     expect(screen.queryByTestId("terrain-wind")).not.toBeInTheDocument();
     await userEvent.click(screen.getByTestId("terrain-cancel"));
@@ -555,13 +545,19 @@ No early return. A student poking the lit Setup button still logs, which is the 
 **That decision needs its own case, because the cleanup that reverses it is invisible.** `TerrainPanelButtonClicked` is emitted at `bottom-bar.tsx:391` and asserted nowhere in `src/` or `cypress/` today. Adding `if (ui.showTerrainUI) return;` to `handleTerrain`, which is exactly the "simplify the inert handler" edit a later reader makes, leaves every other case in this plan green while deleting the signal and falsifying the `LOGGED-EVENTS.md` row. `log-events.test.tsx` is the right home: it already owns log-payload assertions, already has the mock, and already renders `BottomBar`, so this needs no new harness and does not reopen the resolved question about where the *Cancel* payload cases live (that one turned on `log-events.test.tsx` having no `TerrainPanel` harness).
 
 ```tsx
-  it("logs on every Setup click, including the no-op click while the wizard is open", async () => {
-    render(<Provider stores={stores}><BottomBar /></Provider>);
-    await userEvent.click(screen.getByTestId("terrain-button"));
-    await userEvent.click(screen.getByTestId("terrain-button"));
-    const calls = mockLog.mock.calls.filter((c: unknown[]) => c[0] === "TerrainPanelButtonClicked");
-    expect(calls).toHaveLength(2);
-    expect(stores.ui.showTerrainUI).toBe(true);
+  describe("TerrainPanelButtonClicked", () => {
+    it("logs on every Setup click, including the no-op click while the wizard is open", async () => {
+      render(
+        <Provider stores={stores}>
+          <BottomBar />
+        </Provider>
+      );
+      await userEvent.click(screen.getByTestId("terrain-button"));
+      await userEvent.click(screen.getByTestId("terrain-button"));
+      const calls = mockLog.mock.calls.filter((c: unknown[]) => c[0] === "TerrainPanelButtonClicked");
+      expect(calls).toHaveLength(2);
+      expect(stores.ui.showTerrainUI).toBe(true);
+    });
   });
 ```
 
@@ -587,46 +583,49 @@ No early return. A student poking the lit Setup button still logs, which is the 
 **Add the lockout tests.** They seed state 3 (a spark placed) so Spark, Reload and Start would otherwise all be live, which is what makes the assertions capable of failing:
 
 ```tsx
-  describe("model controls while the Setup wizard is open", () => {
-    // The wizard can only be open before the run starts, so Restart, Fire Line
-    // and Helitack are already disabled by simulationStarted and need no guard.
-    const renderWithWizardOpen = () => {
-      seedState(stores, 3); // a spark placed, so Spark/Reload/Start would otherwise be live
-      stores.ui.showTerrainUI = true;
-      render(<Provider stores={stores}><BottomBar /></Provider>);
-    };
-
-    it("disables Spark", () => {
-      renderWithWizardOpen();
-      expectButtonState("spark-button", false);
-    });
-
-    it("disables Reload", () => {
-      renderWithWizardOpen();
-      expectButtonState("reload-button", false);
-    });
-
-    it("disables Start", () => {
-      renderWithWizardOpen();
-      expectButtonState("start-button", false);
-    });
-
-    it("leaves Setup enabled and marks it selected", () => {
-      renderWithWizardOpen();
-      expectButtonState("terrain-button", true);
-      // selected and disabled cannot be combined: IconButton puts both class
-      // names on one element and icon-button.scss nests .selected inside
-      // :not(.disabled), so a disabled Setup button would render greyed with
-      // no highlight.
-      expect(screen.getByTestId("terrain-button").className).toContain("selected");
-    });
-
-    it("leaves the wizard open when Setup is clicked", async () => {
-      renderWithWizardOpen();
-      await userEvent.click(screen.getByTestId("terrain-button"));
-      expect(stores.ui.showTerrainUI).toBe(true);
-    });
+describe("model controls while the Setup wizard is open", () => {
+  let stores = createStores();
+  beforeEach(() => {
+    stores = createStores();
   });
+
+  // The wizard can only be open before the run starts, so Restart, Fire Line
+  // and Helitack are already disabled by simulationStarted and need no guard.
+  const renderWithWizardOpen = () => {
+    seedState(stores, 3);
+    stores.ui.showTerrainUI = true;
+    render(<Provider stores={stores}><BottomBar /></Provider>);
+  };
+
+  it("disables Spark", () => {
+    renderWithWizardOpen();
+    expectButtonState("spark-button", false);
+  });
+
+  it("disables Reload", () => {
+    renderWithWizardOpen();
+    expectButtonState("reload-button", false);
+  });
+
+  it("disables Start", () => {
+    renderWithWizardOpen();
+    expectButtonState("start-button", false);
+  });
+
+  it("leaves Setup enabled and marks it selected", () => {
+    renderWithWizardOpen();
+    expectButtonState("terrain-button", true);
+    // identity-obj-proxy resolves css.selected, so the class is visible here;
+    // the rendered treatment is asserted in bottom-bar-visuals.cy.ts.
+    expect(screen.getByTestId("terrain-button").className).toContain("selected");
+  });
+
+  it("leaves the wizard open when Setup is clicked", async () => {
+    renderWithWizardOpen();
+    await userEvent.click(screen.getByTestId("terrain-button"));
+    expect(stores.ui.showTerrainUI).toBe(true);
+  });
+});
 ```
 
 The `selected` assertion works in jsdom because `identity-obj-proxy` resolves `css.selected` to the string `"selected"`. That is also its limit: jsdom computes no CSS, so it cannot see the failure the requirements spec spent a review round on, where `disabled` alongside `selected` leaves the class on the element and suppresses the treatment anyway. The class-name assertion passes with `icon-button.scss` gutted.
@@ -634,11 +633,11 @@ The `selected` assertion works in jsdom because `identity-obj-proxy` resolves `c
 **So assert the rendered highlight in the browser too.** `bottom-bar-visuals.cy.ts` already has the pattern for the sibling case ("renders highlight opacity = 1 on the Fireline button while its tool is armed", lines 125-131); the Setup version goes beside it:
 
 ```ts
-  // WM-42: `selected` and `disabled` cannot be combined on IconButton --
-  // icon-button.tsx puts both class names on one element and icon-button.scss
-  // nests .selected inside &:not(.disabled), so a disabled Setup button renders
-  // greyed with the highlight suppressed. jsdom computes no CSS, so this is the
-  // only place that failure is observable.
+  // selected and disabled cannot be combined on IconButton: both class names
+  // land on one element and icon-button.scss nests .selected inside
+  // :not(.disabled), so a disabled Setup button renders greyed with the
+  // highlight suppressed. jsdom computes no CSS, so this is the only place that
+  // failure is observable.
   it("renders highlight opacity = 1 on the Setup button while the wizard is open", () => {
     cy.get("[data-testid='terrain-button']").click();
     cy.get("[data-testid='terrain-header']").should("be.visible");
@@ -655,9 +654,8 @@ Mutation-tested on the spike: adding `|| ui.showTerrainUI` to the Setup button's
 **Add the stays-live assertion for the Hazbot button.** It goes in the existing `describe("BottomBar Hazbot button (WM-6)")` block rather than alongside the guard tests above, because the button only renders under `?hazbotRules=23` and that block already sets the URL:
 
 ```tsx
-  // WM-42: the bar lockout covers the model controls in .mainContainer only.
-  // The Hazbot button sits in .rightContainer, is not a way out of the wizard,
-  // and must neither disappear nor close Setup when it is used.
+  // The bar lockout covers the model controls in .mainContainer only. The
+  // Hazbot button sits in .rightContainer and is not a way out of the wizard.
   it("still opens feedback while the Setup wizard is open, and leaves the wizard open", async () => {
     stores.ui.showTerrainUI = true;
     render(<Provider stores={stores}><BottomBar /></Provider>);
@@ -688,11 +686,8 @@ Rows three and four are the point of the Setup assertion: it fails both when `se
 **Add state 8 to the Cypress state machine.** `bottom-bar-state-machine.cy.ts` documents the bar as a state machine and covers states 1 through 7 with the same seven-button matrix; this story adds a state to that machine, so it belongs in that file. Append inside the existing `describe`, after the state 7 case:
 
 ```ts
-  // State 8: SetupOpen (WM-42) — the wizard locks the model controls, so Cancel
-  // and Next/Create are the only ways out. Setup itself stays enabled and shows
-  // the selected treatment instead; its click is inert (open-only handler).
-  // Restart, Fireline and Helitack need no guard: they all require
-  // simulationStarted, and the wizard can only be open before the run starts.
+  // State 8: SetupOpen — the wizard locks the model controls, so Cancel and
+  // Next/Create are the only ways out. Setup stays enabled and its click is inert.
   it("state 8 (SetupOpen): only Setup stays enabled; Spark/Reload/Start locked out", () => {
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     // Assert the pre-state first: from SparkPlaced all three are live, which is
@@ -930,6 +925,7 @@ The gap is cheap to close, and jsdom is enough: DOM order is exactly what `getAl
 
 ```tsx
 const footerLabels = () =>
+  // eslint-disable-next-line testing-library/no-node-access
   within(screen.getByTestId("terrain-cancel").closest("div")!)
     .getAllByRole("button").map(b => b.textContent);
 // panel 0: ["Cancel", "Next"];  master-model panel 1: ["Cancel", "Previous", "Next"];

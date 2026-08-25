@@ -205,11 +205,8 @@ describe("Bottom-bar state machine (WM-24)", () => {
     });
   });
 
-  // State 8: SetupOpen. The wizard locks the model controls, so Cancel and
-  // Next/Create are the only ways out. Setup itself stays enabled and shows the
-  // selected treatment instead; its click is inert (open-only handler). Restart,
-  // Fireline and Helitack need no guard: they all require simulationStarted, and
-  // the wizard can only be open before the run starts.
+  // State 8: SetupOpen — the wizard locks the model controls, so Cancel and
+  // Next/Create are the only ways out. Setup stays enabled and its click is inert.
   it("state 8 (SetupOpen): only Setup stays enabled; Spark/Reload/Start locked out", () => {
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     // Assert the pre-state first: from SparkPlaced all three are live, which is
