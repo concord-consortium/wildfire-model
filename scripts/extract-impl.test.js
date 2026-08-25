@@ -1,14 +1,14 @@
 const path = require("path");
 const fs = require("fs");
 const os = require("os");
-const { extractFromSheets, parseTab, tsString, normalizeFeedback, parseActionToken } = require("./extract-impl");
+const { extractFromSheets, parseTab, tsString, normalizeFeedback, parseActionToken, EXCLUDED_TABS } = require("./extract-impl");
 // ts-node/register lets `require()` resolve .ts files via in-memory TS compilation
 // (per spec EXT-6 / DEV-1 — ts-node is already a project devDep). Compile errors
 // surface as `require()` throws, so the tests still verify the generated TS compiles.
 require("ts-node/register");
 
 // Synthetic fixture: rows shaped like read-excel-file's output.
-// One rule-set tab + a README + an empty/excluded tab.
+// A README, one loadable rule-set tab, an empty tab, and a populated excluded tab.
 const SYNTHETIC_SHEETS = [
   {
     sheet: "README",
@@ -31,10 +31,23 @@ const SYNTHETIC_SHEETS = [
     ],
   },
   {
-    // No longer in EXCLUDED_TABS (WM-18 R1 emptied it). parseTab() returns null
-    // for this tab — it has no category block — so it still lands in skippedTabs.
+    // parseTab() returns null for this tab — it has no category block — so it lands
+    // in skippedTabs whatever EXCLUDED_TABS holds.
     sheet: "43",
     data: [["empty"]],
+  },
+  {
+    // Carries a full category block, so the ONLY thing keeping it out of the build is
+    // its membership in EXCLUDED_TABS. Tab 55 is Act 5.5, a performance assessment page
+    // that gets no Hazbot, and dropping it is a curriculum decision students can see.
+    sheet: "55",
+    data: [
+      ["#", "Student Action", "Hazbot Feedback", "Visual Feedback", "Text to Go with Arrows", "Pseudocode for Rules", "Details"],
+      [1, "Run a sim", "Excluded!", "Visual X", "Arrow text X", "ranSimulation", "details"],
+      [""],
+      ["Factor variable", "Definition", "Log events", "Details"],
+      ["ranSimulation", "Whether sim was started", "SimulationStarted", "Default values = \"Plains\" (zone 1)"],
+    ],
   },
 ];
 
@@ -51,6 +64,18 @@ describe("extractFromSheets", () => {
     expect(result.indexSource).toMatch(/"23": ruleSet23/);
     expect(result.dslGrammar).toMatch(/AUTO-GENERATED/);
     expect(result.skippedTabs).toContain("43");
+  });
+
+  // Guards the exclusion itself. Tab 43 cannot: it has no category block, so parseTab()
+  // skips it whether or not EXCLUDED_TABS names it, leaving the branch that removes Act
+  // 5.5's coaching with no coverage at all. Tab 55 is fully populated, so emptying
+  // EXCLUDED_TABS fails all three assertions below.
+  it("excludes a populated tab named in EXCLUDED_TABS", () => {
+    const result = extractFromSheets(SYNTHETIC_SHEETS);
+    expect(EXCLUDED_TABS).toContain("55");
+    expect(result.skippedTabs).toContain("55");
+    expect(result.tabs.map((t) => t.id)).not.toContain("55");
+    expect(result.indexSource).not.toMatch(/ruleSet55/);
   });
 });
 

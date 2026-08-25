@@ -75,17 +75,19 @@ seq.activities.forEach((act, ai) => {
   });
 });
 
-// Loadable rulesets have a defined rule-set module + playbook. Placeholders
-// do not. As of WM-18, no tabs are excluded — leave the set empty unless a
-// future workbook revision introduces empty/TBD tabs.
-const EXCLUDED = new Set([]);
+// Loadable rulesets have a defined rule-set module + playbook. Placeholders have
+// neither, so they get no playbook link and no hazbotRules= URL. Keep this in step
+// with EXCLUDED_TABS in scripts/extract-impl.js, which is what actually decides.
+const EXCLUDED = new Set(["55"]);
 const loadable = rows.filter(r => !EXCLUDED.has(r.tabId));
 const placeholders = rows.filter(r => EXCLUDED.has(r.tabId));
 
 const renderLoadable = r =>
   `| ${r.tabId} | ${r.activity} | ${r.page} | ${r.preset} | [${r.tabId}.md](${r.tabId}.md) | http://localhost:8080/?${r.params}&hazbotRules=${r.tabId}&hazbotSidebar=true |`;
+// The reason a tab is excluded is not in the sequence export, so this leaves a
+// marker to fill in by hand rather than inventing one.
 const renderPlaceholder = r =>
-  `| ${r.tabId} | ${r.activity} | ${r.page} | ${r.preset} | — | http://localhost:8080/?${r.params}&hazbotSidebar=true |`;
+  `| ${r.tabId} | ${r.activity} | ${r.page} | TODO: why this tab is not extracted |`;
 
 console.log("## Loadable rulesets\n");
 console.log(loadable.map(renderLoadable).join("\n"));
