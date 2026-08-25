@@ -3,8 +3,8 @@
 import { RuleSet } from "../engine";
 import { WildfireDefaults } from "../wildfire/types";
 
-export const ruleSet45: RuleSet<WildfireDefaults> = {
-  id: "45",
+export const ruleSet46: RuleSet<WildfireDefaults> = {
+  id: "46",
   categories: [
     {
       id: 1,
@@ -16,43 +16,59 @@ export const ruleSet45: RuleSet<WildfireDefaults> = {
     },
     {
       id: 2,
-      studentAction: "Ran the simulation with a changed vegetation type, drought, or wind.",
+      studentAction: "Ran the simulation with changed vegetation type, drought, or wind.",
       feedback: `Hazbot: Looks like you changed the Setup. Let’s run the model using the original settings!
 [Show me]`,
-      visualFeedback: `1. Reload button outlined; coach mark points to Reload button
+      feedbackRound2: `Hazbot: If you have changed the model setup, click **Clear All** to reset the model and run it again!
+[Show me]`,
+      feedbackRound3: `Hazbot: In this investigation, you will run the model **without** changing the setup! Scroll down and look at the questions!
+[Okay]`,
+      visualFeedback: `1. Clear All button outlined; coach mark points to Clear All button
 2. Start button outlined; coach mark points to Start button`,
-      arrowText: `1. Hazbot: First, **Reload** your model. (Step 1 of 2)
+      arrowText: `1. Hazbot: First, click **Clear All** to reset your model. (Step 1 of 2)
 2. Hazbot: Click **Start** to run the model! (Step 2 of 2)
 [Got it!]`,
       expression: "ranSimulation WITH NOT DefaultVars",
     },
     {
       id: 3,
-      studentAction: `Ran the model with no setup changes and with no fireline and helitacks
-
-OR 
-With firelines only
- 
-OR 
-with helitacks only 
- 
-in a single or multiple trials.`,
-      feedback: `Hazbot: Try using both the **firelines and helitacks!**
+      studentAction: "Ran with original settings and with neither fireline nor helitack (but did not do the next step of running with fireline or helitack yet)",
+      feedback: `Hazbot: Try using **firelines and helitacks** to contain the fire!
 [Show me]`,
+      feedbackRound2: `Hazbot: Go up and look at the instructions under "Concord Wildfire Investigation" again. Try using **helitacks** and **firelines** to contain the fire!
+[Show me]`,
+      feedbackRound3: `Hazbot: In this investigation, you must try to contain the fire with **helitacks** and **firelines**! Scroll down and see if you can answer the questions!
+[Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Fireline and Helitack buttons outlined (both are disabled) and Start button outlined; coach mark points to Fireline/Helitack buttons`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 2)
 2. Hazbot: Add both a **Fireline** and a **Helitack** while the model is running. Click **Start** to begin! (Step 2 of 2)
 [Got it!]`,
-      expression: "NOT (usedFireline AND usedHelitack) AND ranSimulation WITH DefaultVars",
+      expression: "ranSimulation WITH DefaultVars AND NOT (Fireline OR Helitack)",
     },
     {
       id: 4,
-      studentAction: "Ran the model with no setup changes and with both firelines and helitacks used in a single or multiple trials.",
-      feedback: `Hazbot: Great job! You’re ready to answer the questions below.
+      studentAction: "Ran with original settings and with at least one fireline or helitack, but without first running with original settings with neither fireline nor helitack",
+      feedback: `Hazbot: Did you try running the model **without firelines and helitacks** to see where the fire spreads first?
+[Show me]`,
+      feedbackRound2: `Hazbot: Go up and look at the instructions under "Concord Wildfire Investigation" again.
+[Show me]`,
+      feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
+[Okay]`,
+      visualFeedback: `1. Restart the model; coach mark points to Restart button
+2. Start button outlined; coach mark points to Start button`,
+      arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 2)
+2. Hazbot: Click **Start** to run the model! (Step 2 of 2)
+[Got it!]`,
+      expression: "NOT ranSimulation WITH DefaultVars AND NOT (Fireline OR Helitack) AND ranSimulation WITH DefaultVars AND (Fireline OR Helitack)",
+    },
+    {
+      id: 5,
+      studentAction: "Ran with original settings and with at least one fireline or helitack, after (or before) running with original settings with neither fireline nor helitack",
+      feedback: `Hazbot: Great job on this investigation! Keep working through the activity!
 [Hooray!]`,
       visualFeedback: "Confetti animation or subtle celebratory visual",
-      expression: "ranSimulation WITH DefaultVars AND Fireline AND ranSimulation WITH DefaultVars AND Helitack",
+      expression: "ranSimulation WITH DefaultVars AND NOT (Fireline OR Helitack) AND ranSimulation WITH DefaultVars AND (Fireline OR Helitack)",
     }
   ],
   factorVariables: [
@@ -61,18 +77,6 @@ in a single or multiple trials.`,
       definition: "At least one \"non-resuming SimulationStarted\" event was recorded.",
       logEvents: ["SimulationStarted", "SimulationStopped", "SimulationRestarted", "SimulationReloaded", "TopBarReloadButtonClicked", "SimulationEnded"],
       details: "Each simulation run is started by 'SimulationStarted', and how it is paused, is resumed, and ends is determined by various events listed here.  It is necessary for this activity to monitor the end of the simulation as well as the beginning, since turning on a sim prop (\"Helitack\") relies on knowing that a simulation is in progress, and fireline installation events occur during a simulation pause.  A \"resuming SimulationStarted\" event is one that was preceded by a SimulationStopped and then started again (SimulationStarted) without being reset/ended (SimulationEnded, SimulationRestarted, SimulationReloaded, TopBarReloadButtonClicked; or the simulation being restarted by an embedding unit (such as an \"Activity Player\")) in between.  All other \"SimulationStarted\" events are \"non-resuming\".",
-    },
-    {
-      name: "usedFireline",
-      definition: "There is at least one \"SimulationStarted\" event for which firelines were set up.",
-      logEvents: ["SimulationStarted->fireLineMarkers"],
-      details: "If there were any firelines set up for the simulation run, then the value of \"fireLineMarkers\" should be an array of length 2 (or more?).  If there were no firelines set up, then the value of \"fireLineMarkers\" would be an empty array.",
-    },
-    {
-      name: "usedHelitack",
-      definition: "There is at least one simulation run, during which helitack was used.",
-      logEvents: ["Helitack"],
-      details: "A \"Helitack\" event is associated with a simulation run if it is triggered during a simulation run, but a Helitack event can also occur outside a simulation run.  Only the first kind is meaningful here.  So, it must be verified that a Helitack event occurs after a simulation started but before it ended (see \"ranSimulation\" above).",
     },
     {
       name: "Fireline",
@@ -96,7 +100,7 @@ in a single or multiple trials.`,
   repeatFeedback: {
     id: 100,
     studentAction: "Student repeats run after success and wants more feedback from Hazbot",
-    feedback: `Hazbot: Great job on this investigation! Keep working through the activity!
+    feedback: `Hazbot: Make sure you have answered all the questions on this page!
 [Got it!]`,
   },
 };

@@ -40,7 +40,7 @@ for any of the 11 rule-sets.
   run-start reading by a translate `modifier` (a third engine substrate result
   kind, chosen over reworking the trigger-state-change-overlap guard); the
   `Helitack` sim-prop reads it per-run and `usedHelitack` aggregates across
-  runs, mirroring `Fireline` / `usedFireline`. Tabs 45/47/54 were re-validated
+  runs, mirroring `Fireline` / `usedFireline`. Tabs 44 and 46 were re-validated
   (Jest per-category coverage plus a Playwright MCP walk); see the WM-28 spec.
 
 ---
@@ -72,11 +72,11 @@ Items where the source data should be corrected before the next re-extract:
   paired-reading primitive in the DSL today (see §6). Either downgrade the
   sheet's spec to single-reading, or extend the DSL.
 - **Typos that don't currently break anything but should be fixed at
-  source.** As of the 2026-06-02 re-extract, `"SimualtionStarted"` and
-  `"whiel"` have been corrected at source and no longer appear. Still
-  outstanding: `"neecessarily"` (multiple — 23/24/32/35/42.ts) and
-  `"magitude"` / `"magnituide"` (24/33/34/35/42.ts). These are in Details
-  prose only, not parsed by the engine, but they survive re-extracts.
+  source — RESOLVED.** `"SimualtionStarted"` and `"whiel"` were corrected
+  at source in the 2026-06-02 re-extract, and `"neecessarily"`,
+  `"magitude"` and `"magnituide"` in the 2026-08-25 one. No extracted
+  rule-set carries any of them. They were in Details prose only, never
+  parsed by the engine.
 - **Tab 35 Cat 2 shadowing — RESOLVED, and the guard has since moved
   (2026-08-20 workbook).** Cat 2 is `ranSimulation AND NOT setAnyVar`; Cat 3 was
   originally `ranSimulation WITH NOT ForestWAWOSuppression`, which any default run

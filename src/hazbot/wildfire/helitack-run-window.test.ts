@@ -7,7 +7,7 @@
 // R2 exclusions, the three no-op-terminator window closes (not UI-reachable, so
 // not in the R8 Playwright walk), and cross-run non-stickiness.
 
-import { ruleSet45 } from "../rule-sets/45";
+import { ruleSet44 } from "../rule-sets/44";
 import { makeWildfireEngine } from "../rule-sets/test-helpers";
 import { factorVariables } from "./factor-variables";
 import { simProps } from "./sim-props";
@@ -16,7 +16,7 @@ import { WildfireDefaults } from "./types";
 
 // Minimal defaults — these substrate tests assert on reading flags and the
 // Helitack / usedHelitack impls (neither consumes `defaults`), not on DefaultVars
-// classification, so the values need only let ruleSet45 load active.
+// classification, so the values need only let ruleSet44 load active.
 const defaults: WildfireDefaults = {
   zones: [{ vegetation: "Shrub", droughtLevel: "No Drought" }],
   wind: { speed: 20, direction: 100 },
@@ -28,7 +28,7 @@ const ended = (at: number): ConsumedEvent => ({ name: "SimulationEnded", at });
 const stopped = (at: number): ConsumedEvent => ({ name: "SimulationStopped", at });
 
 function feed(events: ConsumedEvent[]) {
-  const e = makeWildfireEngine(ruleSet45, defaults);
+  const e = makeWildfireEngine(ruleSet44, defaults);
   for (const ev of events) e.consume(ev);
   return e;
 }

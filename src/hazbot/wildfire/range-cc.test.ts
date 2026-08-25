@@ -12,7 +12,7 @@ import { WildfireDefaults, WildfireReading } from "./types";
 // re-extract that moves a value fails here, with Sam's number on one side and the
 // sheet's on the other, rather than silently windowing an activity wrongly.
 const SAM_RANGE_CC: Record<string, number> = {
-  "23": 1, "24": 0, "25": 1, "32": 1, "33": 1, "34": 1, "35": 1, "42": 1, "45": 2, "47": 2, "54": 1,
+  "23": 1, "24": 0, "25": 1, "32": 1, "33": 1, "34": 1, "35": 1, "41": 1, "44": 2, "46": 2,
 };
 
 // Factor variables whose value is a property of the whole session rather than of any
@@ -53,6 +53,14 @@ describe("rangeCcOfExpression", () => {
 });
 
 describe("deriveRangeCc", () => {
+  // Both assertions below walk SAM_RANGE_CC's own keys, so a rule set absent from the map
+  // is skipped rather than checked, and deriveRangeCc answers 0 for an unknown id, which
+  // is also the legitimate "no trailing window" value. Pin the membership so a re-extract
+  // that adds or renames a rule set fails here by name.
+  it("covers every exported rule set", () => {
+    expect(Object.keys(SAM_RANGE_CC).sort()).toEqual(Object.keys(ruleSets).sort());
+  });
+
   it("reproduces Sam's authored value for every rule set", () => {
     const derived: Record<string, number> = {};
     Object.keys(SAM_RANGE_CC).forEach((id) => {

@@ -1,7 +1,7 @@
 import { WildfireReading } from "../wildfire/types";
 import { ruleSet23 } from "./23";
-import { ruleSet45 } from "./45";
-import { tab23, tab45, vars23, vars45 } from "./__fixtures__/tab-shapes";
+import { ruleSet44 } from "./44";
+import { tab23, tab44, vars23, vars44 } from "./__fixtures__/tab-shapes";
 import { makeWildfireEngine, matchAgainst, matchCurrentAgainst, mkReading } from "./test-helpers";
 
 // The narratives behind the sweep next door: named sequences a reader can follow, rather
@@ -35,21 +35,21 @@ describe("current-category regressions", () => {
     expect(matchCurrentAgainst(engine, readings)).toBe(2);
   });
 
-  it("tab 45: a trailing window lifts current above best", () => {
+  it("tab 44: a trailing window lifts current above best", () => {
     // Run 1 changed setup with a fire line, run 2 default with a helitack, run 3 default
-    // with no tools. 35 of tab 45's 512 depth-3 states move this way, all of them 2 -> 3.
+    // with no tools. 35 of tab 44's 512 depth-3 states move this way, all of them 2 -> 3.
     //
     // This pins the two INPUTS and deliberately not the selection: `used` here would be
     // this file's own `current ?? best`, true by construction whatever the app does. The
     // revert-to-min guard is the best 2 / current 3 case in hazbot-button.test.tsx and
     // sidebar.test.tsx, which run the shipped computeCategorySelectionForEngine.
-    const engine = makeWildfireEngine(ruleSet45, tab45.defaults, true);
+    const engine = makeWildfireEngine(ruleSet44, tab44.defaults, true);
     const readings = [
-      ...run(tab45.base, 100, { zones: vars45.changedZones, fireLineMarkers: vars45.fireLine }),
-      ...run(tab45.base, 200, { helitack: true }),
-      ...run(tab45.base, 300),
+      ...run(tab44.base, 100, { zones: vars44.changedZones, fireLineMarkers: vars44.fireLine }),
+      ...run(tab44.base, 200, { helitack: true }),
+      ...run(tab44.base, 300),
     ];
-    expect(matchAgainst(ruleSet45, engine, readings)).toBe(2);
+    expect(matchAgainst(ruleSet44, engine, readings)).toBe(2);
     expect(matchCurrentAgainst(engine, readings)).toBe(3);
   });
 });

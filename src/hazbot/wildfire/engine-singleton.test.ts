@@ -240,7 +240,7 @@ describe("getDerivedRangeCc", () => {
   it("derives the active rule set's value", () => {
     setUrl("?hazbotRules=23");
     expect(getDerivedRangeCc()).toBe(1);
-    setUrl("?hazbotRules=47");
+    setUrl("?hazbotRules=46");
     // Memoized alongside the engine, which is itself memoized, so a later URL change
     // without a reset does not re-derive.
     expect(getDerivedRangeCc()).toBe(1);
@@ -250,7 +250,7 @@ describe("getDerivedRangeCc", () => {
     setUrl("?hazbotRules=24");
     expect(getDerivedRangeCc()).toBe(0);
     _resetAnalysisEngineForTests();
-    setUrl("?hazbotRules=45");
+    setUrl("?hazbotRules=44");
     expect(getDerivedRangeCc()).toBe(2);
   });
 });

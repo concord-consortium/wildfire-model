@@ -59,7 +59,7 @@ export const ruleSet24: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation once with a different wind speed or a direction",
       feedback: `Hazbot: Keep going! Set up the model with **different wind settings** to compare!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go down and look at the questions you need to answer.
+      feedbackRound2: `Hazbot: Go down and look at the questions. See if you can answer the questions!
 [Show me]`,
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,

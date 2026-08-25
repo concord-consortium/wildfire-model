@@ -21,15 +21,19 @@ These rulesets have defined categories/expressions in [src/hazbot/rule-sets/](..
 | 33 | 3 | 3 | mountainTwoZone | [33.md](33.md) | http://localhost:8080/?preset=mountainTwoZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=false&severeDroughtAvailable=false&hazbotRules=33&hazbotSidebar=true |
 | 34 | 3 | 4 | shrubThreeZone | [34.md](34.md) | http://localhost:8080/?preset=shrubThreeZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=true&severeDroughtAvailable=false&hazbotRules=34&hazbotSidebar=true |
 | 35 | 3 | 5 | mountainTwoZone | [35.md](35.md) | http://localhost:8080/?preset=mountainTwoZone&helitackAvailable=false&fireLineAvailable=false&showBurnIndex=true&severeDroughtAvailable=false&hazbotRules=35&hazbotSidebar=true |
-| 42 | 4 | 2 | defaultTwoZone | [42.md](42.md) | http://localhost:8080/?preset=defaultTwoZone&windSpeed=2&windDirection=270.5&helitackAvailable=false&fireLineAvailable=false&severeDroughtAvailable=false&showBurnIndex=false&hazbotRules=42&hazbotSidebar=true |
-| 45 | 4 | 5 | townsThreeZone | [45.md](45.md) | http://localhost:8080/?preset=townsThreeZone&windSpeed=4&windDirection=100&sparks=[[50000,40000],[50000,40000],[50000,40000]]&severeDroughtAvailable=false&showBurnIndex=false&hazbotRules=45&hazbotSidebar=true |
-| 47 | 4 | 7 | dryTownsThreeZone | [47.md](47.md) | http://localhost:8080/?preset=dryTownsThreeZone&sparks=[[35000,31000],[35000,31000],[35000,31000]]&windSpeed=6&windDirection=265&severeDroughtAvailable=false&hazbotRules=47&hazbotSidebar=true |
-| 54 | 5 | 4 | fiveTownsThreeZone | [54.md](54.md) | http://localhost:8080/?preset=fiveTownsThreeZone&severeDroughtAvailable&windSpeed=2&windDirection=165&showBurnIndex=true&hazbotRules=54&hazbotSidebar=true |
+| 41 | 4 | 1 | defaultTwoZone | [41.md](41.md) | http://localhost:8080/?preset=defaultTwoZone&windSpeed=2&windDirection=270.5&helitackAvailable=false&fireLineAvailable=false&severeDroughtAvailable=false&showBurnIndex=false&hazbotRules=41&hazbotSidebar=true |
+| 44 | 4 | 4 | townsThreeZone | [44.md](44.md) | http://localhost:8080/?preset=townsThreeZone&windSpeed=4&windDirection=100&sparks=[[50000,40000],[50000,40000],[50000,40000]]&severeDroughtAvailable=false&showBurnIndex=false&hazbotRules=44&hazbotSidebar=true |
+| 46 | 4 | 6 | dryTownsThreeZone | [46.md](46.md) | http://localhost:8080/?preset=dryTownsThreeZone&sparks=[[35000,31000],[35000,31000],[35000,31000]]&windSpeed=6&windDirection=265&severeDroughtAvailable=false&hazbotRules=46&hazbotSidebar=true |
 
 ## Placeholder tabs
 
-(none — all 11 rule-set tabs are extracted as of WM-18; `EXCLUDED_TABS` in
-[scripts/extract-impl.js](../../scripts/extract-impl.js) is empty.)
+Tabs present in the workbook but not extracted, so they have no rule-set module, no
+playbook and no working `hazbotRules=` URL. Listed in `EXCLUDED_TABS` in
+[scripts/extract-impl.js](../../scripts/extract-impl.js).
+
+| Tab | Activity | Page | Why |
+|-----|----------|------|-----|
+| 55 | 5 | 5 | Act 5.5 is a performance assessment, so it gets no Hazbot coaching. |
 
 ## Notes
 
@@ -158,10 +162,18 @@ Cat 1 → Cat 2 transition after a default-only run (sparks placed via
 each reachable category end to end through the engine.
 
 **WM-28 update (2026-06-03):** helitack run-window detection landed.
-`Helitack` / `usedHelitack` are implemented (no remaining stubs), and tabs
-45/47/54 were re-validated via a Playwright MCP walk (helitack drops driven by
+`Helitack` / `usedHelitack` are implemented (no remaining stubs), and tabs 44
+and 46 were re-validated via a Playwright MCP walk (helitack drops driven by
 `window.test.placeHelitackInZone`); see the WM-28 PR description for the per-tab
 walk summary. The stub-effects column below now reads "none" for every row.
+
+**WM-54 update (2026-08-25):** the Act 4 tabs were renumbered (42/45/47 became 41/44/46)
+and Act 5.5's rule-set was dropped. Tabs 41, 44 and 46 were re-walked against the renumbered
+rule-sets: every category above reproduced, tab 41 category 2 was re-confirmed on its new
+`ranSimulation WITH NOT DefaultVars` expression, and the level 1 / Round 2 / Round 3 ladder
+was walked end to end on 46/4. A request for a removed id (`?hazbotRules=54` or `55`) renders
+no Hazbot button and no error. The remaining seven tabs were not re-walked: their generated
+modules are byte-identical to their previous counterparts.
 
 | Ruleset | Preset | R9 Jest coverage | Browser walk (WM-51, 2026-08-20) | Stub effects (per WM-18) |
 |---------|--------|------------------|----------------------------------|--------------------------|
@@ -172,10 +184,9 @@ walk summary. The stub-effects column below now reads "none" for every row.
 | 33 | mountainTwoZone | cats 1–6 ✓ | cats 1–6 ✓ | none |
 | 34 | shrubThreeZone | cats 1–5 ✓ | cats 1–5 ✓ | none — rewritten by the 2026-08-20 re-extract into a two-by-two over `VegetationSet` × (`WindSet` OR `DroughtLevelSet`); the endpoint moved from cat 4 to cat 5 and `triedAllVegetations` is no longer referenced |
 | 35 | mountainTwoZone | cats 1–7 ✓ | cats 1–7 ✓ — includes the state that used to fall through the coverage hole (uniform terrain, uniform drought, no forest pairing), now cat 4 | none — cats 3 and 4 were reshuffled and both carry a `setAnyVar AND` guard as of 2026-08-20 (see [TBD.md §4](../../src/hazbot/TBD.md)) |
-| 42 | defaultTwoZone | cats 1–3 ✓ | cats 1–3 ✓ — verified that a compliant second run escapes cat 2, which the pre-2026-08-20 expression made impossible | none |
-| 45 | townsThreeZone | cats 1–4 ✓ | cats 1–4 ✓ | none (`Helitack` / `usedHelitack` implemented, WM-28): cat 4 reachable (same-run or across-trials), cat 3 no longer over-matches fireline+helitack runs |
-| 47 | dryTownsThreeZone | cats 1–5 ✓ | cats 1–5 ✓ — cat 4 needs one mitigated run, cat 5 needs a separate clean run as well | none (WM-28): helitack arm of cats 4/5 live; cat 3 no longer over-matches helitack-only runs |
-| 54 | fiveTownsThreeZone | cats 1–4 ✓ | cats 1–4 ✓ | none (WM-28): helitack arm of cat 4 live (gated on `DefaultVegetations AND SevereDroughts`); cat 3 no longer over-matches helitack-only runs |
+| 41 | defaultTwoZone | cats 1–3 ✓ | cats 1–3 ✓ — a compliant run reaches cat 3 while the earlier changed run keeps cat 2 true; the higher category wins | none |
+| 44 | townsThreeZone | cats 1–4 ✓ | cats 1–4 ✓ | none (`Helitack` / `usedHelitack` implemented, WM-28): cat 4 reachable (same-run or across-trials), cat 3 no longer over-matches fireline+helitack runs |
+| 46 | dryTownsThreeZone | cats 1–5 ✓ | cats 1–5 ✓ — cat 4 needs one mitigated run, cat 5 needs a separate clean run as well | none (WM-28): helitack arm of cats 4/5 live; cat 3 no longer over-matches helitack-only runs |
 
 Re-run this validation pass whenever rule-sets are regenerated from the source sheet, or when an impl in [src/hazbot/wildfire/sim-props.ts](../../src/hazbot/wildfire/sim-props.ts) / [factor-variables.ts](../../src/hazbot/wildfire/factor-variables.ts) changes.
 
@@ -186,4 +197,4 @@ Re-run this validation pass whenever rule-sets are regenerated from the source s
 - **A helitack only registers while the run is live.** `window.test.placeHelitackInZone` during a pause does nothing to `usedHelitack`, because the `Helitack` modifier in `translate.ts` requires an open run start.
 - **A fire line only registers on resume.** The `Fireline` sim-prop reads `reading.fireLineMarkers` off the run-start snapshot, and placing a fire line pauses the run, so the markers reach the reading on the resume `SimulationStarted` and `canonical-runs.ts` merges them forward into the same run. Place the fire line, then press Start again, then read.
 
-Tabs 45, 47 and 54 also confirm the canonical-run merge directly: the sidebar's `simulationRuns` reads `[1]` after a pause/resume with mitigation, and `[2]` only when a run is genuinely closed with Restart before the next one. (WM-28 has landed helitack run-window detection and re-validated tabs 45/47/54; there are no remaining Hazbot impl stubs.)
+Tabs 44 and 46 also confirm the canonical-run merge directly: the sidebar's `simulationRuns` reads `[1]` after a pause/resume with mitigation, and `[2]` only when a run is genuinely closed with Restart before the next one. (WM-28 has landed helitack run-window detection and re-validated tabs 44 and 46; there are no remaining Hazbot impl stubs.)

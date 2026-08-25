@@ -392,148 +392,100 @@ export const tab35: TabFixture = {
   ),
 };
 
-// ---------------------------------------------------------------------------- 42
+// ---------------------------------------------------------------------------- 41
 
-const defaultZones42: WildfireZone[] = [
+const defaultZones41: WildfireZone[] = [
   { terrainType: "Foothills", vegetation: "Grass", droughtLevel: "Medium Drought" },
   { terrainType: "Foothills", vegetation: "Shrub", droughtLevel: "Mild Drought" },
 ];
-const defaultWind42 = { speed: 10, direction: 270.5 };
-const changedWind42 = { speed: 25, direction: 90 };
+const defaultWind41 = { speed: 10, direction: 270.5 };
+const changedWind41 = { speed: 25, direction: 90 };
 
-const defaults42: WildfireDefaults = { zones: defaultZones42, wind: defaultWind42 };
+const defaults41: WildfireDefaults = { zones: defaultZones41, wind: defaultWind41 };
 
-export const vars42 = {
-  changedWind: changedWind42,
-  defaults: defaults42,
+export const vars41 = {
+  changedWind: changedWind41,
+  defaults: defaults41,
 };
 
-export const tab42: TabFixture = {
-  id: "42",
-  defaults: vars42.defaults,
-  base: { zones: defaultZones42, sparks: [], wind: defaultWind42 },
+export const tab41: TabFixture = {
+  id: "41",
+  defaults: vars41.defaults,
+  base: { zones: defaultZones41, sparks: [], wind: defaultWind41 },
   shapes: [
     { name: "default", reading: {} },
-    { name: "changedWind", reading: { wind: changedWind42 } },
+    { name: "changedWind", reading: { wind: changedWind41 } },
   ],
 };
 
-// ---------------------------------------------------------------------------- 45
+// ---------------------------------------------------------------------------- 44
 
-const defaultZones45: WildfireZone[] = [
+const defaultZones44: WildfireZone[] = [
   { terrainType: "Mountains", vegetation: "Shrub", droughtLevel: "No Drought" },
   { terrainType: "Foothills", vegetation: "Shrub", droughtLevel: "No Drought" },
   { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "No Drought" },
 ];
-const defaultWind45 = { speed: 20, direction: 100 };
+const defaultWind44 = { speed: 20, direction: 100 };
 // A zone changed from default → DefaultVars false.
-const changedZones45: WildfireZone[] = [
+const changedZones44: WildfireZone[] = [
   { terrainType: "Mountains", vegetation: "Shrub", droughtLevel: "Severe Drought" },
   { terrainType: "Foothills", vegetation: "Shrub", droughtLevel: "No Drought" },
   { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "No Drought" },
 ];
-const fireLine45 = [{ x: 0.1, y: 0.2 }, { x: 0.3, y: 0.2 }];
+const fireLine44 = [{ x: 0.1, y: 0.2 }, { x: 0.3, y: 0.2 }];
 
-const defaults45: WildfireDefaults = { zones: defaultZones45, wind: defaultWind45 };
+const defaults44: WildfireDefaults = { zones: defaultZones44, wind: defaultWind44 };
 
-export const vars45 = {
-  changedZones: changedZones45,
-  fireLine: fireLine45,
-  defaults: defaults45,
+export const vars44 = {
+  changedZones: changedZones44,
+  fireLine: fireLine44,
+  defaults: defaults44,
 };
 
-export const tab45: TabFixture = {
-  id: "45",
-  defaults: vars45.defaults,
-  base: { zones: defaultZones45, sparks: [], fireLineMarkers: [], wind: defaultWind45 },
+export const tab44: TabFixture = {
+  id: "44",
+  defaults: vars44.defaults,
+  base: { zones: defaultZones44, sparks: [], fireLineMarkers: [], wind: defaultWind44 },
   shapes: cross(
-    [{ name: "default", zones: defaultZones45 }, { name: "changed", zones: changedZones45 }],
-    toolVariants(fireLine45),
+    [{ name: "default", zones: defaultZones44 }, { name: "changed", zones: changedZones44 }],
+    toolVariants(fireLine44),
   ),
 };
 
-// ---------------------------------------------------------------------------- 47
+// ---------------------------------------------------------------------------- 46
 
-const defaultZones47: WildfireZone[] = [
+const defaultZones46: WildfireZone[] = [
   { terrainType: "Mountains", vegetation: "Forest", droughtLevel: "Mild Drought" },
   { terrainType: "Foothills", vegetation: "Shrub", droughtLevel: "Medium Drought" },
   { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Medium Drought" },
 ];
-const defaultWind47 = { speed: 30, direction: 265 };
+const defaultWind46 = { speed: 30, direction: 265 };
 // A zone changed from default → DefaultVars false.
-const changedZones47: WildfireZone[] = [
+const changedZones46: WildfireZone[] = [
   { terrainType: "Mountains", vegetation: "Forest", droughtLevel: "Severe Drought" },
   { terrainType: "Foothills", vegetation: "Shrub", droughtLevel: "Medium Drought" },
   { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "Medium Drought" },
 ];
-const fireLine47 = [{ x: 0.1, y: 0.2 }, { x: 0.3, y: 0.2 }];
+const fireLine46 = [{ x: 0.1, y: 0.2 }, { x: 0.3, y: 0.2 }];
 
-const defaults47: WildfireDefaults = { zones: defaultZones47, wind: defaultWind47 };
+const defaults46: WildfireDefaults = { zones: defaultZones46, wind: defaultWind46 };
 
-export const vars47 = {
-  changedZones: changedZones47,
-  fireLine: fireLine47,
-  defaults: defaults47,
+export const vars46 = {
+  changedZones: changedZones46,
+  fireLine: fireLine46,
+  defaults: defaults46,
 };
 
-export const tab47: TabFixture = {
-  id: "47",
-  defaults: vars47.defaults,
-  base: { zones: defaultZones47, sparks: [], fireLineMarkers: [], wind: defaultWind47 },
+export const tab46: TabFixture = {
+  id: "46",
+  defaults: vars46.defaults,
+  base: { zones: defaultZones46, sparks: [], fireLineMarkers: [], wind: defaultWind46 },
   shapes: cross(
-    [{ name: "default", zones: defaultZones47 }, { name: "changed", zones: changedZones47 }],
-    toolVariants(fireLine47),
-  ),
-};
-
-// ---------------------------------------------------------------------------- 54
-
-const terrains54 = ["Mountains", "Foothills", "Plains"];
-const defaultZones54: WildfireZone[] = terrains54.map((t) => ({
-  terrainType: t, vegetation: "Shrub", droughtLevel: "No Drought",
-}));
-const defaultWind54 = { speed: 10, direction: 165 };
-// Default vegetation (all Shrub) with every zone at Severe Drought.
-const severeZones54: WildfireZone[] = terrains54.map((t) => ({
-  terrainType: t, vegetation: "Shrub", droughtLevel: "Severe Drought",
-}));
-// Vegetation changed off default, drought left below severe → cat 2.
-const vegChangedNotSevere54: WildfireZone[] = [
-  { terrainType: "Mountains", vegetation: "Forest", droughtLevel: "No Drought" },
-  { terrainType: "Foothills", vegetation: "Shrub", droughtLevel: "No Drought" },
-  { terrainType: "Plains", vegetation: "Shrub", droughtLevel: "No Drought" },
-];
-const fireLine54 = [{ x: 0.1, y: 0.2 }, { x: 0.3, y: 0.2 }];
-
-const defaults54: WildfireDefaults = { zones: defaultZones54, wind: defaultWind54 };
-
-export const vars54 = {
-  severeZones: severeZones54,
-  vegChangedNotSevere: vegChangedNotSevere54,
-  fireLine: fireLine54,
-  defaults: defaults54,
-};
-
-// Tab 54's axis is SEVERITY, not the default-vs-changed of 45 and 47. Its cats 3 and 4
-// both require DefaultVegetations AND SevereDroughts, and SevereDroughts demands every
-// zone at Severe Drought while the tab's SIMINIT default is No Drought everywhere. So a
-// "default" run fails it and a "changed" run bumping one zone fails it too: both land on
-// cat 2, and a default-vs-changed sweep would classify all 64 states as 2, reaching cats
-// 3 and 4 never.
-export const tab54: TabFixture = {
-  id: "54",
-  defaults: vars54.defaults,
-  base: { zones: defaultZones54, sparks: [], fireLineMarkers: [], wind: defaultWind54 },
-  shapes: cross(
-    [
-      { name: "default", zones: defaultZones54 },
-      { name: "severe", zones: severeZones54 },
-      { name: "vegNotSevere", zones: vegChangedNotSevere54 },
-    ],
-    toolVariants(fireLine54),
+    [{ name: "default", zones: defaultZones46 }, { name: "changed", zones: changedZones46 }],
+    toolVariants(fireLine46),
   ),
 };
 
 export const TAB_FIXTURES: TabFixture[] = [
-  tab23, tab25, tab32, tab33, tab34, tab35, tab42, tab45, tab47, tab54,
+  tab23, tab25, tab32, tab33, tab34, tab35, tab41, tab44, tab46,
 ];

@@ -16,7 +16,7 @@ import { makeWildfireEngine, matchAgainst, matchCurrentAgainst, mkReading } from
 // old one. If a series does not reproduce, that is bar 1 doing its job, or the fixture
 // disagreeing with the axis set it was measured against; check the second first.
 //
-// Tab 45 runs at depth 3 because it is the only tab that can move upward at all, and at
+// Tab 44 runs at depth 3 because it is the only tab that can move upward at all, and at
 // depth 2 it cannot: 0 upward moves at depth 2, 35 at depth 3, 308 at depth 4. Running it
 // at depth 2 would make bar 2 vacuous. Its rows are 64 characters rather than 8.
 const BASELINES: Record<string, { depth: number; rangeCc: number; top: number; best: string }> = {
@@ -87,11 +87,11 @@ const BASELINES: Record<string, { depth: number; rangeCc: number; top: number; b
     "446755444444",  // run 1 = uniformDroughtNoForest/noSparks
     "446755444444",  // run 1 = uniformDroughtNoForest/perZone
   ].join("") },
-  "42": { depth: 2, rangeCc: 1, top: 3, best: [
+  "41": { depth: 2, rangeCc: 1, top: 3, best: [
     "33",  // run 1 = default
     "32",  // run 1 = changedWind
   ].join("") },
-  "45": { depth: 3, rangeCc: 2, top: 4, best: [
+  "44": { depth: 3, rangeCc: 2, top: 4, best: [
     "3334333333443333343433334444444433343333333433333334333333343333",  // run 1 = default/noFireline/noHelitack
     "3344333333443333444444444444444433443333334433333344333333443333",  // run 1 = default/noFireline/helitack
     "3434333344444444343433334444444434343333343433333434333334343333",  // run 1 = default/fireline/noHelitack
@@ -101,7 +101,7 @@ const BASELINES: Record<string, { depth: number; rangeCc: number; top: number; b
     "3334333322442222343433334444444432342222222422223234222222242222",  // run 1 = changed/fireline/noHelitack
     "2224222222442222242422224444444422242222222422222224222222242222",  // run 1 = changed/fireline/helitack
   ].join("") },
-  "47": { depth: 2, rangeCc: 2, top: 5, best: [
+  "46": { depth: 2, rangeCc: 2, top: 5, best: [
     "35553333",  // run 1 = default/noFireline/noHelitack
     "54444444",  // run 1 = default/noFireline/helitack
     "54444444",  // run 1 = default/fireline/noHelitack
@@ -110,21 +110,6 @@ const BASELINES: Record<string, { depth: number; rangeCc: number; top: number; b
     "34442222",  // run 1 = changed/noFireline/helitack
     "34442222",  // run 1 = changed/fireline/noHelitack
     "34442222",  // run 1 = changed/fireline/helitack
-  ].join("") },
-  // Tab 54 on its SEVERITY axis, not 45/47's default-vs-changed. See tab-shapes.ts.
-  "54": { depth: 2, rangeCc: 1, top: 4, best: [
-    "222234442222",  // run 1 = default/noFireline/noHelitack
-    "222234442222",  // run 1 = default/noFireline/helitack
-    "222234442222",  // run 1 = default/fireline/noHelitack
-    "222234442222",  // run 1 = default/fireline/helitack
-    "333334443333",  // run 1 = severe/noFireline/noHelitack
-    "444444444444",  // run 1 = severe/noFireline/helitack
-    "444444444444",  // run 1 = severe/fireline/noHelitack
-    "444444444444",  // run 1 = severe/fireline/helitack
-    "222234442222",  // run 1 = vegNotSevere/noFireline/noHelitack
-    "222234442222",  // run 1 = vegNotSevere/noFireline/helitack
-    "222234442222",  // run 1 = vegNotSevere/fireline/noHelitack
-    "222234442222",  // run 1 = vegNotSevere/fireline/helitack
   ].join("") },
 };
 
@@ -209,7 +194,7 @@ describe.each(Object.keys(BASELINES))("windowed sweep — tab %s", (tabId) => {
   // Bar 2: no upward move may land on this ruleset's highest category id, so no student
   // is congratulated on a window they did not earn. An upward move needs an anti-monotone
   // subterm (a history factor variable, or a WITH occurrence, under an odd number of
-  // NOTs); tab 45 is the only tab with one in a position that can fire, and its top
+  // NOTs); tab 44 is the only tab with one in a position that can fire, and its top
   // category is unreachable that way. A sheet edit moving a NOT onto a history variable in
   // a high category is what breaks this, and is a change this repo has already seen once.
   it("never moves upward onto the highest category", () => {

@@ -3,9 +3,10 @@
 
 const TS_HEADER = "// AUTO-GENERATED — DO NOT EDIT — re-run scripts/extract-hazbot-sheets.js\n\n";
 const MD_HEADER = "> **AUTO-GENERATED — DO NOT EDIT — re-run `scripts/extract-hazbot-sheets.js`**\n\n";
-// All 11 rule-set tabs are now extracted (WM-18 R1). README / SIMINIT are
-// auto-skipped — parseTab() returns null for any tab with no category block.
-const EXCLUDED_TABS = [];
+// Tab 55 coaches Act 5.5, which is a performance assessment page and so gets no
+// Hazbot. README / SIMINIT are auto-skipped — parseTab() returns null for any tab
+// with no category block.
+const EXCLUDED_TABS = ["55"];
 
 function extractFromSheets(sheets) {
   const tabs = [];

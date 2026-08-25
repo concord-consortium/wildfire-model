@@ -1,9 +1,9 @@
-import { ruleSet45 } from "./45";
+import { ruleSet44 } from "./44";
 import { makeWildfireEngine, matchAgainst, mkReading } from "./test-helpers";
-import { tab45, vars45 } from "./__fixtures__/tab-shapes";
+import { tab44, vars44 } from "./__fixtures__/tab-shapes";
 import { WildfireReading } from "../wildfire/types";
 
-// Tab 45 categories (regenerated from the 2026-05-22 sheet; Cat 100 dropped):
+// Tab 44 categories (Cat 100 dropped):
 //   1: NOT ranSimulation
 //   2: ranSimulation WITH NOT DefaultVars
 //   3: NOT (usedFireline AND usedHelitack) AND ranSimulation WITH DefaultVars
@@ -18,69 +18,69 @@ import { WildfireReading } from "../wildfire/types";
 //    fireline+helitack history, so a fireline+helitack run lands at Cat 4, not
 //    Cat 3 (no longer over-matches).
 
-// SIMINIT defaults for tab 45: 3 zones Shrub / No Drought (terrains
+// SIMINIT defaults for tab 44: 3 zones Shrub / No Drought (terrains
 // Mountains / Foothills / Plains), wind magnitude 20 / direction 100.
-const { defaults, changedZones, fireLine } = vars45;
+const { defaults, changedZones, fireLine } = vars44;
 
 function startReading(opts: Partial<WildfireReading> = {}): WildfireReading {
-  return mkReading("SimulationStarted", opts.at ?? 100, { ...tab45.base, ...opts });
+  return mkReading("SimulationStarted", opts.at ?? 100, { ...tab44.base, ...opts });
 }
 
-describe("ruleSet 45 — per-rule-set behavior sweep", () => {
+describe("ruleSet 44 — per-rule-set behavior sweep", () => {
   it("(a) empty readings → cat 1 (NOT ranSimulation)", () => {
-    const e = makeWildfireEngine(ruleSet45, defaults);
-    expect(matchAgainst(ruleSet45, e, [])).toBe(1);
+    const e = makeWildfireEngine(ruleSet44, defaults);
+    expect(matchAgainst(ruleSet44, e, [])).toBe(1);
   });
   it("(b) single match — ran with a changed variable → cat 2 (NOT DefaultVars)", () => {
-    const e = makeWildfireEngine(ruleSet45, defaults);
-    expect(matchAgainst(ruleSet45, e, [startReading({ zones: changedZones })])).toBe(2);
+    const e = makeWildfireEngine(ruleSet44, defaults);
+    expect(matchAgainst(ruleSet44, e, [startReading({ zones: changedZones })])).toBe(2);
   });
   it("(c) multiple-true → highest wins — a changed run and an all-default run → cat 3", () => {
-    const e = makeWildfireEngine(ruleSet45, defaults);
+    const e = makeWildfireEngine(ruleSet44, defaults);
     const changed = startReading({ zones: changedZones });
     const allDefault = startReading({ at: 200 });
     // cat 2 (a non-default run exists) and cat 3 (an all-default run exists) are
     // both true → highest, cat 3, wins.
-    expect(matchAgainst(ruleSet45, e, [changed, allDefault])).toBe(3);
+    expect(matchAgainst(ruleSet44, e, [changed, allDefault])).toBe(3);
   });
   it("(d) stability — cat 3 holds across a later all-default run", () => {
-    const e = makeWildfireEngine(ruleSet45, defaults);
+    const e = makeWildfireEngine(ruleSet44, defaults);
     const r0 = startReading();
-    expect(matchAgainst(ruleSet45, e, [r0])).toBe(3);
-    expect(matchAgainst(ruleSet45, e, [r0, startReading({ at: 200 })])).toBe(3);
+    expect(matchAgainst(ruleSet44, e, [r0])).toBe(3);
+    expect(matchAgainst(ruleSet44, e, [r0, startReading({ at: 200 })])).toBe(3);
   });
   it("(e) success cat 4 — an all-default run with both a fireline and a helitack → cat 4", () => {
-    const e = makeWildfireEngine(ruleSet45, defaults);
+    const e = makeWildfireEngine(ruleSet44, defaults);
     // DefaultVars + Fireline + Helitack all satisfied on one run.
-    expect(matchAgainst(ruleSet45, e, [startReading({ fireLineMarkers: fireLine, helitack: true })])).toBe(4);
+    expect(matchAgainst(ruleSet44, e, [startReading({ fireLineMarkers: fireLine, helitack: true })])).toBe(4);
   });
 });
 
-describe("ruleSet 45 — R9 per-category coverage", () => {
-  const e = () => makeWildfireEngine(ruleSet45, defaults);
-  it("cat 1 — no run", () => expect(matchAgainst(ruleSet45, e(), [])).toBe(1));
+describe("ruleSet 44 — R9 per-category coverage", () => {
+  const e = () => makeWildfireEngine(ruleSet44, defaults);
+  it("cat 1 — no run", () => expect(matchAgainst(ruleSet44, e(), [])).toBe(1));
   it("cat 2 — ran with variables off default", () =>
-    expect(matchAgainst(ruleSet45, e(), [startReading({ zones: changedZones })])).toBe(2));
+    expect(matchAgainst(ruleSet44, e(), [startReading({ zones: changedZones })])).toBe(2));
   it("cat 3 — ran with all variables at default", () =>
-    expect(matchAgainst(ruleSet45, e(), [startReading()])).toBe(3));
+    expect(matchAgainst(ruleSet44, e(), [startReading()])).toBe(3));
   it("cat 4 — fireline + helitack in a single run", () =>
-    expect(matchAgainst(ruleSet45, e(), [startReading({ fireLineMarkers: fireLine, helitack: true })])).toBe(4));
+    expect(matchAgainst(ruleSet44, e(), [startReading({ fireLineMarkers: fireLine, helitack: true })])).toBe(4));
 });
 
-describe("ruleSet 45 — helitack reachability (WM-28)", () => {
+describe("ruleSet 44 — helitack reachability (WM-28)", () => {
   // Same-run Cat 4 (one run with both tools) is covered by the (e) sweep and R9
   // cat 4 above. This block covers the genuinely-new helitack behaviors: the
   // across-runs Cat 4 path and Cat 3 no longer over-matching.
-  const e = () => makeWildfireEngine(ruleSet45, defaults);
+  const e = () => makeWildfireEngine(ruleSet44, defaults);
   it("cat 4 across-runs — fireline in run 1, helitack in run 2 (each binds its own WITH witness)", () => {
     const firelineRun = startReading({ fireLineMarkers: fireLine });
     const helitackRun = startReading({ at: 200, helitack: true });
-    expect(matchAgainst(ruleSet45, e(), [firelineRun, helitackRun])).toBe(4);
+    expect(matchAgainst(ruleSet44, e(), [firelineRun, helitackRun])).toBe(4);
   });
   it("cat 3 no longer over-matches — a fireline+helitack run is not classified cat 3", () => {
     // Under the stub this run landed at cat 3 (NOT (usedFireline AND usedHelitack)
     // collapsed to true); with the real impls usedHelitack flips it off cat 3.
     const run = startReading({ fireLineMarkers: fireLine, helitack: true });
-    expect(matchAgainst(ruleSet45, e(), [run])).not.toBe(3);
+    expect(matchAgainst(ruleSet44, e(), [run])).not.toBe(3);
   });
 });

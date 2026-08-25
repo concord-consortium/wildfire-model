@@ -329,7 +329,7 @@ describe("wildfire sim-props", () => {
   });
 
   describe("Fireline", () => {
-    // Tab 45/47/54 sim-prop: a drawn fire line carries >= 2 fireLineMarkers in
+    // Tab 44/46/55 sim-prop: a drawn fire line carries >= 2 fireLineMarkers in
     // the SimulationStarted snapshot. A sim-prop is evaluated against one
     // witness reading, so the test pins both ends of the >= 2 threshold.
     it("false when fireLineMarkers is undefined or empty", () => {
@@ -346,7 +346,7 @@ describe("wildfire sim-props", () => {
   });
 
   describe("DefaultVars", () => {
-    // Per tab 45/47 sheet (DefaultVars, R13/R12): all adjustable variables at
+    // Per tab 44/46 sheet (DefaultVars, R13/R12): all adjustable variables at
     // default; wind matched with tolerance +/-2 MPH magnitude, +/-20 deg angle.
     // The cases below omit wind.scaleFactor, so it defaults to 1 and the speed
     // values double as MPH. The scaleFactor sub-block covers the conversion.

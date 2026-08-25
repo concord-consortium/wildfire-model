@@ -17,7 +17,7 @@
  * Aggregate module:
  *   export const ruleSets: Record<string, RuleSet<WildfireDefaults>> = { "23": ruleSet23, ... };
  *
- * Empty / placeholder tabs (43, 45, 47, 54) are excluded from the index.
+ * Tabs named in `EXCLUDED_TABS` (extract-impl.js) are excluded from the index.
  * The extraction logic (segmentation + parsing + emission) lives in
  * `extract-impl.js` so unit tests can call it without the xlsx step.
  */
