@@ -233,7 +233,7 @@ Group these in one PR:
 - [ ] New per-rule-set test files for newly-loadable tabs.
 - [ ] Regenerated `docs/hazbot-validation/*.md` playbook docs.
 - [ ] Regenerated `src/hazbot/wildfire/tour-data.generated.ts` if any `arrowText` changed (`npm run generate-hazbot-tour-data`).
-- [ ] `APP_RULES_VERSION` bumped (if semantic change).
+- [ ] `APP_RULES_VERSION` bumped (semantic **or** selection-semantics change, see section 7; adding Round 2/3 columns counts).
 - [ ] All tests pass (`npm test`).
 - [ ] Lint passes (`npm run lint`).
 - [ ] Smoke-checked in browser.
