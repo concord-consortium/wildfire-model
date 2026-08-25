@@ -168,13 +168,16 @@ export const HazbotButton = observer(function HazbotButton() {
     let introCancelled = false;
     let tourCancelled = false;
     let cleanup = false;
+    // 0-based index of the tour step on screen. Null until a tour is launched, which is
+    // what makes it null on the intro in the run-start log below.
+    let lastStepIndex: number | null = null;
 
     const openTour = (steps: EngineStep[]) => {
       log("HazbotShowMeClicked", {
         ruleSetId, categoryId: matched, stepCount: steps.length, feedbackLevel: selected?.level ?? null,
       });
       setTourActive(true);
-      let lastStepIndex = 0;
+      lastStepIndex = 0;
       tourEngine = createCoachmarksEngine({
         actionGated: true,                       // gated nav/keyboard/focus + wait-for-target
         onTargetLost: "close",                   // close the tour if a step's anchor unmounts (vs degrade-to-centered)
@@ -266,6 +269,19 @@ export const HazbotButton = observer(function HazbotButton() {
       // Programmatic teardown: set `cleanup` BEFORE destroying so neither engine's
       // onDestroyed launches a tour or logs a Completed/Dismissed event.
       cleanup = true;
+      // The `intro || tourEngine` term is not redundant with the running gate: this
+      // cleanup is registered BEFORE the popover opens (openOnce is deferred to the
+      // avatar's transitionend, with a 400ms fallback), so a run started in that window
+      // would otherwise log a coach mark that was never displayed.
+      if (simulation.simulationRunning && (intro || tourEngine)) {
+        log("HazbotCoachMarkHiddenByRun", {
+          ruleSetId,
+          categoryId: matched,
+          phase: tourEngine ? "tour" : "intro",
+          lastStepIndex,
+          feedbackLevel: selected?.level ?? null,
+        });
+      }
       avatar.removeEventListener("transitionend", onTransitionEnd);
       clearTimeout(fallbackId);
       intro?.destroy();
@@ -273,6 +289,17 @@ export const HazbotButton = observer(function HazbotButton() {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ui.showHazbotFeedback]);
+
+  // Writing the flag rather than destroying the engines keeps this a no-op when nothing
+  // is open, since MobX suppresses a same-value assignment: no reaction, no re-render and
+  // no log. `tourActive` is cleared here because the panel effect's own
+  // setTourActive(false) sits on the `cleanup`-skipped branch and would otherwise leave
+  // the flag set for the whole run.
+  useEffect(() => {
+    if (!running) return;
+    ui.showHazbotFeedback = false;
+    setTourActive(false);
+  }, [running, ui]);
 
   const handleClick = () => {
     ui.showHazbotFeedback = true;          // the effect above renders the panel off this flag
@@ -293,12 +320,14 @@ export const HazbotButton = observer(function HazbotButton() {
   // Wrapper state classes: `ready` (pulse halo), `coached` (intro enlarged-robot,
   // intro only), `noHazbot` (faded button while the tour runs), `runDisabled` (faded
   // button while the model runs). coached and noHazbot are mutually exclusive — see
-  // the effect.
+  // the effect. `noHazbot` is conjoined with the panel flag so the state cannot be
+  // reached while the panel is closed: it carries pointer-events:none and no `disabled`
+  // attribute, so a stale tourActive would leave the button unclickable.
   const wrapClassName = [
     css.hazbotButtonWrap,
     pulsing ? css.ready : "",
     (ui.showHazbotFeedback && !tourActive) ? css.coached : "",
-    tourActive ? css.noHazbot : "",
+    (ui.showHazbotFeedback && tourActive) ? css.noHazbot : "",
     running ? css.runDisabled : "",
   ].filter(Boolean).join(" ");
 

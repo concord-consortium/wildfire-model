@@ -313,41 +313,44 @@ describe("Hazbot feedback panel", () => {
   });
 });
 
-describe("Hazbot walk-through tour", () => {
-  // A coaching engine: ruleSet.id "23" with category 2 (a [Show me] coaching category
-  // present in tour-data.generated). The intro reads engine.ruleSet.{id,categories}.
-  function coachingEngine() {
-    return {
-      ruleSet: {
-        id: "23",
-        categories: [{ id: 2, feedback: "Hazbot: Looks like defaults. I can help!\n[Show me]" }],
-      },
-    } as unknown as ReturnType<typeof getAnalysisEngine>;
-  }
+// A coaching engine: ruleSet.id "23" with category 2 (a [Show me] coaching category
+// present in tour-data.generated). The intro reads engine.ruleSet.{id,categories}.
+// Shared by the two coach-mark describes below.
+function coachingEngine() {
+  return {
+    ruleSet: {
+      id: "23",
+      categories: [{ id: 2, feedback: "Hazbot: Looks like defaults. I can help!\n[Show me]" }],
+    },
+  } as unknown as ReturnType<typeof getAnalysisEngine>;
+}
 
-  // Record every engine created (intro then tour) with its opts + spies.
-  let engines: Array<{
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    opts: any; highlight: jest.Mock; drive: jest.Mock; destroy: jest.Mock;
-  }>;
+// Record every engine created (intro then tour) with its opts + spies.
+let engines: Array<{
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  opts: any; highlight: jest.Mock; drive: jest.Mock; destroy: jest.Mock;
+}>;
 
-  beforeEach(() => {
-    engines = [];
-    mockGetEngine.mockReset().mockReturnValue(coachingEngine());
-    mockSelection.mockReset().mockReturnValue(selection(2));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    mockCreateEngine.mockReset().mockImplementation((opts: any) => {
-      const e = { opts, highlight: jest.fn(), drive: jest.fn(), destroy: jest.fn() };
-      engines.push(e);
-      return e;
-    });
+function useCoachingEngine() {
+  engines = [];
+  mockGetEngine.mockReset().mockReturnValue(coachingEngine());
+  mockSelection.mockReset().mockReturnValue(selection(2));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  mockCreateEngine.mockReset().mockImplementation((opts: any) => {
+    const e = { opts, highlight: jest.fn(), drive: jest.fn(), destroy: jest.fn() };
+    engines.push(e);
+    return e;
   });
+}
 
-  // Simulate the [Show me] activation: the intro's done button routes moveNext →
-  // destroy → onDestroyed with NO onCancelRequested first.
-  function activateShowMe() {
-    act(() => { engines[0].opts.onDestroyed(); });
-  }
+// Simulate the [Show me] activation: the intro's done button routes moveNext →
+// destroy → onDestroyed with NO onCancelRequested first.
+function activateShowMe() {
+  act(() => { engines[0].opts.onDestroyed(); });
+}
+
+describe("Hazbot walk-through tour", () => {
+  beforeEach(useCoachingEngine);
 
   it("launches a gated tour on [Show me]: destroys intro, drives a tour engine, logs HazbotShowMeClicked", () => {
     const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
@@ -724,5 +727,149 @@ describe("Disabled while the model runs (WM-31)", () => {
     act(() => { stores.simulation.simulationRunning = true; });
     expect(screen.queryByTestId("hazbot-blinks")).toBeNull(); // not frozen mid-blink
     jest.useRealTimers();
+  });
+});
+
+describe("Run-start coach-mark teardown (WM-31)", () => {
+  beforeEach(useCoachingEngine);
+
+  const wrap = () => screen.getByTestId("hazbot-button-wrap");
+  const startRun = (stores: ReturnType<typeof createStores>) =>
+    act(() => { stores.simulation.simulationRunning = true; });
+
+  it("hides an open intro popover and logs it as phase intro", () => {
+    const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    const { stores } = renderWithStores();
+    openPanel();
+    expect(engines).toHaveLength(1);
+    startRun(stores);
+    expect(engines[0].destroy).toHaveBeenCalled();
+    expect(stores.ui.showHazbotFeedback).toBe(false);
+    expect(wrap().className).not.toMatch(/coached/);
+    expect(screen.getByTestId("hazbot-button")).toBeDisabled();
+    expect(logSpy).toHaveBeenCalledWith(
+      "HazbotCoachMarkHiddenByRun",
+      { ruleSetId: "23", categoryId: 2, phase: "intro", lastStepIndex: null, feedbackLevel: 1 },
+    );
+    // The real engine fires onDestroyed FROM destroy(); the mock does not, so drive it
+    // or everything below is asserted against a callback that never ran. It is the
+    // `cleanup` flag that has to swallow this one: without it the intro's onDestroyed
+    // reads as a [Show me] activation and opens a tour mid-run.
+    act(() => { engines[0].opts.onDestroyed(); });
+    expect(engines).toHaveLength(1);
+    expect(logSpy).not.toHaveBeenCalledWith("HazbotShowMeClicked", expect.anything());
+    expect(logSpy).not.toHaveBeenCalledWith("HazbotTourCompleted", expect.anything());
+    expect(logSpy).not.toHaveBeenCalledWith("HazbotTourDismissed", expect.anything());
+  });
+
+  it("hides a running tour, logs its last step, and leaves the button disabled rather than faded-for-tour", () => {
+    const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    const { stores } = renderWithStores();
+    openPanel();
+    activateShowMe();
+    act(() => { engines[1].opts.onHighlightStarted(undefined, {}, { state: { activeIndex: 1 } }); });
+    expect(wrap().className).toMatch(/noHazbot/);
+    startRun(stores);
+    expect(engines[1].destroy).toHaveBeenCalled();
+    expect(logSpy).toHaveBeenCalledWith(
+      "HazbotCoachMarkHiddenByRun",
+      { ruleSetId: "23", categoryId: 2, phase: "tour", lastStepIndex: 1, feedbackLevel: 1 },
+    );
+    act(() => { engines[1].opts.onDestroyed(); });
+    expect(logSpy).not.toHaveBeenCalledWith("HazbotTourCompleted", expect.anything());
+    expect(logSpy).not.toHaveBeenCalledWith("HazbotTourDismissed", expect.anything());
+    // The tour's faded state is gone; what is left is the disabled state, which keeps
+    // the robot and is reached through the `disabled` attribute.
+    expect(wrap().className).not.toMatch(/noHazbot/);
+    expect(wrap().className).toMatch(/runDisabled/);
+    expect(screen.getByTestId("hazbot-button")).toBeDisabled();
+  });
+
+  it("reopening after such a teardown lands in .coached without ever committing .noHazbot", () => {
+    jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    const { stores } = renderWithStores();
+    openPanel();
+    activateShowMe();
+    startRun(stores);
+    act(() => { stores.simulation.simulationRunning = false; });
+    // The coach mark does not come back on its own when the run ends: nothing reopens
+    // the panel and no third engine is created. The student has to click.
+    expect(stores.ui.showHazbotFeedback).toBe(false);
+    expect(engines).toHaveLength(2);
+    // Watch every committed value of the wrapper's class attribute across the reopen: a
+    // stale tourActive would commit one render of `.noHazbot` before the panel effect
+    // clears it. takeRecords() (not disconnect()) drains records still queued in the
+    // microtask.
+    const seen: string[] = [];
+    const observer = new MutationObserver(() => undefined);
+    observer.observe(wrap(), { attributes: true, attributeFilter: ["class"], attributeOldValue: true });
+    openPanel();
+    // oldValue, not target.className: the target reads its FINAL value at drain time, so
+    // every record would look identical and the assertion could never fail.
+    observer.takeRecords().forEach((r) => seen.push(r.oldValue ?? ""));
+    observer.disconnect();
+    seen.push(wrap().className);
+    expect(seen.length).toBeGreaterThan(1);
+    expect(seen.some((c) => /noHazbot/.test(c))).toBe(false);
+    expect(wrap().className).toMatch(/coached/);
+  });
+
+  it("never shows the tour's click-blocking faded state while the panel is closed", () => {
+    jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    const { stores } = renderWithStores();
+    openPanel();
+    activateShowMe();
+    expect(wrap().className).toMatch(/noHazbot/);
+    // Any writer clearing the flag from outside the component tears the tour down
+    // through the effect's cleanup path, which by design skips setTourActive(false) so
+    // neither engine mis-logs. `.noHazbot` carries pointer-events:none and no `disabled`
+    // attribute, so a stale tourActive leaves the button permanently unclickable.
+    act(() => { stores.ui.showHazbotFeedback = false; });
+    expect(wrap().className).not.toMatch(/noHazbot/);
+    expect(screen.getByTestId("hazbot-button")).not.toBeDisabled();
+  });
+
+  it("logs and clears nothing when a run starts with no coach mark open", () => {
+    const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    const { stores } = renderWithStores();
+    expect(engines).toHaveLength(0);
+    startRun(stores);
+    expect(logSpy).not.toHaveBeenCalledWith("HazbotCoachMarkHiddenByRun", expect.anything());
+    // Not `showHazbotFeedback === false`, which was already false and would pass against
+    // any implementation: what "clears nothing" means here is that the run start neither
+    // built a coach mark nor moved the button off its default state.
+    expect(engines).toHaveLength(0);
+    expect(wrap().className).not.toMatch(/coached|noHazbot/);
+  });
+
+  it("stays silent when the run starts after the click but before the popover opens", () => {
+    const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    const { stores } = renderWithStores();
+    // Click without letting the open-after-scale-up timer fire: the effect's cleanup is
+    // registered, but no coachmarks engine exists yet.
+    jest.useFakeTimers();
+    try {
+      fireEvent.click(screen.getByTestId("hazbot-button"));
+      act(() => { jest.advanceTimersByTime(100); });
+      expect(engines).toHaveLength(0);
+      startRun(stores);
+    } finally {
+      jest.useRealTimers();
+    }
+    expect(logSpy).not.toHaveBeenCalledWith("HazbotCoachMarkHiddenByRun", expect.anything());
+  });
+
+  it("still logs a plain dismiss as HazbotTourDismissed when no run is involved", () => {
+    const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    renderWithStores();
+    openPanel();
+    activateShowMe();
+    act(() => { engines[1].opts.onCancelRequested(); });
+    act(() => { engines[1].opts.onDestroyed(); });
+    expect(logSpy).toHaveBeenCalledWith(
+      "HazbotTourDismissed", { ruleSetId: "23", categoryId: 2, lastStepIndex: 0, feedbackLevel: 1 },
+    );
+    expect(logSpy).not.toHaveBeenCalledWith("HazbotCoachMarkHiddenByRun", expect.anything());
+    expect(logSpy).not.toHaveBeenCalledWith("HazbotTourCompleted", expect.anything());
   });
 });

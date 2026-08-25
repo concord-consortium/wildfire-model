@@ -80,6 +80,7 @@ All model coordinates are in feet. Normalized coordinates (x, y) are relative to
 | `HazbotShowMeClicked` | `{ ruleSetId: string \| null, categoryId: number \| null, stepCount: number, feedbackLevel: number \| null }` | User activates the `[Show me]` button on a coaching category's intro popover, launching the visual-feedback walk-through (WM-17). `stepCount` is the number of steps in the launched tour. `feedbackLevel` is the level of the popover the student activated from: the tour can now be re-offered from level 2, and its content is the same walk-through either way, so this is what separates a first coaching from a repeat one. Like the other Hazbot events, a deliberate engine no-op (unhandled in `translate.ts`). See the `categoryId` note below the table. |
 | `HazbotTourCompleted` | `{ ruleSetId: string \| null, categoryId: number \| null, lastStepIndex: number, feedbackLevel: number \| null }` | User finishes the walk-through via the terminal `[Got it!]` button (the tour engine's `onDestroyed` fires without a preceding cancel). `lastStepIndex` is the 0-based index of the last step shown. `feedbackLevel` is the level the tour was launched from. Deliberate engine no-op. See the `categoryId` note below the table. |
 | `HazbotTourDismissed` | `{ ruleSetId: string \| null, categoryId: number \| null, lastStepIndex: number, feedbackLevel: number \| null }` | User closes or Escapes the walk-through before the end (the tour engine's `onCancelRequested` fires). `lastStepIndex` is the 0-based index of the step shown when dismissed. `feedbackLevel` is the level the tour was launched from. Deliberate engine no-op. See the `categoryId` note below the table. |
+| `HazbotCoachMarkHiddenByRun` | `{ ruleSetId: string \| null, categoryId: number \| null, phase: "intro" \| "tour", lastStepIndex: number \| null, feedbackLevel: number \| null }` | A run starts (Start pressed, including a resume from pause) while a Hazbot coach mark is on screen: the coach mark is destroyed and the button is disabled for the duration of the run. **Fires only when a coach mark was actually open**, so its absence alongside a `SimulationStarted` means nothing was showing, and a run started in the gap between the Hazbot click and the popover opening logs nothing. `phase` is `"intro"` for the feedback popover and `"tour"` for the `[Show me]` walk-through; `phase: "intro"` always carries `lastStepIndex: null`, since the intro has no steps. `feedbackLevel` is the level of the coach mark that was on screen, the same value the popover's own `HazbotFeedbackShown` carries and, on the tour phase, the same one on the paired `HazbotShowMeClicked`; it is repeated here so the row reads without a join. **The event says only that a run started while a coach mark was up; it is not by itself a record of abandonment.** Which it is depends on `lastStepIndex` against the `stepCount` on the paired `HazbotShowMeClicked`: below `stepCount - 1` is abandonment-by-running, distinct from the abandonment-by-leaving that a `HazbotShowMeClicked` with no terminator at all still indicates. A **terminal** `lastStepIndex` is the opposite wherever the tour's last step asked the student to press Start, which is six of the live coaching tours. Judge that by what the step asks for, not by what it is anchored to. **41/2, 44/2, 46/2 and 46/4** end on the Start button and ask only that ("Click **Start** to run the model!"), so a terminal index there is plain compliance. **44/3 and 46/3** are anchored on the Fireline button and end "Add both a **Fireline** and a **Helitack** while the model is running. Click **Start** to begin!", so a terminal index there is *partial* compliance: the student did the Start half, and this release removes the during-run half from the screen at the moment it becomes actionable. For all six, this event replaces `HazbotTourCompleted` **on one route only**: the terminal popover also carries a `[Got it!]` button, so a student who dismisses before pressing Start still logs `HazbotTourCompleted` as before. Completion counts for these six therefore drop from this release by however many students press Start without dismissing first, which is not recoverable from earlier sessions. Deliberate engine no-op. See the `categoryId` note below the table. |
 
 ### Rule-set ids renumbered (`appRulesVersion` 8 onward)
 
@@ -97,11 +98,12 @@ missing data. The workbook still carries the tab as 55, but it is excluded from 
 and a page requesting an id with no rule-set renders no Hazbot button and logs no
 `AnalysisEngineActivated` at all.
 
-### `categoryId` on the tour events (`appRulesVersion` 6 onward)
+### `categoryId` on the coach-mark events (`appRulesVersion` 6 onward)
 
-On `HazbotShowMeClicked`, `HazbotTourCompleted` and `HazbotTourDismissed`, `categoryId` is
-the category the feedback was selected from, i.e. `categoryUsed`, which **may differ from
-`matchedCategory` in either direction**.
+On `HazbotShowMeClicked`, `HazbotTourCompleted`, `HazbotTourDismissed` and
+`HazbotCoachMarkHiddenByRun`, `categoryId` is the category the feedback was selected
+from, i.e. `categoryUsed`, which **may differ from `matchedCategory` in either
+direction**.
 
 Lower is the common case and the point of the change: the student is coached on the run
 they just made rather than on their best run. Higher is rare. It occurs only on tab 44,
@@ -109,7 +111,9 @@ only as 2 to 3, and never reaches a celebration category; it happens when a trai
 makes a NOT-guarded lower category true that was false over the full session. A
 `categoryId` above `matchedCategory` is documented behavior, not corrupt data.
 
-Before `appRulesVersion` 6, `categoryId` on these three events was `matchedCategory`.
+Before `appRulesVersion` 6, `categoryId` on `HazbotShowMeClicked`, `HazbotTourCompleted` and
+`HazbotTourDismissed` was `matchedCategory`. `HazbotCoachMarkHiddenByRun` post-dates that boundary
+and has never carried anything but `categoryUsed`.
 
 ### `feedbackLevel` is not monotonic within a session (`appRulesVersion` 7 onward)
 
