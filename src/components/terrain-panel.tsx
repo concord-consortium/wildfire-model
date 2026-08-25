@@ -237,7 +237,8 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
       {
         ui.showTerrainUI &&
         <div
-          className={`${css.background} ${cssClasses[selectedZone]} ${panelClasses[currentPanel]}`}
+          className={[css.background, cssClasses[selectedZone], panelClasses[currentPanel]]
+            .filter(Boolean).join(" ")}
           data-testid="terrain-panel-container"
         >
           <button
