@@ -75,6 +75,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   get sparkEnabled() {
     const { simulation, ui } = this.stores;
     return !simulation.simulationStarted
+      && !ui.showTerrainUI
       && simulation.canAddSpark
       && ui.interaction !== Interaction.PlaceSpark;
   }
@@ -144,6 +145,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               icon={simulation.zonesCount < 3 ? <TerrainIcon /> : <TerrainThreeIcon />}
               highlightIcon={simulation.zonesCount < 3 ? <TerrainHighlightIcon /> : <TerrainThreeHighlightIcon />}
               disabled={!simulation.setupEnabled}
+              selected={ui.showTerrainUI}
               buttonText="Setup"
               dataTest="terrain-button"
               onClick={this.handleTerrain}
@@ -165,7 +167,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               className={css.playbackButton}
               data-testid="reload-button"
               onClick={this.handleReload}
-              disabled={!simulation.reloadEnabled}
+              disabled={!simulation.reloadEnabled || ui.showTerrainUI}
               disableRipple={true}
             >
               <span><ReloadIcon/><span className={css.playbackButtonLabel}>Reload</span></span>
@@ -183,7 +185,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           <div className={css.widgetGroup}>
             <Button
               onClick={this.handleStart}
-              disabled={!simulation.startEnabled}
+              disabled={!simulation.startEnabled || ui.showTerrainUI}
               className={css.playbackButton}
               data-testid="start-button"
               disableRipple={true}
@@ -385,7 +387,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   public handleTerrain = () => {
     const { ui } = this.stores;
-    ui.showTerrainUI = !ui.showTerrainUI;
+    ui.showTerrainUI = true;
     log("TerrainPanelButtonClicked");
   };
 

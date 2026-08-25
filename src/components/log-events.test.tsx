@@ -524,4 +524,19 @@ describe("Log events", () => {
       });
     });
   });
+
+  describe("TerrainPanelButtonClicked", () => {
+    it("logs on every Setup click, including the no-op click while the wizard is open", async () => {
+      render(
+        <Provider stores={stores}>
+          <BottomBar />
+        </Provider>
+      );
+      await userEvent.click(screen.getByTestId("terrain-button"));
+      await userEvent.click(screen.getByTestId("terrain-button"));
+      const calls = mockLog.mock.calls.filter((c: unknown[]) => c[0] === "TerrainPanelButtonClicked");
+      expect(calls).toHaveLength(2);
+      expect(stores.ui.showTerrainUI).toBe(true);
+    });
+  });
 });

@@ -4,7 +4,8 @@
 // deterministic geometry: per-widget border widths, the Reload+Restart
 // shared widgetGroup width, inter-widget gaps (8 px default; -1 px at the
 // three abutting bubble seams: Spark <-> Reload pair, Restart <-> Start,
-// and Fireline <-> Helitack), default-state highlight opacity, the
+// and Fireline <-> Helitack), default-state highlight opacity and the
+// Setup button's selected-state highlight, the
 // "Fireline" label, and the fullscreen container's 62 x 62 dimensions
 // with computed background-size / repeat / position.
 //
@@ -128,6 +129,19 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     cy.get("[data-testid='fireline-button']").click();
     cy.get('[data-testid="fireline-button"] [class*="iconButtonHighlightSvg"]')
       .should("have.css", "opacity", "1");
+  });
+
+  // selected and disabled cannot be combined on IconButton: both class names
+  // land on one element and icon-button.scss nests .selected inside
+  // :not(.disabled), so a disabled Setup button renders greyed with the
+  // highlight suppressed. jsdom computes no CSS, so this is the only place that
+  // failure is observable.
+  it("renders highlight opacity = 1 on the Setup button while the wizard is open", () => {
+    cy.get("[data-testid='terrain-button']").click();
+    cy.get("[data-testid='terrain-header']").should("be.visible");
+    cy.get('[data-testid="terrain-button"] [class*="iconButtonHighlightSvg"]')
+      .should("have.css", "opacity", "1");
+    cy.get('[data-testid="terrain-button"]').should("have.css", "filter", "none");
   });
 
   it("renders the Fireline button with label 'Fireline'", () => {
