@@ -1,11 +1,21 @@
 import React from "react";
-import { act, fireEvent, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
 import { TerrainPanel } from "./terrain-panel";
 import { Vegetation, TerrainType } from "../types";
 import { Zone } from "../models/zone";
+
+const mockLog = jest.fn();
+jest.mock("../log", () => ({
+  log: (...args: unknown[]) => mockLog(...args)
+}));
+
+const footerLabels = () =>
+  // eslint-disable-next-line testing-library/no-node-access
+  within(screen.getByTestId("terrain-cancel").closest("div")!)
+    .getAllByRole("button").map(b => b.textContent);
 
 const defaultTwoZones = [
   {
@@ -178,7 +188,11 @@ describe("setupChanged", () => {
     stores.simulation.zones = defaultTwoZones.map(opt => new Zone(opt));
     stores.simulation.config.zonesCount = 2;
     stores.ui.showTerrainUI = true;
+    mockLog.mockClear();
   });
+
+  const cancelPayload = () =>
+    mockLog.mock.calls.find((c: unknown[]) => c[0] === "TerrainPanelClosed")![1];
 
   const goToCreatePanel = async () => {
     // beforeEach sets zonesCount=2 so we start on panel 1 (zone-edit).
@@ -352,5 +366,165 @@ describe("setupChanged", () => {
     // If the snapshot is stale at drought=2: snapshot=2, live wizard=3,
     // diff is non-empty, setSetupChanged(true), flag flips to true. ✗
     expect(stores.simulation.setupChanged).toBe(false);
+  });
+
+  // eslint-disable-next-line max-len
+  it("(i) change zonesCount (2 -> 3), Cancel — the simulation keeps 2 zones", async () => {
+    // Require config.zonesCount === undefined so the wizard starts on the
+    // zones-count panel; only the master model can reach it.
+    stores.simulation.config.zonesCount = undefined as any;
+    // eslint-disable-next-line testing-library/no-container
+    const { container } = render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
+    const threeZonesInput = container.querySelector('input[type="radio"][value="3"]') as HTMLInputElement;
+    expect(footerLabels()).toEqual(["Cancel", "Next"]);
+    fireEvent.click(threeZonesInput);
+    await userEvent.click(screen.getByTestId("terrain-cancel"));
+    expect(stores.simulation.zones.length).toBe(2);
+    expect(stores.simulation.setupChanged).toBe(false);
+    expect(cancelPayload()).toMatchObject({ panel: "zones", reachedWind: false });
+  });
+
+  // eslint-disable-next-line max-len
+  it("(i2) change zonesCount (2 -> 3), Next, Cancel — the simulation keeps 2 zones", async () => {
+    stores.simulation.config.zonesCount = undefined as any;
+    // eslint-disable-next-line testing-library/no-container
+    const { container } = render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+    // eslint-disable-next-line testing-library/no-node-access, testing-library/no-container
+    const threeZonesInput = container.querySelector('input[type="radio"][value="3"]') as HTMLInputElement;
+    fireEvent.click(threeZonesInput);
+    const nextButtons = () => screen.getAllByRole("button", { name: /next/i });
+    await userEvent.click(nextButtons()[nextButtons().length - 1]);
+    expect(footerLabels()).toEqual(["Cancel", "Previous", "Next"]);
+    await userEvent.click(screen.getByTestId("terrain-cancel"));
+    expect(stores.simulation.zones.length).toBe(2);
+    expect(stores.simulation.setupChanged).toBe(false);
+  });
+
+  // eslint-disable-next-line max-len
+  it("(j) change drought, Cancel, reopen — the panel shows the simulation value, not the abandoned edit", async () => {
+    render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+    // eslint-disable-next-line testing-library/no-node-access
+    const droughtSlider = screen.getByTestId("drought-slider").querySelector("input")!;
+    fireEvent.change(droughtSlider, { target: { value: "3" } });
+    expect(droughtSlider).toHaveValue("3");
+    await userEvent.click(screen.getByTestId("terrain-cancel"));
+
+    act(() => { stores.ui.showTerrainUI = true; });
+    // eslint-disable-next-line testing-library/no-node-access
+    const reopened = screen.getByTestId("drought-slider").querySelector("input")!;
+    expect(reopened).toHaveValue("2");
+  });
+
+  it("(k) Cancel after an edit logs TerrainPanelClosed with changed: true", async () => {
+    render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+    // eslint-disable-next-line testing-library/no-node-access
+    const droughtSlider = screen.getByTestId("drought-slider").querySelector("input")!;
+    fireEvent.change(droughtSlider, { target: { value: "3" } });
+    await userEvent.click(screen.getByTestId("terrain-cancel"));
+    expect(cancelPayload()).toEqual({
+      reason: "cancel", changed: true, panel: "conditions", reachedWind: false
+    });
+  });
+
+  it("(l) Cancel on an untouched wizard logs TerrainPanelClosed with changed: false", async () => {
+    render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+    expect(footerLabels()).toEqual(["Cancel", "Next"]);
+    await userEvent.click(screen.getByTestId("terrain-cancel"));
+    expect(cancelPayload()).toEqual({
+      reason: "cancel", changed: false, panel: "conditions", reachedWind: false
+    });
+  });
+
+  // eslint-disable-next-line max-len
+  it("(m) change drought, Next, Cancel on the wind panel — the simulation keeps its pre-open values", async () => {
+    render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+    // eslint-disable-next-line testing-library/no-node-access
+    const droughtSlider = screen.getByTestId("drought-slider").querySelector("input")!;
+    fireEvent.change(droughtSlider, { target: { value: "3" } });
+    await goToCreatePanel();
+    expect(screen.getByTestId("terrain-wind")).toBeInTheDocument();
+    expect(footerLabels()).toEqual(["Cancel", "Previous", "Create"]);
+    await userEvent.click(screen.getByTestId("terrain-cancel"));
+    expect(stores.simulation.zones[0].droughtLevel).toBe(2);
+    expect(stores.simulation.zones[1].droughtLevel).toBe(1);
+    expect(stores.simulation.wind.speed).toBe(0);
+    expect(stores.simulation.wind.direction).toBe(0);
+    expect(stores.simulation.setupChanged).toBe(false);
+    expect(cancelPayload()).toMatchObject({ panel: "wind", reachedWind: true });
+  });
+
+  // eslint-disable-next-line max-len
+  it("(n) reach the wind panel, Previous, Cancel — panel is conditions but reachedWind is true", async () => {
+    render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+    await goToCreatePanel();
+    expect(screen.getByTestId("terrain-wind")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: /previous/i }));
+    await userEvent.click(screen.getByTestId("terrain-cancel"));
+    // reachedWind is a high-water mark, panel is where the student stood, so
+    // this is the path where the two disagree.
+    expect(cancelPayload()).toMatchObject({ panel: "conditions", reachedWind: true });
+  });
+
+  // eslint-disable-next-line max-len
+  it("(o) reach the wind panel, click a zone tile, Cancel — the tile jump does not erase reachedWind", async () => {
+    render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+    await goToCreatePanel();
+    expect(screen.getByTestId("terrain-wind")).toBeInTheDocument();
+    // What simulation-info.tsx writes when a zone info tile is clicked. The
+    // write forces the wizard back to the conditions panel.
+    act(() => { stores.ui.terrainUISelectedZone = 1; });
+    expect(screen.queryByTestId("terrain-wind")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByTestId("terrain-cancel"));
+    expect(cancelPayload()).toMatchObject({ panel: "conditions", reachedWind: true });
+  });
+
+  // eslint-disable-next-line max-len
+  it("(p) reach the wind panel, Cancel, reopen, Cancel — reachedWind resets with the rest of the wizard", async () => {
+    render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+    await goToCreatePanel();
+    await userEvent.click(screen.getByTestId("terrain-cancel"));
+    expect(cancelPayload()).toMatchObject({ panel: "wind", reachedWind: true });
+
+    mockLog.mockClear();
+    act(() => { stores.ui.showTerrainUI = true; });
+    await userEvent.click(screen.getByTestId("terrain-cancel"));
+    expect(cancelPayload()).toMatchObject({ panel: "conditions", reachedWind: false });
   });
 });

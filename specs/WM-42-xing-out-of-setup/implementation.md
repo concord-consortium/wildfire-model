@@ -234,7 +234,7 @@ That is the whole test change for this commit: no log mock and no new cases, whi
 
 ### Cover what nothing covers today
 
-**Summary**: The migrated test (d) ships with the Cancel commit above, because that commit invalidates it. This commit adds the coverage that is genuinely new: zone-count cancel on both sides of Next, the wind panel's own Cancel, reopen after cancel, footer order on all four variants, and the log payload in every direction including the two paths where `panel` and `reachedWind` disagree. Between them, (i), (d) and (m) click all three copies of the Cancel button, which no earlier draft of this plan did.
+**Summary**: The migrated test (d) ships with the Cancel commit above, because that commit invalidates it. This commit adds the coverage that is genuinely new: zone-count cancel on both sides of Next, the wind panel's own Cancel, reopen after cancel, footer order on all four variants, and the log payload in every direction including the two paths where `panel` and `reachedWind` disagree. Between them, (i), (d) and (m) click Cancel on all three panels, which no earlier draft of this plan did.
 
 **Files affected**:
 - `src/components/terrain-panel.test.tsx`: add a log mock, a payload accessor and a footer-order helper; add (i), (i2), (j), (k), (l), (m), (n), (o), (p)
@@ -321,7 +321,7 @@ One line of it goes into four cases that already stand on the four footer varian
 
 `simulation.zonesCount` is not asserted alongside `simulation.zones.length`: the computed returns `this.zones.length` (`simulation.ts:107-109`), so the two are the same assertion written twice.
 
-**Add (m)**, the wind panel's Cancel. It is the third copy of the same element and the only one that sits next to Create, which makes it the copy where a mis-wire is most expensive:
+**Add (m)**, the wind panel's Cancel. It is the only footer where Cancel sits next to Create, which makes it the panel where a mis-wire is most expensive:
 
 ```tsx
   // eslint-disable-next-line max-len
@@ -483,7 +483,7 @@ One line of it goes into four cases that already stand on the four footer varian
 
 (k) and (l) have to be separate cases: each catches the hardcode in one direction only, so either alone would pass against a `changed` that is always the value it happens to expect.
 
-The two per-panel wiring rows are the reason (i) and (m) exist as separate cases rather than being folded into (i2) and (d). The plan adds the same Cancel element to three footers, and before these cases only the conditions panel's copy was ever clicked: rewiring either of the other two to `applyAndClose` left the **whole Jest suite** green, so a copy-paste slip would have shipped a Cancel that commits.
+The two per-panel wiring rows are the reason (i) and (m) exist as separate cases rather than being folded into (i2) and (d). The Cancel element is single-sourced through a `renderCancelButton` helper, so the three footers cannot drift from each other, but each footer still decides for itself whether it calls that helper at all and the wizard still has to render it: before these cases only the conditions panel's Cancel was ever clicked, and rewiring either of the other two to `applyAndClose` left the **whole Jest suite** green.
 
 **(j) does not guard the `observer` dependency**, despite what the comment block at `terrain-panel.tsx:74-95` might suggest. Unwrapping `observer` fails three tests, two of which already exist: "is not displayed until the UI store value is set" and (h), which is already named `[canary for stale-snapshot bug]` for exactly that effect. Deleting `setZones` from the close-time reset effect is what (j) alone catches (1 failed, 21 passed against the 22-case file).
 
@@ -823,7 +823,7 @@ The plan adds the same Cancel element to all three footers and then exercises ex
 
 Mutation-tested, both directions, on the spike: rewiring the wind panel's Cancel to `onClick={applyAndClose}` leaves **the full Jest suite green** (889/889 on the pre-WM-46 base), and rewiring the zone-count panel's Cancel the same way leaves all 20 tests in `terrain-panel.test.tsx` green. Cypress does not close the gap either: no spec in `cypress/e2e/` clicks Cancel at all.
 
-That is the exact failure this story is built to prevent, shipped by a copy-paste slip, with a green suite. The wind panel is the worst place for it: Cancel is newly adjacent to Create, at an 8px gap, and a mis-wired Cancel there would commit the student's settings while the label says it discards them.
+That is the exact failure this story is built to prevent, shipped with a green suite. The wind panel is the worst place for it: Cancel is newly adjacent to Create, at an 8px gap, and a mis-wired Cancel there would commit the student's settings while the label says it discards them.
 
 Suggested resolution: extend the wind-panel case rather than adding two more full tests. Test (d) already walks to the wind panel in the `goToCreatePanel` helper, so a sixth case that changes drought, clicks Next, clicks Cancel on the wind panel and re-asserts the simulation's own values costs about ten lines and kills the mutation. Panel 0's Cancel can be covered by moving test (i)'s Cancel click one step earlier, cancelling from panel 0 before Next instead of after, which also makes (i) assert something (i) does not assert today: that abandoning a zone-count change before it is even applied locally leaves the simulation alone.
 
