@@ -24,9 +24,9 @@ The label is rendered in `simulation-info.tsx` as `` `${Math.round(scaledWind)} 
 
 ## Requirements
 
-- The Wind Meter label never renders more than two lines for any reading the model can produce, **including authored ones outside the slider's range**, at the label's shipping font (`'Roboto Condensed'` 14px). The guarantee is measured against that font by design; see the font-fallback note in Technical Notes.
+- The Wind Meter label never renders more than two lines for any reading the model can produce, **including authored speeds outside the slider's range, up to seven digits**, at the label's shipping font (`'Roboto Condensed'` 14px). The guarantee is measured against that font by design; see the font-fallback note in Technical Notes.
 - `.windText` widens from 68px to **81px**. `.windContainer`'s box is unchanged: it stays `$keyAreaWidth` x `$windContainerHeight` (104 x 126, since WM-52 sets the width), and its height in particular is not reduced.
-- 81px is chosen because it clears `"from the WNW"`, which measures **80.03px** and is the binding line at every speed. Above that width the two-line guarantee stops depending on the speed value at all: verified across speeds from 0 to 123456, no reading produces three lines. 74px, the minimum for one- and two-digit speeds, is **not** sufficient, because a three-digit reading is reachable today.
+- 81px is chosen because it clears `"from the WNW"`, which measures **80.03px** and is the binding line at every speed. Above that width the speed stops being the binding line until the speed line itself outgrows the box, which takes eight digits: `"9999999 MPH"` measures 78.61px and stays on two lines, `"99999999 MPH"` measures 85.52px and does not. 74px, the minimum for one- and two-digit speeds, is **not** sufficient, because a three-digit reading is reachable today.
 - The compass dial sits fully inside the container in every state, 5px above its bottom edge, matching the design.
 - The two-line break point is unchanged for the shortest reading: "0 MPH from the N" still renders as "0 MPH from" / "the N".
 - **Mid-length readings do re-break, and that is accepted.** 336 of the 496 slider readings change their break point at 81px, of which 189 are the three-line readings being fixed, leaving 147 that were already two lines and now break in a different place. This is identical at 74px, so it is a consequence of fixing the bug rather than of the width chosen.
@@ -52,13 +52,14 @@ Every number below was measured live in Chrome against the running dev server, a
 | 74 | 2 lines | 5px inside |
 | 81 | 2 lines | 5px inside |
 
-**The binding constraint is the compass line, not the speed.** `"from the WNW"` measures **80.03px**; the longest speed line tested, `"123456 MPH"`, measures only 71.7px, and `"99999 MPH"` 64.8px. So once the label is wide enough to hold `"from the WNW"` on one line, the speed magnitude cannot add a third line. Scanned across speeds 0, 7, 10, 30, 99, 100, 150, 999, 1000, 8888, 99999 and 123456 crossed with all 16 compass points: **at 81px there are zero three-line readings; at 74px there are 35**, all of them at three or more digits. This is why 81 is a different kind of number from 74. 74 is the minimum for the strings the slider happens to produce; 81 is the width at which the guarantee no longer has a premise that can change.
+**The binding constraint is the compass line, not the speed.** `"from the WNW"` measures **80.03px**; the longest speed line tested, `"123456 MPH"`, measures only 71.7px, and `"99999 MPH"` 64.8px. So once the label is wide enough to hold `"from the WNW"` on one line, the speed magnitude cannot add a third line until the speed line outgrows the box itself, at eight digits: `"9999999 MPH"` measures 78.61px and `"99999999 MPH"` 85.52px. Scanned across speeds 0, 7, 10, 30, 99, 100, 150, 999, 1000, 8888, 99999 and 123456 crossed with all 16 compass points: **at 81px there are zero three-line readings; at 74px there are 35**, all of them at three or more digits. This is why 81 is a different kind of number from 74. 74 is the minimum for the strings the slider happens to produce; 81 is the width at which the guarantee no longer has a premise that can change.
 
 | Speed range | Minimum `.windText` width for 2 lines |
 |---|---|
 | 0 to 30 (the slider's range) | 74px |
 | 0 to 99 | 74px |
-| Any value, up to 123456 tested | **81px** |
+| Any value up to seven digits (`9999999`) | **81px** |
+| Eight digits and above | more than 81px (`"99999999 MPH"` measures 85.52px) |
 
 **The 81px guarantee is measured at Roboto Condensed, and that is the right basis.** The font is loaded from `fonts.googleapis.com` (`src/index.html:10`) and `.windText` declares `font-family: 'Roboto Condensed'` with no fallback stack, so a failed font load renders the label in the browser's default. Line counts for the worst in-range reading, `"10 MPH from the NNE"`:
 
@@ -122,7 +123,7 @@ Every number below was measured live in Chrome against the running dev server, a
 - B) Size to 81px so any two- or three-digit authored value is safe, and note why.
 - C) Clamp `config.windSpeed` to the slider's range so the label's contract is enforced rather than assumed.
 
-**Decision**: **yes, it can, and B covers it.** Verified live rather than reasoned about: `?windSpeed=30`, which is the slider's own maximum and a value the config documents as "mph", renders **"150 MPH from the WNW"** in three lines with the dial 11px outside the container. So A is eliminated by a reproduction, not by a hypothetical. C stops being a prerequisite and becomes an independent improvement. Worth recording that the answer is not merely "three digits are possible": there is no authored value that breaks 81px, since the compass phrase rather than the speed is what binds.
+**Decision**: **yes, it can, and B covers it.** Verified live rather than reasoned about: `?windSpeed=30`, which is the slider's own maximum and a value the config documents as "mph", renders **"150 MPH from the WNW"** in three lines with the dial 11px outside the container. So A is eliminated by a reproduction, not by a hypothetical. C stops being a prerequisite and becomes an independent improvement. Worth recording that the answer is not merely "three digits are possible": no authored value up to seven digits breaks 81px, since below that the compass phrase rather than the speed is what binds. At eight digits the speed line becomes the binding one, `"99999999 MPH"` measuring 85.52px, and the label takes three lines again; that is out of scope here, as an eight-digit wind speed renders as nonsense whatever the layout does with it.
 
 ---
 
