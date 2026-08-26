@@ -128,6 +128,15 @@ describe("BottomBar component", () => {
     );
     expect(screen.getByTestId("helitack-button")).toBeInTheDocument();
   });
+
+  it("renders the Clear All button with label 'Clear All'", () => {
+    render(
+      <Provider stores={stores}>
+        <BottomBar />
+      </Provider>
+    );
+    expect(screen.getByTestId("clear-all-button")).toHaveTextContent("Clear All");
+  });
 });
 
 describe("BottomBar state machine (Requirements 1-7)", () => {

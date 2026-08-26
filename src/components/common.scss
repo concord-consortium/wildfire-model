@@ -7,9 +7,9 @@ $bottomBarBorderRadius: 10px;
 
 // Margin-right value applied to .widgetGroup. With the paired -1px
 // margin-left (border-continuity trick at bottom-bar.scss), the net
-// outer-to-outer visible gap between adjacent widgets is 9 - 1 = 8 px,
-// matching the spec's "8 px visible / 10 px content-edge gap".
-$bottomBarWidgetGroupSpacing: 9px;
+// outer-to-outer visible gap between adjacent widgets is 4 - 1 = 3 px,
+// matching the board's "3 px visible / 5 px content-edge gap".
+$bottomBarWidgetGroupSpacing: 4px;
 
 // Width of the fixed left-edge display stack, set by its widest content, the
 // Fire Intensity Scale's two-line title: 10 + 84 + 10.

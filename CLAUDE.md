@@ -122,7 +122,7 @@ and the min-mean cell with `zoneIdx === 0` (valley). The prior `(119000, 38000)`
 `(59000, 3500)` pair (2026-06-03) no longer clears the margin on the current heightmap.
 
 `addSpark` no-ops once both zones hold a spark, so to switch between the Cat 4
-(mid-slope `placeSparkInZone(0/1)`) and Cat 6 endpoints you must **Reload** (not
+(mid-slope `placeSparkInZone(0/1)`) and Cat 6 endpoints you must **Clear All** (not
 Restart) to clear sparks, then re-dismiss the Terrain Setup wizard. Read the engine's
 **matched** category from the sidebar's `.hazbot-sidebar-category-matched` row — not
 the `▸ ✓ N` truth icon, which reflects per-category truth, not the matched floor. The
@@ -135,13 +135,13 @@ Also exposed in [src/models/stores.ts](src/models/stores.ts):
 - `window.sim` — the `SimulationModel` instance. Has `addSpark(x, y)`, `addFireLineMarker`, `setHelitackPoint`, `setWindDirection`, `sparks`, `cells`, `config`, `zones`, etc. All coords in **model feet** (e.g. `plainsTwoZone` is 120000 × 80000 ft)
 - `window.DroughtLevel`, `window.Vegetation`, `window.TerrainType` — enum values for `sim.load(...)`
 
-### Restart vs Reload behavior (important)
+### Restart vs Clear All behavior (important)
 
 - **Restart** stops the running sim and returns to the pre-Start state. **Sparks stay placed**, terrain settings stay set. Factor variables (e.g. `setVegetation`) persist across runs by design — they track *user history*, not current state
-- **Reload** is a full reset: returns spark count to the preset default, clears terrain customizations, forces user back through Terrain Setup before Spark/Start re-enable
-- **Reload also clears Hazbot's per-category feedback levels**, so every category opens on level 1 again; **Restart does not**. To reset the levels without losing the terrain setup, call `window.test.resetHazbotFeedbackLevels()`
+- **Clear All** is a full reset: returns spark count to the preset default, clears terrain customizations, forces user back through Terrain Setup before Spark/Start re-enable
+- **Clear All also clears Hazbot's per-category feedback levels**, so every category opens on level 1 again; **Restart does not**. To reset the levels without losing the terrain setup, call `window.test.resetHazbotFeedbackLevels()`
 
-When testing categories that require fresh spark placement (e.g. Category 4 → Category 5), use Reload, not Restart.
+When testing categories that require fresh spark placement (e.g. Category 4 → Category 5), use Clear All, not Restart.
 
 ### Things that will trip you up
 

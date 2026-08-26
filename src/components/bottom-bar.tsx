@@ -11,7 +11,7 @@ import SparkIcon from "../assets/bottom-bar/spark.svg";
 import SparkHighlight from "../assets/bottom-bar/spark_highlight.svg";
 import PauseIcon from "../assets/bottom-bar/pause.svg";
 import StartIcon from "../assets/bottom-bar/start.svg";
-import ReloadIcon from "../assets/bottom-bar/reload.svg";
+import ClearAllIcon from "../assets/bottom-bar/clear-all.svg";
 import RestartIcon from "../assets/bottom-bar/restart.svg";
 import FireLineIcon from "../assets/bottom-bar/fire-line.svg";
 import FireLineHighlightIcon from "../assets/bottom-bar/fire-line_highlight.svg";
@@ -138,6 +138,17 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           <CCLogoSmall className={css.logoSmall} />
         </div>
         <div className={css.mainContainer}>
+          <div className={`${css.widgetGroup} ${css.clearAll}`}>
+            <Button
+              className={css.playbackButton}
+              data-testid="clear-all-button"
+              onClick={this.handleClearAll}
+              disabled={!simulation.reloadEnabled || ui.showTerrainUI}
+              disableRipple={true}
+            >
+              <span><ClearAllIcon/><span className={css.playbackButtonLabel}>Clear All</span></span>
+            </Button>
+          </div>
           <div className={`${css.widgetGroup} ${css.terrainButton}`}>
             <IconButton
               icon={simulation.zonesCount < 3 ? <TerrainIcon /> : <TerrainThreeIcon />}
@@ -160,16 +171,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               onClick={this.placeSpark}
             />
           </div>
-          <div className={`${css.widgetGroup} ${css.reloadRestart}`}>
-            <Button
-              className={css.playbackButton}
-              data-testid="clear-all-button"
-              onClick={this.handleReload}
-              disabled={!simulation.reloadEnabled || ui.showTerrainUI}
-              disableRipple={true}
-            >
-              <span><ReloadIcon/><span className={css.playbackButtonLabel}>Reload</span></span>
-            </Button>
+          <div className={`${css.widgetGroup} ${css.restart}`}>
             <Button
               className={css.playbackButton}
               data-testid="restart-button"
@@ -324,7 +326,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     log("SimulationRestarted");
   };
 
-  public handleReload = () => {
+  public handleClearAll = () => {
     const { simulation, ui } = this.stores;
     if (simulation.simulationStarted) {
       simulation.simulationEndedLogged = true;
@@ -334,7 +336,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       });
     }
     this.stores.chartStore.reset();
-    // Reload (Clear All) clears Hazbot's per-category feedback levels too, so a full
+    // Clear All clears Hazbot's per-category feedback levels too, so a full
     // restart cannot open on "I'm all out of ideas". The top bar's refresh icon already
     // does this for free by reloading the page; this is what makes the two agree.
     ui.resetHazbotFeedback();

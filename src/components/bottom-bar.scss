@@ -96,15 +96,15 @@ $overflowHeight: 11px;
   // the browser resolves it to MUI's `.MuiButton-root { min-width: 64px }`
   // default, rendering the widget at 66 px (64 + 2 border) instead of the
   // spec's 62 px (60 + 2 border). Same pattern as `.terrainButton` (width 82);
-  // pill buttons (Reload / Restart / Start) avoid this because `.playbackButton`
+  // pill buttons (Clear All / Restart / Start) avoid this because `.playbackButton`
   // has no `width: 100%` and so doesn't trigger the circular sizing.
   .placeSpark {
     width: 60px;
     // Also constrain the inner MUI Button to 60 so its icon SVG (sized
     // `width: 100%` via .iconButton's rule) doesn't overflow the 60 px
-    // widgetGroup content area. The tag selector `.placeSpark button`
-    // has specificity 0,1,1 and beats both `.iconButton` (0,1,0) and
-    // MUI's `.MuiButton-root { min-width: 64px }` (0,1,0). Same
+    // widgetGroup content area. Nested, the tag selector compiles to
+    // `.bottomBar .placeSpark button` (0,2,1) and beats both `.iconButton`
+    // (0,1,0) and MUI's `.MuiButton-root { min-width: 64px }` (0,1,0). Same
     // cross-module pattern as `.fireLineHelitack button { width: 65px }`.
     // Both `min-width` and `width` need overriding here: effective
     // rendered width = max(min-width, width), so leaving MUI's
@@ -113,13 +113,27 @@ $overflowHeight: 11px;
       min-width: 60px;
       width: 60px;
     }
-    // Spark bubble abuts the Reload bubble (no gap)
+    // Spark bubble abuts the Restart bubble (no gap)
     margin-right: 0;
   }
 
-  .reloadRestart {
-    white-space: nowrap;
-    // Start bubble abuts the Reload/Restart bubble (no gap)
+  // Clear All is the one pill wider than 60. `.playbackButton` locks all three
+  // pills to `width: 60px !important` (the rule below explains why the
+  // !important is unavoidable there), so reaching 66 has to beat an !important
+  // declaration, which specificity alone cannot do. Nested, this compiles to
+  // `.bottomBar .clearAll button` (0,2,1) and outranks `.playbackButton` (0,1,0).
+  // `min-width` needs no companion override: `.playbackButton` pins it at 60,
+  // and the used width is clamp(min-width, width), so a floor below the target
+  // never binds. That is what separates this from `.placeSpark button`, where
+  // the competing min-width is MUI's 64 and so exceeds that rule's 60 target.
+  .clearAll {
+    button {
+      width: 66px !important;
+    }
+  }
+
+  // Start bubble abuts the Restart bubble (no gap)
+  .restart {
     margin-right: 0;
   }
 
@@ -137,7 +151,7 @@ $overflowHeight: 11px;
     }
   }
   // Designer: Fireline bubble abuts the Helitack bubble (no gap). Same
-  // trick as .placeSpark / .reloadRestart — zero the right margin and
+  // trick as .placeSpark / .restart: zero the right margin and
   // the next group's -1px left margin pulls it flush.
   .fireLineButton {
     margin-right: 0;
@@ -197,8 +211,8 @@ $overflowHeight: 11px;
   }
 }
 
-// Mirrors `.iconButtonText` in icon-button.scss so playback labels (Reload /
-// Restart / Start / Stop) share the same baseline as Setup / Spark / Fireline /
+// Mirrors `.iconButtonText` in icon-button.scss so playback labels (Clear All /
+// Restart / Start / Pause) share the same baseline as Setup / Spark / Fireline /
 // Helitack. Wrapped in a span by bottom-bar.tsx so it can be positioned
 // independently of the inline-flow text node it used to be.
 .playbackButtonLabel {
@@ -214,8 +228,8 @@ $overflowHeight: 11px;
   // sets `min-width: 64px` via emotion, which is injected after our
   // static SCSS and wins on equal-specificity source-order. Without
   // !important the effective width is max(min-width, width) =
-  // max(64, 60) = 64, and Reload / Restart / Start each render at 66 px
-  // (64 inner + 2 widgetGroup border) instead of the spec's 62 / 122.
+  // max(64, 60) = 64, and the Clear All / Restart / Start pills would each
+  // render 4 px wider than the 62 px border box they default to.
   // Same !important pattern as the disabled-opacity override below.
   min-width: 60px !important;
   width: 60px !important;

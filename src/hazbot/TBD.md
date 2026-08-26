@@ -160,7 +160,7 @@ top of the substrate, not part of WM-10.
   carrying it through — host app needs to display it.
 - **Persistence.** Engine state is in-memory only — page reload clears
   readings + factor variables. Documented in [CLAUDE.md](../../CLAUDE.md)
-  "Restart vs Reload behavior." Fine for the current feature, but a future
+  "Restart vs Clear All behavior." Fine for the current feature, but a future
   "show me where I was last session" surface needs serialization.
 - **Engine-emitted log events.** Today the engine receives events via
   `consume()` but emits nothing back to the LARA log stream beyond the

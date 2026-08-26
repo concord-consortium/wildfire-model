@@ -60,8 +60,8 @@ describe("Log events", () => {
     it("fires with reason 'SimulationReloaded' before reload", async () => {
       jest.spyOn(stores.simulation, "reload");
       // Under the new reloadEnabled = setupChanged || sparks.length > 0 rule,
-      // simulationStarted alone leaves Reload disabled and userEvent.click
-      // would no-op. Add a spark so Reload is enabled (mirrors the test-4
+      // simulationStarted alone leaves Clear All disabled and userEvent.click
+      // would no-op. Add a spark so Clear All is enabled (mirrors the test-4
       // fixture pattern below).
       stores.simulation.sparks.push(new Vector2(50000, 50000));
       stores.simulation.simulationStarted = true;
@@ -501,7 +501,7 @@ describe("Log events", () => {
         expect(names.indexOf("FireLineCanceled")).toBeLessThan(names.indexOf("SimulationRestarted"));
       });
 
-      it("logs reason 'reload' when Reload discards a placement", async () => {
+      it("logs reason 'reload' when Clear All discards a placement", async () => {
         renderCancelHook();
         renderBottomBar();
         placeFirstEnd();
