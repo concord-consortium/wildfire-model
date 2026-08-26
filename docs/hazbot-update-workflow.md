@@ -17,17 +17,17 @@ node scripts/extract-hazbot-sheets.js "/path/to/Wildfire Hazbot Feedback Tables.
 ```
 
 This regenerates:
-- `src/hazbot/rule-sets/{23,24,25,32,33,34,35}.ts` — per-tab `RuleSet<WildfireDefaults>` modules.
+- `src/hazbot/rule-sets/{23,24,25,32,33,34,35,41,44,46}.ts`: per-tab `RuleSet<WildfireDefaults>` modules.
 - `src/hazbot/rule-sets/index.ts` — aggregating `ruleSets` barrel.
 - `src/hazbot/dsl-grammar.md` — README-tab dump (DSL grammar reference).
 
 Each generated file starts with `// AUTO-GENERATED — DO NOT EDIT — re-run scripts/extract-hazbot-sheets.js`. Manual edits will be overwritten on the next run; PR review should flag any.
 
 > **Note: the committed rule-set modules are a clean regenerate, so `git diff` is the sheet diff (WM-51).**
-> This reverses an earlier caveat. WM-27 removed the per-rule-set `defaults` field, and until WM-18 reconciled the modules a re-extract mixed real sheet changes with unrelated drift. WM-18 landed and did the reconciliation, and re-extracting the workbook the committed modules came from now reproduces all eleven rule-set modules, `index.ts` and `dsl-grammar.md` byte-for-byte (verified 2026-08-20 against `Wildfire Hazbot Feedback Tables-2026-06-21-v2.xlsx`). Run the extractor in place and read step 2's diff directly; there is no need to compare temp extractions against each other.
+> This reverses an earlier caveat. WM-27 removed the per-rule-set `defaults` field, and until WM-18 reconciled the modules a re-extract mixed real sheet changes with unrelated drift. WM-18 landed and did the reconciliation, and re-extracting the workbook the committed modules came from now reproduces all ten rule-set modules, `index.ts` and `dsl-grammar.md` byte-for-byte (verified 2026-08-20 against `Wildfire Hazbot Feedback Tables-2026-06-21-v2.xlsx`). Run the extractor in place and read step 2's diff directly; there is no need to compare temp extractions against each other.
 
-> **Note — text bolding in the sheet is dropped on extraction (candidate WM-18 enhancement).**
-> The Feedback Tables sheet bolds key words in `feedback` / `arrowText` (e.g. **Restart**, **Setup**, **Next**, **Wind Direction**, **Scroll up!**) — verified ~127 bold runs across ~65 strings in the `2026-06-19` export. The extractor reads cell **values** via `read-excel-file` (`readXlsxFile(inputPath, { getSheets: true })`, [extract-hazbot-sheets.js](../scripts/extract-hazbot-sheets.js)), which does **not** expose rich-text run formatting, so the committed rule-set modules carry **no** markdown bold. To preserve it, change the read path to one that surfaces runs — e.g. `exceljs` (`cell.value.richText: [{ font: { bold }, text }]`) or a direct `xl/sharedStrings.xml` parse — and emit each bold run as `**…**`. The rendering side is already markdown-bold-ready: `parseFeedback` leaves `**…**` intact and the coachmarks popover renders it, so once the extractor emits bold it shows in both the WM-16 intro popover and the WM-17 tour steps with no renderer change. WM-17 cannot source this itself: its tour-data generator reads the already-stripped committed modules. (Watch for a mid-word artifact in the sheet — one run is bolded as `**Wind Directio**n`; normalize or fix at source.)
+> **Note: text bolding in the sheet is preserved on extraction.**
+> The Feedback Tables sheet bolds key words in `feedback` / `arrowText` (e.g. **Restart**, **Setup**, **Next**, **Wind Direction**, **Scroll up!**): roughly 127 bold runs across 65 strings in the `2026-06-19` export. `read-excel-file` flattens rich text to plain values and does not expose run formatting, so [rich-text-bold.js](../scripts/rich-text-bold.js) parses `xl/sharedStrings.xml` directly and [extract-hazbot-sheets.js](../scripts/extract-hazbot-sheets.js) swaps each bolded cell's value for its markdown form before the rest of the pipeline runs. The rendering side needs no change: `parseFeedback` leaves `**…**` intact and the coachmarks popover renders it, so bold shows in both the WM-16 intro popover and the WM-17 tour steps. (Watch for a mid-word artifact in the sheet: one run is bolded as `**Wind Directio**n`; normalize or fix at source.)
 
 ## 2. Inspect the generated diff
 
