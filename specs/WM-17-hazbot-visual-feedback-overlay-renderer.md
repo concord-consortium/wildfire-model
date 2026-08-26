@@ -12,6 +12,8 @@ For a non-technical reader: when a student opens the Hazbot Analysis panel after
 
 The ticket's original scope note (rule-sets 32 to 35 and 43/45/47/54 excluded as "blocked on defaults" or "no content authored yet") was stale by the time the work started; all eleven tabs had authored `visualFeedback` in the committed modules, and the ticket's "43" is actually tab 42.
 
+**Rule-set IDs in this document are the ones in force when the story shipped.** [WM-54](WM-54-renumber-rule-sets.md) later renumbered `42` to `41`, `45` to `44` and `47` to `46`, and removed 54, leaving ten rule-sets; `src/hazbot/wildfire/tour-map.tsx` uses the new numbers. Read every ID below, including the "45/47/54" cue in Out of Scope, as historical.
+
 ## Requirements
 
 **Scope and launch**
@@ -57,7 +59,7 @@ The ticket's original scope note (rule-sets 32 to 35 and 43/45/47/54 excluded as
 - **R24.** Map coverage (unit): every coaching category has exactly one map entry, and there are no orphan entries for non-coaching categories.
 - **R25.** Step-count agreement (unit): each map entry's step count equals its category's parsed `arrowText` step count.
 - **R26.** Anchor resolvability: every `data-testid` the map references is a known testid, enforced by the `AnchorTestId` union type rather than a render smoke test.
-- **R27.** Per-tab Playwright validation against a running dev server, as an explicit deliverable rather than guidance.
+- **R27 (partial).** Per-tab Playwright validation against a running dev server, as an explicit deliverable rather than guidance. Three categories were walked live, 23/2, 24/2 and 25/4; the remaining tabs were accepted on a reuse rationale plus unit coverage. That evidence also predates the pin change: the walks ran against yalc-linked `0.0.1-pre.8`, and two of them (the gated degrade-on-removal and the 24 Next-to-Wind held-anchor-removal) covered behavior the branch reversed when it re-pinned to `pre.9`. See Superseded During Implementation.
 
 ## Technical Notes
 
@@ -69,7 +71,7 @@ The ticket's original scope note (rule-sets 32 to 35 and 43/45/47/54 excluded as
 
 **Every intermediate step is an anchor click.** Across all 33 coaching tours, every intermediate step advances on clicking Restart, Setup, Next, Reload or Start, and the final step is always Done-terminated. The "place sparks" and "run the model again" actions always live in that final Done step. So `advanceOn: { event: "click" }` alone covers every wildfire tour, and the imperative `moveNext()` path, while available, is unused.
 
-**Two anchor-removal hazards, one library rule.** Two distinct wildfire interactions remove a gated step's anchor mid-tour: 24's Next and Wind live in different wizard sub-panels that mount and unmount, so clicking Next removes the held anchor while the engine waits for Wind; and every terminal Setup-panel step's instruction ("then run the model again") requires Create, which unmounts the panel. Both were addressed by a single library behavior rather than two rules.
+**Two anchor-removal hazards, one library rule.** Two distinct wildfire interactions remove a gated step's anchor mid-tour: 24's Next and Wind live in different wizard sub-panels that mount and unmount, so clicking Next removes the held anchor while the engine waits for Wind; and every terminal Setup-panel step's instruction ("then run the model again") requires Create, which unmounts the panel. Both were addressed by a single library behavior rather than two rules. *(Reversed during implementation. The branch ships `onTargetLost: "close"`, so a step whose anchor unmounts closes the tour rather than re-floating. The terminals remain anchored to the Setup panel, so a student who follows the terminal instruction and clicks Create ends the tour at that point. See Superseded During Implementation.)*
 
 **Spark zone counting.** `simulation.sparks` is `Vector2[]` with no `zoneIdx`, and the `OneSparkPerZone` factor reads the run snapshot's baked-in `zoneIdx`, so "live sparks" and "analyzed-run sparks" are genuinely different sources. The conditional helper maps each live spark to its cell's `zoneIdx`, reusing the snapshot path rather than duplicating it, and reads live sparks so the ring reflects current placement.
 
@@ -153,7 +155,7 @@ Three things the branch shipped differently from what this spec settled. Recorde
 - B) Add image support to the popover and supply the artwork.
 - C) Render the imagery host-side as a custom viewport overlay outside the popover.
 
-**Decision**: **B**, shipped with a placeholder SVG reading "TBD: Mountain image" so the image path is fully exercised, with the final artwork swapping in later as an asset change only. `arrowText` already gives a working text-only fallback for that step, so the image is an enhancement rather than a blocker.
+**Decision**: **B**. The initial implementation used a placeholder SVG reading "TBD: Mountain image" so the image path was fully exercised, and the final artwork replaced it before the story shipped (see Superseded During Implementation). `arrowText` already gives a working text-only fallback for that step, so the image is an enhancement rather than a blocker.
 
 ---
 
