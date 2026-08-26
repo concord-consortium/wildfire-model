@@ -62,13 +62,13 @@
 
 .timeDisplay{
   box-sizing: border-box;
-  width: 97px;
-  height: 47px;
+  width: $keyAreaWidth;
+  height: $timeDisplayHeight;
   position: fixed;
-  top: $topBarHeight + 10px;
-  left: 10px;
-  background: white;
-  border-radius: 4px;
+  top: $timeDisplayTop;
+  left: $keyAreaLeft;
+  background: $keyAreaBackground;
+  border-radius: $keyAreaBorderRadius;
   text-align: center;
   color: $controlText;
   z-index: 2;
