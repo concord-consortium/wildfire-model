@@ -129,7 +129,9 @@
       font-family: 'Roboto Condensed';
       font-size: 14px;
       font-weight: normal;
-      width: 68px;
+      // Holds "from the WNW" (80.03px), the reading's longest unbreakable run, on one line.
+      // Deliberately independent of $keyAreaWidth: it only has to fit inside it.
+      width: 81px;
       margin: 5px auto 0;
     }
     .windDial {

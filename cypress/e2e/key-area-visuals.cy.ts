@@ -7,7 +7,7 @@
 const APP_URL = "/?preset=plainsTwoZone";
 
 const TIME = ".app--timeDisplay--__wildfire-v1__";
-const WIND = ".simulation-info--windContainer--__wildfire-v1__";
+const WIND = '[data-testid="wind-meter"]';
 const SCALE = ".app--fireIntensityScaleContainer--__wildfire-v1__";
 const TITLE = ".fire-intensity-scale--title--__wildfire-v1__";
 const BAR = ".fire-intensity-scale--barsContainer--__wildfire-v1__";
