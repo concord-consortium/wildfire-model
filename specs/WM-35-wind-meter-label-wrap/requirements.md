@@ -23,7 +23,7 @@ The label is rendered at `simulation-info.tsx:52-54` as `` `${Math.round(scaledW
 ## Requirements
 
 - The Wind Meter label never renders more than two lines for any reading the model can produce, **including authored ones outside the slider's range**, at the label's shipping font (`'Roboto Condensed'` 14px). The guarantee is measured against that font by design; see the font-fallback note in Technical Notes.
-- `.windText` widens from 68px to **81px**. The container's `97 x 126` box is unchanged, and its height in particular is not reduced.
+- `.windText` widens from 68px to **81px**. `.windContainer`'s box is unchanged: it stays `$keyAreaWidth` x `$windContainerHeight` (104 x 126 on this branch, since WM-52 sets the width), and its height in particular is not reduced.
 - 81px is chosen because it clears `"from the WNW"`, which measures **80.03px** and is the binding line at every speed. Above that width the two-line guarantee stops depending on the speed value at all: verified across speeds from 0 to 123456, no reading produces three lines. 74px, the minimum for one- and two-digit speeds, is **not** sufficient, because a three-digit reading is reachable today (see the resolved questions below).
 - The compass dial sits fully inside the container in every state, 5px above its bottom edge, matching the design.
 - The two-line break point is unchanged for the shortest reading: "0 MPH from the N" still renders as "0 MPH from" / "the N".
@@ -32,7 +32,7 @@ The label is rendered at `simulation-info.tsx:52-54` as `` `${Math.round(scaledW
 - The chosen width is recorded in a comment naming the string it was measured against (`"from the WNW"`, 80.03px at `normal 400 14px "Roboto Condensed"`) and its relationship to the container (81px fits inside today's 97px box and inside the 104px box WM-52 introduces), so a later font, copy, or container change can be re-checked rather than re-derived.
 - **A Cypress regression test pins both the cause and the symptom**, in one spec: the label's rendered height is 32px (two 16px line boxes) and the dial's bottom is inside the container's bottom. Reverting `.windText` to 68px must turn both red. The worst cases to drive it with are `"10 MPH from the NNE"` (the worst reading in the slider's range) and `"150 MPH from the WNW"` (reachable through `?windSpeed=30`, and the case 74px does not fix).
 - The test drives state through URL params rather than `window.sim`: `?windSpeed=2&windDirection=22.5` renders exactly `"10 MPH from the NNE"`, and `?windSpeed=30&windDirection=292.5` renders `"150 MPH from the WNW"`. Both verified live.
-- A `data-testid` is added to `.windText` and to `.windContainer`. Neither carries one today, and there is no wind-related test id anywhere in the app.
+- A `data-testid` is added to `.windText`, `.windContainer` and `.windDial` (`wind-meter-label` / `wind-meter` / `wind-meter-dial`). None carries one today, and there is no wind-related test id anywhere in the app. The dial's was not in the original list but the dial-position assertion needs to select it, and giving all three ids keeps the new spec from mixing test ids with the hashed-class selectors `key-area-visuals.cy.ts` uses.
 - **The test must be a browser test.** jsdom performs no line breaking, so the same assertion written in Jest reports a constant height at any width and passes against the unfixed code.
 
 ## Technical Notes

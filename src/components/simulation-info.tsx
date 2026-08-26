@@ -47,12 +47,15 @@ export const SimulationInfo = observer(function WrappedComponent() {
           <ZoneInfo key={idx} idx={idx} zone={zone} locked={uiDisabled} onClick={showTerrainPanel.bind(null, idx)} />
         )
       }
-      <div className={`${css.windContainer} ${simulation.windDidChange ? css.windDidChange : ""}`}>
+      <div
+        className={`${css.windContainer} ${simulation.windDidChange ? css.windDidChange : ""}`}
+        data-testid="wind-meter"
+      >
         <div className={css.windHeader}>Wind Meter</div>
-        <div className={css.windText}>
+        <div className={css.windText} data-testid="wind-meter-label">
             {`${Math.round(scaledWind)} MPH from the ${degToCompass(simulation.wind.direction)}`}
         </div>
-        <div className={css.windDial}>
+        <div className={css.windDial} data-testid="wind-meter-dial">
           <WindDial windDirection={simulation.wind.direction} />
         </div>
       </div>
