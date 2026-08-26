@@ -9,11 +9,9 @@
 // "Fireline" label, and the fullscreen container's 62 x 62 dimensions
 // with computed background-size / repeat / position.
 //
-// Hover/active opacity (0.5 / 1.0) and FIS-hidden centering live in the
-// Playwright walkthrough rather than here. Cypress's cy.trigger doesn't
-// reliably activate :hover / :active pseudo-classes for getComputedStyle
-// reads, and the centering check is part of the manual Playwright
-// walkthrough that produces the PR-attached screenshots.
+// Hover/active opacity (0.5 / 1.0) lives in the Playwright walkthrough rather
+// than here: Cypress's cy.trigger doesn't reliably activate :hover / :active
+// pseudo-classes for getComputedStyle reads.
 
 const APP_URL = "/?preset=plainsTwoZone";
 
@@ -56,7 +54,6 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     widgetRect("start-button").should((r) => expect(r.width).to.eq(62));
     widgetRect("fireline-button").should((r) => expect(r.width).to.eq(67));
     widgetRect("helitack-button").should((r) => expect(r.width).to.eq(67));
-    widgetRect("fire-intensity-scale").should((r) => expect(r.width).to.eq(142));
   });
 
   it("renders the Reload+Restart paired group at its shared Border w. value", () => {
@@ -74,7 +71,7 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     // widgetGroup; Fireline and Helitack each have their own
     // widgetGroup. So the rects[] order is:
     //   0: Setup, 1: Spark, 2: Reload+Restart pair, 3: Start,
-    //   4: Fireline, 5: Helitack, 6: FIS.
+    //   4: Fireline, 5: Helitack.
     //
     // Two gap values are expected:
     //   8 px (default): 9 px widgetGroup margin-right minus the next
@@ -88,8 +85,7 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     const rects: { left: number; right: number }[] = [];
     const ids = [
       "terrain-button", "spark-button", "reload-button",
-      "start-button", "fireline-button", "helitack-button",
-      "fire-intensity-scale"
+      "start-button", "fireline-button", "helitack-button"
     ];
     ids.forEach((id) =>
       widgetRect(id).then((r) => { rects.push({ left: r.left, right: r.right }); })
@@ -100,7 +96,6 @@ describe("Bottom-bar visual regression (WM-23)", () => {
       expect(rects[3].left - rects[2].right, "Restart -> Start (abuts)").to.eq(-1);
       expect(rects[4].left - rects[3].right, "Start -> Fireline").to.eq(8);
       expect(rects[5].left - rects[4].right, "Fireline -> Helitack (abuts)").to.eq(-1);
-      expect(rects[6].left - rects[5].right, "Helitack -> FIS").to.eq(8);
     });
   });
 

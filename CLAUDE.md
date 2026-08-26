@@ -44,7 +44,7 @@ The app reads config from the query string. For Hazbot validation runs, combine 
 | `helitackAvailable=false` | Disable helitack tool |
 | `fireLineAvailable=false` | Disable fire-line tool |
 | `severeDroughtAvailable=false` | Cap drought slider at Medium |
-| `showBurnIndex=false` | Hide burn-index UI |
+| `showBurnIndex=false` | Hide burn-index UI: omits the Fire Intensity Scale from the left key area (Time and Wind Meter are unchanged) and drops the three-tier burn-index terrain coloring |
 | `forestWithSuppressionAvailable=false` | Disable forest-with-suppression option |
 | `tpiDebug=true` | Paint each placed spark's TPI bands onto the terrain (warm = ridge / +TPI, cool = valley / −TPI). Used to validate `SparksAtTopAndBottom` (ruleset 25) |
 | `tpiBands=[3,8,15]` | Concentric band radii (cells) for the multi-scale TPI; array length = N bands |
