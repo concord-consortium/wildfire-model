@@ -95,10 +95,9 @@ $overflowHeight: 11px;
   // creates a circular-sizing dependency with its shrink-wrapping parent;
   // the browser resolves it to MUI's `.MuiButton-root { min-width: 64px }`
   // default, rendering the widget at 66 px (64 + 2 border) instead of the
-  // spec's 62 px (60 + 2 border). Same pattern as `.terrainButton`
-  // (width 82) and `.fireIntensityScale` (width 140); pill buttons
-  // (Reload / Restart / Start) avoid this because `.playbackButton` has
-  // no `width: 100%` and so doesn't trigger the circular sizing.
+  // spec's 62 px (60 + 2 border). Same pattern as `.terrainButton` (width 82);
+  // pill buttons (Reload / Restart / Start) avoid this because `.playbackButton`
+  // has no `width: 100%` and so doesn't trigger the circular sizing.
   .placeSpark {
     width: 60px;
     // Also constrain the inner MUI Button to 60 so its icon SVG (sized
@@ -144,13 +143,6 @@ $overflowHeight: 11px;
     margin-right: 0;
   }
 
-  // Width-locking modifier on the Fire Intensity Scale widgetGroup so the
-  // bar's right edge sits at the layout-table-specified Border w. of 142px
-  // (140 content + 2 border).
-  .fireIntensityScale {
-    width: 140px;
-  }
-
   // WM-6 Hazbot button container, inside .rightContainer. `margin: 0 auto`
   // centers it horizontally in the right region's free space (between the last
   // control and the fullscreen toggle). NOT a `.widgetGroup` (no white bubble /
@@ -161,34 +153,6 @@ $overflowHeight: 11px;
     align-items: center;
     margin: 0 auto;
     overflow: visible;
-  }
-
-  // FIS-hidden layout: when the Fire Intensity Scale widgetGroup is not
-  // rendered, center the controls cluster horizontally between the CC
-  // logo (leftContainer) and the Fullscreen toggle (rightContainer).
-  // Uses `margin: 0 auto` rather than bare `margin: auto`: under
-  // `display: flex` the bare form also applies vertical auto-margins
-  // which can shift the cluster off-axis depending on .bottomBar's
-  // align-items. The `0` vertical margins keep the cluster's vertical
-  // placement unchanged.
-  &.fisHidden {
-    .mainContainer {
-      margin: 0 auto;
-    }
-  }
-
-  .label {
-    font-size: 14px;
-    font-weight: bold;
-    padding: 4px 6px 3px 6px;
-    // push the "Fire Intensity Scale" title 2px down from the
-    // bubble's rounded top edge.
-    margin-top: 2px;
-    // Center the "Fire Intensity Scale" title above the centered bars
-    // and Low/High labels below it. Without this the title is left-
-    // aligned within the 140 px widget content area while the bars
-    // (80 px) are centered, producing a visually misaligned stack.
-    text-align: center;
   }
 
   .terrainButton{

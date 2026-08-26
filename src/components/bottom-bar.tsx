@@ -22,7 +22,6 @@ import TerrainHighlightIcon from "../assets/bottom-bar/terrain-setup_highlight.s
 import TerrainThreeIcon from "../assets/bottom-bar/terrain-three.svg";
 import TerrainThreeHighlightIcon from "../assets/bottom-bar/terrain-three_highlight.svg";
 import { Interaction } from "../models/ui";
-import { FireIntensityScale } from "./fire-intensity-scale";
 import { IconButton } from "./icon-button";
 import { log } from "../log";
 import { AnalysisEngineProvider } from "../hazbot/engine";
@@ -132,7 +131,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     const { simulation, ui } = this.stores;
     const { hazbotEngine } = this;
     return (
-      <div className={`${css.bottomBar} ${!simulation.config.showBurnIndex ? css.fisHidden : ""}`}>
+      <div className={css.bottomBar}>
         {simulation.config.bottomBarBaseline && <div className={css.bottomBarBaseline} />}
         <div className={css.leftContainer}>
           <CCLogo className={css.logo} />
@@ -216,13 +215,6 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               onClick={this.handleHelitack}
             />
           </div>
-          {
-            simulation.config.showBurnIndex &&
-            <div className={`${css.widgetGroup} ${css.fireIntensityScale}`}>
-              <div className={css.label}>Fire Intensity Scale</div>
-              <FireIntensityScale />
-            </div>
-          }
         </div>
         {/* Right region. `.leftContainer` and `.rightContainer` are balanced flex
             items (flex: 1) so `.mainContainer` stays centered between them. The

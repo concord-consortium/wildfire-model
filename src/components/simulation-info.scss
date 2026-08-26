@@ -104,13 +104,13 @@
 
   .windContainer {
     box-sizing: border-box;
-    width: 97px;
-    height: 126px;
+    width: $keyAreaWidth;
+    height: $windContainerHeight;
     position: fixed;
-    top: 67px + $topBarHeight;
-    left: 10px;
-    background: #fff;
-    border-radius: 4px;
+    top: $windContainerTop;
+    left: $keyAreaLeft;
+    background: $keyAreaBackground;
+    border-radius: $keyAreaBorderRadius;
     text-align: center;
     color: $controlText;
     z-index: 2;

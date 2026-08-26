@@ -1,51 +1,76 @@
 @import "common.scss";
 
+$swatchWidth: 27px;
+$swatchesWidth: $swatchWidth * 3;
+
 .fireIntensityScale {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  color: $controlText;
+
+  .title {
+    position: absolute;
+    left: 10px;
+    top: 6px;
+    width: 84px;
+    height: 34px;
+    // `pre`, not `pre-line`: both honor the authored break, but `pre-line`
+    // still soft-wraps, and "Fire Intensity" is 87px on the fallback font
+    // inside this 84px box, so it would take a third line and overflow the
+    // container. `pre` overflows 3px sideways into the inset instead.
+    white-space: pre;
+    font-family: Lato;
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+  }
 
   .barsContainer {
-    width: 88px;
-    height: 15px;
-    margin: 4px 0;
-    border-radius: 3px;
+    box-sizing: border-box;
+    position: absolute;
+    left: 11px;
+    top: 45px;
+    width: $swatchesWidth + 2px;
+    height: 12px;
     border: solid 1px $controlGray;
+    border-radius: 3px;
     display: flex;
     flex-direction: row;
-    // nudge the bar up 2 px so it sits visually centered between the title and labels
-    position: relative;
-    top: -2px;
   }
 
-  .bar1 {
-    width: 33.33%;
+  .swatch {
+    width: $swatchWidth;
     height: 100%;
-    border-top-left-radius: 2px;
-    border-bottom-left-radius: 2px;
-  }
 
-  .bar2 {
-    width: 33.33%;
-    height: 100%;
-  }
+    &:first-child {
+      border-top-left-radius: 2px;
+      border-bottom-left-radius: 2px;
+    }
 
-  .bar3 {
-    width: 33.33%;
-    height: 100%;
-    border-top-right-radius: 2px;
-    border-bottom-right-radius: 2px;
+    &:last-child {
+      border-top-right-radius: 2px;
+      border-bottom-right-radius: 2px;
+    }
   }
 
   .labels {
-    width: 80px;
-    font-size: 14px;
+    position: absolute;
+    left: 12px;
+    top: 59px;
+    width: $swatchesWidth;
+    height: 16px;
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    // nudge the labels to align with the bottom-bar baseline
-    position: relative;
-    top: -3px;
+    font-family: $scaleFont;
+    font-size: 14px;
+    line-height: 16px;
+  }
+
+  // each label spans its end swatch, so centering here centers under that swatch
+  .label {
+    width: $swatchWidth;
+    text-align: center;
   }
 }
