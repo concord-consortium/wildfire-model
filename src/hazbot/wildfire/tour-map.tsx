@@ -121,18 +121,18 @@ export const tourMap: Record<string, Record<number, TourFactory>> = {
     5: () => [anchor("restart-button"), anchor("terrain-button"), setupPanel()],
     6: (ctx) => [anchor("restart-button"), conditionalSparkStep(ctx)],
   },
-  // 41 — Reload → Start.
+  // 41: Clear All -> Start.
   "41": {
-    2: () => [anchor("reload-button"), anchor("start-button")],
+    2: () => [anchor("clear-all-button"), anchor("start-button")],
   },
-  // 44 — Reload → Start; and a Restart → Fireline (ring Fireline only, v1).
+  // 44: Clear All -> Start; and a Restart -> Fireline (ring Fireline only, v1).
   "44": {
-    2: () => [anchor("reload-button"), anchor("start-button")],
+    2: () => [anchor("clear-all-button"), anchor("start-button")],
     3: () => [anchor("restart-button"), anchor("fireline-button")],
   },
-  // 46 — Reload → Start; Restart → Fireline; Restart → Start.
+  // 46: Clear All -> Start; Restart -> Fireline; Restart -> Start.
   "46": {
-    2: () => [anchor("reload-button"), anchor("start-button")],
+    2: () => [anchor("clear-all-button"), anchor("start-button")],
     3: () => [anchor("restart-button"), anchor("fireline-button")],
     4: () => [anchor("restart-button"), anchor("start-button")],
   },

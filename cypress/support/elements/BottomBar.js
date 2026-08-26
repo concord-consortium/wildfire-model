@@ -6,8 +6,8 @@ export class BottomBar {
   getSparkButton() {
     return cy.get('[data-testid="spark-button"]');
   }
-  getReloadButton() {
-    return cy.get('[data-testid="reload-button"]');
+  getClearAllButton() {
+    return cy.get('[data-testid="clear-all-button"]');
   }
   getRestartButton() {
     return cy.get('[data-testid="restart-button"]');

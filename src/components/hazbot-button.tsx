@@ -97,7 +97,7 @@ export const HazbotButton = observer(function HazbotButton() {
   }, [runInProgress]);
 
   // Ready/pulse predicate. The simulationStarted term keeps the pulse off in the
-  // pre-run / terrain-setup state and auto-hides a stale arm after Restart/Reload
+  // pre-run / terrain-setup state and auto-hides a stale arm after Restart/Clear All
   // (both clear simulationStarted without routing through start()). The
   // !showHazbotFeedback term suppresses the pulse while the coach mark is open
   // (intro or tour) — a run ending mid-coach-mark re-arms the pulse, which would

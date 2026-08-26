@@ -1,11 +1,10 @@
 // cypress/e2e/bottom-bar-visuals.cy.ts
 //
 // Visual-regression guard for the WM-23 bottom-bar layout. Locks in the
-// deterministic geometry: per-widget border widths, the Reload+Restart
-// shared widgetGroup width, inter-widget gaps (8 px default; -1 px at the
-// three abutting bubble seams: Spark <-> Reload pair, Restart <-> Start,
-// and Fireline <-> Helitack), default-state highlight opacity and the
-// Setup button's selected-state highlight, the
+// deterministic geometry: per-widget border widths, inter-widget gaps
+// (3 px default; -1 px at the three abutting bubble seams: Spark <->
+// Restart, Restart <-> Start, and Fireline <-> Helitack), default-state
+// highlight opacity and the Setup button's selected-state highlight, the
 // "Fireline" label, and the fullscreen container's 62 x 62 dimensions
 // with computed background-size / repeat / position.
 //
@@ -21,20 +20,11 @@ const placeSparkInZone = (win: Window, zoneIdx: number) =>
   (win as unknown as { test: { placeSparkInZone(z: number): void } }).test.placeSparkInZone(zoneIdx);
 
 // Pivots from a data-testid'd inner element up to its enclosing widgetGroup
-// (the per-pair outer container with the 1 px border). The
+// (the outer container carrying the 1 px border). The
 // [class*="widgetGroup"] substring-match survives CSS modules hashing.
 const widgetRect = (testid: string) =>
   cy.get(`[data-testid="${testid}"]`).then(($btn) =>
     $btn.closest('[class*="widgetGroup"]')[0].getBoundingClientRect()
-  );
-
-// For within-pair gap assertions: read the inner button rects directly.
-// The shared-container structure under WM-23 means both pair-mates climb
-// to the same widgetGroup ancestor, so the closest-widgetGroup pivot
-// degenerates for these adjacencies.
-const innerRect = (testid: string) =>
-  cy.get(`[data-testid="${testid}"]`).then(($btn) =>
-    $btn[0].getBoundingClientRect()
   );
 
 describe("Bottom-bar visual regression (WM-23)", () => {
@@ -48,74 +38,54 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     // requirements.md Layout table. Fireline and Helitack each live in
     // their own widgetGroup (designer wanted two abutting bubbles
     // rather than one shared bubble) so each shrink-wraps to 67
-    // (65 content + 2 border).
+    // (65 content + 2 border). Clear All is the one pill wider than
+    // `.playbackButton`'s 60px lock, at 66 content + 2 border.
+    widgetRect("clear-all-button").should((r) => expect(r.width).to.eq(68));
     widgetRect("terrain-button").should((r) => expect(r.width).to.eq(84));
     widgetRect("spark-button").should((r) => expect(r.width).to.eq(62));
+    widgetRect("restart-button").should((r) => expect(r.width).to.eq(62));
     widgetRect("start-button").should((r) => expect(r.width).to.eq(62));
     widgetRect("fireline-button").should((r) => expect(r.width).to.eq(67));
     widgetRect("helitack-button").should((r) => expect(r.width).to.eq(67));
   });
 
-  it("shrink-wraps the controls cluster to its six widget groups", () => {
-    // .mainContainer sizes to its contents, so this is the sum of the six
+  it("shrink-wraps the controls cluster to its seven widget groups", () => {
+    // .mainContainer sizes to its contents, so this is the sum of the seven
     // widget widths, their gaps, and the trailing widgetGroup margin
     cy.get('[class*="mainContainer"]').should(($m) => {
-      expect($m[0].getBoundingClientRect().width).to.eq(485);
+      expect($m[0].getBoundingClientRect().width).to.eq(481);
     });
-  });
-
-  it("renders the Reload+Restart paired group at its shared Border w. value", () => {
-    // Reload and Restart still share one widgetGroup (only Fireline +
-    // Helitack got split), so both inner buttons climb to the same
-    // widgetGroup ancestor. Reading the shared widgetGroup's outer
-    // rect gives the spec's "Border w." value (120 content + 2 border).
-    widgetRect("reload-button").should((r) => expect(r.width).to.eq(122));
   });
 
   it("renders the correct visible gap at every widget adjacency", () => {
     // Read each widget's closest-widgetGroup rect into a buffer, then
     // assert the next.left - prev.right delta for every widget-to-widget
-    // adjacency. reload-button climbs to the Reload+Restart shared
-    // widgetGroup; Fireline and Helitack each have their own
-    // widgetGroup. So the rects[] order is:
-    //   0: Setup, 1: Spark, 2: Reload+Restart pair, 3: Start,
-    //   4: Fireline, 5: Helitack.
+    // adjacency. Every control now has its own widgetGroup, so the rects[]
+    // order matches the ids[] order below.
     //
     // Two gap values are expected:
-    //   8 px (default): 9 px widgetGroup margin-right minus the next
+    //   3 px (default): 4 px widgetGroup margin-right minus the next
     //     widget's 1 px margin-left.
-    //   -1 px (abutting): the Spark, Reload+Restart, and Fireline
-    //     widgetGroups carry margin-right:0 so the next widget's -1 px
-    //     margin-left pulls the bubbles into a 1 px border overlap.
-    //     This produces the "two bubbles touching at the side" look
-    //     the designer wants for Spark <-> Reload pair, Restart <->
-    //     Start, and Fireline <-> Helitack.
+    //   -1 px (abutting): the Spark, Restart and Fireline widgetGroups
+    //     carry margin-right:0 so the next widget's -1 px margin-left
+    //     pulls the bubbles into a 1 px border overlap. This produces the
+    //     "two bubbles touching at the side" look the designer wants for
+    //     Spark <-> Restart, Restart <-> Start, and Fireline <-> Helitack.
     const rects: { left: number; right: number }[] = [];
     const ids = [
-      "terrain-button", "spark-button", "reload-button",
+      "clear-all-button", "terrain-button", "spark-button", "restart-button",
       "start-button", "fireline-button", "helitack-button"
     ];
     ids.forEach((id) =>
       widgetRect(id).then((r) => { rects.push({ left: r.left, right: r.right }); })
     );
     cy.then(() => {
-      expect(rects[1].left - rects[0].right, "Setup -> Spark").to.eq(8);
-      expect(rects[2].left - rects[1].right, "Spark -> Reload pair (abuts)").to.eq(-1);
-      expect(rects[3].left - rects[2].right, "Restart -> Start (abuts)").to.eq(-1);
-      expect(rects[4].left - rects[3].right, "Start -> Fireline").to.eq(8);
-      expect(rects[5].left - rects[4].right, "Fireline -> Helitack (abuts)").to.eq(-1);
-    });
-  });
-
-  it("renders 0 px gap within the Reload+Restart paired group", () => {
-    // Reload and Restart still share one widgetGroup (Fireline and
-    // Helitack each got their own widgetGroup, so they're no longer a
-    // shared-bubble pair). Use inner button rects for the within-pair
-    // assertion.
-    innerRect("reload-button").then((reload) => {
-      innerRect("restart-button").then((restart) => {
-        expect(restart.left - reload.right, "Reload -> Restart").to.eq(0);
-      });
+      expect(rects[1].left - rects[0].right, "Clear All -> Setup").to.eq(3);
+      expect(rects[2].left - rects[1].right, "Setup -> Spark").to.eq(3);
+      expect(rects[3].left - rects[2].right, "Spark -> Restart (abuts)").to.eq(-1);
+      expect(rects[4].left - rects[3].right, "Restart -> Start (abuts)").to.eq(-1);
+      expect(rects[5].left - rects[4].right, "Start -> Fireline").to.eq(3);
+      expect(rects[6].left - rects[5].right, "Fireline -> Helitack (abuts)").to.eq(-1);
     });
   });
 

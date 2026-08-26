@@ -128,6 +128,15 @@ describe("BottomBar component", () => {
     );
     expect(screen.getByTestId("helitack-button")).toBeInTheDocument();
   });
+
+  it("renders the Clear All button with label 'Clear All'", () => {
+    render(
+      <Provider stores={stores}>
+        <BottomBar />
+      </Provider>
+    );
+    expect(screen.getByTestId("clear-all-button")).toHaveTextContent("Clear All");
+  });
 });
 
 describe("BottomBar state machine (Requirements 1-7)", () => {
@@ -136,40 +145,40 @@ describe("BottomBar state machine (Requirements 1-7)", () => {
     stores = createStores();
   });
 
-  // State 1: Default — Enabled: Setup, Spark. Disabled: Reload, Restart,
+  // State 1: Default — Enabled: Setup, Spark. Disabled: Clear All, Restart,
   // Start, Fireline, Helitack.
-  it("state 1 (Default): Setup + Spark enabled; Reload/Restart/Start/Fireline/Helitack disabled", () => {
+  it("state 1 (Default): Setup + Spark enabled; Clear All/Restart/Start/Fireline/Helitack disabled", () => {
     seedState(stores, 1);
     render(<Provider stores={stores}><BottomBar /></Provider>);
     expectButtonState("terrain-button", true);
     expectButtonState("spark-button", true);
-    expectButtonState("reload-button", false);
+    expectButtonState("clear-all-button", false);
     expectButtonState("restart-button", false);
     expectButtonState("start-button", false);
     expectButtonState("fireline-button", false);
     expectButtonState("helitack-button", false);
   });
 
-  // State 2: SetupChanged — Reload enabled, rest same as Default
-  it("state 2 (SetupChanged): Reload enabled; otherwise same as Default", () => {
+  // State 2: SetupChanged — Clear All enabled, rest same as Default
+  it("state 2 (SetupChanged): Clear All enabled; otherwise same as Default", () => {
     seedState(stores, 2);
     render(<Provider stores={stores}><BottomBar /></Provider>);
     expectButtonState("terrain-button", true);
     expectButtonState("spark-button", true);
-    expectButtonState("reload-button", true);
+    expectButtonState("clear-all-button", true);
     expectButtonState("restart-button", false);
     expectButtonState("start-button", false);
     expectButtonState("fireline-button", false);
     expectButtonState("helitack-button", false);
   });
 
-  // State 3: SparkPlaced — Start enabled, Reload enabled, rest like Default
-  it("state 3 (SparkPlaced): Start + Reload enabled", () => {
+  // State 3: SparkPlaced — Start enabled, Clear All enabled, rest like Default
+  it("state 3 (SparkPlaced): Start + Clear All enabled", () => {
     seedState(stores, 3);
     render(<Provider stores={stores}><BottomBar /></Provider>);
     expectButtonState("terrain-button", true);
     expectButtonState("spark-button", true);
-    expectButtonState("reload-button", true);
+    expectButtonState("clear-all-button", true);
     expectButtonState("restart-button", false);
     expectButtonState("start-button", true);
     expectButtonState("fireline-button", false);
@@ -179,12 +188,12 @@ describe("BottomBar state machine (Requirements 1-7)", () => {
   // State 4: Running — Restart, Start/Pause, Fireline, Helitack enabled;
   // Setup, Spark disabled
   // eslint-disable-next-line max-len
-  it("state 4 (Running): Setup/Spark disabled; Restart/Start/Fireline/Helitack enabled; Reload enabled; label is 'Pause'", () => {
+  it("state 4 (Running): Setup/Spark disabled; Restart/Start/Fireline/Helitack enabled; Clear All enabled; label is 'Pause'", () => {
     seedState(stores, 4);
     render(<Provider stores={stores}><BottomBar /></Provider>);
     expectButtonState("terrain-button", false);
     expectButtonState("spark-button", false);
-    expectButtonState("reload-button", true);
+    expectButtonState("clear-all-button", true);
     expectButtonState("restart-button", true);
     expectButtonState("start-button", true);
     expectButtonState("fireline-button", true);
@@ -194,41 +203,41 @@ describe("BottomBar state machine (Requirements 1-7)", () => {
     expect(screen.getByTestId("start-button")).toHaveTextContent("Pause");
   });
 
-  // State 5: Ended — Start, Fireline, Helitack disabled; Restart, Reload enabled
+  // State 5: Ended — Start, Fireline, Helitack disabled; Restart, Clear All enabled
   // eslint-disable-next-line max-len
-  it("state 5 (Ended): Start/Fireline/Helitack disabled; Restart/Reload enabled; Setup/Spark disabled", () => {
+  it("state 5 (Ended): Start/Fireline/Helitack disabled; Restart/Clear All enabled; Setup/Spark disabled", () => {
     seedState(stores, 5);
     render(<Provider stores={stores}><BottomBar /></Provider>);
     expectButtonState("terrain-button", false);
     expectButtonState("spark-button", false);
-    expectButtonState("reload-button", true);
+    expectButtonState("clear-all-button", true);
     expectButtonState("restart-button", true);
     expectButtonState("start-button", false);
     expectButtonState("fireline-button", false);
     expectButtonState("helitack-button", false);
   });
 
-  // State 6: Restarted — Setup, Spark, Start, Reload enabled; Restart disabled
+  // State 6: Restarted — Setup, Spark, Start, Clear All enabled; Restart disabled
   // eslint-disable-next-line max-len
-  it("state 6 (Restarted): Setup/Spark/Start/Reload enabled; Restart disabled; Fireline/Helitack disabled", () => {
+  it("state 6 (Restarted): Setup/Spark/Start/Clear All enabled; Restart disabled; Fireline/Helitack disabled", () => {
     seedState(stores, 6);
     render(<Provider stores={stores}><BottomBar /></Provider>);
     expectButtonState("terrain-button", true);
     expectButtonState("spark-button", true);
-    expectButtonState("reload-button", true);
+    expectButtonState("clear-all-button", true);
     expectButtonState("restart-button", false);
     expectButtonState("start-button", true);
     expectButtonState("fireline-button", false);
     expectButtonState("helitack-button", false);
   });
 
-  // State 7 (AfterReload) is intentionally omitted from this matrix. The
+  // State 7 (AfterClearAll) is intentionally omitted from this matrix. The
   // state-7 button matrix is identical to state 1 (Default) for curriculum
-  // presets with empty config.sparks. Real "AfterReload" coverage lives in
-  // the Paused vs. Ended → Paused → Reload and Running → Reload edge-case
-  // tests below: both click the actual Reload button and assert
+  // presets with empty config.sparks. Real "AfterClearAll" coverage lives in
+  // the Paused vs. Ended → Paused → Clear All and Running → Clear All edge-case
+  // tests below: both click the actual Clear All button and assert
   // Default-equivalent post-state. For dev presets with preplaced sparks
-  // (basic, basicWithWind, slope45deg, basicWithSlopeAndWind) AfterReload
+  // (basic, basicWithWind, slope45deg, basicWithSlopeAndWind) AfterClearAll
   // lands in SparkPlaced-shape per requirements.md "Preset caveat".
 });
 
@@ -284,7 +293,7 @@ describe("BottomBar edge cases", () => {
       expectButtonState("start-button", true);
     });
 
-    it("Paused → Reload → Default-state rules", async () => {
+    it("Paused → Clear All → Default-state rules", async () => {
       // Sanity guard: this test asserts sparks.length === 0 after reload,
       // which assumes the default config ships with no preplaced sparks.
       expect(stores.simulation.config.sparks).toEqual([]);
@@ -293,27 +302,27 @@ describe("BottomBar edge cases", () => {
       stores.simulation.simulationRunning = false;
       (stores.simulation as any).engine = mockEngine();
       render(<Provider stores={stores}><BottomBar /></Provider>);
-      await userEvent.click(screen.getByTestId("reload-button"));
+      await userEvent.click(screen.getByTestId("clear-all-button"));
       expect(stores.simulation.setupChanged).toBe(false);
       expect(stores.simulation.sparks.length).toBe(0);
       expectButtonState("restart-button", false);
-      expectButtonState("reload-button", false);
+      expectButtonState("clear-all-button", false);
     });
 
-    it("Running → Reload → Default-state rules, engine torn down", async () => {
-      // Sanity guard: see Paused → Reload above for rationale.
+    it("Running → Clear All → Default-state rules, engine torn down", async () => {
+      // Sanity guard: see Paused → Clear All above for rationale.
       expect(stores.simulation.config.sparks).toEqual([]);
       stores.simulation.sparks.push(new Vector2(50000, 50000));
       stores.simulation.simulationStarted = true;
       stores.simulation.simulationRunning = true;
       (stores.simulation as any).engine = mockEngine();
       render(<Provider stores={stores}><BottomBar /></Provider>);
-      await userEvent.click(screen.getByTestId("reload-button"));
+      await userEvent.click(screen.getByTestId("clear-all-button"));
       expect(stores.simulation.engine).toBeNull();
       expect(stores.simulation.simulationStarted).toBe(false);
       expect(stores.simulation.sparks.length).toBe(0);
       expect(stores.simulation.setupChanged).toBe(false);
-      expectButtonState("reload-button", false);
+      expectButtonState("clear-all-button", false);
     });
   });
 
@@ -379,11 +388,11 @@ describe("BottomBar edge cases", () => {
   });
 
   describe("ui.interaction reset", () => {
-    it("Reload-during-PlaceSpark: returns to Default with Spark enabled", async () => {
-      stores.simulation.setSetupChanged(true); // so Reload is enabled
+    it("Clear All during PlaceSpark: returns to Default with Spark enabled", async () => {
+      stores.simulation.setSetupChanged(true); // so Clear All is enabled
       stores.ui.interaction = Interaction.PlaceSpark;
       render(<Provider stores={stores}><BottomBar /></Provider>);
-      await userEvent.click(screen.getByTestId("reload-button"));
+      await userEvent.click(screen.getByTestId("clear-all-button"));
       expect(stores.ui.interaction).toBeNull();
       expectButtonState("spark-button", true);
     });
@@ -439,7 +448,7 @@ describe("BottomBar edge cases", () => {
     // These are handler-wiring checks: they prove the click reaches the
     // handler which then calls simulation.restart()/reload(). Actual
     // state-transition behavior is covered by the Paused→Restart,
-    // Paused→Reload, and Running→Reload tests above. Don't weaken these to
+    // Paused→Clear All, and Running→Clear All tests above. Don't weaken these to
     // mockImplementation() — the spy currently forwards to the real method,
     // which lets a maintainer add downstream assertions here without
     // re-wiring.
@@ -456,12 +465,12 @@ describe("BottomBar edge cases", () => {
       expect(stores.simulation.restart).toHaveBeenCalled();
     });
 
-    it("Reload click calls simulation.reload() (when enabled)", async () => {
-      // Seed SetupChanged so Reload is enabled
+    it("Clear All click calls simulation.reload() (when enabled)", async () => {
+      // Seed SetupChanged so Clear All is enabled
       stores.simulation.setSetupChanged(true);
       jest.spyOn(stores.simulation, "reload");
       render(<Provider stores={stores}><BottomBar /></Provider>);
-      await userEvent.click(screen.getByTestId("reload-button"));
+      await userEvent.click(screen.getByTestId("clear-all-button"));
       expect(stores.simulation.reload).toHaveBeenCalled();
     });
   });
@@ -509,9 +518,9 @@ describe("model controls while the Setup wizard is open", () => {
     expectButtonState("spark-button", false);
   });
 
-  it("disables Reload", () => {
+  it("disables Clear All", () => {
     renderWithWizardOpen();
-    expectButtonState("reload-button", false);
+    expectButtonState("clear-all-button", false);
   });
 
   it("disables Start", () => {
@@ -617,8 +626,8 @@ describe("BottomBar Hazbot button (WM-6)", () => {
     expect(wrap().className).not.toMatch(/ready/);
   });
 
-  it("Reload (Clear All) clears the Hazbot feedback levels; Restart leaves them alone", async () => {
-    seedState(stores, 5); // Ended: both Restart and Reload are enabled
+  it("Clear All clears the Hazbot feedback levels; Restart leaves them alone", async () => {
+    seedState(stores, 5); // Ended: both Restart and Clear All are enabled
     stores.ui.hazbotFeedbackLevels.set(2, 3);
     stores.ui.hazbotLastFeedbackShown = { level: 3, source: "round3" };
     render(<Provider stores={stores}><BottomBar /></Provider>);
@@ -627,7 +636,7 @@ describe("BottomBar Hazbot button (WM-6)", () => {
     expect(stores.ui.hazbotFeedbackLevels.get(2)).toBe(3);
     expect(stores.ui.hazbotLastFeedbackShown).toEqual({ level: 3, source: "round3" });
 
-    await userEvent.click(screen.getByTestId("reload-button"));
+    await userEvent.click(screen.getByTestId("clear-all-button"));
     expect(stores.ui.hazbotFeedbackLevels.size).toBe(0);
     expect(stores.ui.hazbotLastFeedbackShown).toBeUndefined();
   });
