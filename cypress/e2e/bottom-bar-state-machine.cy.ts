@@ -304,13 +304,14 @@ describe("Hazbot button pulse (WM-6)", () => {
       .should("be.disabled")
       .and("have.css", "opacity", "0.35");
     // The robot stays (that is what separates this state from the tour's fade), and the
-    // Button back keeps its fill and border. border-top-width is 1px, not the declared
-    // 1.5px: Chrome floors a sub-pixel border at devicePixelRatio 1, which is what
-    // Cypress runs at.
+    // Button back keeps its fill and border. Style and color rather than width: Chrome
+    // rasterizes the declared 1.5px border to 1px at devicePixelRatio 1 and 1.5px at 2,
+    // so a width assertion passes on CI and fails on a HiDPI display.
     cy.get("[data-testid='hazbot-back']").should("be.visible");
     cy.get("[data-testid='hazbot-button']")
       .should("have.css", "background-color", "rgb(193, 218, 255)")
-      .and("have.css", "border-top-width", "1px");
+      .and("have.css", "border-top-style", "solid")
+      .and("have.css", "border-top-color", "rgb(121, 121, 121)");
     // Pausing does not bring it back: a paused run is still a run (WM-31).
     cy.get("[data-testid='start-button']").click();
     cy.window().its("sim.simulationRunning").should("eq", false);

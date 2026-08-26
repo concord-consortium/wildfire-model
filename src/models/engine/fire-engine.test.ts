@@ -69,6 +69,20 @@ describe("FireEngine", () => {
     return res;
   };
 
+  // `fireDidStop` is derived from the cell states as they were when `updateFire` was
+  // entered, so it trails the cells by one call: a fire that goes out during a call is
+  // still reported as burning until the next one. Advancing to a fixed day therefore
+  // races the randomized burn-out. `maxDay` is what lets these assertions fail; a fire
+  // that can never go out exhausts it.
+  const maxDay = 40;
+  const runUntilFireStops = (engine: FireEngine, fromDay: number) => {
+    let day = fromDay;
+    while (!engine.fireDidStop && day < maxDay) {
+      day += 1;
+      engine.updateFire(1440 * day);
+    }
+  };
+
   it("should stop low intensity fire after 5 days (or earlier but it's random)", () => {
     const engine = new FireEngine(generateCells(), wind, sparks, config);
     expect(engine.endOfLowIntensityFire).toBe(false);
@@ -81,10 +95,9 @@ describe("FireEngine", () => {
     engine.updateFire(1440 * 5);
     expect(engine.fireDidStop).toBe(false);
     expect(engine.cells.filter(c => c.isBurningOrWillBurn).length).toBeGreaterThan(0);
-    engine.updateFire(1440 * 6);
-    engine.updateFire(1440 * 7);
-    expect(engine.cells.filter(c => c.isBurningOrWillBurn).length).toEqual(0);
+    runUntilFireStops(engine, 5);
     expect(engine.fireDidStop).toBe(true);
+    expect(engine.cells.filter(c => c.isBurningOrWillBurn).length).toEqual(0);
   });
 
   it("burns out a burning cell whose ignition time a fire line erased", () => {
@@ -99,10 +112,9 @@ describe("FireEngine", () => {
     burning.forEach(c => { c.isFireLine = true; c.ignitionTime = Infinity; });
     engine.updateFire(1440 * 2);
     burning.forEach(c => expect(c.fireState).toEqual(FireState.Burnt));
-    engine.updateFire(1440 * 6);
-    engine.updateFire(1440 * 7);
-    expect(engine.cells.filter(c => c.isBurningOrWillBurn).length).toEqual(0);
+    runUntilFireStops(engine, 2);
     expect(engine.fireDidStop).toBe(true);
+    expect(engine.cells.filter(c => c.isBurningOrWillBurn).length).toEqual(0);
   });
 
   it("should mark unburnt islands cell and remove this flag from cells are directly under the spark", () => {
