@@ -23,7 +23,7 @@ Two findings changed the plan:
 
 **The Clear All group loses its inherited `white-space: nowrap`.** Today the label is nowrap only because `.reloadRestart` declares it and the label inherits. A plain `.widgetGroup` computes `white-space: normal` (measured on Start's group), so after the split the two-word label is free to wrap. It does not wrap in practice: "Clear All" measures **53.94px** at `bold 14px Lato` and **56.80px** at the `Arial, sans-serif` fallback, both inside the 66px box. The resolved question below drops the declaration rather than carrying it onto `.clearAll`.
 
-**`npx jest` reports 1009 passed / 79 suites on this branch.** The requirements' Technical Notes recorded 879, a figure that predates WM-54 and the intervening rule-set work; it has since been corrected there. Use 1009 as the baseline and in the PR body, re-measured on the head commit before the body is written.
+**`npx jest` reports 1009 passed / 79 suites on this branch.** The requirements' Technical Notes recorded 879, a figure that predates WM-54 and the intervening rule-set work; it has since been corrected there. Use 1009 as the baseline, and 1010 at the branch head, since step 2 adds the Clear All label assertion. Re-measure on the head commit before the PR body is written.
 
 ## Implementation Plan
 
@@ -269,7 +269,7 @@ grep -rn "Reload" --include=*.md . | grep -v node_modules | grep -v '^./specs' \
   | grep -vE '^\./docs/hazbot-validation/[0-9]+\.md'
 ```
 
-`specs/` is history and the numbered validation playbooks are generated from the rule-sets, which already say Clear All. After this step that second grep returns only `LOGGED-EVENTS.md:14,17` (the lowercase operation and the top bar's control) and the `SimulationReloaded` / `TopBarReloadButtonClicked` event names.
+`specs/` is history and the numbered validation playbooks are generated from the rule-sets, which already say Clear All. After this step that second grep returns only three things: `LOGGED-EVENTS.md:14,17` (the lowercase operation and the top bar's control), `localhost-urls.md:138` (*"Reload the page entirely"*, the browser operation, called out as a keep in the Files affected list above), and the `SimulationReloaded` / `TopBarReloadButtonClicked` event names.
 
 After this step every hit of the first grep is one of exactly three things: a `TopBarReload` triple (`canonical-runs.ts:19`, `types.ts:32`, `translate.test.ts:76`); the `SimulationReloaded` and `TopBarReloadButtonClicked` log event names; or `top-bar.tsx` and `top-bar.test.tsx`, which belong to the page-level reload this story does not touch. Anything else is a miss. The `ReloadIcon` / `reload.svg` class that used to sit here is gone, because the asset is renamed with the button.
 

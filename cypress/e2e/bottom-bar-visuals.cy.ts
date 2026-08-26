@@ -38,7 +38,8 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     // requirements.md Layout table. Fireline and Helitack each live in
     // their own widgetGroup (designer wanted two abutting bubbles
     // rather than one shared bubble) so each shrink-wraps to 67
-    // (65 content + 2 border).
+    // (65 content + 2 border). Clear All is the one pill wider than
+    // `.playbackButton`'s 60px lock, at 66 content + 2 border.
     widgetRect("clear-all-button").should((r) => expect(r.width).to.eq(68));
     widgetRect("terrain-button").should((r) => expect(r.width).to.eq(84));
     widgetRect("spark-button").should((r) => expect(r.width).to.eq(62));
