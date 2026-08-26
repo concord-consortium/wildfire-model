@@ -9,6 +9,10 @@ const APP_URL = "/?preset=plainsTwoZone";
 const TIME = ".app--timeDisplay--__wildfire-v1__";
 const WIND = ".simulation-info--windContainer--__wildfire-v1__";
 const SCALE = ".app--fireIntensityScaleContainer--__wildfire-v1__";
+const TITLE = ".fire-intensity-scale--title--__wildfire-v1__";
+const BAR = ".fire-intensity-scale--barsContainer--__wildfire-v1__";
+const LABEL = ".fire-intensity-scale--label--__wildfire-v1__";
+const SWATCH = '[data-testid="fire-intensity-scale-swatch"]';
 
 const KEY_AREA_LEFT = 10;
 const KEY_AREA_WIDTH = 104;
@@ -23,7 +27,7 @@ describe("Key-area visual regression", () => {
     cy.window().its("sim.dataReady").should("eq", true);
   });
 
-  it("renders the three displays at one width, one left edge and a 10 px gap", () => {
+  it("renders the three displays at one width and left edge, their own heights, and a 10 px gap", () => {
     const rects: DOMRect[] = [];
     [TIME, WIND, SCALE].forEach((s) => rect(s).then((r) => { rects.push(r); }));
 
@@ -51,15 +55,15 @@ describe("Key-area visual regression", () => {
   });
 
   it("renders the color bar as three 27 x 10 swatches inside an 83 x 12 outline", () => {
-    rect(".fire-intensity-scale--barsContainer--__wildfire-v1__").then((bar) => {
+    rect(BAR).then((bar) => {
       expect(bar.width, "bar width").to.eq(83);
       expect(bar.height, "bar height").to.eq(12);
     });
-    cy.get(".fire-intensity-scale--barsContainer--__wildfire-v1__")
+    cy.get(BAR)
       .should("have.css", "border", "1px solid rgb(121, 121, 121)")
       .and("have.css", "border-radius", "3px");
 
-    cy.get('[data-testid="fire-intensity-scale-swatch"]').should("have.length", 3).each(($s) => {
+    cy.get(SWATCH).should("have.length", 3).each(($s) => {
       const swatch = $s[0].getBoundingClientRect();
       expect(swatch.width, "swatch width").to.eq(27);
       expect(swatch.height, "swatch height").to.eq(10);
@@ -67,14 +71,13 @@ describe("Key-area visual regression", () => {
   });
 
   it("rounds only the outer ends of the color bar", () => {
-    const swatches = '[data-testid="fire-intensity-scale-swatch"]';
-    cy.get(swatches).eq(0)
+    cy.get(SWATCH).eq(0)
       .should("have.css", "border-top-left-radius", "2px")
       .and("have.css", "border-top-right-radius", "0px");
-    cy.get(swatches).eq(1)
+    cy.get(SWATCH).eq(1)
       .should("have.css", "border-top-left-radius", "0px")
       .and("have.css", "border-top-right-radius", "0px");
-    cy.get(swatches).eq(2)
+    cy.get(SWATCH).eq(2)
       .should("have.css", "border-top-left-radius", "0px")
       .and("have.css", "border-top-right-radius", "2px");
   });
@@ -82,9 +85,9 @@ describe("Key-area visual regression", () => {
   it("centers Low and High under the end swatches", () => {
     const centers: { label: number; swatch: number }[] = [];
     const collect = (labelIdx: number, swatchIdx: number) => {
-      cy.get(".fire-intensity-scale--label--__wildfire-v1__").eq(labelIdx).then(($label) => {
+      cy.get(LABEL).eq(labelIdx).then(($label) => {
         const label = $label[0].getBoundingClientRect();
-        cy.get('[data-testid="fire-intensity-scale-swatch"]').eq(swatchIdx).then(($swatch) => {
+        cy.get(SWATCH).eq(swatchIdx).then(($swatch) => {
           const swatch = $swatch[0].getBoundingClientRect();
           centers.push({ label: label.left + label.width / 2, swatch: swatch.left + swatch.width / 2 });
         });
@@ -100,14 +103,53 @@ describe("Key-area visual regression", () => {
     });
   });
 
-  it("breaks the title onto two lines", () => {
+  it("breaks the title onto two lines, inset from the container's top left", () => {
     // an 84 px box holds "Fire Intensity" on one line only while Lato is loaded;
     // the height check is what catches a third line on the fallback font
-    rect(".fire-intensity-scale--title--__wildfire-v1__").then((title) => {
-      expect(title.width, "title width").to.eq(84);
-      expect(title.height, "title height").to.eq(34);
+    rect(SCALE).then((container) => {
+      rect(TITLE).then((title) => {
+        expect(title.width, "title width").to.eq(84);
+        expect(title.height, "title height").to.eq(34);
+        expect(title.left - container.left, "title left inset").to.eq(10);
+        expect(title.top - container.top, "title top inset").to.eq(6);
+      });
     });
-    cy.get(".fire-intensity-scale--title--__wildfire-v1__")
+    cy.get(TITLE)
       .should("have.css", "white-space", "pre-line");
+  });
+
+  it("sets the title and label typography", () => {
+    cy.get(TITLE)
+      .should("have.css", "font-family", "Lato")
+      .and("have.css", "font-size", "14px")
+      .and("have.css", "font-weight", "700")
+      .and("have.css", "color", "rgb(67, 67, 67)");
+
+    cy.get(LABEL).each(($label) => {
+      cy.wrap($label)
+        .should("have.css", "font-family", '"Roboto Condensed", Lato, arial, sans-serif')
+        .and("have.css", "font-size", "14px")
+        .and("have.css", "color", "rgb(67, 67, 67)");
+    });
+  });
+
+});
+
+// the scale's own title is what sets the 104px width, so the no-scale case is
+// where a second, narrower key-area layout would show up
+describe("Key-area visual regression with the burn index hidden", () => {
+  beforeEach(() => {
+    cy.visit(`${APP_URL}&showBurnIndex=false`);
+    cy.window().its("sim.dataReady").should("eq", true);
+  });
+
+  it("omits the scale but leaves Time and Wind Meter at the same width", () => {
+    cy.get(SCALE).should("not.exist");
+    cy.get(TIME).should(($time) => {
+      expect($time[0].getBoundingClientRect().width, "Time width").to.eq(KEY_AREA_WIDTH);
+    });
+    cy.get(WIND).should(($wind) => {
+      expect($wind[0].getBoundingClientRect().width, "Wind Meter width").to.eq(KEY_AREA_WIDTH);
+    });
   });
 });

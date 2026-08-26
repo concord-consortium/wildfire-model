@@ -56,6 +56,14 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     widgetRect("helitack-button").should((r) => expect(r.width).to.eq(67));
   });
 
+  it("shrink-wraps the controls cluster to its six widget groups", () => {
+    // .mainContainer sizes to its contents, so this is the sum of the six
+    // widget widths, their gaps, and the trailing widgetGroup margin
+    cy.get('[class*="mainContainer"]').should(($m) => {
+      expect($m[0].getBoundingClientRect().width).to.eq(485);
+    });
+  });
+
   it("renders the Reload+Restart paired group at its shared Border w. value", () => {
     // Reload and Restart still share one widgetGroup (only Fireline +
     // Helitack got split), so both inner buttons climb to the same
