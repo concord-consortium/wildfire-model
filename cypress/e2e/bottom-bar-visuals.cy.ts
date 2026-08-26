@@ -69,13 +69,13 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     // Helitack got split), so both inner buttons climb to the same
     // widgetGroup ancestor. Reading the shared widgetGroup's outer
     // rect gives the spec's "Border w." value (120 content + 2 border).
-    widgetRect("reload-button").should((r) => expect(r.width).to.eq(122));
+    widgetRect("clear-all-button").should((r) => expect(r.width).to.eq(122));
   });
 
   it("renders the correct visible gap at every widget adjacency", () => {
     // Read each widget's closest-widgetGroup rect into a buffer, then
     // assert the next.left - prev.right delta for every widget-to-widget
-    // adjacency. reload-button climbs to the Reload+Restart shared
+    // adjacency. clear-all-button climbs to the Reload+Restart shared
     // widgetGroup; Fireline and Helitack each have their own
     // widgetGroup. So the rects[] order is:
     //   0: Setup, 1: Spark, 2: Reload+Restart pair, 3: Start,
@@ -92,7 +92,7 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     //     Start, and Fireline <-> Helitack.
     const rects: { left: number; right: number }[] = [];
     const ids = [
-      "terrain-button", "spark-button", "reload-button",
+      "terrain-button", "spark-button", "clear-all-button",
       "start-button", "fireline-button", "helitack-button"
     ];
     ids.forEach((id) =>
@@ -112,7 +112,7 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     // Helitack each got their own widgetGroup, so they're no longer a
     // shared-bubble pair). Use inner button rects for the within-pair
     // assertion.
-    innerRect("reload-button").then((reload) => {
+    innerRect("clear-all-button").then((reload) => {
       innerRect("restart-button").then((restart) => {
         expect(restart.left - reload.right, "Reload -> Restart").to.eq(0);
       });

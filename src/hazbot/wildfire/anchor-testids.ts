@@ -10,7 +10,7 @@
 // tour anchors to it, and it is the one id rendered conditionally (showBurnIndex).
 export const ANCHOR_TESTIDS = [
   "restart-button",
-  "reload-button",
+  "clear-all-button",
   "terrain-button",        // the "Setup" button
   "spark-button",
   "start-button",

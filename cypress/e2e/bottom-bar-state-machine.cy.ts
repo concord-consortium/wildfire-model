@@ -20,7 +20,7 @@
 // BottomBar helper class so each `it` block reads top-to-bottom without
 // cross-referencing the helper file. If a future ticket consolidates
 // Cypress tests on the helper-class style (matching smoke.cy.ts), swap the
-// inline selectors for `bottomBar.getReloadButton()` etc.
+// inline selectors for `bottomBar.getClearAllButton()` etc.
 
 // Type for the `window.sim` and `window.test.*` debug hooks exposed by
 // src/models/stores.ts (see CLAUDE.md "Playwright MCP testing" section).
@@ -63,12 +63,12 @@ const debugHooks = (win: Window) => win as unknown as AppDebugHooks;
 const APP_URL = "/?preset=plainsTwoZone&hazbotRules=23";
 
 const expectButtonStates = (states: {
-  setup: boolean; spark: boolean; reload: boolean; restart: boolean;
+  setup: boolean; spark: boolean; clearAll: boolean; restart: boolean;
   startStop: boolean; fireLine: boolean; helitack: boolean; hazbot: boolean;
 }) => {
   cy.get("[data-testid='terrain-button']").should(states.setup ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='spark-button']").should(states.spark ? "not.be.disabled" : "be.disabled");
-  cy.get("[data-testid='reload-button']").should(states.reload ? "not.be.disabled" : "be.disabled");
+  cy.get("[data-testid='clear-all-button']").should(states.clearAll ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='restart-button']").should(states.restart ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='start-button']").should(states.startStop ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='fireline-button']").should(states.fireLine ? "not.be.disabled" : "be.disabled");
@@ -119,12 +119,12 @@ describe("Bottom-bar state machine (WM-24)", () => {
   it("state 1 (Default): Setup + Spark enabled; rest disabled", () => {
     expectButtonStates({
       setup: true, spark: true,
-      reload: false, restart: false, startStop: false,
+      clearAll: false, restart: false, startStop: false,
       fireLine: false, helitack: false, hazbot: true,
     });
   });
 
-  it("state 2 (SetupChanged): Reload enabled; otherwise Default", () => {
+  it("state 2 (SetupChanged): Clear All enabled; otherwise Default", () => {
     // Open Setup, change drought on zone 0, click Create.
     cy.get("[data-testid='terrain-button']").click();
     cy.get("[data-testid='terrain-header']").should("be.visible");
@@ -135,16 +135,16 @@ describe("Bottom-bar state machine (WM-24)", () => {
     cy.contains("button", /create/i).click();
     expectButtonStates({
       setup: true, spark: true,
-      reload: true, restart: false, startStop: false,
+      clearAll: true, restart: false, startStop: false,
       fireLine: false, helitack: false, hazbot: true,
     });
   });
 
-  it("state 3 (SparkPlaced): Start + Reload enabled", () => {
+  it("state 3 (SparkPlaced): Start + Clear All enabled", () => {
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     expectButtonStates({
       setup: true, spark: true,
-      reload: true, restart: false, startStop: true,
+      clearAll: true, restart: false, startStop: true,
       fireLine: false, helitack: false, hazbot: true,
     });
   });
@@ -155,12 +155,12 @@ describe("Bottom-bar state machine (WM-24)", () => {
     cy.window().its("sim.simulationRunning").should("eq", true);
     expectButtonStates({
       setup: false, spark: false,
-      reload: true, restart: true, startStop: true,
+      clearAll: true, restart: true, startStop: true,
       fireLine: true, helitack: true, hazbot: false,
     });
   });
 
-  it("state 5 (Ended): Start/Fireline/Helitack disabled; Restart/Reload enabled", () => {
+  it("state 5 (Ended): Start/Fireline/Helitack disabled; Restart/Clear All enabled", () => {
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     cy.get("[data-testid='start-button']").click();
     cy.window().then((win: Window) => {
@@ -175,19 +175,19 @@ describe("Bottom-bar state machine (WM-24)", () => {
     });
     expectButtonStates({
       setup: false, spark: false,
-      reload: true, restart: true, startStop: false,
+      clearAll: true, restart: true, startStop: false,
       fireLine: false, helitack: false, hazbot: true,
     });
   });
 
-  it("state 6 (Restarted): Setup/Spark/Start/Reload enabled; Restart disabled; Fireline/Helitack disabled", () => {
+  it("state 6 (Restarted): Setup/Spark/Start/Clear All enabled; Restart disabled; Fireline/Helitack disabled", () => {
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     cy.get("[data-testid='start-button']").click();
     cy.get("[data-testid='restart-button']").click();
     cy.window().its("sim.simulationStarted").should("eq", false);
     expectButtonStates({
       setup: true, spark: true,
-      reload: true, restart: false, startStop: true,
+      clearAll: true, restart: false, startStop: true,
       fireLine: false, helitack: false, hazbot: true,
     });
   });
@@ -203,7 +203,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     cy.window().its("sim.simulationRunning").should("eq", false);
     expectButtonStates({
       setup: false, spark: false,
-      reload: true, restart: true, startStop: true,
+      clearAll: true, restart: true, startStop: true,
       fireLine: true, helitack: true, hazbot: false,
     });
     // Clicking it again disarms, and the button stays available.
@@ -211,14 +211,14 @@ describe("Bottom-bar state machine (WM-24)", () => {
     cy.get("[data-testid='fireline-button']").should("not.be.disabled");
   });
 
-  it("state 7 (AfterReload from SetupChanged): identical to Default for plainsTwoZone", () => {
+  it("state 7 (AfterClearAll from SetupChanged): identical to Default for plainsTwoZone", () => {
     // Reach SetupChanged
     cy.get("[data-testid='terrain-button']").click();
     setDroughtSlider(3);
     cy.contains("button", /next/i).click();
     cy.contains("button", /create/i).click();
-    // Now Reload
-    cy.get("[data-testid='reload-button']").click();
+    // Now Clear All
+    cy.get("[data-testid='clear-all-button']").click();
     cy.window().its("sim.dataReady").should("eq", true);
     // setupChanged must be reset by reload() — without this assertion, a bug
     // that skipped `this.setupChanged = false` in reload() could still pass
@@ -227,27 +227,27 @@ describe("Bottom-bar state machine (WM-24)", () => {
     cy.window().its("sim.setupChanged").should("eq", false);
     expectButtonStates({
       setup: true, spark: true,
-      reload: false, restart: false, startStop: false,
+      clearAll: false, restart: false, startStop: false,
       fireLine: false, helitack: false, hazbot: true,
     });
   });
 
   // State 8: SetupOpen — the wizard locks the model controls, so Cancel and
   // Next/Create are the only ways out. Setup stays enabled and its click is inert.
-  it("state 8 (SetupOpen): Setup and Hazbot stay enabled; Spark/Reload/Start locked out", () => {
+  it("state 8 (SetupOpen): Setup and Hazbot stay enabled; Spark/Clear All/Start locked out", () => {
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     // Assert the pre-state first: from SparkPlaced all three are live, which is
     // what makes the post-open assertion below able to fail.
     expectButtonStates({
       setup: true, spark: true,
-      reload: true, restart: false, startStop: true,
+      clearAll: true, restart: false, startStop: true,
       fireLine: false, helitack: false, hazbot: true,
     });
     cy.get("[data-testid='terrain-button']").click();
     cy.get("[data-testid='terrain-header']").should("be.visible");
     expectButtonStates({
       setup: true, spark: false,
-      reload: false, restart: false, startStop: false,
+      clearAll: false, restart: false, startStop: false,
       fireLine: false, helitack: false, hazbot: true,
     });
   });

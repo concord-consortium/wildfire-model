@@ -163,7 +163,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           <div className={`${css.widgetGroup} ${css.reloadRestart}`}>
             <Button
               className={css.playbackButton}
-              data-testid="reload-button"
+              data-testid="clear-all-button"
               onClick={this.handleReload}
               disabled={!simulation.reloadEnabled || ui.showTerrainUI}
               disableRipple={true}

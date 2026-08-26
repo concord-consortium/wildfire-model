@@ -70,7 +70,7 @@ describe("Log events", () => {
           <BottomBar />
         </Provider>
       );
-      await userEvent.click(screen.getByTestId("reload-button"));
+      await userEvent.click(screen.getByTestId("clear-all-button"));
 
       const endedIdx = mockLog.mock.calls.findIndex(
         (call: unknown[]) => call[0] === "SimulationEnded"
@@ -506,7 +506,7 @@ describe("Log events", () => {
         renderBottomBar();
         placeFirstEnd();
 
-        await userEvent.click(screen.getByTestId("reload-button"));
+        await userEvent.click(screen.getByTestId("clear-all-button"));
 
         expect(canceledCall().reason).toBe("reload");
         expect(stores.simulation.fireLineMarkers).toHaveLength(0);
