@@ -20,13 +20,28 @@ const READINGS = [
   { params: "windSpeed=30&windDirection=292.5", text: "150 MPH from the WNW" }
 ];
 
+// Every measurement here is specific to the label's shipping font, 14px Roboto Condensed
+// weight 400 (loaded from fonts.googleapis.com in src/index.html). The fallback's metrics
+// differ enough to change the line count, so wait for that face rather than measuring
+// whatever is applied at first paint.
+const visit = (query = "") => {
+  cy.visit(`/?preset=plainsTwoZone${query}`);
+  cy.window().its("sim.dataReady").should("eq", true);
+  cy.document().should((doc) => {
+    const loaded = Array.from(doc.fonts).some(
+      (f) => f.family === "Roboto Condensed" && f.weight === "400" && f.status === "loaded"
+    );
+    expect(loaded, "Roboto Condensed 400 loaded").to.eq(true);
+  });
+};
+
 // The lines the browser actually laid the label out on. The DOM exposes no line list, so
 // they are reconstructed from per-character client rects.
 const renderedLines = (el: Element) => {
   const node = el.firstChild;
   if (!node?.textContent) throw new Error("wind label has no text node");
   const text = node.textContent;
-  const range = document.createRange();
+  const range = el.ownerDocument.createRange();
   const lines: string[] = [];
   let line = "";
   let previousTop: number | null = null;
@@ -49,8 +64,7 @@ describe("Wind Meter label", () => {
   READINGS.forEach(({ params, text }) => {
     describe(`reading "${text}"`, () => {
       beforeEach(() => {
-        cy.visit(`/?preset=plainsTwoZone&${params}`);
-        cy.window().its("sim.dataReady").should("eq", true);
+        visit(`&${params}`);
         // without this the geometry below would assert against whatever reading rendered
         cy.get(LABEL).should("have.text", text);
       });
@@ -76,8 +90,7 @@ describe("Wind Meter label", () => {
   });
 
   it('breaks the shortest reading after "from"', () => {
-    cy.visit("/?preset=plainsTwoZone&windSpeed=0&windDirection=0");
-    cy.window().its("sim.dataReady").should("eq", true);
+    visit("&windSpeed=0&windDirection=0");
     cy.get(LABEL).should("have.text", "0 MPH from the N");
     cy.get(LABEL).should(($label) => {
       expect(renderedLines($label[0]), "line breaks").to.deep.eq(["0 MPH from ", "the N"]);
@@ -85,8 +98,7 @@ describe("Wind Meter label", () => {
   });
 
   it("keeps the label centered in the container at its declared width", () => {
-    cy.visit("/?preset=plainsTwoZone");
-    cy.window().its("sim.dataReady").should("eq", true);
+    visit();
     cy.get(LABEL).should("have.css", "width", "81px");
     cy.get(CONTAINER).then(($container) => {
       const container = $container[0].getBoundingClientRect();
