@@ -15,9 +15,11 @@ $swatchesWidth: $swatchWidth * 3;
     top: 6px;
     width: 84px;
     height: 34px;
-    // honor the authored break; natural wrapping fits only while Lato is
-    // loaded and takes three lines on the fallback font
-    white-space: pre-line;
+    // `pre`, not `pre-line`: both honor the authored break, but `pre-line`
+    // still soft-wraps, and "Fire Intensity" is 87px on the fallback font
+    // inside this 84px box, so it would take a third line and overflow the
+    // container. `pre` overflows 3px sideways into the inset instead.
+    white-space: pre;
     font-family: Lato;
     font-size: 14px;
     font-weight: bold;

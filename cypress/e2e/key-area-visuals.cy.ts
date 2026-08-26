@@ -104,8 +104,6 @@ describe("Key-area visual regression", () => {
   });
 
   it("breaks the title onto two lines, inset from the container's top left", () => {
-    // an 84 px box holds "Fire Intensity" on one line only while Lato is loaded;
-    // the height check is what catches a third line on the fallback font
     rect(SCALE).then((container) => {
       rect(TITLE).then((title) => {
         expect(title.width, "title width").to.eq(84);
@@ -114,8 +112,13 @@ describe("Key-area visual regression", () => {
         expect(title.top - container.top, "title top inset").to.eq(6);
       });
     });
-    cy.get(TITLE)
-      .should("have.css", "white-space", "pre-line");
+    // the box carries an explicit height, so a third line overflows it rather
+    // than growing it; scrollHeight is what sees that
+    cy.get(TITLE).should(($title) => {
+      const el = $title[0];
+      expect(el.scrollHeight, "title lines fit the box").to.eq(el.clientHeight);
+      expect(getComputedStyle(el).whiteSpace, "must not soft-wrap").to.eq("pre");
+    });
   });
 
   it("sets the title and label typography", () => {
