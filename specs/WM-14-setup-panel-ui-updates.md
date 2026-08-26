@@ -26,11 +26,11 @@ Controls and states:
 - **R7.** Cursors: `pointer` on buttons, radios and interactive zone thumbnails; `grab`/`grabbing` on the three sliders and the wind dial.
 - **R8.** Zone thumbnails behave as a radio group: default 50% opacity, hover 75%, selected 100%, no hover state once selected, and the read-only step-2 thumbnails sit flat at 100% with no hover response.
 - **R9.** Step-0 zones-count radio: `#797979` ring and dot backed by a white disk; the "2"/"3" labels grow and bold on selection without shifting horizontally; the radio, label and image act as one target, and the selected image shows its full white outline.
-- **R10.** Step-1 terrain type radios (2-zone): Roboto Condensed 14/400 `#434343` labels, the full `FormControlLabel` as the hit area, radio styling matched to the step-0 radios, and no horizontal shift when the label bolds.
+- **R10.** Step-1 terrain type radios (2-zone): Roboto Condensed 13/400 `#434343` labels, the full `FormControlLabel` as the hit area, radio styling matched to the step-0 radios, and no horizontal shift when the label bolds.
 
 Assets and sliders:
 
-- **R11.** Replace the 20 terrain background PNGs in place with the shortened artboard exports: 120x100 (2-zone) and 80x100 (3-zone) inside a 4px white frame.
+- **R11.** Replace the 15 terrain background PNGs in place with the shortened artboard exports: 120x100 (2-zone) and 80x100 (3-zone) inside a 4px white frame.
 - **R12.** Wire the river overlay strips back in over the shortened terrains, aligned flush at the bottom and dimming with the terrain.
 - **R13.** Vegetation and drought sliders: Roboto Condensed 13 marks with the selected mark at weight 500, rail lengthened to 114px so the marks land on the Zeplin positions, headers indented over the slider column, and the chevron-ring thumb asset swapped in.
 - **R14.** Wind speed slider: lifted out of the cramped wind text into its own 92px-wide positioned container, 13px marks, small chevron-ring thumb.
@@ -117,7 +117,7 @@ Zeplin screen: https://app.zeplin.io/project/5fe47ae231d1f6a428c53450/screen/6a1
 - A) Shrink globally to 59px, breaking the setup panel.
 - B) Make `WindDial` size-aware with a `size` prop or per-context class.
 
-**Decision**: **B**. `WindDial` gained a `size` prop defaulting to 59, so the model display is untouched, and the setup panel passes its own value through a single `WIND_DIAL_SIZE` constant in `wind-circular-control.tsx`.
+**Decision**: **B**. `WindDial` gained a `size` prop defaulting to 59, so the model display is untouched, and the setup panel passes its own value through a single `WIND_DIAL_SIZE` constant in `wind-circular-control.tsx`. That constant ships at **74px**: 79px was the artboard target, dialed back slightly on designer review.
 
 ---
 
