@@ -77,3 +77,15 @@
   font-weight: bold;
   padding-top: 6px;
 }
+
+.fireIntensityScaleContainer {
+  box-sizing: border-box;
+  width: $keyAreaWidth;
+  height: $fireIntensityScaleHeight;
+  position: fixed;
+  top: $fireIntensityScaleTop;
+  left: $keyAreaLeft;
+  background: $keyAreaBackground;
+  border-radius: $keyAreaBorderRadius;
+  z-index: 2;
+}

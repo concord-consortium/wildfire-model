@@ -6,6 +6,7 @@ import { SimulationInfo } from "./simulation-info";
 import { TerrainPanel } from "./terrain-panel";
 import { RightPanel } from "./right-panel";
 import { BottomBar } from "./bottom-bar";
+import { FireIntensityScale } from "./fire-intensity-scale";
 import { useStores } from "../use-stores";
 import { TopBar } from "./top-bar/top-bar";
 import { AboutDialogContent } from "./top-bar/about-dialog-content";
@@ -108,6 +109,11 @@ export const AppComponent = observer(function WrappedComponent() {
       <div className={css.timeDisplay}>
         {timeInDays} {timeInDays === 1 ? "day" : "days"} and <br /> {timeHours} {timeHours === 1 ? "hour" : "hours"}
       </div>
+      {config.showBurnIndex &&
+        <div className={css.fireIntensityScaleContainer}>
+          <FireIntensityScale />
+        </div>
+      }
       <div className={`${css.mainContent} ${ui.showChart && css.shrink}`}>
         <SimulationInfo />
         <View3d />
