@@ -49,8 +49,8 @@ const MIN_SD = 12;
 // four are rasterized into one shared texture at one shared scale — a different
 // viewBox silently changes how large that tile's glyphs render.
 const EXPECTED_VIEWBOX = 256;
-// Paired with GLYPH_STROKE in generate-terrain-textures.mjs. Change one and this
-// has to move with it.
+// The authored stroke weight every tile draws its glyphs at. A tile at a different
+// weight quietly loses contrast against its field.
 const EXPECTED_STROKE = 3;
 // Elements drawn in this ink are the glyphs; anything else (an inert group
 // default, say) is ignored.

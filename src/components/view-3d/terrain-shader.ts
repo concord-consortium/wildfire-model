@@ -148,10 +148,10 @@ float wfEdgeNoise(vec2 p) {
   return 0.62 * wfNoise(p) + 0.38 * wfNoise(p * 2.7 + 11.3);
 }
 
-// Tile luminance at which a glyph reaches its full ink color. Matches the gray
-// the tiles draw their strokes at (see the generator's GLYPH_INK) — the two are
-// a matched pair, so if the tiles are redrawn at a different stroke gray this
-// must move with them or the glyphs will render washed out.
+// Tile luminance at which a glyph reaches its full ink color. 0.165 is #2A2A2A,
+// the gray the tiles draw their strokes at, which scripts/measure-terrain-textures.mjs
+// checks them against. Redraw the tiles at a different stroke gray and this has to
+// move with them or the glyphs render washed out.
 const float WF_GLYPH_INK = 0.165;
 
 /**
