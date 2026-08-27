@@ -23,7 +23,7 @@
  *   discrete glyphs it legitimately sits below 128 and is not the thing to tune.
  *
  *   SD is the tile's contrast, and is what decides whether it reads as a surface
- *   or as flat gray once it is repeated ~40x across the terrain and viewed at a
+ *   or as flat gray once it is repeated ~7x across the terrain and viewed at a
  *   shallow angle. Below roughly 12 a tile disappears at distance.
  *
  * Measurement goes through headless Chrome because that is what actually

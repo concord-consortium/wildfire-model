@@ -125,6 +125,23 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     cy.get('[data-testid="fireline-button"]').should("contain.text", "Fireline");
   });
 
+  // .leftContainer and .rightContainer are both flex: 1 with no min-width: 0, so
+  // neither can shrink below its own content: past the row's intrinsic minimum it
+  // does not compress or wrap, it overflows the fixed bar. That minimum is 824px
+  // (576 of controls, plus the right container's 194 floor of Hazbot 122 + 10 +
+  // fullscreen 62, plus the left container's 54), against the 1241 x 529 viewport
+  // the target Chromebook reports. Visited with a rule-set because the Hazbot
+  // button is what sets that floor, and it only renders for a loaded one.
+  it("fits the target Chromebook's viewport without overflowing the bar", () => {
+    cy.visit(`${APP_URL}&hazbotRules=25`);
+    cy.window().its("sim.dataReady").should("eq", true);
+    cy.get('[class*="hazbotButton"]').should("exist");
+    cy.viewport(1241, 529);
+    cy.get('[class*="bottomBar"]').should(($bar) => {
+      expect($bar[0].scrollWidth, "bottom bar content width").to.be.at.most($bar[0].clientWidth);
+    });
+  });
+
   it("renders the fullscreen container at 62 x 62 with 42 x 42 centered background", () => {
     cy.get('[title="Toggle Fullscreen"]').then(($el) => {
       const rect = $el[0].getBoundingClientRect();

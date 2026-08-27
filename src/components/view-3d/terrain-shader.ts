@@ -51,12 +51,21 @@ const BURN_EDGE_SOFTNESS = 0.06;
 // if the tiles are ever replaced with organic artwork.
 const MACRO_AMOUNT = 0.07;
 
+// Spatial frequency of that variation, in repeats across the terrain. Low, so it
+// reads as broad regional shading rather than as a second texture competing with
+// the tiles.
+const MACRO_SCALE = 5.0;
+
 // Range of "upness" (the surface normal's up component, 1 = flat, 0 = vertical)
 // over which the texture fades in: [fully faded, fully textured]. Exists because
 // the tile UV is a top-down planar projection, which smears badly on the near
 // vertical skirt fillTerrainEdges puts around the model. Raise the upper bound to
 // also strip texture off steep mountain faces, lower it to keep more.
 const SLOPE_FADE: [number, number] = [0.15, 0.5];
+
+// How much of the flame color the fire front lays over the ground. Short of 1 so
+// a trace of the terrain beneath still shows through the burning cells.
+const FIRE_OPACITY = 0.92;
 
 export interface TerrainShaderUniforms {
   uVegetationTiles: { value: THREE.Texture };
@@ -298,7 +307,8 @@ const FRAGMENT_BODY = /* glsl */`
   // which give the actual geometry of the triangle being shaded rather than the
   // averaged vertex normal. This is what makes the skirt read as vertical even
   // where it borders flat terrain. dFdx/dFdy are core in GLSL ES 3.00, which three
-  // compiles to on the WebGL2 context it creates by default at r153.
+  // compiles to on the WebGL2 context it creates by default at r153; the WebGL1
+  // fallback context is covered by the material's extensions.derivatives flag.
   vec3 dLocalX = dFdx(vLocalPos);
   vec3 dLocalY = dFdy(vLocalPos);
   float upness = abs(normalize(cross(dLocalX, dLocalY)).z);
@@ -368,11 +378,11 @@ export const createTexturedTerrainMaterial = (
       ].map(level => srgb(getTerrainColor(level)))
     },
     uHighlight: { value: HIGHLIGHT },
-    uMacroScale: { value: 5.0 },
+    uMacroScale: { value: MACRO_SCALE },
     uMacroAmount: { value: MACRO_AMOUNT },
     uEdgeNoiseScale: { value: BURN_EDGE_NOISE_SCALE },
     uEdgeSoftness: { value: BURN_EDGE_SOFTNESS },
-    uFireOpacity: { value: 0.92 },
+    uFireOpacity: { value: FIRE_OPACITY },
     uShowBurnIndex: { value: config.showBurnIndex ? 1 : 0 },
     uBurntColor: { value: srgb(BURNT_COLOR) },
     uBurningColor: { value: srgb(BURNING_COLOR) },
@@ -382,6 +392,13 @@ export const createTexturedTerrainMaterial = (
   };
 
   const material = new THREE.MeshPhongMaterial({ vertexColors: true });
+  // The fragment shader's dFdx/dFdy are core in GLSL ES 3.00, but three still
+  // falls back to a WebGL1 context where they need GL_OES_standard_derivatives,
+  // and it emits that #extension directive only for a material that asks for it.
+  // Without the directive the program fails to link on such a context and the
+  // terrain mesh draws nothing at all. `extensions` is typed on ShaderMaterial
+  // alone even though the renderer reads it off any material, hence the assign.
+  Object.assign(material, { extensions: { derivatives: true } });
 
   material.onBeforeCompile = shader => {
     Object.assign(shader.uniforms, uniforms);

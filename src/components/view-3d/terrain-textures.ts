@@ -12,9 +12,10 @@ import { Vegetation } from "../../types";
 // resolves correctly under a branch deploy path.
 export const TILE_DIR = "terrain-textures/";
 
-// Rasterization size per tile. A tile repeats ~10x across the terrain, so on a
-// 1200px-wide viewport each repeat covers roughly 100px; 512 leaves headroom for
-// zooming in with OrbitControls, and mipmaps handle the minified case.
+// Rasterization size per tile. A tile covers a fixed 18,000 ft of ground, so it
+// repeats 6.7x across the default 120,000 ft model; on a 1200px-wide viewport
+// each repeat covers roughly 180px. 512 leaves headroom for zooming in with
+// OrbitControls, and mipmaps handle the minified case.
 const RASTER_SIZE = 512;
 
 // The four vegetation tiles are packed into the four channels of one texture, in

@@ -17,13 +17,9 @@ import { useSimulationClickedInteraction } from "./use-simulation-clicked-intera
 import {
   BURNING_COLOR, BURNT_COLOR, FIRE_LINE_UNDER_CONSTRUCTION_COLOR, burnIndexColor, getTerrainColor
 } from "./terrain-colors";
+import { buildNearEdgeMask } from "./near-edge-mask";
 import { useTerrainTextures } from "./terrain-textures";
 import { createTexturedTerrainMaterial } from "./terrain-shader";
-
-// The palette moved to terrain-colors.ts so the textured-terrain shader can share
-// it without importing this component. Re-exported here because
-// fire-intensity-scale.tsx imports these from this module.
-export { BURN_INDEX_LOW, BURN_INDEX_MEDIUM, BURN_INDEX_HIGH } from "./terrain-colors";
 
 const vertexIdx = (cell: Cell, gridWidth: number, gridHeight: number) => (gridHeight - 1 - cell.y) * gridWidth + cell.x;
 
@@ -190,41 +186,22 @@ const createCellDataTexture = (width: number, height: number): CellDataTexture =
 // up with cell.y = 0 directly.
 const cellDataIdx = (cell: Cell, gridWidth: number) => (cell.y * gridWidth + cell.x) * 4;
 
-// True for the perimeter cells whose geometry forms the edge skirt, and for their
-// immediate neighbors. The skirt FACE spans from a perimeter cell to the cell
-// inward of it, so masking only the perimeter would leave the upper half of that
-// face textured. Delegating to simulation.isTerrainEdge rather than re-deriving
-// the condition keeps its deliberate off-by-one (the row at gridHeight - 1 is NOT
-// zeroed, so there is no skirt there) automatically correct.
-//
-// The mask is built once per grid because the predicate is expensive: five
-// isTerrainEdge calls per cell cost 16.5ms across 38,400 cells, almost all of it
-// MobX re-evaluating the two unobserved @computed dimensions each call reads. Null
-// when the textures are off, the only case with no consumer.
+// Null when the textures are off, the only case with no consumer. The mask itself
+// lives in near-edge-mask.ts, where it is unit tested.
 const useNearEdgeMask = (simulation: SimulationModel, enabled: boolean) => {
   const { gridWidth, gridHeight } = simulation;
   const { fillTerrainEdges } = simulation.config;
-  return useMemo(() => {
-    if (!enabled) return null;
-    const mask = new Uint8Array(gridWidth * gridHeight);
-    // fillTerrainEdges gates isTerrainEdge entirely, so with it off no cell is an
-    // edge and the all-zero mask is already the answer. Read here rather than only
-    // named as a dependency, so the memo is invalidated on a value it truly uses.
-    if (!fillTerrainEdges) return mask;
-    // Bounded to real cells. isTerrainEdge answers true for y === gridHeight, a
-    // coordinate no cell has, so an unbounded neighbor probe reports the whole
-    // gridHeight - 1 row as near-edge. That row carries no skirt, so masking it
-    // strips its glyphs and suppresses its river color for nothing.
-    const edge = (x: number, y: number) =>
-      x >= 0 && x < gridWidth && y >= 0 && y < gridHeight && simulation.isTerrainEdge(x, y);
-    for (let y = 0; y < gridHeight; y++) {
-      for (let x = 0; x < gridWidth; x++) {
-        mask[y * gridWidth + x] = (edge(x, y) || edge(x - 1, y) || edge(x + 1, y) ||
-          edge(x, y - 1) || edge(x, y + 1)) ? 1 : 0;
-      }
-    }
-    return mask;
-  }, [enabled, simulation, gridWidth, gridHeight, fillTerrainEdges]);
+  return useMemo(
+    () => enabled
+      ? buildNearEdgeMask({
+        gridWidth, gridHeight, fillTerrainEdges,
+        // Called through the model rather than passed as a bound reference: it
+        // reads this.config, so destructuring it would strip its receiver.
+        isTerrainEdge: (x, y) => simulation.isTerrainEdge(x, y)
+      })
+      : null,
+    [enabled, simulation, gridWidth, gridHeight, fillTerrainEdges]
+  );
 };
 
 // One-hot vegetation weights, one channel per Vegetation enum value, matching the
