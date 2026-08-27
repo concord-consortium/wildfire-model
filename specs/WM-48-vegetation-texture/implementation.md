@@ -630,18 +630,19 @@ The on fill needs no change: the raw literal `#2997ff` matches `wind-dial.scss:3
 
 `:93` estimates step two at "~950 lines, most of it the prototype's shader and loader arriving unchanged". Measured against `98858e5`:
 
-| | estimate | measured |
+| | estimate | measured on the head commit |
 |---|---|---|
 | performance hoist | ~10 | ~10 |
-| terrain (incl. the prototype) | ~950 | **~1800** (11 files, +1713 / -44 tracked, plus 87 lines of new test) |
-| switch | ~200 | ~216 (6 files, +20 / -1 tracked, plus 196 lines of new files) |
-| **whole PR** | ~1160 | **~2016 / -45 across 17 files** |
+| terrain (incl. the prototype) | ~950 | **~1800** (14 files, +1798 / -43, most of it new) |
+| switch | ~200 | ~234 (8 files, +234 / -1) |
+| audit follow-ups | - | ~110 (9 files) |
+| **whole PR** | ~1160 | **+2063 / -45 across 22 files** |
 
 The switch estimate is accurate; the terrain one is not, and it could not have been, since the prototype alone is +1678 and this step carries it whole. The requirements spec's own figure of "one ~1800-line diff" is much closer to the terrain step alone, and the real total is over 2,000.
 
 This is worth correcting rather than shrugging at, for two reasons that both come from decisions already made. The split decision was argued partly on diff size, on the reasoning that "one ~1800-line diff costs about what two ~900-line ones do", and its stated reversal condition is "review tooling that truncates or degrades on a diff this size". Both are sized against a number that is now known to be low. And the PR body is required to carry measured figures, which this one currently would not.
 
-**Decision**: replace the estimates with the measured figures and drop the "Estimated" framing for the two that are now measured. The requirements spec's "one ~1800-line diff" is corrected to the whole PR at roughly +2016 / -45 across 17 files, with the note that ~1800 of it is the terrain step alone.
+**Decision**: replace the estimates with the measured figures and drop the "Estimated" framing for the two that are now measured. The requirements spec's "one ~1800-line diff" is corrected to the whole PR at **+2063 / -45 across 22 files**, with the note that ~1800 of it is the terrain step alone.
 
 ---
 
