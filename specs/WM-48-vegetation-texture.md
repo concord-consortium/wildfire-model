@@ -404,7 +404,11 @@ Two things follow. **The reason for default-off is backward compatibility, not p
 
 ---
 
-### The thumb highlight matches the board (WITHDRAWN)
-**Context**: A visual-review finding claimed the thumb highlight treatment diverged from the board.
+### The thumb highlight was a square, and the withdrawal was wrong
+**Context**: A visual-review finding claimed the thumb highlight treatment diverged from the board. It was withdrawn during specing as a false positive, on the grounds that the opacity progression (0 / 0.5 / 1) matched the board and the repo's other bottom-bar controls.
 
-**Decision**: withdrawn as a false positive. The row identification from thumb position (x=400 off, x=418 on) and the eight `Vegetation Key Back` fills are unaffected, and the requirements bullet describing hover and select as the icon-outline treatment at 50% and 100% is correct as it stands.
+**Decision**: the withdrawal does not survive testing the built control. The progression was right and the *shape* was wrong: the highlight was a 28 px white square div sitting behind the thumb art, whose visible circle is only 20 px, so it rendered as a square halo rather than a ring. Reading the opacity values off the board could not catch that, and only looking at the running switch did.
+
+The fix is to stop hand-rolling the highlight and use the construction the Setup panel's sliders already use for this exact asset: a `box-shadow: 0 0 0 3px` ring at `rgba(255, 255, 255, 0.5)` on hover and `rgb(255, 255, 255)` on active, on a `border-radius: 50%` element. `wind-circular-control.scss` and `vertical-selectors.scss` both do this, and the rules now match theirs exactly. The thumb element is sized to the art's 20 px circle rather than its 28 px box, with `background-size: 140%` so the circle fills it, which is what makes the ring hug the circle; the `.on` offset moves from 18 px to 22 px to keep the circle in the same place. The separate `.thumbIcon` and `.thumbHighlight` nodes are deleted.
+
+**The lesson worth keeping**: this finding was withdrawn on desk evidence (board layer data and an opacity comparison) about a property that only renders. A visual claim needs the running control.

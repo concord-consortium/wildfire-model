@@ -32,10 +32,7 @@ export const VegetationKeySwitch = observer(function WrappedComponent() {
         <span className={css.label}>{"Vegetation\nKey"}</span>
         <span className={css.switchGroup}>
           <span className={css.track} />
-          <span className={css.thumb}>
-            <span className={css.thumbHighlight} />
-            <span className={css.thumbIcon} />
-          </span>
+          <span className={css.thumb} />
         </span>
       </span>
     </Button>
