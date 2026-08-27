@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256px" height="256px" viewBox="0 0 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>forest-with-suppression</title>
+    <defs>
+        <rect id="path-1" x="0" y="0" width="256" height="256"></rect>
+    </defs>
+    <g id="forest-with-suppression" stroke="none" fill="none" fill-rule="evenodd" stroke-width="1">
+        <g id="Group">
+            <rect id="Rectangle" fill="#808080" x="0" y="0" width="256" height="256"></rect>
+            <g id="Clipped">
+                <mask id="mask-2" fill="white">
+                    <use xlink:href="#path-1"></use>
+                </mask>
+                <g id="Rectangle"></g>
+                <g id="Group" mask="url(#mask-2)" stroke="#2A2A2A" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+                    <g transform="translate(-273.41, -288.9)" id="Path">
+                        <line x1="318.01" y1="286.57" x2="318.01" y2="290.42"></line>
+                        <polygon points="356.03 257.9 342.51 288.96 369.55 288.96"></polygon>
+                        <line x1="356.03" y1="288.96" x2="356.03" y2="295.17"></line>
+                        <polygon points="400.66 272.04 391.8 292.4 409.53 292.4"></polygon>
+                        <line x1="400.66" y1="292.4" x2="400.66" y2="296.47"></line>
+                        <polygon points="443.18 260.97 430.55 289.99 455.82 289.99"></polygon>
+                        <line x1="443.18" y1="289.99" x2="443.18" y2="295.79"></line>
+                        <line x1="487.83" y1="285.37" x2="487.83" y2="289.37"></line>
+                        <line x1="525.74" y1="287.54" x2="525.74" y2="293.85"></line>
+                        <polygon points="294.3 308.89 285.19 329.81 303.42 329.81"></polygon>
+                        <line x1="294.3" y1="329.81" x2="294.3" y2="333.99"></line>
+                        <polygon points="340.21 304.03 327.39 333.45 353.02 333.45"></polygon>
+                        <line x1="340.21" y1="333.45" x2="340.21" y2="339.34"></line>
+                        <polygon points="382.58 314.39 374.32 333.35 390.84 333.35"></polygon>
+                        <line x1="382.58" y1="333.35" x2="382.58" y2="337.14"></line>
+                        <polygon points="421.76 305.51 409.2 334.36 434.32 334.36"></polygon>
+                        <line x1="421.76" y1="334.36" x2="421.76" y2="340.13"></line>
+                        <polygon points="466.15 310.85 456.94 332.01 475.36 332.01"></polygon>
+                        <line x1="466.15" y1="332.01" x2="466.15" y2="336.24"></line>
+                        <polygon points="507.15 298.95 493.94 329.27 520.35 329.27"></polygon>
+                        <line x1="507.15" y1="329.27" x2="507.15" y2="335.34"></line>
+                        <polygon points="275.12 342.8 262.23 372.41 288.02 372.41"></polygon>
+                        <line x1="275.12" y1="372.41" x2="275.12" y2="378.34"></line>
+                        <polygon points="317.31 355.77 308.18 376.74 326.44 376.74"></polygon>
+                        <line x1="317.31" y1="376.74" x2="317.31" y2="380.94"></line>
+                        <polygon points="359.45 342.42 345.63 374.17 373.28 374.17"></polygon>
+                        <line x1="359.45" y1="374.17" x2="359.45" y2="380.51"></line>
+                        <polygon points="399.62 355.64 390.48 376.62 408.75 376.62"></polygon>
+                        <line x1="399.62" y1="376.62" x2="399.62" y2="380.82"></line>
+                        <polygon points="443.2 341.54 430.13 371.56 456.27 371.56"></polygon>
+                        <line x1="443.2" y1="371.56" x2="443.2" y2="377.56"></line>
+                        <polygon points="487.37 353.22 478.2 374.29 496.54 374.29"></polygon>
+                        <line x1="487.37" y1="374.29" x2="487.37" y2="378.5"></line>
+                        <polygon points="531.12 342.8 518.23 372.41 544.02 372.41"></polygon>
+                        <polygon points="293.71 399.05 284.58 420.02 302.84 420.02"></polygon>
+                        <line x1="293.71" y1="420.02" x2="293.71" y2="424.21"></line>
+                        <polygon points="336.05 385.97 322.35 417.42 349.74 417.42"></polygon>
+                        <line x1="336.05" y1="417.42" x2="336.05" y2="423.71"></line>
+                        <polygon points="378.29 400.46 370.24 418.94 386.33 418.94"></polygon>
+                        <line x1="378.29" y1="418.94" x2="378.29" y2="422.64"></line>
+                        <polygon points="421.64 390.28 408.57 420.3 434.72 420.3"></polygon>
+                        <line x1="421.64" y1="420.3" x2="421.64" y2="426.3"></line>
+                        <polygon points="462.83 398.47 454.02 418.71 471.64 418.71"></polygon>
+                        <line x1="462.83" y1="418.71" x2="462.83" y2="422.75"></line>
+                        <polygon points="510.25 382.94 496.71 414.04 523.79 414.04"></polygon>
+                        <line x1="510.25" y1="414.04" x2="510.25" y2="420.26"></line>
+                        <polygon points="274.69 429.22 261.76 458.92 287.62 458.92"></polygon>
+                        <line x1="274.69" y1="458.92" x2="274.69" y2="464.86"></line>
+                        <polygon points="317.32 442.34 308.67 462.2 325.97 462.2"></polygon>
+                        <line x1="317.32" y1="462.2" x2="317.32" y2="466.17"></line>
+                        <polygon points="358.04 433.2 344.94 463.28 371.14 463.28"></polygon>
+                        <line x1="358.04" y1="463.28" x2="358.04" y2="469.3"></line>
+                        <polygon points="398.84 440.72 389.95 461.12 407.72 461.12"></polygon>
+                        <line x1="398.84" y1="461.12" x2="398.84" y2="465.2"></line>
+                        <polygon points="445.02 431.72 431.23 463.38 458.81 463.38"></polygon>
+                        <line x1="445.02" y1="463.38" x2="445.02" y2="469.72"></line>
+                        <polygon points="489.43 435.16 480.33 456.07 498.53 456.07"></polygon>
+                        <line x1="489.43" y1="456.07" x2="489.43" y2="460.25"></line>
+                        <polygon points="530.69 429.22 517.76 458.92 543.62 458.92"></polygon>
+                        <polygon points="295.6 482.33 287.25 501.49 303.94 501.49"></polygon>
+                        <line x1="295.6" y1="501.49" x2="295.6" y2="505.32"></line>
+                        <polygon points="340.74 472.48 327.43 503.06 354.06 503.06"></polygon>
+                        <line x1="340.74" y1="503.06" x2="340.74" y2="509.18"></line>
+                        <polygon points="381.05 480.1 372.67 499.32 389.42 499.32"></polygon>
+                        <line x1="381.05" y1="499.32" x2="381.05" y2="503.17"></line>
+                        <polygon points="424.33 472.69 411.3 502.61 437.36 502.61"></polygon>
+                        <line x1="424.33" y1="502.61" x2="424.33" y2="508.59"></line>
+                        <polygon points="462.26 483.36 453.97 502.4 470.55 502.4"></polygon>
+                        <line x1="462.26" y1="502.4" x2="462.26" y2="506.21"></line>
+                        <polygon points="511.91 469.38 498.43 500.35 525.4 500.35"></polygon>
+                        <line x1="511.91" y1="500.35" x2="511.91" y2="506.55"></line>
+                        <polygon points="269.74 512 256 543.54 283.47 543.54"></polygon>
+                        <polygon points="318.01 523.33 309.64 542.57 326.39 542.57"></polygon>
+                        <line x1="318.01" y1="542.57" x2="318.01" y2="546.42"></line>
+                        <polygon points="356.03 513.9 342.51 544.96 369.55 544.96"></polygon>
+                        <polygon points="400.66 528.04 391.8 548.4 409.53 548.4"></polygon>
+                        <polygon points="443.18 516.97 430.55 545.99 455.82 545.99"></polygon>
+                        <polygon points="487.83 521.36 479.12 541.37 496.54 541.37"></polygon>
+                        <line x1="487.83" y1="541.37" x2="487.83" y2="545.37"></line>
+                        <polygon points="525.74 512 512 543.54 539.47 543.54"></polygon>
+                    </g>
+                </g>
+                <g id="Group" mask="url(#mask-2)" stroke="#2A2A2A" stroke-linecap="round" stroke-width="3">
+                    <line x1="238.67" y1="4" x2="256" y2="21.33" id="Path"></line>
+                    <line x1="217.83" y1="4.5" x2="226.33" y2="13" id="Path"></line>
+                    <line x1="251.83" y1="38.5" x2="256" y2="42.67" id="Path"></line>
+                    <line x1="192" y1="0" x2="220" y2="28" id="Path"></line>
+                    <line x1="239" y1="47" x2="250" y2="58" id="Path"></line>
+                    <line x1="177.17" y1="6.5" x2="188.67" y2="18" id="Path"></line>
+                    <line x1="202.67" y1="32" x2="243.67" y2="73" id="Path"></line>
+                    <line x1="149.33" y1="0" x2="152.33" y2="3" id="Path"></line>
+                    <line x1="155.33" y1="6" x2="182.33" y2="33" id="Path"></line>
+                    <line x1="197.83" y1="48.5" x2="209.83" y2="60.5" id="Path"></line>
+                    <line x1="224.33" y1="75" x2="238.33" y2="89" id="Path"></line>
+                    <line x1="241.83" y1="92.5" x2="256" y2="106.67" id="Path"></line>
+                    <line x1="136.5" y1="8.5" x2="143" y2="15" id="Path"></line>
+                    <line x1="161" y1="33" x2="203.5" y2="75.5" id="Path"></line>
+                    <line x1="219" y1="91" x2="228.5" y2="100.5" id="Path"></line>
+                    <line x1="106.67" y1="0" x2="136.67" y2="30" id="Path"></line>
+                    <line x1="157.17" y1="50.5" x2="162.67" y2="56" id="Path"></line>
+                    <line x1="187.67" y1="81" x2="221.67" y2="115" id="Path"></line>
+                    <line x1="241.17" y1="134.5" x2="250.17" y2="143.5" id="Path"></line>
+                    <line x1="90.83" y1="5.5" x2="106.33" y2="21" id="Path"></line>
+                    <line x1="117.83" y1="32.5" x2="130.33" y2="45" id="Path"></line>
+                    <line x1="135.83" y1="50.5" x2="156.33" y2="71" id="Path"></line>
+                    <line x1="174.83" y1="89.5" x2="189.83" y2="104.5" id="Path"></line>
+                    <line x1="195.33" y1="110" x2="243.83" y2="158.5" id="Path"></line>
+                    <line x1="69.5" y1="5.5" x2="99" y2="35" id="Path"></line>
+                    <line x1="114" y1="50" x2="125.5" y2="61.5" id="Path"></line>
+                    <line x1="132.5" y1="68.5" x2="180.5" y2="116.5" id="Path"></line>
+                    <line x1="199" y1="135" x2="210" y2="146" id="Path"></line>
+                    <line x1="230" y1="166" x2="239.5" y2="175.5" id="Path"></line>
+                    <line x1="244" y1="180" x2="256" y2="192" id="Path"></line>
+                    <line x1="48.17" y1="5.5" x2="60.17" y2="17.5" id="Path"></line>
+                    <line x1="83.67" y1="41" x2="117.17" y2="74.5" id="Path"></line>
+                    <line x1="135.67" y1="93" x2="142.67" y2="100" id="Path"></line>
+                    <line x1="161.17" y1="118.5" x2="203.67" y2="161" id="Path"></line>
+                    <line x1="218.67" y1="176" x2="229.67" y2="187" id="Path"></line>
+                    <line x1="21.33" y1="0" x2="53.33" y2="32" id="Path"></line>
+                    <line x1="71.83" y1="50.5" x2="78.83" y2="57.5" id="Path"></line>
+                    <line x1="104.33" y1="83" x2="136.33" y2="115" id="Path"></line>
+                    <line x1="157.83" y1="136.5" x2="165.33" y2="144" id="Path"></line>
+                    <line x1="187.33" y1="166" x2="223.33" y2="202" id="Path"></line>
+                    <line x1="242.33" y1="221" x2="245.83" y2="224.5" id="Path"></line>
+                    <line x1="4" y1="4" x2="16.5" y2="16.5" id="Path"></line>
+                    <line x1="31.5" y1="31.5" x2="72" y2="72" id="Path"></line>
+                    <line x1="91.5" y1="91.5" x2="107" y2="107" id="Path"></line>
+                    <line x1="109.5" y1="109.5" x2="130" y2="130" id="Path"></line>
+                    <line x1="136.5" y1="136.5" x2="159" y2="159" id="Path"></line>
+                    <line x1="179.5" y1="179.5" x2="189.5" y2="189.5" id="Path"></line>
+                    <line x1="194.5" y1="194.5" x2="239.5" y2="239.5" id="Path"></line>
+                    <line x1="0" y1="21.33" x2="10" y2="31.33" id="Path"></line>
+                    <line x1="26" y1="47.33" x2="41" y2="62.33" id="Path"></line>
+                    <line x1="52.5" y1="73.83" x2="96.5" y2="117.83" id="Path"></line>
+                    <line x1="114" y1="135.33" x2="125" y2="146.33" id="Path"></line>
+                    <line x1="131.5" y1="152.83" x2="152.5" y2="173.83" id="Path"></line>
+                    <line x1="158.5" y1="179.83" x2="180" y2="201.33" id="Path"></line>
+                    <line x1="197.5" y1="218.83" x2="209.5" y2="230.83" id="Path"></line>
+                    <line x1="227" y1="248.33" x2="233.5" y2="254.83" id="Path"></line>
+                    <line x1="0" y1="42.67" x2="34" y2="76.67" id="Path"></line>
+                    <line x1="50.5" y1="93.17" x2="56" y2="98.67" id="Path"></line>
+                    <line x1="79" y1="121.67" x2="116.5" y2="159.17" id="Path"></line>
+                    <line x1="135" y1="177.67" x2="144" y2="186.67" id="Path"></line>
+                    <line x1="168.5" y1="211.17" x2="203" y2="245.67" id="Path"></line>
+                    <line x1="20" y1="84" x2="49.5" y2="113.5" id="Path"></line>
+                    <line x1="70" y1="134" x2="79.5" y2="143.5" id="Path"></line>
+                    <line x1="98" y1="162" x2="137.5" y2="201.5" id="Path"></line>
+                    <line x1="156" y1="220" x2="164" y2="228" id="Path"></line>
+                    <line x1="184" y1="248" x2="192" y2="256" id="Path"></line>
+                    <line x1="6.5" y1="91.83" x2="19.5" y2="104.83" id="Path"></line>
+                    <line x1="26.5" y1="111.83" x2="44" y2="129.33" id="Path"></line>
+                    <line x1="48.5" y1="133.83" x2="73" y2="158.33" id="Path"></line>
+                    <line x1="94.5" y1="179.83" x2="103" y2="188.33" id="Path"></line>
+                    <line x1="119" y1="204.33" x2="157.5" y2="242.83" id="Path"></line>
+                    <line x1="0" y1="106.67" x2="11" y2="117.67" id="Path"></line>
+                    <line x1="29.5" y1="136.17" x2="42" y2="148.67" id="Path"></line>
+                    <line x1="51.5" y1="158.17" x2="66.5" y2="173.17" id="Path"></line>
+                    <line x1="73" y1="179.67" x2="96.5" y2="203.17" id="Path"></line>
+                    <line x1="111.5" y1="218.17" x2="127" y2="233.67" id="Path"></line>
+                    <line x1="133" y1="239.67" x2="149.33" y2="256" id="Path"></line>
+                    <line x1="0" y1="128" x2="34.5" y2="162.5" id="Path"></line>
+                    <line x1="50.5" y1="178.5" x2="59.5" y2="187.5" id="Path"></line>
+                    <line x1="86" y1="214" x2="118.5" y2="246.5" id="Path"></line>
+                    <line x1="19" y1="168.33" x2="53" y2="202.33" id="Path"></line>
+                    <line x1="72.5" y1="221.83" x2="76.5" y2="225.83" id="Path"></line>
+                    <line x1="98" y1="247.33" x2="106.67" y2="256" id="Path"></line>
+                    <line x1="6.5" y1="177.17" x2="18.5" y2="189.17" id="Path"></line>
+                    <line x1="31.5" y1="202.17" x2="70" y2="240.67" id="Path"></line>
+                    <line x1="0" y1="192" x2="12" y2="204" id="Path"></line>
+                    <line x1="27" y1="219" x2="40" y2="232" id="Path"></line>
+                    <line x1="56" y1="248" x2="64" y2="256" id="Path"></line>
+                    <line x1="0.5" y1="213.83" x2="33.5" y2="246.83" id="Path"></line>
+                    <line x1="12.5" y1="247.17" x2="21.33" y2="256" id="Path"></line>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

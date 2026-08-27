@@ -93,7 +93,9 @@ describe("BottomBar component", () => {
         <BottomBar />
       </Provider>
     );
-    expect(screen.queryAllByRole("button").length).toEqual(7);
+    // Clear All, Setup, Vegetation Key, Spark, Restart, Start, Fireline, Helitack.
+    expect(screen.queryAllByRole("button").length).toEqual(8);
+    expect(screen.getByTestId("vegetation-key-switch")).toBeInTheDocument();
   });
 
   it("terrain button opens the terrain dialog and a second click leaves it open", async () => {
@@ -307,6 +309,25 @@ describe("BottomBar edge cases", () => {
       expect(stores.simulation.sparks.length).toBe(0);
       expectButtonState("restart-button", false);
       expectButtonState("clear-all-button", false);
+    });
+
+    it("Vegetation Key survives both Restart and Clear All", async () => {
+      stores.ui.showVegetationKey = true;
+      stores.simulation.sparks.push(new Vector2(50000, 50000));
+      stores.simulation.simulationStarted = true;
+      stores.simulation.simulationRunning = false;
+      (stores.simulation as any).engine = mockEngine();
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+
+      // Each half asserts the reset it rode on actually happened, so neither can
+      // pass by clicking a disabled button.
+      await userEvent.click(screen.getByTestId("restart-button"));
+      expect(stores.simulation.simulationStarted).toBe(false);
+      expect(stores.ui.showVegetationKey).toBe(true);
+
+      await userEvent.click(screen.getByTestId("clear-all-button"));
+      expect(stores.simulation.sparks.length).toBe(0);
+      expect(stores.ui.showVegetationKey).toBe(true);
     });
 
     it("Running → Clear All → Default-state rules, engine torn down", async () => {

@@ -117,6 +117,12 @@ $overflowHeight: 11px;
     margin-right: 0;
   }
 
+  // 90 px of content inside the shared 1 px border, per the board's 90/92 group.
+  // The switch itself fills this, so the width lives here only.
+  .vegetationKey {
+    width: 90px;
+  }
+
   // Clear All is the one pill wider than 60. `.playbackButton` locks all three
   // pills to `width: 60px !important` (the rule below explains why the
   // !important is unavoidable there), so reaching 66 has to beat an !important

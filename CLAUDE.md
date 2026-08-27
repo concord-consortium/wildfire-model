@@ -23,6 +23,7 @@ Project-specific notes for working in this repo. Conventions, gotchas, and tools
 | Build | `npm run build` |
 | Regenerate validation playbook | `node scripts/generate-hazbot-validation-playbook.js` |
 | Regenerate replay fixture | `node scripts/generate-replay-fixture.js` |
+| Check the terrain tiles | `node scripts/measure-terrain-textures.mjs` (run after editing any tile in `src/public/terrain-textures/`) |
 
 ## Playwright MCP testing
 
@@ -46,6 +47,7 @@ The app reads config from the query string. For Hazbot validation runs, combine 
 | `severeDroughtAvailable=false` | Cap drought slider at Medium |
 | `showBurnIndex=false` | Hide burn-index UI: omits the Fire Intensity Scale from the left key area (Time and Wind Meter are unchanged) and drops the three-tier burn-index terrain coloring |
 | `forestWithSuppressionAvailable=false` | Disable forest-with-suppression option |
+| `showVegetationKey=true` | Open with the Vegetation Key switched on, so the terrain loads textured. Sets the switch's *initial* state only: it is a normal bottom-bar control and can still be toggled off. Off by default, because the key on by default would change what the already-published module renders |
 | `tpiDebug=true` | Paint each placed spark's TPI bands onto the terrain (warm = ridge / +TPI, cool = valley / −TPI). Used to validate `SparksAtTopAndBottom` (ruleset 25) |
 | `tpiBands=[3,8,15]` | Concentric band radii (cells) for the multi-scale TPI; array length = N bands |
 | `tpiMarginFraction=0.02` | Fraction of `heightmapMaxElevation` a spark's mean TPI must clear to count as top/bottom (default 0.02 ≈ 400 ft) |

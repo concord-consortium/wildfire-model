@@ -1,6 +1,6 @@
 
 import React from "react";
-import { BURN_INDEX_HIGH, BURN_INDEX_LOW, BURN_INDEX_MEDIUM } from "./view-3d/terrain";
+import { BURN_INDEX_HIGH, BURN_INDEX_LOW, BURN_INDEX_MEDIUM } from "./view-3d/terrain-colors";
 import css from "./fire-intensity-scale.scss";
 
 const colorArrayToRGB = (colorArray: number[]) =>

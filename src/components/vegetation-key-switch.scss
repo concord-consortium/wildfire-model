@@ -1,0 +1,88 @@
+@import "common.scss";
+
+.vegetationKeySwitch {
+  position: relative;
+  // Fill the widget group, which owns the width. min-width defeats MUI's
+  // `.MuiButton-root { min-width: 64px }`, which would otherwise be the floor.
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  text-transform: none;
+}
+
+.label {
+  position: absolute;
+  left: 10px;
+  top: 4px;
+  width: 70px;
+  height: 34px;
+  font-family: Lato, arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 17px;
+  color: $controlLabel;
+  text-align: center;
+  white-space: pre-line;
+}
+
+// 46 x 28 rather than the track's 28: the 28 px thumb overhangs the 28 px track
+// by 9 px at whichever end it rests, so the group has to hold both extremes.
+.switchGroup {
+  position: absolute;
+  left: 22px;
+  top: 41px;
+  width: 46px;
+  height: 28px;
+}
+
+.track {
+  position: absolute;
+  left: 9px;
+  top: 9px;
+  width: 28px;
+  height: 10px;
+  box-sizing: border-box;
+  border: 1px solid $controlGray;
+  border-radius: 11px;
+  // Not $controlGrayLight1: that is $hoverColor, so the track would vanish into the
+  // widget background on hover. Same literal as wind-circular-control's gray shapes.
+  background: #d8d8d8;
+}
+
+// Sized to the art's 20 px circle rather than to its 28 px box, so the element is
+// round and the highlight ring below hugs the circle. background-size 140% scales
+// the 28 px artwork so that circle exactly fills the element, which is the same
+// construction wind-circular-control.scss uses for this asset.
+.thumb {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-image: url("../assets/slider-thumb-small.svg");
+  background-size: 140%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.vegetationKeySwitch:hover .thumb {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5);
+}
+
+.vegetationKeySwitch:active .thumb {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 1);
+}
+
+.on {
+  .track {
+    background: #2997ff;
+  }
+
+  .thumb {
+    left: 22px;
+  }
+}

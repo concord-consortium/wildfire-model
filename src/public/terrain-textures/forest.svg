@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="256px" height="256px" viewBox="0 0 256 256" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <title>forest</title>
+    <defs>
+        <rect id="path-1" x="0" y="0" width="256" height="256"></rect>
+    </defs>
+    <g id="forest" stroke="none" fill="none" fill-rule="evenodd" stroke-width="1">
+        <g id="Group">
+            <rect id="Rectangle" fill="#808080" x="0" y="0" width="256" height="256"></rect>
+            <g id="Clipped">
+                <mask id="mask-2" fill="white">
+                    <use xlink:href="#path-1"></use>
+                </mask>
+                <g id="Rectangle"></g>
+                <g id="Group" mask="url(#mask-2)" stroke="#2A2A2A" stroke-linecap="round" stroke-linejoin="round" stroke-width="3">
+                    <g transform="translate(-273.41, -288.9)" id="Path">
+                        <line x1="318.01" y1="286.57" x2="318.01" y2="290.42"></line>
+                        <polygon points="356.03 257.9 342.51 288.96 369.55 288.96"></polygon>
+                        <line x1="356.03" y1="288.96" x2="356.03" y2="295.17"></line>
+                        <polygon points="400.66 272.04 391.8 292.4 409.53 292.4"></polygon>
+                        <line x1="400.66" y1="292.4" x2="400.66" y2="296.47"></line>
+                        <polygon points="443.18 260.97 430.55 289.99 455.82 289.99"></polygon>
+                        <line x1="443.18" y1="289.99" x2="443.18" y2="295.79"></line>
+                        <line x1="487.83" y1="285.37" x2="487.83" y2="289.37"></line>
+                        <line x1="525.74" y1="287.54" x2="525.74" y2="293.85"></line>
+                        <polygon points="294.3 308.89 285.19 329.81 303.42 329.81"></polygon>
+                        <line x1="294.3" y1="329.81" x2="294.3" y2="333.99"></line>
+                        <polygon points="340.21 304.03 327.39 333.45 353.02 333.45"></polygon>
+                        <line x1="340.21" y1="333.45" x2="340.21" y2="339.34"></line>
+                        <polygon points="382.58 314.39 374.32 333.35 390.84 333.35"></polygon>
+                        <line x1="382.58" y1="333.35" x2="382.58" y2="337.14"></line>
+                        <polygon points="421.76 305.51 409.2 334.36 434.32 334.36"></polygon>
+                        <line x1="421.76" y1="334.36" x2="421.76" y2="340.13"></line>
+                        <polygon points="466.15 310.85 456.94 332.01 475.36 332.01"></polygon>
+                        <line x1="466.15" y1="332.01" x2="466.15" y2="336.24"></line>
+                        <polygon points="507.15 298.95 493.94 329.27 520.35 329.27"></polygon>
+                        <line x1="507.15" y1="329.27" x2="507.15" y2="335.34"></line>
+                        <polygon points="275.12 342.8 262.23 372.41 288.02 372.41"></polygon>
+                        <line x1="275.12" y1="372.41" x2="275.12" y2="378.34"></line>
+                        <polygon points="317.31 355.77 308.18 376.74 326.44 376.74"></polygon>
+                        <line x1="317.31" y1="376.74" x2="317.31" y2="380.94"></line>
+                        <polygon points="359.45 342.42 345.63 374.17 373.28 374.17"></polygon>
+                        <line x1="359.45" y1="374.17" x2="359.45" y2="380.51"></line>
+                        <polygon points="399.62 355.64 390.48 376.62 408.75 376.62"></polygon>
+                        <line x1="399.62" y1="376.62" x2="399.62" y2="380.82"></line>
+                        <polygon points="443.2 341.54 430.13 371.56 456.27 371.56"></polygon>
+                        <line x1="443.2" y1="371.56" x2="443.2" y2="377.56"></line>
+                        <polygon points="487.37 353.22 478.2 374.29 496.54 374.29"></polygon>
+                        <line x1="487.37" y1="374.29" x2="487.37" y2="378.5"></line>
+                        <polygon points="531.12 342.8 518.23 372.41 544.02 372.41"></polygon>
+                        <polygon points="293.71 399.05 284.58 420.02 302.84 420.02"></polygon>
+                        <line x1="293.71" y1="420.02" x2="293.71" y2="424.21"></line>
+                        <polygon points="336.05 385.97 322.35 417.42 349.74 417.42"></polygon>
+                        <line x1="336.05" y1="417.42" x2="336.05" y2="423.71"></line>
+                        <polygon points="378.29 400.46 370.24 418.94 386.33 418.94"></polygon>
+                        <line x1="378.29" y1="418.94" x2="378.29" y2="422.64"></line>
+                        <polygon points="421.64 390.28 408.57 420.3 434.72 420.3"></polygon>
+                        <line x1="421.64" y1="420.3" x2="421.64" y2="426.3"></line>
+                        <polygon points="462.83 398.47 454.02 418.71 471.64 418.71"></polygon>
+                        <line x1="462.83" y1="418.71" x2="462.83" y2="422.75"></line>
+                        <polygon points="510.25 382.94 496.71 414.04 523.79 414.04"></polygon>
+                        <line x1="510.25" y1="414.04" x2="510.25" y2="420.26"></line>
+                        <polygon points="274.69 429.22 261.76 458.92 287.62 458.92"></polygon>
+                        <line x1="274.69" y1="458.92" x2="274.69" y2="464.86"></line>
+                        <polygon points="317.32 442.34 308.67 462.2 325.97 462.2"></polygon>
+                        <line x1="317.32" y1="462.2" x2="317.32" y2="466.17"></line>
+                        <polygon points="358.04 433.2 344.94 463.28 371.14 463.28"></polygon>
+                        <line x1="358.04" y1="463.28" x2="358.04" y2="469.3"></line>
+                        <polygon points="398.84 440.72 389.95 461.12 407.72 461.12"></polygon>
+                        <line x1="398.84" y1="461.12" x2="398.84" y2="465.2"></line>
+                        <polygon points="445.02 431.72 431.23 463.38 458.81 463.38"></polygon>
+                        <line x1="445.02" y1="463.38" x2="445.02" y2="469.72"></line>
+                        <polygon points="489.43 435.16 480.33 456.07 498.53 456.07"></polygon>
+                        <line x1="489.43" y1="456.07" x2="489.43" y2="460.25"></line>
+                        <polygon points="530.69 429.22 517.76 458.92 543.62 458.92"></polygon>
+                        <polygon points="295.6 482.33 287.25 501.49 303.94 501.49"></polygon>
+                        <line x1="295.6" y1="501.49" x2="295.6" y2="505.32"></line>
+                        <polygon points="340.74 472.48 327.43 503.06 354.06 503.06"></polygon>
+                        <line x1="340.74" y1="503.06" x2="340.74" y2="509.18"></line>
+                        <polygon points="381.05 480.1 372.67 499.32 389.42 499.32"></polygon>
+                        <line x1="381.05" y1="499.32" x2="381.05" y2="503.17"></line>
+                        <polygon points="424.33 472.69 411.3 502.61 437.36 502.61"></polygon>
+                        <line x1="424.33" y1="502.61" x2="424.33" y2="508.59"></line>
+                        <polygon points="462.26 483.36 453.97 502.4 470.55 502.4"></polygon>
+                        <line x1="462.26" y1="502.4" x2="462.26" y2="506.21"></line>
+                        <polygon points="511.91 469.38 498.43 500.35 525.4 500.35"></polygon>
+                        <line x1="511.91" y1="500.35" x2="511.91" y2="506.55"></line>
+                        <polygon points="269.74 512 256 543.54 283.47 543.54"></polygon>
+                        <polygon points="318.01 523.33 309.64 542.57 326.39 542.57"></polygon>
+                        <line x1="318.01" y1="542.57" x2="318.01" y2="546.42"></line>
+                        <polygon points="356.03 513.9 342.51 544.96 369.55 544.96"></polygon>
+                        <polygon points="400.66 528.04 391.8 548.4 409.53 548.4"></polygon>
+                        <polygon points="443.18 516.97 430.55 545.99 455.82 545.99"></polygon>
+                        <polygon points="487.83 521.36 479.12 541.37 496.54 541.37"></polygon>
+                        <line x1="487.83" y1="541.37" x2="487.83" y2="545.37"></line>
+                        <polygon points="525.74 512 512 543.54 539.47 543.54"></polygon>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

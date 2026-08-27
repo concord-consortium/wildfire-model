@@ -29,6 +29,7 @@ export const createStores = (): IStores => {
   // Constructed here rather than in the returned literal: the test helpers below need
   // the same UIModel the stores hold.
   const ui = new UIModel();
+  ui.showVegetationKey = simulation.config.showVegetationKey;
   (window as any).sim = simulation;
   (window as any).DroughtLevel = DroughtLevel;
   (window as any).Vegetation = Vegetation;
