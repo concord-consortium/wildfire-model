@@ -41,6 +41,12 @@ export const TopBar: React.FC<IProps> = ({ projectName, aboutContent, shareConte
   return (
     <div className={css.topBar}>
       <span className={css.textButton} data-testid="reload" onClick={handleReload}><RefreshIcon /></span>
+      {simulation.config.texturedTerrain &&
+        <span className={css.versionTag} data-testid="version-tag">
+          <strong>Wildfire Explorer: Textured Terrain &ndash; v0.2 &ndash; </strong>
+          <span className={css.versionDate}>updated: 8/21/26</span>
+        </span>
+      }
       <span>
         <span data-testid="share" className={css.textButton} onClick={handleShareOpen}>Share</span>
         <span data-testid="about" className={css.textButton} onClick={handleAboutOpen}>About</span>
