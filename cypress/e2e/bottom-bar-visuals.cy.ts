@@ -42,6 +42,8 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     // `.playbackButton`'s 60px lock, at 66 content + 2 border.
     widgetRect("clear-all-button").should((r) => expect(r.width).to.eq(68));
     widgetRect("terrain-button").should((r) => expect(r.width).to.eq(84));
+    // Vegetation Key is 90 content + 2 border, per the board's 90/92 group.
+    widgetRect("vegetation-key-switch").should((r) => expect(r.width).to.eq(92));
     widgetRect("spark-button").should((r) => expect(r.width).to.eq(62));
     widgetRect("restart-button").should((r) => expect(r.width).to.eq(62));
     widgetRect("start-button").should((r) => expect(r.width).to.eq(62));
@@ -49,11 +51,11 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     widgetRect("helitack-button").should((r) => expect(r.width).to.eq(67));
   });
 
-  it("shrink-wraps the controls cluster to its seven widget groups", () => {
-    // .mainContainer sizes to its contents, so this is the sum of the seven
+  it("shrink-wraps the controls cluster to its eight widget groups", () => {
+    // .mainContainer sizes to its contents, so this is the sum of the eight
     // widget widths, their gaps, and the trailing widgetGroup margin
     cy.get('[class*="mainContainer"]').should(($m) => {
-      expect($m[0].getBoundingClientRect().width).to.eq(481);
+      expect($m[0].getBoundingClientRect().width).to.eq(576);
     });
   });
 
@@ -73,19 +75,21 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     //     Spark <-> Restart, Restart <-> Start, and Fireline <-> Helitack.
     const rects: { left: number; right: number }[] = [];
     const ids = [
-      "clear-all-button", "terrain-button", "spark-button", "restart-button",
-      "start-button", "fireline-button", "helitack-button"
+      "clear-all-button", "terrain-button", "vegetation-key-switch", "spark-button",
+      "restart-button", "start-button", "fireline-button", "helitack-button"
     ];
     ids.forEach((id) =>
       widgetRect(id).then((r) => { rects.push({ left: r.left, right: r.right }); })
     );
     cy.then(() => {
+      expect(rects.length, "every widget resolved to a widgetGroup").to.eq(ids.length);
       expect(rects[1].left - rects[0].right, "Clear All -> Setup").to.eq(3);
-      expect(rects[2].left - rects[1].right, "Setup -> Spark").to.eq(3);
-      expect(rects[3].left - rects[2].right, "Spark -> Restart (abuts)").to.eq(-1);
-      expect(rects[4].left - rects[3].right, "Restart -> Start (abuts)").to.eq(-1);
-      expect(rects[5].left - rects[4].right, "Start -> Fireline").to.eq(3);
-      expect(rects[6].left - rects[5].right, "Fireline -> Helitack (abuts)").to.eq(-1);
+      expect(rects[2].left - rects[1].right, "Setup -> Vegetation Key").to.eq(3);
+      expect(rects[3].left - rects[2].right, "Vegetation Key -> Spark").to.eq(3);
+      expect(rects[4].left - rects[3].right, "Spark -> Restart (abuts)").to.eq(-1);
+      expect(rects[5].left - rects[4].right, "Restart -> Start (abuts)").to.eq(-1);
+      expect(rects[6].left - rects[5].right, "Start -> Fireline").to.eq(3);
+      expect(rects[7].left - rects[6].right, "Fireline -> Helitack (abuts)").to.eq(-1);
     });
   });
 

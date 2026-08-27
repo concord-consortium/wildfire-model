@@ -285,6 +285,7 @@ describe("terrain glyph ink derivation", () => {
 - `src/components/vegetation-key-switch.tsx`, `.scss`: new
 - `src/components/bottom-bar.tsx`, `.scss`: insert the widget group
 - `src/components/bottom-bar.test.tsx`: the button-count assertion, and the persistence case
+- `cypress/e2e/bottom-bar-visuals.cy.ts`: the widget inventory, the cluster width, and the adjacency list
 - `src/components/vegetation-key-switch.test.tsx`: new
 - `src/hazbot/wildfire/translate.ts`: explicit no-op cases
 - `LOGGED-EVENTS.md`: one row per new event, matching the `ChartTabShown` / `ChartTabHidden` wording at `:60-61`
@@ -337,6 +338,12 @@ That 0 / 0.5 / 1 progression is not an interpretation of the board's note: it is
 | track fill, on | `#2997ff` | `rgb(41,151,255)` |
 
 The label's newline is authored (`"Vegetation\nKey"` plus `white-space: pre-line`) rather than left to wrapping. The board's text layer content is literally `"Vegetation\nKey"`, and the repo already uses that exact pattern at `wind-circular-control.scss:69-70`.
+
+#### The Cypress layout guard has to move with the bar
+
+`bottom-bar-visuals.cy.ts` is a visual-regression guard that pins the bar's geometry, and inserting a widget invalidates three of its assertions: it asserts `.mainContainer` is 481 wide under the name "shrink-wraps the controls cluster to its **seven** widget groups", and its adjacency list asserts a 3px gap for `Setup -> Spark`, an adjacency that no longer exists. Both fail. The suite's 43-of-43 figure was measured on the rebased prototype, which has the terrain work but not the switch, so it did not cover this.
+
+The fix is the inventory rather than the numbers: the widget list gains `vegetation-key-switch` at 92 (90 content + 2 border), the cluster assertion becomes eight groups at 576, and the adjacency list gains `Setup -> Vegetation Key` and `Vegetation Key -> Spark` at the default 3px each. The rect buffer is built by a `forEach` that pushes one entry per id, so it also gains a length assertion against `ids.length`: without one, a widget that stops resolving to a `widgetGroup` shortens the buffer and the later index comparisons read the wrong pairs or silently compare `undefined`. **43 of 43 on the shipped branch**, re-run with the switch in place.
 
 #### What it does to the bottom bar
 
