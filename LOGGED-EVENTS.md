@@ -69,6 +69,8 @@ All model coordinates are in feet. Normalized coordinates (x, y) are relative to
 | `AboutDialogOpened` | — | User opens About dialog |
 | `FullscreenEnabled` | — | User enters fullscreen mode |
 | `FullscreenDisabled` | — | User exits fullscreen mode |
+| `VegetationKeyShown` | — | User switches the Vegetation Key on |
+| `VegetationKeyHidden` | — | User switches the Vegetation Key off |
 
 ## Hazbot
 

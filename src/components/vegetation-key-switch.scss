@@ -1,0 +1,101 @@
+@import "common.scss";
+
+.vegetationKeySwitch {
+  position: relative;
+  // Fill the widget group, which owns the width. min-width defeats MUI's
+  // `.MuiButton-root { min-width: 64px }`, which would otherwise be the floor.
+  min-width: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border-bottom-left-radius: 0 !important;
+  border-bottom-right-radius: 0 !important;
+  text-transform: none;
+}
+
+.label {
+  position: absolute;
+  left: 10px;
+  top: 4px;
+  width: 70px;
+  height: 34px;
+  font-family: Lato, arial, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 17px;
+  color: $controlLabel;
+  text-align: center;
+  white-space: pre-line;
+}
+
+// 46 x 28 rather than the track's 28: the 28 px thumb overhangs the 28 px track
+// by 9 px at whichever end it rests, so the group has to hold both extremes.
+.switchGroup {
+  position: absolute;
+  left: 22px;
+  top: 41px;
+  width: 46px;
+  height: 28px;
+}
+
+.track {
+  position: absolute;
+  left: 9px;
+  top: 9px;
+  width: 28px;
+  height: 10px;
+  box-sizing: border-box;
+  border: 1px solid $controlGray;
+  border-radius: 11px;
+  background: $controlGrayLight1;
+}
+
+.thumb {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+}
+
+.thumbIcon {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  background-image: url("../assets/slider-thumb-small.svg");
+  background-size: contain;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+// Painted before the thumb art in DOM order, so it sits behind the 20 px circle
+// and reads as a ring once the button's own hover background darkens the bubble.
+.thumbHighlight {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 28px;
+  height: 28px;
+  background: #fff;
+  opacity: 0;
+}
+
+.vegetationKeySwitch:hover .thumbHighlight {
+  opacity: 0.5;
+}
+
+.vegetationKeySwitch:active .thumbHighlight {
+  opacity: 1;
+}
+
+.on {
+  .track {
+    background: #2997ff;
+  }
+
+  .thumb {
+    left: 18px;
+  }
+}

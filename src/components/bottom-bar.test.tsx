@@ -93,7 +93,9 @@ describe("BottomBar component", () => {
         <BottomBar />
       </Provider>
     );
-    expect(screen.queryAllByRole("button").length).toEqual(7);
+    // Clear All, Setup, Vegetation Key, Spark, Restart, Start, Fireline, Helitack.
+    expect(screen.queryAllByRole("button").length).toEqual(8);
+    expect(screen.getByTestId("vegetation-key-switch")).toBeInTheDocument();
   });
 
   it("terrain button opens the terrain dialog and a second click leaves it open", async () => {

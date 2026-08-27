@@ -90,6 +90,12 @@ $overflowHeight: 11px;
     background: $hoverColor;
   }
 
+  // 90 px of content inside the shared 1 px border, per the board's 90/92 group.
+  // The switch itself fills this, so the width lives here only.
+  .vegetationKey {
+    width: 90px;
+  }
+
   // Spark gets an explicit content width to force the inner IconButton to
   // 60 px. Without this, `.iconButton { width: 100%; min-width: 60px }`
   // creates a circular-sizing dependency with its shrink-wrapping parent;

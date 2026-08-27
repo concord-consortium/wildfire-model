@@ -63,6 +63,8 @@ export function translate(
       } };
     case "ChartTabShown":
     case "ChartTabHidden":
+    case "VegetationKeyShown":
+    case "VegetationKeyHidden":
     case "AnalysisEngineActivated":
     default:
       return { kind: "no-op" };

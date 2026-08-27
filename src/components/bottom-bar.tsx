@@ -7,6 +7,7 @@ import CCLogo from "../assets/cc-logo.svg";
 import CCLogoSmall from "../assets/cc-logo-small.svg";
 import screenfull from "screenfull";
 import Button from "@mui/material/Button";
+import { VegetationKeySwitch } from "./vegetation-key-switch";
 import SparkIcon from "../assets/bottom-bar/spark.svg";
 import SparkHighlight from "../assets/bottom-bar/spark_highlight.svg";
 import PauseIcon from "../assets/bottom-bar/pause.svg";
@@ -159,6 +160,9 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               dataTest="terrain-button"
               onClick={this.handleTerrain}
             />
+          </div>
+          <div className={`${css.widgetGroup} ${css.vegetationKey}`}>
+            <VegetationKeySwitch />
           </div>
           <div className={`${css.widgetGroup} ${css.placeSpark}`}>
             <div className={css.sparksCount}>{ simulation.remainingSparks }</div>
