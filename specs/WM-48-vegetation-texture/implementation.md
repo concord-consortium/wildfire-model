@@ -8,9 +8,9 @@
 
 The prototype's three commits are rebased onto `origin/master` (`98858e5`) on the local branch `wm48-probe-scratch`. The rebase is clean: no conflicts, `tsc --noEmit` reports only the two pre-existing `line-chart.tsx` errors, `npm run lint` reports 0 errors with no warnings in any prototype file, `npx jest` reports 1010 of 1010, and `CI=true npx cypress run --browser chrome` reports 43 of 43. That branch is the base for the work below; the plan assumes it, and does not re-litigate it.
 
-**What is built.** The verified diff at `oob repo:wildfire-model/wm48-harness/verified-implementation.diff` is the code that has actually been compiled and run, and it is the authority: 17 files covering the performance work, the textured-terrain rewiring, the switch, the texture-loader retention fix, the config collapse, the demo-banner removal, the logging cases, the hex-pinning test and the `CLAUDE.md` param row. The suite on that state reports **1017 of 1017 across 81 suites**, `npm run lint` is clean, and `tsc --noEmit` reports only the two pre-existing `line-chart.tsx` errors.
+**What is built.** The branch is the authority. The three commits land **22 files: 10 modified (+288 / -45) and 12 new (1775 lines)**, covering the performance work, the textured-terrain rewiring, the switch, the texture-loader retention fix, the config collapse, the logging cases and rows, the hex-pinning test, and the `CLAUDE.md` rows. Measured on the head commit: the suite reports **1019 of 1019 across 81 suites**, `npm run lint` reports 0 errors, `eslint` reports no warnings in any touched file, `tsc --noEmit` reports only the two pre-existing `line-chart.tsx` errors, `npm run build` succeeds with the four tiles emitted to the build root, and `node scripts/measure-terrain-textures.mjs` passes all four tiles (viewBox 256, stroke 3, background 128, sd 28.3 to 36.0).
 
-That covers everything in this plan except **two `export` keywords in `terrain-textures.ts`**, which are the one deliberate addition left to make; see the resolved question on the WM-53 exports. The ink derivation stays private inside the pinning test, which is what the requirements spec describes.
+The prototype reached this branch through the verified diff at `oob repo:wildfire-model/wm48-harness/verified-implementation.diff`, which is a snapshot of the same work rebased onto the prototype rather than built onto master. Where the two differ, the branch is what shipped, and each difference is recorded in the step it belongs to. The ink derivation stays private inside the pinning test, which is what the requirements spec describes; `TILE_DIR` and `VEGETATION_TILE_FILES` are exported.
 
 **The config field is `showVegetationKey`, not `texturedTerrain`.** The rename landed with the config collapse. It puts the field in the existing `show<Thing>` family (`showBurnIndex` is the authoring precedent; `showModelDimensions`, `showZoneLines` and `showCoordsOnClick` are the default-off ones) and makes the config key, the MobX flag and the on-screen label one name. Verified live: `?showVegetationKey=true` opens with the switch on and the tiles fetched, `?texturedTerrain=true` is now inert, and the old key is gone from the config object entirely. `CLAUDE.md`'s URL-param table gains a row in this story.
 
@@ -56,11 +56,10 @@ After:
 const updateColors = (geometry: THREE.PlaneGeometry, simulation: SimulationModel) => {
   const colArray = geometry.attributes.color.array as number[];
   const debugColors = simulation.config.tpiDebug ? computeTpiDebugColors(simulation) : undefined;
-  // gridWidth and gridHeight are @computed. Read from an effect rather than from
-  // inside a reaction they have no observers, so MobX re-evaluates them on every
-  // access; per cell that is 76,800 recomputes a tick for two numbers that cannot
-  // change during the loop. `config` is a plain object and is hoisted only to keep
-  // the three reads together.
+  // gridWidth and gridHeight are @computed, and read from an effect rather than a
+  // reaction they have no observers, so MobX re-evaluates them on every read.
+  // Hoisting keeps two recomputes per cell off the per-tick path. `config` is a
+  // plain object, grouped here only to keep the three reads together.
   const { gridWidth, gridHeight, config } = simulation;
   simulation.cells.forEach(cell => {
     setVertexColor(colArray, cell, gridWidth, gridHeight, config, debugColors);
@@ -70,6 +69,8 @@ const updateColors = (geometry: THREE.PlaneGeometry, simulation: SimulationModel
 ```
 
 `setupElevation` has the same shape at `terrain.tsx:166` and gets the same treatment. It runs on elevation change rather than per tick, so it is a tidy-up rather than a fix, and it is in this commit because leaving one of the two behind invites the next reader to conclude the pattern is deliberate.
+
+`updateBurnState`, which arrives with the terrain commit, has the same shape and gets the same treatment there: it reads `simulation.gridWidth` per cell on the textured path's per-tick loop, which is 38,400 recomputes a tick. `simulation.time` is hoisted alongside it. That keeps the requirement "no per-cell loop in `terrain.tsx` reads `simulation.gridWidth` or `simulation.gridHeight`" true of the whole file rather than of two of its three loops, and it is orthogonal to the separate decision that `updateBurnState` stays whole-grid-per-tick.
 
 **Verification**: `updateColors` measured 17.19ms/tick before and 7.88ms/tick after, taking the untextured desktop burning median from 20.0ms to a vsync-capped 16.7ms and the Chromebook's from **36.8ms to 28.6ms**. Renders pixel-identically: production builds of master and of this change, `mountainsandplainsTwoZone`, terrain canvas only, differ in 0 of 1,409,280 channel samples in both the initial view and a driven burnt state.
 
@@ -86,11 +87,17 @@ const updateColors = (geometry: THREE.PlaneGeometry, simulation: SimulationModel
 - `src/components/view-3d/terrain.tsx`: from the prototype, plus the cached edge mask
 - `src/components/view-3d/terrain-glyph-colors.test.ts`: new
 - `src/config.ts`: three fields rather than nine
-- `src/components/top-bar/top-bar.tsx`, `top-bar.scss`: remove the demo version banner
+- `src/models/ui.ts`: the flag
+- `src/models/stores.ts`: seed it from `config.showVegetationKey`
 - `src/public/terrain-textures/*.svg`: four tiles, unchanged
 - `scripts/measure-terrain-textures.mjs`: unchanged
+- `CLAUDE.md`: the `showVegetationKey` URL-param row, and a commands row for the tile checker
 
-**Measured diff size**: ~1800 lines (11 files, +1713 / -44 tracked against `98858e5`, plus the 87-line new test), most of it the prototype's shader and loader arriving unchanged. An earlier estimate of ~950 was never plausible, since the prototype alone is +1678.
+**The flag lands here rather than with the switch**, because `terrain.tsx` reads `ui.showVegetationKey` and this commit does not compile without it. It is also what makes the commit's own claim true: `?showVegetationKey=true` reaches the terrain through `stores.ts` seeding the flag, so the textured render is reachable and reviewable one commit before the control that drives it exists. The switch commit then adds only the control.
+
+**The demo version banner needs no removal.** It was added by the prototype's own commit, and this work is built onto master rather than rebased on top of the prototype, so the banner never exists. `top-bar.tsx` and `top-bar.scss` stay byte-identical to master, which is the property the requirements spec asks for, reached by a shorter route.
+
+**Measured diff size**: ~1800 lines (12 files, +1713 / -44 tracked against `98858e5`, plus the 90-line new test), most of it the prototype's shader and loader arriving unchanged. An earlier estimate of ~950 was never plausible, since the prototype alone is +1678.
 
 #### The config collapses from nine fields to three
 
@@ -119,6 +126,8 @@ No `tileUrl` helper: WM-53 names the map, not a URL builder, and a helper with n
 An earlier draft of this plan exported `glyphInkHex`, `glyphInkForDrought` and `glyphInkForBurnt` from `terrain-colors.ts` for WM-53 to import. That is not being built, and the reasoning is recorded in the resolved question below. In short: the TypeScript mirror has to exist for the pinning test either way, the only question is where it lives, and exporting it now ships production code whose sole caller is a test, to serve a consumer whose rendering mechanism is not yet decided.
 
 `terrain-shader.ts`'s `wfInk` gets a comment naming `terrain-glyph-colors.test.ts` as its mirror, so an edit to the GLSL is at least told where the TypeScript copy lives.
+
+One further value comes across from the palette rather than being retyped: the prototype's `uBurningColor` uniform hardcodes `[1, 0, 0]` while `terrain-colors.ts` exports `BURNING_COLOR` as the same triple, and the shader already imports four other palette values from there. It imports the fifth, so retuning the burning red cannot leave the shader and the vertex-color path disagreeing.
 
 #### The texture loader stops keying its lifetime on the switch
 
@@ -255,10 +264,10 @@ describe("terrain glyph ink derivation", () => {
   });
 
   it("takes the lighten branch only for burnt ground", () => {
-    // The lighten branch triggers below linear luminance (0.05 * ratio) - 0.05,
-    // which is 0.25 at ratio 6. Burnt is far below it; every drought color is far
-    // above. This is the case that proves the mechanism, since it is what produces
-    // a light gray ink on dark ground with no separate ash color.
+    // The threshold is (0.05 * ratio) - 0.05, so it is derived from each level's
+    // own contrast target rather than from the ratio most of them share: severe is
+    // configured at 7, not 6. This is the case that proves the mechanism, since it
+    // is what produces a light gray ink on dark ground with no separate ash color.
     ...
   });
 });
@@ -273,16 +282,16 @@ describe("terrain glyph ink derivation", () => {
 **Summary**: the switch does not exist in the prototype; this is the half that is new rather than already built. A purpose-built two-state toggle in the bottom bar between Setup and Spark, writing `ui.showVegetationKey`, which the previous commit's terrain already reads.
 
 **Files affected**:
-- `src/models/ui.ts`: the flag
-- `src/models/stores.ts`: seed it from `config.showVegetationKey`
 - `src/components/vegetation-key-switch.tsx`, `.scss`: new
 - `src/components/bottom-bar.tsx`, `.scss`: insert the widget group
-- `src/components/bottom-bar.test.tsx`: the button-count assertion
+- `src/components/bottom-bar.test.tsx`: the button-count assertion, and the persistence case
 - `src/components/vegetation-key-switch.test.tsx`: new
 - `src/hazbot/wildfire/translate.ts`: explicit no-op cases
 - `LOGGED-EVENTS.md`: one row per new event, matching the `ChartTabShown` / `ChartTabHidden` wording at `:60-61`
 
-**Measured diff size**: ~216 lines (6 files, +20 / -1 tracked, plus 196 lines of new files)
+The flag and its seeding are not here: they land with the terrain commit, which does not compile without them. See that step.
+
+**Measured diff size**: ~250 lines (5 files, +23 / -1 tracked, plus 217 lines of new files)
 
 #### The flag
 
@@ -314,14 +323,16 @@ That 0 / 0.5 / 1 progression is not an interpretation of the board's note: it is
 .vegetationKeySwitch:active .thumbHighlight { opacity: 1; }
 ```
 
-**Every dimension below was read off the board's own layer data and then measured in the running app; the two agree.**
+**The 90 is written once.** `bottom-bar.scss`'s `.vegetationKey` owns it and the button fills its group with `width: 100%`, rather than both files naming 90 with near-duplicate comments. `min-width: 0` is what makes the fill work, since MUI's `.MuiButton-root { min-width: 64px }` would otherwise be the floor. This differs from `.placeSpark`, which does repeat its 60 in both places, because there the inner control is an `IconButton` whose own `width: 100%` creates the circular-sizing dependency the comment above it describes; the switch has no such rule of its own.
+
+**Every dimension below was read off the board's own layer data and then measured in the running app.**
 
 | piece | board | measured |
 |---|---|---|
 | widget group | 90 content / 92 border | 90 / 92 |
 | label | (10, 4) 70x34, Lato Bold 14, `#434343` | (10, 4) 70x34, 700 14px, `rgb(67,67,67)` |
 | switch group | (22, 40.5) 46x28 | (22, 41) 46x28 |
-| track | (9, 9) 28x10, `#d8d8d8`, 1px `#797979`, radius 11 | (9, 9) 28x10, `rgb(223,223,223)`, 1px `rgb(121,121,121)`, 11px |
+| track | (9, 9) 28x10, `#d8d8d8`, 1px `#797979`, radius 11 | (9, 9) 28x10, `rgb(216,216,216)`, 1px `rgb(121,121,121)`, 11px |
 | thumb, off / on | left 0 / 18 | left 0 / 18 |
 | track fill, on | `#2997ff` | `rgb(41,151,255)` |
 
@@ -372,7 +383,9 @@ expect(screen.queryAllByRole("button").length).toEqual(8);
 expect(screen.getByTestId("vegetation-key-switch")).toBeInTheDocument();
 ```
 
-A new `vegetation-key-switch.test.tsx` covers the three things that can silently break: that the key starts off and is seeded from config, that clicking toggles the flag and logs the correctly paired event, and that the click leaves `simulation.config` alone. **Mutation-checked**: swapping the two log event names fails the toggle test, and writing the wrong field fails two of the three.
+A new `vegetation-key-switch.test.tsx` covers the four things that can silently break: that the key starts off by default, that `?showVegetationKey=true` opens it on, that clicking toggles the flag and logs the correctly paired event, and that the click leaves `simulation.config` alone. **Mutation-checked**: swapping the two log event names fails the toggle test, writing the wrong field fails two cases, and deleting the seeding line in `stores.ts` fails the URL case on its `ui` assertion specifically, with the `config` assertion still passing, so it isolates the seeding rather than the parsing.
+
+`bottom-bar.test.tsx` gains one more case beyond the button count, for the requirement that the key survives Restart and Clear All. Nothing else asserts it, and it is a requirement guarded by an absence: no line implements it, so the mutation it catches is a reset being *added* to `handleClearAll`, which was verified to turn it red. Each half asserts the reset it rode on actually happened, so neither can pass by clicking a disabled button.
 
 ---
 
@@ -423,7 +436,7 @@ The hook's source is above, in the terrain step; it is not repeated here.
 
 ## Self-Review
 
-Roles: Senior Engineer, QA Engineer, Visual Design Reviewer, Release Engineer. Every finding was checked against the built tree in the `wm48-verify` worktree (the three rebased prototype commits plus the working changes) rather than read off this document. Where a claim was testable, it was tested: the suite was run, mutations were applied and reverted, and the switch was measured and pixel-sampled in a browser against a dev server on that tree. Baselines re-measured this pass: **1017 passed of 1017 across 81 suites**, `eslint src/` **0 errors and no warnings in any of the 17 touched files**, `tsc --noEmit` clean in project source apart from the two known `line-chart.tsx` errors, and **17 files changed, +1733 / -45 tracked plus 283 lines of new files**.
+Roles: Senior Engineer, QA Engineer, Visual Design Reviewer, Release Engineer. Every finding was checked against a built tree rather than read off this document. Where a claim was testable, it was tested: the suite was run, mutations were applied and reverted, and the switch was measured and pixel-sampled in a browser against a dev server. Every finding below was resolved on the shipped branch. Baselines on the head commit: **1019 passed of 1019 across 81 suites**, `eslint` **0 errors and no warnings in any touched file**, `tsc --noEmit` clean in project source apart from the two known `line-chart.tsx` errors, and **22 files changed, 10 modified (+288 / -45) plus 12 new files (1775 lines)**.
 
 ### Senior Engineer
 
@@ -502,7 +515,7 @@ The built diff puts the new rule immediately above `.placeSpark`, with no blank 
 
 A reader now sees one nine-line comment block above `.vegetationKey`, eight lines of which are about a different rule, and `.placeSpark` sits under nothing. The fix is to move the new rule below `.placeSpark`, or to put a blank line between the borrowed comment and the new one. Cosmetic, but it is the kind of thing this repo's reviewers do flag.
 
-**Decision**: move `.vegetationKey` below `.placeSpark` so the eight-line comment sits directly above the rule it explains.
+**Decision**: move `.vegetationKey` below `.placeSpark` so the eight-line comment sits directly above the rule it explains. Shipped that way. The file's rules do not follow bar order anyway (`.clearAll` already sits below `.placeSpark` while Clear All is leftmost), so there is no source-order convention the move breaks.
 
 ---
 

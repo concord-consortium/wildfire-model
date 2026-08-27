@@ -23,6 +23,7 @@ Project-specific notes for working in this repo. Conventions, gotchas, and tools
 | Build | `npm run build` |
 | Regenerate validation playbook | `node scripts/generate-hazbot-validation-playbook.js` |
 | Regenerate replay fixture | `node scripts/generate-replay-fixture.js` |
+| Check the terrain tiles | `node scripts/measure-terrain-textures.mjs` (run after editing any tile in `src/public/terrain-textures/`) |
 
 ## Playwright MCP testing
 

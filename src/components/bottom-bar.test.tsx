@@ -311,6 +311,25 @@ describe("BottomBar edge cases", () => {
       expectButtonState("clear-all-button", false);
     });
 
+    it("Vegetation Key survives both Restart and Clear All", async () => {
+      stores.ui.showVegetationKey = true;
+      stores.simulation.sparks.push(new Vector2(50000, 50000));
+      stores.simulation.simulationStarted = true;
+      stores.simulation.simulationRunning = false;
+      (stores.simulation as any).engine = mockEngine();
+      render(<Provider stores={stores}><BottomBar /></Provider>);
+
+      // Each half asserts the reset it rode on actually happened, so neither can
+      // pass by clicking a disabled button.
+      await userEvent.click(screen.getByTestId("restart-button"));
+      expect(stores.simulation.simulationStarted).toBe(false);
+      expect(stores.ui.showVegetationKey).toBe(true);
+
+      await userEvent.click(screen.getByTestId("clear-all-button"));
+      expect(stores.simulation.sparks.length).toBe(0);
+      expect(stores.ui.showVegetationKey).toBe(true);
+    });
+
     it("Running → Clear All → Default-state rules, engine torn down", async () => {
       // Sanity guard: see Paused → Clear All above for rationale.
       expect(stores.simulation.config.sparks).toEqual([]);

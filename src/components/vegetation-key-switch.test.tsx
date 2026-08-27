@@ -10,23 +10,25 @@ jest.mock("../log", () => ({
   log: (...args: unknown[]) => mockLog(...args)
 }));
 
-// SimulationModel resolves its config through getResolvedConfig, which calls
-// getUrlConfig internally, so overriding the resolved config is what stands in for
-// a URL parameter here.
-const configOverride = jest.fn<Record<string, unknown>, []>(() => ({}));
-jest.mock("../config", () => {
-  const actual = jest.requireActual("../config");
-  return {
-    ...actual,
-    getResolvedConfig: (preset?: unknown) => ({ ...actual.getResolvedConfig(preset), ...configOverride() })
-  };
+// Capture / restore window.location around tests so the URL mock doesn't leak.
+// Same pattern as config.test.ts.
+const originalLocation = window.location;
+afterAll(() => {
+  Object.defineProperty(window, "location", { value: originalLocation, writable: true });
 });
+
+function setUrl(search: string) {
+  Object.defineProperty(window, "location", {
+    value: new URL(`https://wildfire-model.unexisting.url.com/${search}`),
+    writable: true,
+  });
+}
 
 describe("VegetationKeySwitch", () => {
   let stores: ReturnType<typeof createStores>;
 
   beforeEach(() => {
-    configOverride.mockReturnValue({});
+    setUrl("");
     stores = createStores();
     mockLog.mockClear();
   });
@@ -42,8 +44,8 @@ describe("VegetationKeySwitch", () => {
     expect(stores.ui.showVegetationKey).toBe(false);
   });
 
-  it("opens on when config.showVegetationKey is set, so ?showVegetationKey=true works", () => {
-    configOverride.mockReturnValue({ showVegetationKey: true });
+  it("opens with the key on when ?showVegetationKey=true", () => {
+    setUrl("?showVegetationKey=true");
     const seeded = createStores();
     expect(seeded.simulation.config.showVegetationKey).toBe(true);
     expect(seeded.ui.showVegetationKey).toBe(true);

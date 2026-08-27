@@ -47,7 +47,9 @@
   box-sizing: border-box;
   border: 1px solid $controlGray;
   border-radius: 11px;
-  background: $controlGrayLight1;
+  // Not $controlGrayLight1: that is $hoverColor, so the track would vanish into the
+  // widget background on hover. Same literal as wind-circular-control's gray shapes.
+  background: #d8d8d8;
 }
 
 .thumb {
