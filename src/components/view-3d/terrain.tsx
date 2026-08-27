@@ -152,8 +152,13 @@ const setVertexColor = (
 const updateColors = (geometry: THREE.PlaneGeometry, simulation: SimulationModel) => {
   const colArray = geometry.attributes.color.array as number[];
   const debugColors = simulation.config.tpiDebug ? computeTpiDebugColors(simulation) : undefined;
+  // gridWidth and gridHeight are @computed, and read from an effect rather than a
+  // reaction they have no observers, so MobX re-evaluates them on every read.
+  // Hoisting keeps two recomputes per cell off the per-tick path. `config` is a
+  // plain object, grouped here only to keep the three reads together.
+  const { gridWidth, gridHeight, config } = simulation;
   simulation.cells.forEach(cell => {
-    setVertexColor(colArray, cell, simulation.gridWidth, simulation.gridHeight, simulation.config, debugColors);
+    setVertexColor(colArray, cell, gridWidth, gridHeight, config, debugColors);
   });
   (geometry.attributes.color as BufferAttribute).needsUpdate = true;
 };
@@ -161,9 +166,10 @@ const updateColors = (geometry: THREE.PlaneGeometry, simulation: SimulationModel
 const setupElevation = (geometry: THREE.PlaneGeometry, simulation: SimulationModel) => {
   const posArray = geometry.attributes.position.array as number[];
   const mult = ftToViewUnit(simulation);
+  const { gridWidth, gridHeight } = simulation;
   // Apply height map to vertices of plane.
   simulation.cells.forEach(cell => {
-    const zAttrIdx = vertexIdx(cell, simulation.gridWidth, simulation.gridHeight) * 3 + 2;
+    const zAttrIdx = vertexIdx(cell, gridWidth, gridHeight) * 3 + 2;
     posArray[zAttrIdx] = cell.elevation * mult;
   });
   geometry.computeVertexNormals();
