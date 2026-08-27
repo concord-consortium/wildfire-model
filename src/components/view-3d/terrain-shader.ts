@@ -282,8 +282,11 @@ const FRAGMENT_BODY = /* glsl */`
     burning);
 
   // Low-frequency variation added here rather than baked into the tiles, so the
-  // tiling never reads as a repeating grid at distance.
-  tileLum = clamp(tileLum + uMacroAmount * (wfNoise(vTerrainUv * uMacroScale) - 0.5), 0.0, 1.0);
+  // tiling never reads as a repeating grid at distance. Scaled by weightSum so it
+  // rides the same mask the glyphs do: a cell with no vegetation weight stays
+  // exactly on neutral and renders its flat base color, and the one-cell bank at
+  // a river's bank fades the variation in along with the glyphs.
+  tileLum = clamp(tileLum + weightSum * uMacroAmount * (wfNoise(vTerrainUv * uMacroScale) - 0.5), 0.0, 1.0);
 
   // Fade the texture off surfaces that do not face up. The tile UV is a top-down
   // planar projection, so on a near-vertical face the UV barely changes while the

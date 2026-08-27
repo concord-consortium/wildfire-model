@@ -94,8 +94,8 @@ export interface ISimulationConfig {
   // IMPORTANT: this ratio is applied to the MATERIAL color, and is not what
   // reaches the eye. The hemisphere light scales the whole scene down by roughly
   // 0.19-0.35x depending on terrain slope, and contrast ratio is not preserved
-  // under scaling — the +0.05 term means uniform dimming compresses the ratio. So
-  // a material ratio of 6 lands nearer 2.5:1 on screen.
+  // under scaling — the +0.05 term means uniform dimming compresses the ratio.
+  // Sampled off the rendered frame, the configured 6 and 7 land at 3.1 to 3.5:1.
   terrainGlyphContrast: [number, number, number, number];
   // Same, for burnt ground. Separate because burnt is not a drought level and its
   // ink lightens rather than darkens, so it lands on screen quite differently.

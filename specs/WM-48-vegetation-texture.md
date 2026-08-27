@@ -356,6 +356,8 @@ Two things follow. **The reason for default-off is backward compatibility, not p
 
 **Decision**: **neither. The mask stays in `terrain.tsx` and calls `simulation.isTerrainEdge` to build itself.** The premise was wrong: the builder runs **once per grid**, not per tick, so it can afford the slow predicate, and duplicating it bought nothing. Measured over all 38,400 cells, every variant classifying the same 1,348 cells: 16.5ms via `simulation.isTerrainEdge`, 6.6ms reading `this.config.*`, 0.7ms with hoisted locals, 0.4ms as a mask lookup. The mask recovers 16.1 of 16.5ms, and paying the full 16.5ms once at grid-build time is free.
 
+**The 1,348 was itself wrong, in the predicate rather than in the port.** `isTerrainEdge` answers true for `y === gridHeight`, a coordinate no cell has, so an unbounded neighbor probe reported the entire `gridHeight - 1` row as near-edge: 240 cells on `plainsTwoZone`, of which only the 4 adjacent to the left and right perimeters belong there. That row carries no skirt, precisely because of the same off-by-one, so masking it stripped its glyphs and suppressed its river color for nothing. The mask and the inline predicate agreed because both inherited the fault. Bounding the probe to real cells takes the count to **1,112**, and it cannot affect the untextured render, which never builds the mask.
+
 **The memo reads `fillTerrainEdges` rather than only listing it.** An early draft named it as a dependency without using it, because the body calls `simulation.isTerrainEdge`, which reads the flag internally; `exhaustive-deps` correctly flagged that, and silencing the rule was the wrong fix. The shipped memo short-circuits on the flag, which is true to `isTerrainEdge`'s own semantics and makes the dependency real.
 
 ---
