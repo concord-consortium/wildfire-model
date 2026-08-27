@@ -74,6 +74,32 @@ export interface ISimulationConfig {
   helitackDropRadius: number; // ft
   // Renders burn index.
   showBurnIndex: boolean;
+  // Opening state of the Vegetation Key: when true the app loads with the key
+  // switched on and the terrain textured. This is the INITIAL value of
+  // ui.showVegetationKey, not the render gate; the switch in the bottom bar owns
+  // the live state and always ships regardless of this. Off by default, because
+  // the key on by default would change what the already-published module renders
+  // for existing activities. Set ?showVegetationKey=true to open a task with the
+  // key on. Tiles are the grayscale SVGs in src/public/terrain-textures/ — see
+  // terrain-textures.ts for the authoring contract.
+  showVegetationKey: boolean;
+  // Target contrast ratio between a glyph and the terrain color it sits on, using
+  // the WCAG relative-luminance form, one per drought level. The glyph ink is
+  // derived per-fragment from the terrain color — same hue and saturation,
+  // darkened until it hits this ratio — so every drought level gets glyphs in its
+  // own color family that are still guaranteed to read. These four values plus
+  // the terrain colors are what produce the five stroke colors on the design
+  // board, which terrain-glyph-colors.test.ts pins.
+  //
+  // IMPORTANT: this ratio is applied to the MATERIAL color, and is not what
+  // reaches the eye. The hemisphere light scales the whole scene down by roughly
+  // 0.19-0.35x depending on terrain slope, and contrast ratio is not preserved
+  // under scaling — the +0.05 term means uniform dimming compresses the ratio. So
+  // a material ratio of 6 lands nearer 2.5:1 on screen.
+  terrainGlyphContrast: [number, number, number, number];
+  // Same, for burnt ground. Separate because burnt is not a drought level and its
+  // ink lightens rather than darkens, so it lands on screen quite differently.
+  terrainGlyphContrastBurnt: number;
   // Renders dashed lines along the boundaries between zones.
   showZoneLines: boolean;
   // Displays alert with current coordinates on mouse click. Useful for authoring.
@@ -196,6 +222,14 @@ export const getDefaultConfig: () => IUrlConfig = () => ({
   maxFireLineLength: 15000, // ft
   helitackDropRadius: 2640, // ft (5280 ft = 1 mile)
   showBurnIndex: true,
+  showVegetationKey: false,
+  // Per drought level: [none, mild, medium, severe]. Severe is bumped because its
+  // tan field measures ~2.27:1 on screen at 6, below the ~2.4-2.5:1 the others
+  // reach. Keep severe under ~8.6: past that, darkening cannot reach the ratio at
+  // all against that field (pure black tops out there) and wfInk clamps to black,
+  // which throws away the same-color-family look for no extra contrast.
+  terrainGlyphContrast: [6, 6, 6, 7],
+  terrainGlyphContrastBurnt: 6,
   showZoneLines: false,
   showCoordsOnClick: false,
   unburntIslandProbability: 0.5, // [0, 1]
