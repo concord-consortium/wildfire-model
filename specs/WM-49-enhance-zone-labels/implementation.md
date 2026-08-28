@@ -146,6 +146,7 @@ are deleted here, in the commit that breaks them, so the suite never goes red.
 **Files affected**:
 - `src/components/simulation-info.tsx`: `showTerrainPanel`, its `log` call, the `onClick` and `locked` props, `LockIcon`
 - `src/components/simulation-info.scss`: `.lockIcon`, `.active:hover`, `.active:active`, `.zone`'s `position: relative`
+- `src/assets/lock.svg`: the asset itself, whose only importer was `LockIcon`
 - `src/models/ui.ts`: `terrainUISelectedZone`
 - `src/components/terrain-panel.tsx`: the consuming `useEffect`, the `|| 0` fallback
 - `src/components/simulation-info.test.tsx`: delete two tests
@@ -156,7 +157,8 @@ are deleted here, in the commit that breaks them, so the suite never goes red.
 `ZoneInfo` loses `locked` and `onClick` from its props and its body; the `LockIcon` import and
 the `{ locked && ... }` element go with them, as does `${locked ? "" : css.active}` from the
 className. `.zone`'s `position: relative` goes too: it is the containing block for
-`.lockIcon`'s absolute positioning and has no other reader. Its `z-index: 2` stays, and does not
+`.lockIcon`'s absolute positioning and has no other reader. `lock.svg` goes with it: `grep` finds
+no other importer and no SCSS `url()` reference, so the removal leaves it orphaned. Its `z-index: 2` stays, and does not
 depend on it, since z-index applies to a flex item whether or not it is positioned. Verified
 live: with `position: static; z-index: 2` the label still paints over the 3D canvas, and with
 the z-index dropped the canvas paints over the label. `SimulationInfo` loses `showTerrainPanel` entirely, including
@@ -429,11 +431,22 @@ it("holds a 10px floor between three zone labels when the graph crowds them", ()
   cy.viewport(950, 880);           // below the ~993px collapse threshold
   cy.visit("/?preset=hillThreeZone");
   cy.window().its("sim.dataReady").should("eq", true);
+  freezeTransitions();                                 // .mainContent animates its width for 1s
   cy.get('[data-testid="right-panel-tab"]').click();   // open the graph
   // Both halves of the floor, at the one width where either can give:
   // gap === 10 exactly, and each label still measures a full 170.
 });
 ```
+
+**The graph's opening animation has to be stopped, or the case measures the easing.** `.mainContent`
+carries `transition: 1s` (`app.scss`) and shrinks by the right panel's width when the graph opens, so
+the labels reflow for a second after the click and `getBoundingClientRect` returns whatever the
+transition was passing through. Measured: three runs of the same case against the same correct CSS
+failed at a gap of -50.6, then passed at 22.4, then passed at 10. The fix is to append a
+`* { transition: none !important; }` style to the AUT document after `cy.visit` and before the graph
+click, which removes the sampling window rather than trying to time it. A retrying `should` is not a
+substitute: without the floor the gap eases continuously from ~86 down to 0, so it passes through 10
+on the way and a retrying assertion can catch that transient and go green.
 
 **The preset has to be one that exists.** `getResolvedConfig` resolves it as
 `presets[urlConfig.preset || base.preset]`, so an unknown name yields `undefined` and

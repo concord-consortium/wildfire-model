@@ -110,7 +110,7 @@ The 169 is not the label shrinking to fit: it is the label's **min-content width
 - The `useEffect` at `terrain-panel.tsx:52-62` that exists purely to consume it. Its comment names the caller directly: *"ui.terrainUISelectedZone is set by external Zone Info buttons."* It also calls `setCurrentPanel(1)`, which is what opens the wizard on the clicked zone's panel rather than at the start.
 - The `|| 0` fallback in `useState<number>(ui.terrainUISelectedZone || 0)` at `terrain-panel.tsx:44`.
 - `showTerrainPanel` and its `log("ZoneButtonClicked", ...)` in `simulation-info.tsx:35-41`.
-- The `locked` and `onClick` props on `ZoneInfo`, `LockIcon`, `.lockIcon` in the SCSS, `data-testid="lock-icon"`, and the `.active` class along with both `box-shadow` rules.
+- The `locked` and `onClick` props on `ZoneInfo`, `LockIcon`, `.lockIcon` in the SCSS, `data-testid="lock-icon"`, and the `.active` class along with both `box-shadow` rules. `src/assets/lock.svg` goes too: `LockIcon` was its only importer.
 - **A third file**: `terrain-panel.test.tsx:508`, test (o), drives the wizard by writing `stores.ui.terrainUISelectedZone = 1`, with the comment *"What simulation-info.tsx writes when a zone info tile is clicked."* This one **fails** rather than going stale, so it is carried in Test fallout below rather than treated as a comment to tidy.
 - **`LOGGED-EVENTS.md:46`**, the `TerrainPanelClosed` description, which tells a researcher that *"Previous and a zone-info-tile click both walk a student back off"* the wind panel. After this story Previous is the only such route, and that sentence is guidance for reading a live parameter rather than a passing mention.
 
