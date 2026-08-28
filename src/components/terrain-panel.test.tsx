@@ -179,6 +179,33 @@ describe("vegetation selector", () => {
     const drought = screen.getByTestId("drought-slider").querySelector("input");
     expect(drought).toHaveValue("2");
   });
+
+  // Setup shows the full display spelling; only the map's zone labels abbreviate it.
+  it("offers the full 'Forest with Suppression' spelling on the vegetation slider", () => {
+    render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+    // Zone 0 is Mountains, the only terrain whose slider offers the option.
+    expect(screen.getByTestId("vegetation-slider")).toBeInTheDocument();
+    expect(screen.getByText("Forest with Suppression")).toBeInTheDocument();
+  });
+
+  it("captions the wind panel's zone summary with the full spelling", async () => {
+    render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+    const nextButtons = screen.getAllByRole("button", { name: /next/i });
+    await userEvent.click(nextButtons[nextButtons.length - 1]);
+    expect(screen.getByTestId("terrain-wind")).toBeInTheDocument();
+    // Zone 2's vegetation is ForestWithSuppression. getByText rather than an
+    // exact textContent comparison: the caption's non-breaking space is
+    // collapsed by testing-library's normalizer but not by string equality.
+    expect(screen.getByText("Forest with Suppression")).toBeInTheDocument();
+  });
 });
 
 describe("setupChanged", () => {
