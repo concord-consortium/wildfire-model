@@ -7,7 +7,7 @@ import { Zone } from "../zone";
 // - data/plains-plains
 // - data/plains-mountains
 // etc.
-const zonesToImageDataFile = (zones: Zone[]) => {
+export const zonesToImageDataFile = (zones: Zone[]) => {
   const zoneTypes: string[] = [];
   zones.forEach((z, i) => {
     zoneTypes.push(TerrainType[z.terrainType].toLowerCase());

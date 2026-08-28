@@ -103,7 +103,7 @@ Measured on 2026-08-28 by driving the real `FireEngine` headlessly against the r
 | Forest | 4172 | 2280 | 1800 | 1077 |
 | Forest with suppression | 805 | 432 | 332 | 191 |
 
-In cells per model day: Grass 13 to 46, Shrub 4 to 19, **Forest 0.3 to 1.3**. A zone is 120 cells wide.
+In cells per model day: Grass 13 to 46, Shrub 4 to 19, **Forest 0.3 to 1.3**. The grid is 240 cells wide, so a zone is about 120 across.
 
 **The two slowest fuel models were never calibrated.** `get-fire-spread-rate.ts:32-33` carries *"the following two land types have not yet been configured via specification, only by approximation to get the code to compile"* over the `Forest` and `ForestWithSuppression` entries. Those are exactly the two rows that produce the symptom.
 
@@ -127,7 +127,7 @@ So the rule reads, in practice, as "fire on flat ground and fire in forest goes 
 
 Four live browser runs of Mountains-shrub into Plains-shrub, identical setup each time, went 3, 13, 18 and 18 cells in. Same setup, different outcome, no user input in between.
 
-**Reproduction harness.** The headless driver used for the tables is in the gitignored `tmp/wm41/`. It loads the real terrain PNGs through the real `populateGrid`, builds real `Cell` objects the way `populateCellsData` does, and steps a real `FireEngine`, with `Math.random` swapped for a seeded PRNG so a run is replayable by seed number. It needs re-creating if this story is picked up after the working tree is cleaned.
+**Reproduction harness.** Every table above is regenerable from `scripts/fire-spread-harness.js`, which drives the real `FireEngine` headlessly: `rates` prints the spread table, `burn-index` the burn-index census, `sweep [seeds]` the crossing-depth table, and `repro [seed]` the screenshot setup plus a plan view of the burn. It decodes the terrain PNGs itself (node has no decoder and this repo has no image dependency), feeds them through the real `populateGrid`, builds `Cell` objects the way `populateCellsData` does, and swaps `Math.random` for a seeded PRNG so a run is replayable by seed number. Nothing in it reimplements the model. The seeded stream is the harness's own, so a given seed does not correspond to any particular browser run; what is reproducible is the distribution, and the numbers above.
 
 ## Out of Scope
 
