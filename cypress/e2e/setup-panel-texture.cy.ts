@@ -1,10 +1,11 @@
 // cypress/e2e/setup-panel-texture.cy.ts
 //
-// The painted-color guard for the Setup panel's vegetation texture. The Jest
-// cases in terrain-panel.test.tsx pin the DOM structure, but jsdom applies no
-// stylesheet filters, so the property the feature exists for (the texture is
-// painted in the drought ink, not run through the drought filter) is only
-// observable here.
+// The painted-color guards for the Setup panel thumbnail. The Jest cases in
+// terrain-panel.test.tsx pin the DOM structure, but jsdom composites nothing, so
+// the two properties that survive to the screen are only observable here: the
+// texture reaches it in the drought ink, and the river reaches it in its own.
+// The relief's multiply is asserted as declarations rather than pixels; its
+// composite is measured in the Playwright pass.
 //
 // Hover's 75% is verified by hand in the Playwright pass, not here: Cypress's
 // cy.trigger dispatches an event without moving the pointer, so :hover never
@@ -26,14 +27,21 @@ const THREE_ZONE_URL = "/?preset=hillThreeZone&showVegetationKey=true";
 // terrain-glyph-colors.test.ts.
 const INK = [0x42, 0x4f, 0x12];
 // Squared distance, roughly 10 per channel. Calibrated against the failure this
-// case exists to catch: the correct DOM shape puts 116 pixels inside this band
-// and the texture-nested-inside-.terrainImage arrangement puts 0. A looser band
-// does not work: at 30 per channel the bug leaks pixels in, because its
-// washed-out render contains a neutral gray that happens to sit near the ink.
+// case exists to catch, a texture whose ink is altered on the way to the screen:
+// the correct render puts 151 pixels inside this band and an altered one puts 0.
+// A looser band does not work: at 30 per channel the bug leaks pixels in, because
+// its washed-out render contains a neutral gray that happens to sit near the ink.
 // There is no byte-exact pixel to assert on: a 3px stroke on a 256 viewBox drawn
 // at a 112.5px mask scale almost never fills a whole destination pixel.
 const TOLERANCE = 300;
 const MIN_INK_PIXELS = 20;
+// The severe-drought terrain color, derived by droughtTerrainHex and pinned as
+// #C8A145 in terrain-glyph-colors.test.ts.
+const SEVERE_TERRAIN = "rgb(200, 161, 69)";
+// The 2-zone-left river is a thin band, and the browser's downscale of the 2x
+// asset softens its edges: 58 pixels clear the test's threshold, against 0 for
+// the same thumbnail with the river inside the multiply.
+const MIN_RIVER_PIXELS = 20;
 
 const openSetup = () => {
   cy.window().its("sim.dataReady").should("eq", true);
@@ -42,8 +50,8 @@ const openSetup = () => {
 };
 
 // Decodes a screenshot in the browser (no PNG decoder is installed in this repo)
-// and counts pixels within TOLERANCE of the ink.
-const countInkPixels = (win: Window, path: string) =>
+// and counts the pixels `match` accepts.
+const countPixels = (win: Window, path: string, match: (r: number, g: number, b: number) => boolean) =>
   cy.readFile(path, null).then((buf: unknown) =>
     new Cypress.Promise<number>((resolve, reject) => {
       const bytes = new Uint8Array(buf as ArrayLike<number>);
@@ -58,8 +66,7 @@ const countInkPixels = (win: Window, path: string) =>
         const d = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
         let hits = 0;
         for (let i = 0; i < d.length; i += 4) {
-          const dist = (d[i] - INK[0]) ** 2 + (d[i + 1] - INK[1]) ** 2 + (d[i + 2] - INK[2]) ** 2;
-          if (dist <= TOLERANCE) hits++;
+          if (match(d[i], d[i + 1], d[i + 2])) hits++;
         }
         win.URL.revokeObjectURL(url);
         resolve(hits);
@@ -72,8 +79,11 @@ const countInkPixels = (win: Window, path: string) =>
     })
   );
 
+const isInk = (r: number, g: number, b: number) =>
+  (r - INK[0]) ** 2 + (g - INK[1]) ** 2 + (b - INK[2]) ** 2 <= TOLERANCE;
+
 describe("Setup panel vegetation texture (WM-53)", () => {
-  it("paints the texture in the drought ink, not through the drought filter", () => {
+  it("gets the drought ink to the screen unaltered", () => {
     cy.visit(TWO_ZONE_URL);
     openSetup();
     // Zone 1 is selected, so the texture sits at full strength; at the 0.5
@@ -87,11 +97,34 @@ describe("Setup panel vegetation texture (WM-53)", () => {
       overwrite: true,
       onAfterScreenshot: (_el, props) => { shotPath = props.path; }
     });
-    cy.window().then(win => countInkPixels(win, shotPath)).then(hits => {
-      // The mutation this catches: move the texture layer inside .terrainImage
-      // and `hits` goes to 0.
+    cy.window().then(win => countPixels(win, shotPath, isInk)).then(hits => {
+      // The assertion above reads the declared color; this reads what composited.
+      // The mutation it catches: give the texture, or anything above it, a color
+      // treatment of its own, and `hits` goes to 0 while the declared color holds.
       expect(hits, "pixels painted in the medium-drought ink").to.be.greaterThan(MIN_INK_PIXELS);
     });
+  });
+
+  it("keeps the river out of the drought multiply", () => {
+    cy.visit(TWO_ZONE_URL);
+    openSetup();
+    // Severe is the level that makes the test possible: its red is far above its
+    // blue, so every pixel the multiply can produce has more red than blue.
+    cy.get('[data-testid="drought-slider"]').contains("Severe").should("be.visible").click();
+    cy.get(IMAGE).first().should("have.css", "background-color", SEVERE_TERRAIN);
+    cy.get(IMAGE).first().should("have.css", "background-blend-mode", "multiply");
+
+    let shotPath = "";
+    cy.get(IMAGE).first().screenshot("zone-1-terrain", {
+      overwrite: true,
+      onAfterScreenshot: (_el, props) => { shotPath = props.path; }
+    });
+    // The river's own ink is rgb(7, 85, 135). Nothing else on the thumbnail can
+    // clear this, and it cannot either once it is inside the multiply.
+    cy.window().then(win => countPixels(win, shotPath, (r, _g, b) => b - r > 30))
+      .then(hits => {
+        expect(hits, "river pixels the drought color never touched").to.be.greaterThan(MIN_RIVER_PIXELS);
+      });
   });
 
   it("fades the texture and the terrain image together", () => {

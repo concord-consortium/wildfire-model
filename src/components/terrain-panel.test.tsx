@@ -153,19 +153,20 @@ describe("zone vegetation texture", () => {
     expect(textures(container)).toHaveLength(2);
   });
 
-  it("keeps the texture out of the drought-filtered image and after it", () => {
+  it("keeps the texture after the image that holds the river", () => {
     stores.ui.showVegetationKey = true;
     const { container } = renderPanelOnZonesScreen();
     const layers = textures(container);
     expect(layers).toHaveLength(2);
     layers.forEach(tex => {
-      // eslint-disable-next-line testing-library/no-node-access
+      /* eslint-disable testing-library/no-node-access */
       const image = tex.parentElement!.querySelector(".terrainImage")!;
-      // Nested inside, the drought filter would rewrite the ink's hue.
-      expect(image.contains(tex)).toBe(false);
-      // Ordered before, .terrainImage's stacking context would hide it.
-      // eslint-disable-next-line testing-library/no-node-access
+      // The two are absolutely positioned at z-index auto, so tree order decides
+      // which paints on top. Ordered before, the river inside .terrainImage would
+      // cover the glyphs; the board draws them crossing it.
+      expect(image.querySelector(".riverOverlay")).not.toBeNull();
       const kids = Array.from(tex.parentElement!.children);
+      /* eslint-enable testing-library/no-node-access */
       expect(kids.indexOf(tex)).toBeGreaterThan(kids.indexOf(image));
     });
   });
@@ -188,10 +189,7 @@ describe("zone vegetation texture", () => {
     wrappers.forEach(wrapper => {
       /* eslint-disable testing-library/no-node-access */
       const badge = wrapper.querySelector(".vegetationPreview")!;
-      const image = wrapper.querySelector(".terrainImage")!;
       const texture = wrapper.querySelector(".vegetationTexture")!;
-      // Out of the filtered image, or the drought filter rewrites the icon's gray.
-      expect(image.contains(badge)).toBe(false);
       // Inside the wrapper, or the badge stops fading with its zone and renders at
       // double strength on every unselected zone.
       expect(wrapper.contains(badge)).toBe(true);
