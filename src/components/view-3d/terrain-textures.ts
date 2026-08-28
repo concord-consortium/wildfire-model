@@ -18,6 +18,12 @@ export const TILE_DIR = "terrain-textures/";
 // OrbitControls, and mipmaps handle the minified case.
 const RASTER_SIZE = 512;
 
+// The tiles draw their glyphs on a transparent field so the Setup panel can use
+// one as a CSS mask and paint its own ink through it. The shader instead wants
+// those glyphs on a neutral field, 128 being the luminance it reads as
+// "unchanged", so the field is painted here rather than in the file.
+const TILE_FIELD = "#808080";
+
 // The four vegetation tiles are packed into the four channels of one texture, in
 // Vegetation enum order. GLSL forbids indexing an array of samplers by a value
 // that varies per fragment, so the alternative to packing would be sampling all
@@ -53,6 +59,8 @@ const rasterizeSvg = (url: string, size: number): Promise<Uint8ClampedArray> =>
         reject(new Error("2d context unavailable while rasterizing terrain tile"));
         return;
       }
+      ctx.fillStyle = TILE_FIELD;
+      ctx.fillRect(0, 0, size, size);
       ctx.drawImage(img, 0, 0, size, size);
       resolve(ctx.getImageData(0, 0, size, size).data);
     };
