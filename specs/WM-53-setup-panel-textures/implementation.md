@@ -8,6 +8,8 @@
 
 Four steps, in dependency order. The first two are small and independent of each other; the third is the story and consumes both; the fourth is the pixel case that carries the story's only real guarantee, the Jest assertions being proxies for it. Every measurement quoted below was taken against this branch on 2026-08-28 (head `82f1584`), not inherited from the requirements spec.
 
+The three that the build could have invalidated were re-measured against the shipped code and all hold: the `fill="none"` twin rasterizes to **0 differing texels of 262,144** in every channel for all four tiles; the measurement script's output is byte-identical (bg 128, sd 36.0 / 28.3 / 29.1 / 31.3); and the pixel case counts **116** ink pixels in the correct shape against **0** in the nested-parent arrangement.
+
 ---
 
 ### Export the glyph ink derivation from `terrain-colors.ts`
@@ -36,10 +38,10 @@ Append to `terrain-colors.ts`:
 // result is converted back for CSS. Running the same formulas on the sRGB values
 // instead yields #001501, #101806, #161A08, #0F0C05 and #000000, none of which
 // match the board, and burnt comes out black rather than gray.
-const srgbToLinear = (c: number) => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+export const srgbToLinear = (c: number) => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
 const linearToSrgb = (c: number) => c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
 const clamp01 = (c: number) => Math.min(1, Math.max(0, c));
-const LUMA = [0.2126, 0.7152, 0.0722];
+export const LUMA = [0.2126, 0.7152, 0.0722] as const;
 
 // Mirror of wfInk (terrain-shader.ts). `base` is linear, and so is the result.
 const glyphInkLinear = (base: number[], ratio: number) => {
@@ -81,7 +83,7 @@ export const droughtGlyphInkHex = (droughtLevel: DroughtLevel, contrast: readonl
   glyphInkHex(getTerrainColor(droughtLevel), contrast[droughtLevel]);
 ```
 
-`terrain-glyph-colors.test.ts` deletes `srgbToLinear`, `linearToSrgb`, `clamp01`, `LUMA`, `toHex`, `wfInk` and `inkFor`, and imports `glyphInkHex` instead. Its header comment loses the "this file reimplements it" framing, since it no longer does. The `lightenBelow` test keeps its own `srgbToLinear` and `LUMA` (it needs raw luminance, not an ink), or imports them if they are exported; keeping them local is fine and is not a duplicated *value*, only a duplicated formula that the hex assertions already pin.
+`terrain-glyph-colors.test.ts` deletes `srgbToLinear`, `linearToSrgb`, `clamp01`, `LUMA`, `toHex`, `wfInk` and `inkFor`, and imports `glyphInkHex` instead. Its header comment loses the "this file reimplements it" framing, since it no longer does. The `lightenBelow` test needs raw luminance rather than an ink, so `srgbToLinear` and `LUMA` are exported and it imports them; `LUMA` is `as const`, because `glyphInkLinear` reads it on every derivation and an exported mutable array is one accidental in-place write away from changing the ink everywhere.
 
 The three existing assertions become:
 
@@ -105,7 +107,7 @@ The three existing assertions become:
 
 The second case is there because indexing is the one thing the first case cannot catch: `terrainGlyphContrast` is `[6, 6, 6, 7]`, so three of the four levels share a ratio and a wrong index still produces the right hex for them.
 
-In `terrain-shader.ts`, the `wfInk` doc comment currently reads "MIRRORED IN TYPESCRIPT at terrain-glyph-colors.test.ts. Jest has no WebGL, so that file reimplements this function...". It now names `terrain-colors.ts` as the mirror and the test as what pins the outputs.
+In `terrain-shader.ts`, the `wfInk` doc comment currently reads "MIRRORED IN TYPESCRIPT at terrain-glyph-colors.test.ts. Jest has no WebGL, so that file reimplements this function...". It now names `terrain-colors.ts` as the mirror and the test as what pins the outputs. **Write it with no backticks**: the whole GLSL program is a TypeScript template literal, so a backticked identifier in a comment terminates the string and the file fails to parse.
 
 ---
 
@@ -388,15 +390,28 @@ it("adds and removes the texture when the key is toggled with the wizard open", 
   expect(textures(container)).toHaveLength(0);
 });
 
-it("follows a zone's vegetation and drought as they change", () => {
+// Driven through the sliders, not by writing to the store: TerrainPanel clones
+// simulation.zones into local state at mount (terrain-panel.tsx:41) and the
+// wizard edits the clone, so a store mutation never reaches the rendered cards.
+// Zone 1 must be Plains, because a Mountains zone's vegetation slider does not
+// offer Grass. Zone 2 is left alone, so each assertion names both zones and a
+// texture that ignored its own zone could not pass.
+it("follows the selected zone's vegetation and drought as the wizard changes them", () => {
   stores.ui.showVegetationKey = true;
-  const { container } = renderPanelOnZonesScreen();
-  const first = () => textures(container)[0] as HTMLElement;
-  expect(first().style.maskImage).toBe("url(terrain-textures/forest.svg)");
-  act(() => { stores.simulation.zones[0].vegetation = Vegetation.Grass; });
-  expect(first().style.maskImage).toBe("url(terrain-textures/grass.svg)");
-  act(() => { stores.simulation.zones[0].droughtLevel = DroughtLevel.NoDrought; });
-  expect(first().style.backgroundColor).toBe("rgb(0, 64, 1)");
+  // Shrub on Plains at medium drought, against defaultTwoZones[0]'s Forest on Mountains.
+  const { container } = renderPanelOnZonesScreen([plainsShrubMediumZone, defaultTwoZones[0]]);
+  const masks = () => textures(container).map(t => t.style.maskImage);
+  const inks = () => textures(container).map(t => t.style.backgroundColor);
+  expect(masks()).toEqual(["url(terrain-textures/shrub.svg)", "url(terrain-textures/forest.svg)"]);
+  expect(inks()).toEqual(["rgb(66, 79, 18)", "rgb(66, 79, 18)"]);
+
+  const vegetationSlider = screen.getByTestId("vegetation-slider").querySelector("input")!;
+  fireEvent.change(vegetationSlider, { target: { value: String(Vegetation.Grass) } });
+  expect(masks()).toEqual(["url(terrain-textures/grass.svg)", "url(terrain-textures/forest.svg)"]);
+
+  const droughtSlider = screen.getByTestId("drought-slider").querySelector("input")!;
+  fireEvent.change(droughtSlider, { target: { value: String(DroughtLevel.NoDrought) } });
+  expect(inks()).toEqual(["rgb(0, 64, 1)", "rgb(66, 79, 18)"]);
 });
 
 it("textures the read-only wind recap, where the badge is not drawn", () => {
@@ -408,6 +423,8 @@ it("textures the read-only wind recap, where the badge is not drawn", () => {
 ```
 
 `renderPanelOnZonesScreen` and `renderPanelOnWindScreen` are small helpers over the existing harness: render `<TerrainPanel/>` inside the existing `Provider`, then walk Next as the existing tests already do to reach the zones and wind panels. The drought and mask expectations are per-zone arrays rather than a `forEach`, so a fixture that folded every zone to the same value could not pass.
+
+Three constraints the harness imposes, each of which is a compile or lint failure rather than a preference. `config.zonesCount` is typed `2 | 3`, so the helper cannot assign `zoneOptions.length`. Every `container.querySelectorAll` has to go through a named helper, or `testing-library/no-container` errors; the helpers also carry the `no-node-access` disables in one place instead of at every call. And a `render` result held in a variable has to be named `view`, per `testing-library/render-result-naming-convention`.
 
 What these tests are and are not: the two structural ones are **proxies**. They pin the two facts that cause the bug and each fails if its line is deleted, but the property anyone cares about is a painted color and jsdom applies no stylesheet filters. The guarantee needs a pixel check, which is the open question below.
 
@@ -428,7 +445,10 @@ What these tests are and are not: the two structural ones are **proxies**. They 
 ```
 -./cypress/screenshots
 +cypress/screenshots/
++cypress/downloads/
 ```
+
+`cypress/downloads/` goes with it: a `cypress run` that takes a screenshot also leaves an artifact there, and a local run of this spec left a 13 MB `.crdownload` showing as untracked.
 
 The case renders the Setup panel with the key on and a selected zone at medium drought, screenshots the texture layer, decodes the PNG in the browser, and counts pixels near the ink:
 
@@ -442,12 +462,13 @@ const IMAGE = ".zone-selector--terrainImage--__wildfire-v1__";
 const TEXTURE = '[data-testid="vegetation-texture"]';
 
 const INK = [0x42, 0x4f, 0x12];
-// Squared distance, roughly 10 per channel. Calibrated against both arrangements:
-// the correct DOM shape puts 116 pixels inside this band and the nested-parent
-// bug puts 0. A looser band does not work: at 30 per channel the bug leaks 55
-// pixels in, because its washed-out render contains a neutral gray that happens
-// to sit near the ink. There is no byte-exact pixel to assert on: a 3px stroke on
-// a 256 viewBox drawn at a 112.5px mask scale almost never fills a whole pixel.
+// Squared distance, roughly 10 per channel. Calibrated against both arrangements
+// and re-measured on head: the correct DOM shape puts 116 pixels inside this band
+// and the nested-parent bug puts 0. A looser band does not work: at 30 per channel
+// the bug leaks 55 pixels in, because its washed-out render contains a neutral
+// gray that happens to sit near the ink. There is no byte-exact pixel to assert
+// on: a 3px stroke on a 256 viewBox drawn at a 112.5px mask scale almost never
+// fills a whole destination pixel.
 const TOLERANCE = 300;
 const MIN_INK_PIXELS = 20;
 
@@ -475,7 +496,12 @@ const countInkPixels = (win: Window, path: string) => new Cypress.Promise<number
 });
 
 it("paints the texture in the drought ink, not through the drought filter", () => {
-  // ...open Setup, reach the zones screen, set zone 1 to medium drought...
+  // ...open Setup, reach the zones screen...
+  // Set zone 1 to medium drought by CLICKING THE MARK LABEL, which is how
+  // cypress/support/elements/TerrainSetup.js drives this slider. Setting the
+  // input's value and firing `change` does not move a MUI slider, and the case
+  // then silently measures the preset's mild-drought ink instead.
+  cy.get('[data-testid="drought-slider"]').contains("Medium").should("be.visible").click();
   let shotPath = "";
   cy.get(TEXTURE).first()
     .screenshot("zone-1-texture", { overwrite: true, onAfterScreenshot: (_el, props) => { shotPath = props.path; } });
