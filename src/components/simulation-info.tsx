@@ -4,18 +4,27 @@ import { useStores } from "../use-stores";
 import { droughtIcons, vegetationIcons } from "./vertical-selectors";
 import { Zone } from "../models/zone";
 import { WindDial, degToCompass } from "./wind-dial";
-import { terrainDisplayLabels } from "../types";
+import { droughtLabels, terrainDisplayLabels, vegetationAbbreviatedLabels } from "../types";
 import css from "./simulation-info.scss";
 
 const zoneCssClasses = [css.zone1, css.zone2, css.zone3];
 
 export const ZoneInfo = ({zone, idx}: {zone: Zone; idx: number}) => (
   <div data-testid="zone-info" className={`${css.zone} ${zoneCssClasses[idx]}`}>
-    <div className={`${css.icon} ${css.vegetationIcon}`}>{vegetationIcons[zone.vegetation]}</div>
-    <div className={`${css.icon} ${css.droughtIcon}`}>{droughtIcons[zone.droughtLevel]}</div>
-    <div className={`${css.zoneText}`}>
-      <div className={css.zoneName}>Zone {idx + 1}</div>
-      <div className={css.terrain}>{terrainDisplayLabels[zone.terrainType]}</div>
+    <div className={css.titleRow}>
+      <span className={css.zoneName}>Zone {idx + 1}</span>
+      <span className={css.bullet}>&middot;</span>
+      <span className={css.terrain}>{terrainDisplayLabels[zone.terrainType]}</span>
+    </div>
+    <div className={css.conditionsRow}>
+      <div className={css.icon}>{vegetationIcons[zone.vegetation]}</div>
+      <div className={css.name} data-testid="zone-vegetation-name">
+        {vegetationAbbreviatedLabels[zone.vegetation]}
+      </div>
+      <div className={`${css.icon} ${css.droughtIcon}`}>{droughtIcons[zone.droughtLevel]}</div>
+      <div className={`${css.name} ${css.droughtName}`} data-testid="zone-drought-name">
+        {droughtLabels[zone.droughtLevel]}
+      </div>
     </div>
   </div>
 );
