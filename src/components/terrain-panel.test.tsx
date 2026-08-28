@@ -522,23 +522,6 @@ describe("setupChanged", () => {
   });
 
   // eslint-disable-next-line max-len
-  it("(o) reach the wind panel, click a zone tile, Cancel — the tile jump does not erase reachedWind", async () => {
-    render(
-      <Provider stores={stores}>
-        <TerrainPanel />
-      </Provider>
-    );
-    await goToCreatePanel();
-    expect(screen.getByTestId("terrain-wind")).toBeInTheDocument();
-    // What simulation-info.tsx writes when a zone info tile is clicked. The
-    // write forces the wizard back to the conditions panel.
-    act(() => { stores.ui.terrainUISelectedZone = 1; });
-    expect(screen.queryByTestId("terrain-wind")).not.toBeInTheDocument();
-    await userEvent.click(screen.getByTestId("terrain-cancel"));
-    expect(cancelPayload()).toMatchObject({ panel: "conditions", reachedWind: true });
-  });
-
-  // eslint-disable-next-line max-len
   it("(p) reach the wind panel, Cancel, reopen, Cancel — reachedWind resets with the rest of the wizard", async () => {
     render(
       <Provider stores={stores}>

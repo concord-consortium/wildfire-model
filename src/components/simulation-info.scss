@@ -22,24 +22,6 @@
     border: solid 1px $controlGray;
     background-color: $zone1Red;
     z-index: 2;
-    position: relative;
-
-    .lockIcon {
-      position: absolute;
-      right: -12px;
-      top: 4px;
-      width: 24px;
-      height: 24px;
-    }
-
-    &.active:hover {
-      box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5);
-      cursor: pointer;
-    }
-
-    &.active:active {
-      box-shadow: 0 0 0 4px rgba(255, 255, 255, 1);
-    }
 
     &.zone1 {
       background-color: $zone1Red;

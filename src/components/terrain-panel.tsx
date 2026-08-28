@@ -41,25 +41,13 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
   const [zones, setZones] = useState<Zone[]>(simulation.zones.map(z => z.clone()));
   const [windSpeed, setWindSpeed] = useState<number>(simulation.wind.speed);
   const [windDirection, setWindDirection] = useState<number>(simulation.wind.direction);
-  const [selectedZone, setSelectedZone] = useState<number>(ui.terrainUISelectedZone || 0);
+  const [selectedZone, setSelectedZone] = useState<number>(0);
   const openSnapshotRef = useRef<ISetupSnapshot | null>(null);
   const maxPanelRef = useRef<number>(firstPanel);
 
   const zone = zones[selectedZone];
   const displayVegetationType =
     zone.terrainType === TerrainType.Mountains ? zone.vegetation - 1 : zone.vegetation;
-
-  useEffect(() => {
-    // ui.terrainUISelectedZone is set by external Zone Info buttons. We need to update internal state accordingly
-    // when it's possible.
-    if (ui.terrainUISelectedZone !== undefined) {
-      if (ui.terrainUISelectedZone < zones.length) {
-        setSelectedZone(ui.terrainUISelectedZone);
-        setCurrentPanel(1); // Show zone panel
-      }
-      ui.terrainUISelectedZone = undefined;
-    }
-  }, [ui, ui.terrainUISelectedZone, zones.length]);
 
   useEffect(() => {
     // Reset internal state when terrain UI is closed
