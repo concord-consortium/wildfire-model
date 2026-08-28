@@ -8,15 +8,25 @@ import { droughtGlyphInkHex } from "./view-3d/terrain-colors";
 
 const cssClasses = [css.zone1, css.zone2, css.zone3];
 
-const getBackgroundImage = (zoneCount: number, terrainType: number, currentZone: number) => {
+// The thumbnail files are named for what the UI calls each terrain, so Foothills
+// reads as "hills" here. The heightmap data files still spell it "foothills"
+// (data-loaders.ts derives those straight off the enum), so the two cannot share
+// a derivation.
+const terrainArtNames: Record<TerrainType, string> = {
+  [TerrainType.Plains]: "plains",
+  [TerrainType.Foothills]: "hills",
+  [TerrainType.Mountains]: "mountains",
+};
+
+export const getBackgroundImage = (zoneCount: number, terrainType: TerrainType, currentZone: number) => {
   const prefix = `./terrain/${zoneCount}-zone-`;
-  const terrainStyle = TerrainType[terrainType].toLowerCase();
+  const terrainStyle = terrainArtNames[terrainType];
   const twoZonePosition = ["-left", "-right"];
   const threeZonePosition = ["-left", "-mid", "-right"];
   const panelPosition = zoneCount === 2 ? twoZonePosition[currentZone] : threeZonePosition[currentZone];
   return prefix + terrainStyle + panelPosition + ".png";
 };
-const getRiverOverlay = (zoneCount: number, currentZone: number) => {
+export const getRiverOverlay = (zoneCount: number, currentZone: number) => {
   const prefix = `./terrain/`;
   const twoZonePosition = ["2-zone-river-left", "2-zone-river-right"];
   const threeZonePosition = ["3-zone-river-left", "3-zone-river-mid", "3-zone-river-right"];
