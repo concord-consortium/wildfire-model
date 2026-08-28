@@ -16,10 +16,10 @@ That keeps all the expensive work off the table: no library change, no version p
 
 ## Background
 
-The coach mark in question is ruleset **25, category 4**. Its two steps are generated from the feedback spreadsheet; only its figure is hand-authored, in `tour-map.tsx:86`:
+The coach mark in question is ruleset **25, category 4**. Its two steps are generated from the feedback spreadsheet; only its figure is hand-authored, in `tour-map.tsx:85`:
 
 ```
-4: () => [anchor("restart-button"), viewportTop(<img src={mountainImg} width={179} height={120} alt="" />)],
+4: () => [anchor("restart-button"), viewportTop(<img src={mountainsImg} width={191} height={122} alt="" />)],
 ```
 
 so the tour is a Restart step followed by a no-pointer centered-top bubble carrying the illustration, and the illustration is the only part this story touches.
@@ -36,11 +36,11 @@ so the tour is a Restart step followed by a no-pointer centered-top bubble carry
 - The figure is declared **191 x 122** in `tour-map.tsx`. 191 is the width the figure has beside the Hazbot avatar, derived and measured under Technical Notes; 122 preserves the asset's 200:128 aspect. A figure of 192 or more does not overflow: it silently relocates below Hazbot.
 - The 2x PNG export (400 x 256) is the source, matching the existing convention of a 2x raster displayed at half size. It is still above 2x at the declared 191 x 122.
 - `src/assets/hazbot/mountain.png` is **deleted**. This story removes its last caller, and it is the only other file in that folder.
-- The stale dimension comment at `tour-map.tsx:84-85` is deleted rather than rewritten. It explains 179 x 120 by reference to a 240 x 120 placeholder that no longer exists, and the number that bounds the figure is the 191 named above.
+- The dimension comment above 25/4 loses its placeholder narrative, which explained 179 x 120 by reference to a 240 x 120 placeholder that no longer exists. What replaces it is a single line naming the 191 bound, matching the one-line comments on the sibling entries in the same block.
 - **The arrows are gone**, replaced by the labels drawn into the panels. Nothing is added to put them back, and the spreadsheet cell that still asks for them is handled by telling Trudi rather than by holding the story.
 - No change to `@concord-consortium/coachmarks`: no per-step width override, no side-figure layout, no `pre.N` publish, no repin.
 - The tour's **step count stays 2**, so `tour-map.test.ts`'s step-count and anchor invariants hold and `tour-data.generated.ts` is untouched.
-- **`tour-map.test.ts:80` is tightened.** It currently asserts only that 25/4's terminal step carries a truthy `image`. It gains, for every viewport step in `tourMap` that carries one: the image is an `<img>`, it declares a positive `width` and `height`, and the declared width is at most 191. The 191 is a named constant carrying the derivation it comes from. Mutation to catch: declaring the asset at its native 200 must turn the test red, because that is the mistake this story invites.
+- **`tour-map.test.ts` gains a figure invariant.** For every viewport step in `tourMap` that carries a figure: the image is an `<img>`, it declares a positive `width` and `height`, and the declared width is at most 191, with the 191 a named constant carrying the derivation it comes from. The existing 25/4 test keeps pinning that the terminal step is a centered-top viewport bubble, and sheds the weaker figure-presence assertion the invariant now subsumes. Mutation to catch: declaring the asset at its native 200 must turn the invariant red, because that is the mistake this story invites.
 - The authored step text is unchanged. This story replaces artwork, not copy.
 
 ## Technical Notes
@@ -61,9 +61,9 @@ Measurements were taken in Chrome against `@concord-consortium/coachmarks@0.0.1-
 
 **An oversized figure fails quietly, in two different ways.** `max-width: 100%` resolves against the 250px content box, not the 191px slot, so a figure between 192 and 250 is not scaled down and not clipped: it just moves. Above 250 it would scale down and look plausible, only smaller than intended. Neither failure throws, which is the whole reason the width is asserted rather than reviewed.
 
-**The current asset.** `src/assets/hazbot/mountain.png` is 358 x 240 intrinsic, rendered at 179 x 120, a 2x asset displayed at half size, and the only file in `src/assets/hazbot/` (82KB). The new export at 2x is 400 x 256 and 58KB.
+**The asset this replaces.** `src/assets/hazbot/mountain.png` was 358 x 240 intrinsic, rendered at 179 x 120, a 2x asset displayed at half size, and the only file in `src/assets/hazbot/` (82KB). The new export at 2x is 400 x 256 and 58KB.
 
-**The in-repo change is one line plus an asset.** `tour-map.tsx:86` is the whole behavioral surface: swap the import and the two numbers. `buildTour` zips the map's anchors with the generated text, the step count is unchanged at 2, and `tour-data.generated.ts`, `build-tour.ts` and the spreadsheet are all untouched.
+**The in-repo change is one line plus an asset.** `tour-map.tsx:85` is the whole behavioral surface: swap the import and the two numbers. `buildTour` zips the map's anchors with the generated text, the step count is unchanged at 2, and `tour-data.generated.ts`, `build-tour.ts` and the spreadsheet are all untouched.
 
 **Nothing in this repo can assert the 280px itself, and that stays true.** The width lives in `dist/styles/hazbot.css` and arrives via a CSS import that jsdom never evaluates, so any Jest assertion about it would be measuring nothing. What is assertable is the figure's own declared width against the 191 constant, which is the direction the risk actually runs: a library change to the popover width is a repin nobody makes silently, whereas an oversized figure is a one-line change anybody can make on a Tuesday.
 
@@ -108,7 +108,7 @@ Moot. The redraw landed on 2026-08-24 as `Mountains with Labels`, and the ticket
 ---
 
 ### RESOLVED: What asset format and density?
-**The 2x PNG**, matching `mountain.png`'s existing 2x-displayed-at-half-size convention. The library's figure rule is `.coachmarks-popover-figure :is(img, svg)`, so SVG would have been equally welcome, but the export is a rendered terrain scene rather than vector art and Zeplin offers it as PNG or JPG only. PNG for the transparent gutter between the panels.
+**The 2x PNG**, matching the 2x-displayed-at-half-size convention `mountain.png` set. The library's figure rule is `.coachmarks-popover-figure :is(img, svg)`, so SVG would have been equally welcome, but the export is a rendered terrain scene rather than vector art and Zeplin offers it as PNG or JPG only. PNG for the transparent gutter between the panels.
 
 ---
 
@@ -118,6 +118,6 @@ Moot. The redraw landed on 2026-08-24 as `Mountains with Labels`, and the ticket
 ## Resolved Decisions From Review
 
 - **The figure's dimensions are no longer a magic pair.** 179 x 120 was explained by a placeholder that no longer existed. 191 x 122 has a stated ceiling, a named source for that ceiling, and a test that fails when it is exceeded, and the old comment goes.
-- **The story is testable from Jest, which it was once assumed not to be.** The declared `width`/`height` are React props that become DOM attributes and survive jsdom intact; only the *rendered* size needs CSS, and the rendered size is not what needs pinning. The existing `tour-map.test.ts:80` already pins that 25/4 carries an image; this story adds the dimensions.
+- **The story is testable from Jest, which it was once assumed not to be.** The declared `width`/`height` are React props that become DOM attributes and survive jsdom intact; only the *rendered* size needs CSS, and the rendered size is not what needs pinning. The 25/4 test already pinned that its terminal step carries a figure; this story moves that assertion into an invariant that also checks the element and its declared dimensions.
 - **The invariant walks every factory, not just 25/4.** 25/4 is the only viewport step carrying an image today, but the check covers entries that do not exist yet, which is the case a type narrowing on `viewportTop` would not have covered anyway.
 - **The figure and the authored text are linked, but only by convention.** 25/4's row carries both `arrowText` and `visualFeedback`, both of them content columns and both Trudi's, so the picture is described in the same place as the words and by the same author. Nothing enforces it; whoever changes one side changes both in the same pass. This story is the exception that proves it, which is why the arrows change is put in front of Trudi explicitly.
