@@ -1,52 +1,16 @@
-import { getTerrainColor, BURNT_COLOR } from "./terrain-colors";
+import {
+  getTerrainColor, BURNT_COLOR, glyphInkHex, droughtGlyphInkHex, srgbToLinear, LUMA
+} from "./terrain-colors";
 import { getDefaultConfig } from "../../config";
 import { DroughtLevel } from "../../types";
 
 // The shipping copy of this arithmetic is GLSL: `wfInk` and `wfRatioFor` in
 // terrain-shader.ts. Jest runs on jsdom with no WebGL context, so it cannot
-// execute them, and this is a TypeScript mirror instead. What it guards is
-// therefore the INPUTS, not the formula: retuning a contrast target or nudging a
-// drought color turns it red, editing the GLSL body does not. terrain-shader.ts
-// carries a comment naming this file as its mirror.
-//
-// The color space is the whole result. A three.js fragment shader works in
-// LINEAR space, so the derivation runs on the linearized drought colors.
-// Evaluating the same formulas on the sRGB values instead yields #001501,
-// #101806, #161A08, #0F0C05 and #000000, none of which match, and burnt comes
-// out black rather than gray.
-
-const srgbToLinear = (c: number) => c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-const linearToSrgb = (c: number) => c <= 0.0031308 ? c * 12.92 : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
-const clamp01 = (c: number) => Math.min(1, Math.max(0, c));
-const LUMA = [0.2126, 0.7152, 0.0722];
-
-const toHex = (linear: number[]) =>
-  "#" + linear
-    .map(c => Math.round(clamp01(linearToSrgb(c)) * 255).toString(16).padStart(2, "0"))
-    .join("").toUpperCase();
-
-// Mirror of wfInk (terrain-shader.ts). `base` is linear.
-const wfInk = (base: number[], ratio: number) => {
-  const baseLum = base[0] * LUMA[0] + base[1] * LUMA[1] + base[2] * LUMA[2];
-  const darkLum = (baseLum + 0.05) / ratio - 0.05;
-  const lightLum = ratio * (baseLum + 0.05) - 0.05;
-  const darkCeiling = (baseLum + 0.05) / 0.05;
-  const lightCeiling = 1.05 / (baseLum + 0.05);
-  let targetLum: number;
-  if (darkLum >= 0) {
-    targetLum = darkLum;
-  } else if (darkCeiling >= lightCeiling) {
-    targetLum = 0;
-  } else {
-    targetLum = Math.min(lightLum, 1);
-  }
-  // step(0.01, baseLum): a base with no chroma to scale falls back to a neutral.
-  return baseLum >= 0.01
-    ? base.map(c => c * (targetLum / Math.max(baseLum, 1e-4)))
-    : [targetLum, targetLum, targetLum];
-};
-
-const inkFor = (srgb: number[], ratio: number) => toHex(wfInk(srgb.map(srgbToLinear), ratio));
+// execute them, and terrain-colors.ts carries a TypeScript mirror instead. What
+// this file guards is the mirror's OUTPUTS plus the INPUTS both share: retuning
+// a contrast target, nudging a drought color or changing the mirror turns it
+// red, editing the GLSL body does not. terrain-shader.ts carries a comment
+// naming terrain-colors.ts as its mirror.
 
 describe("terrain glyph ink derivation", () => {
   const config = getDefaultConfig();
@@ -66,11 +30,19 @@ describe("terrain glyph ink derivation", () => {
 
   it("derives exactly the five stroke colors on the Terrain Textures board", () => {
     const [none, mild, medium, severe] = config.terrainGlyphContrast;
-    expect(inkFor(getTerrainColor(DroughtLevel.NoDrought), none)).toBe("#004001");
-    expect(inkFor(getTerrainColor(DroughtLevel.MildDrought), mild)).toBe("#2D460B");
-    expect(inkFor(getTerrainColor(DroughtLevel.MediumDrought), medium)).toBe("#424F12");
-    expect(inkFor(getTerrainColor(DroughtLevel.SevereDrought), severe)).toBe("#241B06");
-    expect(inkFor(BURNT_COLOR, config.terrainGlyphContrastBurnt)).toBe("#B3B3B3");
+    expect(glyphInkHex(getTerrainColor(DroughtLevel.NoDrought), none)).toBe("#004001");
+    expect(glyphInkHex(getTerrainColor(DroughtLevel.MildDrought), mild)).toBe("#2D460B");
+    expect(glyphInkHex(getTerrainColor(DroughtLevel.MediumDrought), medium)).toBe("#424F12");
+    expect(glyphInkHex(getTerrainColor(DroughtLevel.SevereDrought), severe)).toBe("#241B06");
+    expect(glyphInkHex(BURNT_COLOR, config.terrainGlyphContrastBurnt)).toBe("#B3B3B3");
+  });
+
+  it("routes drought levels to their own contrast target", () => {
+    // terrainGlyphContrast is [6, 6, 6, 7], so three of the four levels share a
+    // ratio and a wrong index still produces the right hex for them. Severe is
+    // the only level whose ratio the case above can tell apart.
+    expect(droughtGlyphInkHex(DroughtLevel.SevereDrought, config.terrainGlyphContrast)).toBe("#241B06");
+    expect(droughtGlyphInkHex(DroughtLevel.SevereDrought, [6, 6, 6, 6])).not.toBe("#241B06");
   });
 
   it("takes the lighten branch only for burnt ground", () => {
