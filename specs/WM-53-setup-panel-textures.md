@@ -1,6 +1,6 @@
 # Hazbot: Add textures to Setup panels (when Vegetation Key is on)
 
-**Jira**: https://concord-consortium.atlassian.net/browse/WM-53
+**Jira**: https://concord-consortium.atlassian.net/browse/WM-53, with **WM-57** folded in
 
 **Status**: **Closed**
 
@@ -9,6 +9,8 @@
 When the Vegetation Key is on, the zone terrain thumbnails in the Setup wizard carry the same per-vegetation texture the 3D model does, so a student choosing Grass or Forest sees the difference in the picture they are choosing rather than only in a corner badge. When the key is off, the thumbnails look exactly as they do today.
 
 WM-48 gave the 3D model a surface texture per vegetation type behind a new Vegetation Key switch. This story carries that treatment back into the Setup wizard, where students actually pick the vegetation. It is not a reuse of WM-48's code: the Setup panel and the 3D model share no rendering path, which is what took the estimate from 2 points to 3.
+
+**WM-57 is folded in here**, on Doug's call of 2026-08-28. It replaces all 20 thumbnail files with the board's 2x art and renames 5 of them from `foothills` to `hills`. It also deletes the three drought `filter` chains, which is the single finding this story's DOM shape was built on, so shipping the two separately would have put a rationale under review that was already being deleted and landed guard tests that WM-57 then made unfalsifiable.
 
 ## Requirements
 
@@ -20,24 +22,29 @@ WM-48 gave the 3D model a surface texture per vegetation type behind a new Veget
 - **The ink is painted, not filtered.** The four tiles carry the glyphs as strokes over a transparent field, and the texture layer is `mask-image: url(<tile>)` with `background-color: <ink>`. That requires the tiles' `#808080` background rect to become `fill="none"` and `rasterizeSvg` to fill its canvas with `#808080` before drawing, which leaves the 3D texture byte-identical.
 - Changing a zone's vegetation or drought while the wizard is open updates that zone's texture immediately.
 - The texture must not disturb the existing zone-thumbnail states: the 4px white selection frame, the 50% / 75% / 100% terrain opacity for default / hover / selected, and the full-strength `.fixed` recap.
-- **The texture carries the same state opacity as the terrain image**, built by wrapping the texture and `.terrainImage` in one container that carries the opacity, leaving the drought filter on `.terrainImage` so `.riverOverlay` is untouched.
+- **The texture carries the same state opacity as the terrain image**, built by wrapping the texture and `.terrainImage` in one container that carries the opacity.
 - **The tile is drawn at a fixed `mask-size: 112.5px 112.5px` with `mask-repeat: repeat`, identical on 2-zone and 3-zone layouts.** The `mask-*` pair rather than `background-*`, because the layer has no background image and a `background-size` on it is inert.
 - Reading the key's state must not couple the Setup panel to the 3D terrain: it reads the same `UIModel` flag WM-48's switch writes.
 - **Toggling the Vegetation Key while the Setup wizard is open** adds or removes the texture on the open screen immediately, on both screens.
 - The texture layer **fills the thumbnail rectangle**; it is not masked to a terrain silhouette.
-- The texture layer is `position: absolute; inset: 0`, a **sibling of `.terrainImage`** and **not a child**, ordered **after** it. `.vegetationPreview` moves out of `.terrainImage` to sit after the texture and **stays inside the opacity wrapper**. All three structural rules are asserted in Jest.
+- The texture layer is `position: absolute; inset: 0`, a **sibling of `.terrainImage`** ordered **after** it, so it paints above the river inside it. `.vegetationPreview` sits after the texture and **stays inside the opacity wrapper**. Both ordering rules are asserted in Jest.
 - The tile filename per vegetation type comes from **one map shared with WM-48** (`VEGETATION_TILE_FILES` in `terrain-textures.ts`).
-- **No terrain file is renamed.** `TerrainType[t].toLowerCase()` stays as the derivation in both `zone-selector.tsx` and `data-loaders.ts`, and the 19 `foothills` filenames stay as they are.
+- **All 20 thumbnail files are the board's 2x art**, 240x200 at 2 zones and 160x200 at 3, dropped into the same `background-size: cover` boxes with no layout change.
+- **The drought treatment is a multiply, not a filter.** The 15 terrain images are a neutral gray relief; `.terrainImage` carries `background-blend-mode: multiply` with the zone's drought color as an inline `background-color`, taken from `getTerrainColor` so a thumbnail and the model it previews read the same palette.
+- **The river is not drought-tinted.** It is outside the drought group on the board, and a blend mode reaches only the element's own background layers, so `.riverOverlay` keeps its own ink. This is a behavior change: under the filter it was tinted.
+- **The 5 thumbnails spelled `foothills` are renamed to `hills`**, matching the board and the UI's own display label. The path comes from an explicit `Record<TerrainType, string>` rather than the enum name, because `data-loaders.ts` still derives `data/foothills-*` from that enum. **The 14 files under `src/public/data/` are not renamed.**
 
 ## Technical Notes
 
 **The Setup panel and the 3D model share no rendering code.** The model rasterizes its tiles to 512, packs them into a `DataTexture`'s four channels and samples them in a fragment shader. The Setup panel draws a CSS `background-image` on a `<div>`. There was no flag to flip.
 
-**The drought filter destroys a nested overlay's color.** A CSS `filter` rasterizes and recolors its whole subtree, so a texture nested where `.riverOverlay` sits paints `#424F12` as `rgb(128, 88, 49)` on a selected medium-drought zone and `rgb(191, 152, 150)` on an unselected one. The damage varies with state, so it cannot be pre-compensated. This is the finding that decides the DOM shape.
+**The thumbnails are a gray relief multiplied by a drought color.** The board states it in a layer name (`2-zone-plains-left-multiply`) with a solid drought-color shape at `blendMode: multiply` directly above it, and the four colors are its *Assigned Color / Terrain* column: `#02D40A`, `#92D637`, `#C1E245`, `#C8A145`. Those are `getTerrainColor`'s four values to the byte, so the panel and the shader share a palette rather than mirroring one. Verified in pixels rather than inferred: the browser's composite matches `relief x color` at a mean absolute error of **0.23 per channel** on the 3-zone hills-left thumbnail, and the three wrong colors score 19.6 to 77.2 on the same crop, so the fit identifies the drought level as well as the mechanism.
 
-**Stacking contexts decide paint order here.** `.terrainImage` forms a stacking context whenever it carries a drought filter or a sub-1 opacity, which is every state but one, so it paints above a *preceding* absolutely positioned sibling. Ordered after it, the texture needs no `z-index` in any state.
+**Three things that are easy to get wrong about those assets.** The board's *Visual Display of Color* column is hand-authored and is not the composite, so it is a useful cross-check and a wrong source for any number. Zeplin's declared layer rect is not the exported file size: all 20 layers declare the full canvas, the 15 opaque terrain images export at it, and the 5 rivers originally exported trimmed to the ink's bounding box (Michael re-exported them on 2026-08-28; check both before assuming an export is canvas-sized). And "2x art" is Zeplin's @1x here, because the layer is authored at 240x200 for a 120x100 box.
 
-**The terrain PNGs have no sky and no alpha.** All 15 are PNG color type 2, truecolor, with zero blue-dominant pixels: top-down shaded relief, green edge to edge. So there is no sky to protect from a rectangular fill and no alpha to derive a mask from.
+**A blend mode reaches only the element's own background layers.** Unlike `filter`, `background-blend-mode` does not touch descendants, which is what leaves `.riverOverlay` untinted for free. It is also the trap in the change: the old sibling-not-child rule existed solely to dodge `filter`'s subtree recoloring, so once the filter is gone that rule stops being load-bearing and any test asserting it stops being able to fail. What survives is paint order, because the river lives inside `.terrainImage` and the glyphs are drawn crossing it.
+
+**The terrain PNGs have no sky and no alpha.** All 15 are PNG color type 2, truecolor: top-down shaded relief, edge to edge. So there is no sky to protect from a rectangular fill and no alpha to derive a mask from.
 
 **The ink's contrast target is a model number, not a thumbnail number.** `terrainGlyphContrast` is `[6, 6, 6, 7]` and the five hexes hit exactly that *against the model's flat drought colors*. Against the thumbnail's shaded relief they land near 4, which the designer drew knowingly. Do not "correct" this against the wrong reference.
 
@@ -56,14 +63,12 @@ WM-48 gave the 3D model a surface texture per vegetation type behind a new Veget
 - **The Vegetation Key switch itself**, and **the 3D model's textures**. Both are WM-48.
 - **The map's zone labels.** WM-49 owns `simulation-info.tsx`.
 - **Texturing the slider marks, the recap icon rows, or the 26x26 badge.** The board textures the zone terrain pictures only.
-- **The 2x terrain art.** Moved out on 2026-08-28 to WM-57, which replaces the 15 terrain thumbnails and 5 river overlays with the board's art, flattened and colorized at the no-drought state. `.terrainImage` is `background-size: cover` at a fixed box, so it consumes a 2x asset with no code change.
-- **The `foothills` to `hills` filename rename.** Moved out on 2026-08-29. The 5 thumbnails travel with the 2x art ticket, which replaces those exact files anyway; the 14 data files are not renamed at all.
+- **The 14 files under `src/public/data/`.** Not renamed, and deliberately so: see Not Yet Implemented.
 - Accessibility review. Out of scope in this repo.
 
 ## Not Yet Implemented
 
-- **The 2x terrain art and the thumbnail rename**: deferred to WM-57, which replaces the same 5 thumbnail files. The board's exportable terrain assets are a gray relief that no standard blend turns into the artboards' colorized thumbnails (rms 26 to 48 against a real match's ~5), so Michael has to export the 20 assets flattened and colorized at 2x, no-drought state, with the rivers on the full thumbnail canvas.
-- **The 14 files under `src/public/data/` are deliberately never renamed.** `getUrlConfig()` reads every key of `getDefaultConfig()` off the query string, and `elevation`, `unburntIslands` and `zoneIndex` are all keys, so a published activity URL can pin `data/foothills-*`. Breaking one does not degrade: `image-utils.ts:100` throws from the image's `error` listener where it cannot reject the enclosing promise, so `dataReady` never flips and the activity sits with no terrain and Start disabled.
+- **The 14 files under `src/public/data/` are deliberately never renamed.** `getUrlConfig()` reads every key of `getDefaultConfig()` off the query string, and `elevation`, `unburntIslands` and `zoneIndex` are all keys, so a published activity URL can pin `data/foothills-*`. Breaking one does not degrade: `image-utils.ts:100` throws from the image's `error` listener where it cannot reject the enclosing promise, so `dataReady` never flips and the activity sits with no terrain and Start disabled. This is why the thumbnail path needs its own name map rather than the enum.
 - **The hover state's 75% opacity has no automated coverage.** It is one of the four opacity declarations moved from `.terrainImage` to the wrapper; the other three are covered in Cypress. Cypress cannot activate `:hover` for a computed-style read, so this one is a manual check in the Playwright pass. Do not read the automated suite as covering it.
 
 ## Decisions
@@ -94,24 +99,24 @@ WM-48 gave the 3D model a surface texture per vegetation type behind a new Veget
 ---
 
 ### Is the texture ordered before or after `.terrainImage`?
-**Context**: The draft required the texture ordered *before* `.terrainImage`, reasoning that ordering it after would paint over the river. Measured live, a probe ordered before is invisible in every state except a selected no-drought zone, because `.terrainImage`'s filter or sub-1 opacity promotes it into the positioned painting step where DOM order decides.
+**Context**: The draft required the texture ordered *before* `.terrainImage`, reasoning that ordering it after would paint over the river.
 **Options considered**:
 - A) Keep the DOM order and add an explicit `z-index` to the texture.
 - B) Order the texture after `.terrainImage`, accepting that it paints over the river.
 - C) Give `.terrainPreview` an explicit stacking context and order both children by `z-index`.
 
-**Decision**: **B**, and the river concern that ruled it out was wrong about the design. The board's stacking order is `Zone N Highlight`, terrain group, `Zone N Texture`, `Vegetation Type`, `Zone N Label`, and the river is a child of the terrain group, one level below the texture: the glyphs are *supposed* to cross the river. That makes A and C unnecessary, since an absolutely positioned `z-index: auto` sibling ordered after paints above in every state.
+**Decision**: **B**, and the river concern that ruled it out was wrong about the design. The board's stacking order is `Zone N Highlight`, terrain group, `Zone N Texture`, `Vegetation Type`, `Zone N Label`, and the river is a child of the terrain group, one level below the texture: the glyphs are *supposed* to cross the river. That makes A and C unnecessary, since two `z-index: auto` positioned layers paint in tree order. The reasoning under this changed when the filter went: while `.terrainImage` carried one, it formed a stacking context that hid a *preceding* sibling outright, which is what the original measurement caught. Without it, the ordering matters only against `.riverOverlay` nested inside, which is the reason the rule now gives.
 
 ---
 
 ### Who owns the 2x terrain re-export and the `foothills` to `hills` rename?
 **Context**: The board carries all 20 terrain PNGs at 2x and names every asset `hills` where the repo says `foothills`. Neither is mentioned in WM-53's description, and neither is needed for the texture overlay.
 **Options considered**:
-- A) Both out of scope for WM-53; raise them as their own ticket.
+- A) Both out of scope for WM-53; raise them as their own ticket (WM-57).
 - B) Both in scope here, since this story is already in `zone-selector`.
 - C) Take the 2x re-export and leave the rename to its own ticket.
 
-**Decision**: **A**, after two reversals (B on 08-27, C on 08-28). Three measurements decided it. The board's asset list names only the 5 thumbnails and carries no heightmap or island assets, so 14 of the 19 files had no design motivation. Those 14 are URL-overridable config, so renaming them breaks a public surface, and it breaks by hanging rather than degrading. And the file-churn argument for B does not survive measurement: the 2x swap is 20 binaries and no code, because `.terrainImage` is `background-size: cover` on a fixed box, so it shares no files with the texture layer.
+**Decision**: **B**, arrived at through A, and the reversal is worth reading because the reason changed rather than the preference. A was right on 2026-08-28 morning, when the swap looked like commissioning 20 recolored assets and waiting: the exported art is a gray relief and no standard blend turned it into the artboards' thumbnails (rms 26 to 48 against a real match's ~5). Michael's correction that afternoon voided that measurement, which had been taken against assets he had already replaced, and named the recipe as a multiply. What was left was 20 binaries, one deleted filter block and one color map. The rename travels with it because it is the same 5 files, and the 14 `src/public/data/` files stay put on the public-URL finding below, which is what pushed the rename out in the first place and still holds.
 
 ---
 
@@ -150,7 +155,7 @@ WM-48 gave the 3D model a surface texture per vegetation type behind a new Veget
 ### The sibling-not-child rule is the whole story and nothing enforces it
 **Context**: The natural place for a future developer to put a texture overlay is exactly where `.riverOverlay` sits, and the resulting bug appears only at mild, medium and severe drought, as a hue shift that reads as a design choice.
 
-**Decision**: Accepted, and promoted to a requirement, with both structural rules guarded rather than one: the texture must not be a descendant of `.terrainImage`, and it must come **after** it. Both are readable in jsdom, so both are cheap Jest assertions, and both fail if someone reaches for the obvious `.riverOverlay`-shaped answer. The comment belongs on the element and should say what breaks, since the rule is guessable and the reason is not.
+**Decision**: Accepted while the filter existed, then **retired with it**. `background-blend-mode` does not touch descendants, so nesting the texture inside `.terrainImage` no longer changes anything and a Jest case asserting it cannot fail. The assertion was dropped rather than reworded, and the one that replaced it guards what is still true: the texture comes **after** the image that holds the river. The painted-color half moved the same way, from a Cypress case whose named mutation was the nested parent to two that state what they catch now, one for the ink reaching the screen and one for the river staying out of the multiply.
 
 ---
 
@@ -190,7 +195,7 @@ WM-48 gave the 3D model a surface texture per vegetation type behind a new Veget
 - C) No automated pixel check; verify manually and say so plainly.
 - D) Assert the mask alpha by rasterizing the tile, and assert the CSS separately.
 
-**Decision**: **A**. Doug, 2026-08-28, after building it as a throwaway so the cost and the assertion were measured rather than estimated. D is cheaper but tests the asset rather than the composition, so it would not catch the nested-parent bug at all. The tolerance had to be calibrated against the bug: a first pass proposed ±30 per channel, which **passes on the bug**, because the buggy render contains a neutral gray near the ink. At squared distance 300 the correct shape yields 116 pixels and the bug yields 0.
+**Decision**: **A**. Doug, 2026-08-28, after building it as a throwaway so the cost and the assertion were measured rather than estimated. D is cheaper but tests the asset rather than the composition, so it would not catch the nested-parent bug at all. The tolerance had to be calibrated against the bug: a first pass proposed ±30 per channel, which **passes on the bug**, because the buggy render contains a neutral gray near the ink. At squared distance 300 the correct shape yields 116 pixels and the bug yields 0. The decode harness survived the fold and now serves two cases; only the mutation each one names changed, and the ink count reads 151 against the new art.
 
 ---
 
@@ -201,14 +206,14 @@ WM-48 gave the 3D model a surface texture per vegetation type behind a new Veget
 - B) Preserve today's appearance by applying the zone's drought filter to the badge as well.
 - C) Accept it but raise it with Michael before merge.
 
-**Decision**: **A**, and call it out in the PR body as an incidental fix. The icon's dominant gray goes from 188 / 216 / 244 / 226 across the four drought levels to a flat 188, which is what an undroughted zone already renders, so the change removes a washout rather than introducing an appearance. At medium drought the icon renders at 244 on a 255 white chip today: drought progressively washes the vegetation icon out of its own badge. B would add a filter no requirement asks for, purely to preserve that. The move itself is not optional, since `.terrainImage`'s filter traps its descendants in a stacking context.
+**Decision**: **A**, and call it out in the PR body as an incidental fix. The icon's dominant gray goes from 188 / 216 / 244 / 226 across the four drought levels to a flat 188, which is what an undroughted zone already renders, so the change removes a washout rather than introducing an appearance. At medium drought the icon renders at 244 on a 255 white chip today: drought progressively washes the vegetation icon out of its own badge. B would add a filter no requirement asks for, purely to preserve that. **Overtaken by the fold**: with the filter deleted there is no drought treatment for the badge to be inside or outside of, so A is now what the code does everywhere rather than a consequence of moving one element. The measured outcome is unchanged, a flat 188.
 
 ---
 
 ### Does the badge stay inside the opacity wrapper?
 **Context**: The plan made `.vegetationPreview` a sibling of the wrapper, which takes it out from under the state opacity as well as out from under the drought filter. Only the second half had been analyzed.
 
-**Decision**: Keep the badge inside `.terrainLayers`, ordered after the texture. Measured on a compiled stylesheet in headless Chrome: outside the wrapper its effective alpha on a default zone is 0.60 against today's 0.30, an appearance that exists nowhere in the UI. Inside, it is 0.30 default and 1.0 selected, identical to today, with the box unchanged at 28x28 and the `.mid` / `.right` variants unaffected, because `.terrainLayers` is `inset: 0` with no border or padding. The Jest case asserts all three facts: not a descendant of `.terrainImage`, a descendant of `.terrainLayers`, ordered after the texture.
+**Decision**: Keep the badge inside `.terrainLayers`, ordered after the texture. Measured on a compiled stylesheet in headless Chrome: outside the wrapper its effective alpha on a default zone is 0.60 against today's 0.30, an appearance that exists nowhere in the UI. Inside, it is 0.30 default and 1.0 selected, identical to today, with the box unchanged at 28x28 and the `.mid` / `.right` variants unaffected, because `.terrainLayers` is `inset: 0` with no border or padding. The Jest case asserts the two that can still fail: a descendant of `.terrainLayers`, ordered after the texture.
 
 ---
 
@@ -257,11 +262,11 @@ WM-48 gave the 3D model a surface texture per vegetation type behind a new Veget
 ### Renaming the 14 files under `src/public/data/` is a change to a public URL surface
 **Context**: Raised as a disclosure obligation while the rename was still in scope, and it is the finding that got the rename cut. `getUrlConfig()` reads every key of `getDefaultConfig()` off the query string, and `elevation`, `unburntIslands` and `zoneIndex` are all keys, so `?elevation=data/foothills-foothills-heightmap.png` is a supported way to configure this model. The failure mode was traced and is worse than a silent 404: an uncaught error in an image `error` listener leaves `dataReady` permanently false. A related finding corrected `presets.ts:132` from a preset that does not exist to `defaultTwoZoneFixedTerrain`, showing that a rename miss would break an activity page rather than an unused preset.
 
-**Decision**: Superseded by cutting the rename entirely. With the rename out there is no breaking surface and nothing owed: the pre-merge check, the closed-spec disclosure and the Slack message to Trudi are all withdrawn. Kept in full because it is what changed the scope decision.
+**Decision**: Settled by renaming the 5 thumbnails and none of the 14 data files, which is why the thumbnail path needs its own `Record<TerrainType, string>` instead of the enum name both used to share. The thumbnails are not a URL surface: nothing reads them off the query string, and a miss shows a flat drought color rather than hanging the model. So the pre-merge check, the closed-spec disclosure and the Slack message to Trudi all stay withdrawn.
 
 ---
 
 ### The rename test does not test what its name claims
 **Context**: The planned test computed a derived filename list and then only length-checked it, never resolving anything against the filesystem, which is the failure the step existed to prevent. It also could not be written as its title read: only 4 of the 27 three-zone combinations ship data files, because three-zone terrain comes from presets rather than the UI.
 
-**Decision**: Superseded with the rename. Two constraints it turned up apply to any future filesystem-touching test in this repo and are worth keeping: `Object.values(...).flatMap(...)` is ES2019 against a `lib` of `["dom", "es5", "es2017"]`, and `tsconfig.json` sets `"types": ["jest"]`, which keeps `@types/node` out of the program even though it is installed. `src/hazbot/wildfire/replay-fixture.test.ts` is the in-repo precedent: local `declare const __dirname` / `declare const require` plus `require("fs") as {...}`, touching no shared config.
+**Decision**: Applied, in `zone-selector-art.test.ts`, once the rename came back with the fold. It resolves all 20 paths against `src/public/` with `existsSync`, which is the check the earlier draft only looked like it was doing, and the mutation is measured rather than asserted: putting `foothills` back in the name map turns two of its three cases red. Both constraints the earlier analysis turned up held: `flatMap` is ES2019 against a `lib` of `["dom", "es5", "es2017"]`, and `tsconfig.json` sets `"types": ["jest"]`, which keeps `@types/node` out of the program even though it is installed. `src/hazbot/wildfire/replay-fixture.test.ts` is the in-repo precedent it follows: local `declare const __dirname` / `declare const require` plus `require("fs") as {...}`, touching no shared config.
