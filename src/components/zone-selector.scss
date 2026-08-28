@@ -22,7 +22,7 @@
   &:not(.selected):not(.fixed):hover{
     .terrainPreview{
       border: solid 4px rgba(255,255,255,0.5);  // 50% white frame on hover
-      .terrainImage {
+      .terrainLayers {
         opacity: 75%;
       }
       .zoneLabelBorder{
@@ -36,7 +36,7 @@
   &.selected{
     .terrainPreview{
       border: solid 4px #ffffff;
-      .terrainImage {
+      .terrainLayers {
         opacity: 100%;
       }
       .zoneLabelBorder{
@@ -55,9 +55,18 @@
     position: relative;
     cursor: pointer; // set on the label itself; a <label> wrapping a control won't inherit the parent's pointer
 
+    // Holds the terrain image and the vegetation texture at one opacity so the two
+    // always read as one picture. The drought filter stays on .terrainImage alone,
+    // which keeps .riverOverlay filtered as it is and keeps the texture's ink out
+    // of a filter that would rewrite its hue.
+    .terrainLayers{
+      position: absolute;
+      inset: 0;
+      opacity: 50%;
+    }
+
     .terrainImage{
       width: 100%;
-      opacity: 50%;
       height: 100%;
       background-size: cover;
       &.mildDrought{
@@ -78,6 +87,15 @@
           saturate(65%)
           brightness(120%);
       }
+    }
+
+    .vegetationTexture{
+      position: absolute;
+      inset: 0;
+      // Tiled by the MASK, not by a background: this layer carries no background
+      // image, so a background-size on it is inert and nothing repeats.
+      mask-repeat: repeat;
+      mask-size: 112.5px 112.5px; // the board's authored tile scale, both layouts
     }
 
     .riverOverlay{
@@ -171,7 +189,7 @@
     .terrainPreview{
       cursor: default; // readonly recap (wind screen) — non-interactive
       pointer-events: none; // don't react to clicks: no :active highlight border, no zone-change handler
-      .terrainImage{
+      .terrainLayers{
         opacity: 100%; // recap shows the terrain at full strength, not the 50% edit-screen fade
       }
     }

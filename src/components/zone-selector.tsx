@@ -3,6 +3,8 @@ import { Zone } from "../models/zone";
 import css from "./zone-selector.scss";
 import { TerrainType, DroughtLevel } from "../types";
 import { vegetationIcons } from "./vertical-selectors";
+import { TILE_DIR, VEGETATION_TILE_FILES } from "./view-3d/terrain-textures";
+import { droughtGlyphInkHex } from "./view-3d/terrain-colors";
 
 const cssClasses = [css.zone1, css.zone2, css.zone3];
 
@@ -36,8 +38,18 @@ const getColorFilter = (droughtLevel: DroughtLevel) => {
   }
 };
 
-export const renderZones = (
-  zones: Zone[], selectedZone: number, readonly: boolean, zonesCount: number, onChange: any) => {
+interface IRenderZonesOptions {
+  zones: Zone[];
+  selectedZone: number;
+  readonly: boolean;
+  zonesCount: number;
+  showVegetationKey: boolean;
+  glyphContrast: readonly number[];
+  onChange: any;
+}
+
+export const renderZones = (options: IRenderZonesOptions) => {
+  const { zones, selectedZone, readonly, zonesCount, showVegetationKey, glyphContrast, onChange } = options;
   const zoneUI: any[] = [];
   const countClass = zonesCount > 2 ? css.threeZone : css.twoZone;
   // handle two, three (or more) zones
@@ -47,6 +59,7 @@ export const renderZones = (
       // Individual zones can only be edited on the first page of the wizard
       const zoneTerrainImagePath = getBackgroundImage(zonesCount, z.terrainType, i);
       const zoneRiverImagePath = getRiverOverlay(zonesCount, i);
+      const tileUrl = `url(${TILE_DIR}${VEGETATION_TILE_FILES[z.vegetation]})`;
       const zoneStyle = readonly ? css.fixed : selectedZone === i ? css.selected : "";
       // Only apply a position change for > 0 zone index (in span rendering)
       let vegPreviewPosition = css.right;
@@ -66,10 +79,32 @@ export const renderZones = (
             <span className={`${css.zoneLabelBorder}`}>
                 <span className={`${css.zoneLabel} ${cssClasses[i]} ${readonly ? css.noZoneLabelBorder : ""}`}>{`Zone ${i + 1}`}</span>
             </span>
-            <div className={`${css.terrainImage} ${getColorFilter(z.droughtLevel)}`}
-              style={{ backgroundImage: `url(${zoneTerrainImagePath})` }}>
-              <div className={`${css.riverOverlay}`} style={{backgroundImage: `url(${zoneRiverImagePath})`}} />
+            <div className={css.terrainLayers}>
+              <div className={`${css.terrainImage} ${getColorFilter(z.droughtLevel)}`}
+                style={{ backgroundImage: `url(${zoneTerrainImagePath})` }}>
+                <div className={`${css.riverOverlay}`} style={{backgroundImage: `url(${zoneRiverImagePath})`}} />
+              </div>
+              {showVegetationKey &&
+                // A sibling of .terrainImage and never a child, because the drought
+                // filter recolors its whole subtree and would rewrite the ink's hue.
+                // Ordered after it, because .terrainImage forms a stacking context
+                // whenever it carries that filter or a sub-1 opacity, and so paints
+                // over a preceding absolutely positioned sibling.
+                <div
+                  className={css.vegetationTexture}
+                  data-testid="vegetation-texture"
+                  style={{
+                    backgroundColor: droughtGlyphInkHex(z.droughtLevel, glyphContrast),
+                    // Inline styles never reach autoprefixer, which handles the SCSS half
+                    // of these properties, so the prefixed copy is written out here.
+                    maskImage: tileUrl,
+                    WebkitMaskImage: tileUrl
+                  }}
+                />
+              }
               {!readonly &&
+                // Outside .terrainImage so the drought filter cannot rewrite the icon's
+                // gray, and inside .terrainLayers so it keeps fading with its zone.
                 <span className={`${css.vegetationPreview} ${i > 0 ? vegPreviewPosition : ""}`}>
                   {vegetationIcons[z.vegetation]}
                 </span>
