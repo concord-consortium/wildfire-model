@@ -1,10 +1,10 @@
 import React from "react";
 import { Zone } from "../models/zone";
 import css from "./zone-selector.scss";
-import { TerrainType, DroughtLevel } from "../types";
+import { TerrainType } from "../types";
 import { vegetationIcons } from "./vertical-selectors";
 import { TILE_DIR, VEGETATION_TILE_FILES } from "./view-3d/terrain-textures";
-import { droughtGlyphInkHex } from "./view-3d/terrain-colors";
+import { droughtGlyphInkHex, droughtTerrainHex } from "./view-3d/terrain-colors";
 
 const cssClasses = [css.zone1, css.zone2, css.zone3];
 
@@ -32,20 +32,6 @@ export const getRiverOverlay = (zoneCount: number, currentZone: number) => {
   const threeZonePosition = ["3-zone-river-left", "3-zone-river-mid", "3-zone-river-right"];
   const panelPosition = zoneCount === 2 ? twoZonePosition[currentZone] : threeZonePosition[currentZone];
   return prefix + panelPosition + ".png";
-};
-
-const getColorFilter = (droughtLevel: DroughtLevel) => {
-  // Default is no drought = no filter
-  switch (droughtLevel) {
-    case DroughtLevel.MildDrought:
-      return css.mildDrought;
-    case DroughtLevel.MediumDrought:
-      return css.mediumDrought;
-    case DroughtLevel.SevereDrought:
-      return css.severeDrought;
-    default:
-      return "";
-  }
 };
 
 interface IRenderZonesOptions {
@@ -90,16 +76,19 @@ export const renderZones = (options: IRenderZonesOptions) => {
                 <span className={`${css.zoneLabel} ${cssClasses[i]} ${readonly ? css.noZoneLabelBorder : ""}`}>{`Zone ${i + 1}`}</span>
             </span>
             <div className={css.terrainLayers}>
-              <div className={`${css.terrainImage} ${getColorFilter(z.droughtLevel)}`}
-                style={{ backgroundImage: `url(${zoneTerrainImagePath})` }}>
+              <div className={css.terrainImage}
+                style={{
+                  backgroundImage: `url(${zoneTerrainImagePath})`,
+                  // Multiplied with the art by .terrainImage's blend mode; see the SCSS.
+                  backgroundColor: droughtTerrainHex(z.droughtLevel)
+                }}>
                 <div className={`${css.riverOverlay}`} style={{backgroundImage: `url(${zoneRiverImagePath})`}} />
               </div>
               {showVegetationKey &&
-                // A sibling of .terrainImage and never a child, because the drought
-                // filter recolors its whole subtree and would rewrite the ink's hue.
-                // Ordered after it, because .terrainImage forms a stacking context
-                // whenever it carries that filter or a sub-1 opacity, and so paints
-                // over a preceding absolutely positioned sibling.
+                // Ordered after .terrainImage, because .riverOverlay lives inside it
+                // and two absolutely positioned layers at z-index auto paint in tree
+                // order. Ordered before, the river would cover the glyphs; the board
+                // draws them crossing it.
                 <div
                   className={css.vegetationTexture}
                   data-testid="vegetation-texture"
@@ -113,8 +102,8 @@ export const renderZones = (options: IRenderZonesOptions) => {
                 />
               }
               {!readonly &&
-                // Outside .terrainImage so the drought filter cannot rewrite the icon's
-                // gray, and inside .terrainLayers so it keeps fading with its zone.
+                // Inside .terrainLayers so it keeps fading with its zone, and after the
+                // texture so the glyphs do not draw over it.
                 <span className={`${css.vegetationPreview} ${i > 0 ? vegPreviewPosition : ""}`}>
                   {vegetationIcons[z.vegetation]}
                 </span>

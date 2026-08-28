@@ -56,37 +56,22 @@
     cursor: pointer; // set on the label itself; a <label> wrapping a control won't inherit the parent's pointer
 
     // Holds the terrain image and the vegetation texture at one opacity so the two
-    // always read as one picture. The drought filter stays on .terrainImage alone,
-    // which keeps .riverOverlay filtered as it is and keeps the texture's ink out
-    // of a filter that would rewrite its hue.
+    // always read as one picture.
     .terrainLayers{
       position: absolute;
       inset: 0;
       opacity: 50%;
     }
 
+    // The art is a neutral gray relief and the drought color arrives as an inline
+    // background-color (zone-selector.tsx); multiplying the two is what gives the
+    // thumbnail its color. A blend mode reaches only this element's own background
+    // layers, so .riverOverlay below stays untinted, which is how the board draws it.
     .terrainImage{
       width: 100%;
       height: 100%;
       background-size: cover;
-      &.mildDrought{
-        filter:
-          hue-rotate(327deg)
-          saturate(80%)
-          brightness(115%);
-      }
-      &.mediumDrought{
-        filter:
-          hue-rotate(316deg)
-          saturate(80%)
-          brightness(130%);
-      }
-      &.severeDrought{
-        filter:
-          hue-rotate(297deg)
-          saturate(65%)
-          brightness(120%);
-      }
+      background-blend-mode: multiply;
     }
 
     .vegetationTexture{

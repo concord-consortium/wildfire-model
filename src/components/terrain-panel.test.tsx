@@ -134,7 +134,7 @@ describe("zone vegetation texture", () => {
   // eslint-disable-next-line testing-library/no-node-access
   const textures = (c: HTMLElement) => Array.from(c.querySelectorAll(".vegetationTexture")) as HTMLElement[];
   // eslint-disable-next-line testing-library/no-node-access
-  const terrainImages = (c: HTMLElement) => Array.from(c.querySelectorAll(".terrainImage"));
+  const terrainImages = (c: HTMLElement) => Array.from(c.querySelectorAll(".terrainImage")) as HTMLElement[];
   // eslint-disable-next-line testing-library/no-node-access
   const layerWrappers = (c: HTMLElement) => Array.from(c.querySelectorAll(".terrainLayers"));
   // eslint-disable-next-line testing-library/no-node-access
@@ -168,6 +168,16 @@ describe("zone vegetation texture", () => {
       const kids = Array.from(tex.parentElement!.children);
       expect(kids.indexOf(tex)).toBeGreaterThan(kids.indexOf(image));
     });
+  });
+
+  it("tints the terrain relief with its zone's drought color", () => {
+    const { container } = renderPanelOnZonesScreen([
+      { ...defaultTwoZones[0], droughtLevel: DroughtLevel.NoDrought },
+      { ...defaultTwoZones[1], droughtLevel: DroughtLevel.SevereDrought }
+    ]);
+    // The art is neutral gray, so this color is the whole of the drought treatment.
+    expect(terrainImages(container).map(i => i.style.backgroundColor))
+      .toEqual(["rgb(2, 212, 10)", "rgb(200, 161, 69)"]);
   });
 
   it("keeps the vegetation badge above the texture and inside the faded wrapper", () => {

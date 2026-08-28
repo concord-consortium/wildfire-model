@@ -1,5 +1,5 @@
 import {
-  getTerrainColor, BURNT_COLOR, glyphInkHex, droughtGlyphInkHex, srgbToLinear, LUMA
+  getTerrainColor, BURNT_COLOR, glyphInkHex, droughtGlyphInkHex, droughtTerrainHex, srgbToLinear, LUMA
 } from "./terrain-colors";
 import { getDefaultConfig } from "../../config";
 import { DroughtLevel } from "../../types";
@@ -35,6 +35,13 @@ describe("terrain glyph ink derivation", () => {
     expect(glyphInkHex(getTerrainColor(DroughtLevel.MediumDrought), medium)).toBe("#424F12");
     expect(glyphInkHex(getTerrainColor(DroughtLevel.SevereDrought), severe)).toBe("#241B06");
     expect(glyphInkHex(BURNT_COLOR, config.terrainGlyphContrastBurnt)).toBe("#B3B3B3");
+  });
+
+  it("derives exactly the four multiply colors in the board's Assigned Color / Terrain column", () => {
+    expect(droughtTerrainHex(DroughtLevel.NoDrought)).toBe("#02D40A");
+    expect(droughtTerrainHex(DroughtLevel.MildDrought)).toBe("#92D637");
+    expect(droughtTerrainHex(DroughtLevel.MediumDrought)).toBe("#C1E245");
+    expect(droughtTerrainHex(DroughtLevel.SevereDrought)).toBe("#C8A145");
   });
 
   it("routes drought levels to their own contrast target", () => {

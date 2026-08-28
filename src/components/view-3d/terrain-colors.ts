@@ -80,14 +80,23 @@ const glyphInkLinear = (base: number[], ratio: number) => {
     : [targetLum, targetLum, targetLum];
 };
 
+const toHex = (srgb: number[]): string =>
+  "#" + srgb.map(c => Math.round(clamp01(c) * 255).toString(16).padStart(2, "0")).join("").toUpperCase();
+
 /**
  * The ink a glyph is drawn in over `srgb`, as a CSS hex string, at the given
  * contrast ratio. `srgb` is one of the getTerrainColor values or BURNT_COLOR.
  */
 export const glyphInkHex = (srgb: number[], ratio: number): string =>
-  "#" + glyphInkLinear(srgb.map(srgbToLinear), ratio)
-    .map(c => Math.round(clamp01(linearToSrgb(c)) * 255).toString(16).padStart(2, "0"))
-    .join("").toUpperCase();
+  toHex(glyphInkLinear(srgb.map(srgbToLinear), ratio).map(linearToSrgb));
+
+/**
+ * One zone's drought color as a CSS hex string. The Setup panel's terrain art is
+ * a neutral gray relief, and multiplying it by this is what gives the thumbnail
+ * its drought tint, so a thumbnail and the 3D model it previews take their color
+ * from the same place.
+ */
+export const droughtTerrainHex = (droughtLevel: DroughtLevel): string => toHex(getTerrainColor(droughtLevel));
 
 /**
  * The Setup panel's texture ink for one zone. `contrast` is
