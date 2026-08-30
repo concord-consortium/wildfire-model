@@ -64,6 +64,18 @@ describe("model speed", () => {
     expect(sim.speedMultiplier).toBe(SPEEDS[0].multiplier);
   });
 
+  // NaN is the one value Math.min and Math.max propagate rather than order, so it
+  // is the one an ordering clamp cannot fold. Stored, it would make every read of
+  // speedMultiplier throw, which is the failure the clamp exists to prevent.
+  it("rejects NaN rather than storing it", async () => {
+    const sim = await newSim();
+    sim.setSpeedIndex(2);
+
+    sim.setSpeedIndex(NaN);
+    expect(sim.speedIndex).toBe(2);
+    expect(sim.speedMultiplier).toBe(SPEEDS[2].multiplier);
+  });
+
   // A faster clock is only safe while one tick cannot carry the model across a
   // whole model day: the engine's per-day roll fires once per *observed* change of
   // Math.floor(time / 1440), so a skipped day is a skipped roll. maxTimeStep and

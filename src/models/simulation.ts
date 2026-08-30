@@ -511,8 +511,13 @@ export class SimulationModel {
   }
 
   // Clamped rather than trusted: speedMultiplier is read once per animation frame,
-  // so an index off the end of SPEEDS would throw on every frame of a run.
+  // so an index off the end of SPEEDS would throw on every frame of a run. NaN is
+  // the one value the clamp cannot fold, since Math.min and Math.max propagate it
+  // rather than ordering it, so it is rejected instead of stored.
   @action.bound public setSpeedIndex(index: number) {
+    if (Number.isNaN(index)) {
+      return;
+    }
     this.speedIndex = Math.max(0, Math.min(SPEEDS.length - 1, Math.round(index)));
   }
 
