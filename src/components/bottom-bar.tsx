@@ -29,6 +29,7 @@ import { AnalysisEngineProvider } from "../hazbot/engine";
 import { APP_RULES_VERSION, getAnalysisEngine } from "../hazbot/wildfire";
 import { HazbotButton } from "./hazbot-button";
 import { cancelFireLinePlacement } from "../models/fire-line-placement";
+import { SpeedControl } from "./speed-control";
 
 import css from "./bottom-bar.scss";
 
@@ -78,6 +79,15 @@ export class BottomBar extends BaseComponent<IProps, IState> {
       && !ui.showTerrainUI
       && simulation.canAddSpark
       && ui.interaction !== Interaction.PlaceSpark;
+  }
+
+  // `ready` rather than `startEnabled`: the latter carries `&& !simulationEnded`,
+  // and Speed stays live after a run, where Start does not. Every other control in
+  // the bar locks while the terrain wizard is open, so Speed does too; without the
+  // showTerrainUI term it would be the only live control in a fully grayed bar.
+  get speedEnabled() {
+    const { simulation, ui } = this.stores;
+    return simulation.ready && !ui.showTerrainUI;
   }
 
   get fireLineEnabled() {
@@ -186,7 +196,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               <span><RestartIcon/><span className={css.playbackButtonLabel}>Restart</span></span>
             </Button>
           </div>
-          <div className={css.widgetGroup}>
+          <div className={`${css.widgetGroup} ${css.startButton}`}>
             <Button
               onClick={this.handleStart}
               disabled={!simulation.startEnabled || ui.showTerrainUI}
@@ -198,6 +208,11 @@ export class BottomBar extends BaseComponent<IProps, IState> {
                 ? <span><PauseIcon/><span className={css.playbackButtonLabel}>Pause</span></span>
                 : <span><StartIcon /><span className={css.playbackButtonLabel}>Start</span></span> }
             </Button>
+          </div>
+          <div className={
+            `${css.widgetGroup} ${css.speedControl} ${this.speedEnabled ? "hoverable" : ""}`
+          }>
+            <SpeedControl disabled={!this.speedEnabled} />
           </div>
 
           <div className={`${css.widgetGroup} ${css.fireLineButton}`}>

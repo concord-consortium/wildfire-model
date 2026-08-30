@@ -1,0 +1,120 @@
+@import "./common.scss";
+
+// Fill the widget group, which owns the width.
+.content {
+  width: 100%;
+  padding-top: 4px;
+  text-align: center;
+}
+
+.header {
+  font-family: Lato, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  line-height: 17px;
+  color: $controlText;
+}
+
+// Nested one level deeper than the emotion class, so these outrank MUI's own slot
+// styles. Flat (0,1,0) rules lose the tie and MUI's width / height / color win.
+.content .slider {
+  width: 55px;
+  height: 1px;
+  padding: 0;
+  display: block;
+  margin: 15px auto 0;
+
+  .rail { height: 1px; opacity: 1; background-color: $controlGray; }
+
+  .mark {
+    width: 4px;
+    height: 4px;
+    border-radius: 4px;
+    border: solid 1px $controlGray;
+    // #d8d8d8 stays a literal: common.scss has no token for it, and
+    // $controlGrayLight2 is #c9c9c9. vertical-selectors.scss and
+    // wind-circular-control.scss both write this literal too.
+    background-color: #d8d8d8;
+    opacity: 1;
+    // MUI hardcodes translate(-1px, -50%), half of its own 2px default mark. Ours
+    // renders 6px wide (4 plus a 1px border a side), so it needs -3px.
+    transform: translate(-3px, -50%);
+
+    // 24px transparent hit target, matching the thumb. The drawn tick is 6px and
+    // the slider root is 1px tall, so without this a click a few pixels off the
+    // rail lands on nothing. The mark is the child that hit-tests reliably here;
+    // giving the root its own taller box measures correctly but does not receive
+    // the clicks.
+    &:after {
+      content: "";
+      position: absolute;
+      left: -10px;
+      top: -10px;
+      width: 24px;
+      height: 24px;
+    }
+  }
+
+  .thumb {
+    width: 24px;
+    height: 24px;
+    // The rotated variant, whose chevrons point left and right. The repo splits
+    // the two by orientation: horizontal sliders take `-small`, the vertical
+    // setup-panel selectors take the unrotated `slider-thumb.svg`. 140% is what
+    // makes the asset's Outer circle exactly fill the box (20 of a 28px viewBox),
+    // which is why the wind meter uses the same figure at a different size.
+    background-image: url("../assets/slider-thumb-small.svg");
+    background-size: 140%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: transparent;
+    box-shadow: none;
+    cursor: grab;
+
+    // MUI paints its own focus ring on a ::before pseudo-element; ours is a
+    // box-shadow on the thumb itself, so that one has to go or both show.
+    &:before { box-shadow: none; }
+  }
+
+  .markLabel {
+    font-family: Lato, sans-serif;
+    font-size: 14px;
+    font-weight: 400;
+    color: $controlText;
+    top: 13px;
+    line-height: 17px;
+
+    &:global(.MuiSlider-markLabelActive) { font-weight: 700; }
+  }
+}
+
+// The board's four-state column: Hover puts a 32x32 white Highlight behind the
+// 24px Outer, which is a 4px ring, at 50% alpha; Select is the same ring at 100%.
+.content:hover .slider .thumb {
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5);
+}
+
+// Mui-focusVisible belongs to the Select group here, as it does in
+// wind-circular-control.scss and vertical-selectors.scss. MUI sets it on a mouse
+// gesture as well as a keyboard one and holds it until the input blurs, so once
+// the control has been clicked it hovers at the Select ring rather than the Hover
+// one. At rest that is a white ring on a white bubble, so nothing shows.
+.content .slider .thumb {
+  &:active,
+  &:global(.Mui-active),
+  &:global(.Mui-focusVisible) {
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 1);
+    cursor: grabbing;
+  }
+}
+
+// Fades the content only, leaving the widget group's white bubble and its 1px
+// border at full opacity, which is both the board and the bar's existing rule for
+// buttons. Fading the group instead renders its border at rgb(187,187,187)
+// against every neighbor's rgb(121,121,121). No grayscale filter: unlike the
+// button rule it would be a no-op, since the control is already achromatic.
+.disabled {
+  opacity: 0.35;
+
+  &:hover .slider .thumb { box-shadow: none; }
+}
