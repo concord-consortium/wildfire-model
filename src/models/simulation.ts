@@ -27,6 +27,45 @@ const DEFAULT_ZONE_DIVISION = {
   ]
 };
 
+// The three positions of the bottom bar's Speed control, in tick order. The
+// slider carries indices into this array rather than the multipliers themselves:
+// MUI positions a mark at valueToPercent(mark.value, min, max), so values of
+// 0.5 / 1 / 2 would put the middle tick at 33% of the rail instead of half way.
+//
+// `label` is deliberately its own field rather than a formatting of `multiplier`.
+// The two are allowed to diverge, so that the pace can be retuned (0.4 behind a
+// "0.5x" tick, say) without redrawing the artboard. Nothing should assert that a
+// label agrees with its multiplier.
+export const SPEEDS = [
+  { multiplier: 0.5, label: "0.5x" },
+  { multiplier: 1, label: "1x" },
+  { multiplier: 2, label: "2x" }
+];
+export const DEFAULT_SPEED_INDEX = 1;
+
+// Standalone so the multiplier's effect on the per-frame timestep can be asserted
+// without a rAF loop.
+export const computeTimeStep = (
+  config: { modelDayInSeconds: number; maxTimeStep: number },
+  speedMultiplier: number,
+  realTimeDiffInMinutes: number
+) => {
+  // One day in model time (86400 seconds) should last X seconds in real time.
+  const ratio = 86400 / config.modelDayInSeconds * speedMultiplier;
+  // Optimal time step assumes we have stable 60 FPS:
+  // realTime = 1000ms / 60 = 16.666ms
+  // timeStepInMs = ratio * realTime
+  // timeStepInMinutes = timeStepInMs / 1000 / 60
+  // Below, these calculations are just simplified (1000 / 60 / 1000 / 60 = 0.000277):
+  const optimalTimeStep = ratio * 0.000277;
+  // Final time step should be limited by:
+  // - maxTimeStep that model can handle
+  // - reasonable multiplication of the "optimal time step" so user doesn't see significant jumps in
+  //   the simulation when one tick takes much longer time (e.g. when cell properties are recalculated
+  //   after adding fire line)
+  return Math.min(config.maxTimeStep, optimalTimeStep * 4, ratio * realTimeDiffInMinutes);
+};
+
 // This class is responsible for data loading, adding sparks and fire lines and so on. It's more focused
 // on management and interactions handling. Core calculations are delegated to FireEngine.
 // Also, all the observable properties should be here, so the view code can observe them.
@@ -70,6 +109,8 @@ export class SimulationModel {
   @observable public simulationEndedLogged = false;
   @observable public setupChanged = false;
 
+  @observable public speedIndex = DEFAULT_SPEED_INDEX;
+
   constructor(presetConfig?: Partial<ISimulationConfig>) {
     makeObservable(this);
     this.load(presetConfig);
@@ -77,6 +118,14 @@ export class SimulationModel {
 
   @computed public get ready() {
     return this.dataReady && this.sparks.length > 0;
+  }
+
+  @computed public get speedMultiplier() {
+    return SPEEDS[this.speedIndex].multiplier;
+  }
+
+  @computed public get speedLabel() {
+    return SPEEDS[this.speedIndex].label;
   }
 
   @computed public get gridWidth() {
@@ -323,6 +372,7 @@ export class SimulationModel {
       speed: config.windSpeed,
       direction: config.windDirection
     };
+    this.speedIndex = DEFAULT_SPEED_INDEX;
     this.sparks.length = 0;
     config.sparks.forEach(s => {
       this.addSpark(s[0], s[1]);
@@ -460,6 +510,12 @@ export class SimulationModel {
     this.setupChanged = value;
   }
 
+  // Clamped rather than trusted: speedMultiplier is read once per animation frame,
+  // so an index off the end of SPEEDS would throw on every frame of a run.
+  @action.bound public setSpeedIndex(index: number) {
+    this.speedIndex = Math.max(0, Math.min(SPEEDS.length - 1, Math.round(index)));
+  }
+
   @action.bound public rafCallback(time: number) {
     if (!this.simulationRunning) {
       return;
@@ -475,19 +531,7 @@ export class SimulationModel {
     }
     let timeStep;
     if (realTimeDiffInMinutes) {
-      // One day in model time (86400 seconds) should last X seconds in real time.
-      const ratio = 86400 / this.config.modelDayInSeconds;
-      // Optimal time step assumes we have stable 60 FPS:
-      // realTime = 1000ms / 60 = 16.666ms
-      // timeStepInMs = ratio * realTime
-      // timeStepInMinutes = timeStepInMs / 1000 / 60
-      // Below, these calculations are just simplified (1000 / 60 / 1000 / 60 = 0.000277):
-      const optimalTimeStep = ratio * 0.000277;
-      // Final time step should be limited by:
-      // - maxTimeStep that model can handle
-      // - reasonable multiplication of the "optimal time step" so user doesn't see significant jumps in the simulation
-      //   when one tick takes much longer time (e.g. when cell properties are recalculated after adding fire line)
-      timeStep = Math.min(this.config.maxTimeStep, optimalTimeStep * 4, ratio * realTimeDiffInMinutes);
+      timeStep = computeTimeStep(this.config, this.speedMultiplier, realTimeDiffInMinutes);
     } else {
       // We don't know performance yet, so simply increase time by some safe value and wait for the next tick.
       timeStep = 1;
