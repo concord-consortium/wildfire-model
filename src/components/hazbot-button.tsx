@@ -7,6 +7,7 @@ import { getAnalysisEngine, selectFeedback, WildfireDefaults, WildfireReading } 
 import { buildTour } from "../hazbot/wildfire/build-tour";
 import { tourData } from "../hazbot/wildfire/tour-data.generated";
 import { TourContext } from "../hazbot/wildfire/tour-map";
+import { AnchorTestId } from "../hazbot/wildfire/anchor-testids";
 import { CategorySelection, computeCategorySelectionForEngine, Engine } from "../hazbot/engine";
 import { createCoachmarksEngine, EngineHandle, EngineStep } from "@concord-consortium/coachmarks";
 import { SimulationModel } from "../models/simulation";
@@ -51,6 +52,41 @@ export function parseFeedback(raw: string): { body: string; label: string } {
   const label = token ? token[1].trim() : "";
   if (token) text = text.slice(0, token.index);
   return { body: text.trim(), label };
+}
+
+// What "already satisfied" means, per anchor. Each predicate references the getter that
+// owns that control's enabled state rather than re-deriving it, so there is one source of
+// truth. NOT the rendered `disabled` attribute: `clear-all-button` is disabled by
+// `ui.showTerrainUI` too (bottom-bar.tsx), and a control the Setup panel is suppressing is
+// not a step the student has done. An anchor with no entry here is never dropped.
+export const SATISFIED_BY: Partial<Record<AnchorTestId, (sim: SimulationModel) => boolean>> = {
+  "restart-button": (sim) => !sim.restartEnabled,      // nothing to restart
+  "clear-all-button": (sim) => !sim.reloadEnabled,     // nothing to clear
+};
+
+// Drop leading gated steps the student has already satisfied, so a re-opened tour starts at
+// the first step they have NOT done. Every tour opens with "First, Restart your model" or
+// "First, click Clear All to reset your model", and both controls disable themselves once
+// used, so a tour rebuilt from index 0 would gate on a dead button.
+//
+// Two guards, each owning a different rule:
+//  - `i < steps.length - 1` is the collapse-to-zero guarantee. The terminal step is never
+//    dropped, so a tour always has something to show.
+//  - `!step.advanceOn` restricts dropping to click-gated steps. An ungated step (a viewport
+//    bubble) is not something the student can satisfy, so it is never treated as satisfied.
+export function dropSatisfiedLeadingSteps(
+  steps: EngineStep[], simulation: SimulationModel,
+): EngineStep[] {
+  let i = 0;
+  while (i < steps.length - 1) {
+    const step = steps[i] as { target?: string; advanceOn?: unknown };
+    if (!step.target || !step.advanceOn) break;
+    const testid = step.target.match(/^\[data-testid="(.+)"\]$/)?.[1] as AnchorTestId | undefined;
+    const satisfied = testid && SATISFIED_BY[testid];
+    if (!satisfied?.(simulation)) break;
+    i++;
+  }
+  return i === 0 ? steps : steps.slice(i);
 }
 
 // The Hazbot Analysis button (bottom bar), a MobX `observer` child of BottomBar.
@@ -178,17 +214,23 @@ export const HazbotButton = observer(function HazbotButton() {
     // 0-based index of the tour step on screen. Null until a tour is launched, which is
     // what makes it null on the intro in the run-start log below.
     let lastStepIndex: number | null = null;
+    // Leading steps the skip dropped, in the same null-on-intro coordinate system as
+    // lastStepIndex: authored index = lastStepIndex + skippedSteps.
+    let skippedSteps: number | null = null;
 
-    const openTour = (steps: EngineStep[]) => {
+    const openTour = (fullSteps: EngineStep[]) => {
+      const steps = dropSatisfiedLeadingSteps(fullSteps, simulation);
+      skippedSteps = fullSteps.length - steps.length;
       log("HazbotShowMeClicked", {
-        ruleSetId, categoryId: matched, stepCount: steps.length, feedbackLevel: selected?.level ?? null,
+        ruleSetId, categoryId: matched, stepCount: steps.length, skippedSteps,
+        feedbackLevel: selected?.level ?? null,
       });
       setTourActive(true);
       lastStepIndex = 0;
       tourEngine = createCoachmarksEngine({
         actionGated: true,                       // gated nav/keyboard/focus + wait-for-target
         onTargetLost: "close",                   // close the tour if a step's anchor unmounts (vs degrade-to-centered)
-        showProgress: true,
+        showProgress: steps.length > 1,          // a collapsed one-step tour must not read "Step 1 of 1"
         progressText: "Step {{current}} of {{total}}",
         arrow: HAZBOT_ARROW,
         // popoverOffset 27 (vs the intro's 25) yields the Zeplin ~9px arrow-tip→button
@@ -202,7 +244,8 @@ export const HazbotButton = observer(function HazbotButton() {
         onCancelRequested: () => {
           tourCancelled = true;
           log("HazbotTourDismissed", {
-            ruleSetId, categoryId: matched, lastStepIndex, feedbackLevel: selected?.level ?? null,
+            ruleSetId, categoryId: matched, lastStepIndex, skippedSteps,
+            feedbackLevel: selected?.level ?? null,
           });
           tourEngine?.destroy();
         },
@@ -210,7 +253,8 @@ export const HazbotButton = observer(function HazbotButton() {
           // Completed ONLY on a terminal Done click: not cancelled (×/Escape), not cleanup.
           if (!tourCancelled && !cleanup) {
             log("HazbotTourCompleted", {
-              ruleSetId, categoryId: matched, lastStepIndex, feedbackLevel: selected?.level ?? null,
+              ruleSetId, categoryId: matched, lastStepIndex, skippedSteps,
+              feedbackLevel: selected?.level ?? null,
             });
           }
           if (!cleanup) { phase = "done"; ui.showHazbotFeedback = false; setTourActive(false); }
@@ -287,6 +331,7 @@ export const HazbotButton = observer(function HazbotButton() {
           categoryId: matched,
           phase: tourEngine ? "tour" : "intro",
           lastStepIndex,
+          skippedSteps,
           feedbackLevel: selected?.level ?? null,
         });
       }
