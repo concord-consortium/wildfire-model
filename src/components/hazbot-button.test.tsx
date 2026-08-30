@@ -772,6 +772,9 @@ describe("Hazbot feedback levels", () => {
     }
 
     expect(cm.highlight).not.toHaveBeenCalled();
+    // No tour is driving yet, so the reset still lowers the flag: that lowering is what
+    // cancels the deferral.
+    expect(stores.ui.showHazbotFeedback).toBe(false);
     expect(stores.ui.hazbotFeedbackLevels.size).toBe(0);
     expect(stores.ui.hazbotLastFeedbackShown).toBeUndefined();
     expect(logSpy).not.toHaveBeenCalledWith("HazbotFeedbackShown", expect.anything());
@@ -1007,31 +1010,48 @@ describe("Run-start coach-mark teardown (WM-31)", () => {
     expect(wrap().className).toMatch(/coached/);
   });
 
-  it("never shows the tour's click-blocking faded state while the panel is closed", () => {
+  it("keeps a driving tour through a Clear All, and does not leave .noHazbot stuck after it", () => {
     jest.spyOn(logModule, "log").mockImplementation(() => undefined);
     const { stores } = renderWithStores();
     openPanel();
     activateShowMe();
     expect(wrap().className).toMatch(/noHazbot/);
-    // Clear All, the production route into resetHazbotFeedback(). It tears the tour down
-    // through the effect's cleanup path, which by design skips the tour engine's own
-    // setTourActive(false) so neither engine mis-logs. `.noHazbot` carries
-    // pointer-events:none and no `disabled` attribute, so a stale tourActive leaves the
-    // button permanently unclickable.
+    // Clear All, the production route into resetHazbotFeedback(). The three Clear All
+    // tours instruct this very click as their first step, so the tour has to survive it.
     act(() => { stores.ui.resetHazbotFeedback(); });
+    expect(wrap().className).toMatch(/noHazbot/);
+    expect(stores.ui.showHazbotFeedback).toBe(true);
+    expect(engines).toHaveLength(2);
+    // ...and the state is not permanent. `.noHazbot` carries pointer-events:none and no
+    // `disabled` attribute, so a stale flag leaves the button silently unclickable.
+    act(() => { engines[1].opts.onDestroyed(); });
     expect(wrap().className).not.toMatch(/noHazbot/);
     expect(screen.getByTestId("hazbot-button")).not.toBeDisabled();
   });
 
-  it("reopening after a Clear All never commits .noHazbot either", () => {
+  it("clears the tour flag when the button unmounts mid-tour", () => {
+    jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    const stores = createStores();
+    const { unmount } = renderWithStores(stores);
+    openPanel();
+    activateShowMe();
+    expect(stores.ui.hazbotTourActive).toBe(true);
+    // The store outlives the component, and the flag gates resetHazbotFeedback(), so an
+    // unmount that left it set would suppress every later reset.
+    unmount();
+    expect(stores.ui.hazbotTourActive).toBe(false);
+  });
+
+  it("reopening after a completed tour never commits .noHazbot either", () => {
     jest.spyOn(logModule, "log").mockImplementation(() => undefined);
     const { stores } = renderWithStores();
     openPanel();
     activateShowMe();
+    act(() => { engines[1].opts.onDestroyed(); });   // "Got it!" closes the tour
     act(() => { stores.ui.resetHazbotFeedback(); });
     // Same observer technique as the run-route case above: what is asserted is every
-    // committed value across the reopen, not the final one. A tourActive cleared only on
-    // the next open paints one frame of the tour's faded state first.
+    // committed value across the reopen, not the final one. A flag cleared only on the
+    // next open paints one frame of the tour's faded state first.
     const seen: string[] = [];
     const observer = new MutationObserver(() => undefined);
     observer.observe(wrap(), { attributes: true, attributeFilter: ["class"], attributeOldValue: true });

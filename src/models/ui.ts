@@ -42,18 +42,25 @@ export class UIModel {
   @observable public hazbotFeedbackLevels = new Map<number, number>();
   // The level and source last displayed, for the dev sidebar's readout only.
   @observable public hazbotLastFeedbackShown?: { level: number; source: string } = undefined;
+  // True while a coach-mark tour is driving, as opposed to the intro popover. Lives here
+  // rather than in the button because resetHazbotFeedback() has to read it.
+  @observable public hazbotTourActive = false;
 
   constructor() {
     makeObservable(this);
   }
 
   // Clear All and window.test.resetHazbotFeedbackLevels() both come through here.
-  // Lowering showHazbotFeedback first is load-bearing, not tidiness: it is the sole
-  // dependency of the Hazbot button's effect, so lowering it runs that effect's
-  // cleanup, which cancels an open deferred by the avatar's scale-up. Without it a
-  // press made just before the reset lands its level back into the map afterwards.
+  // Lowering showHazbotFeedback is load-bearing, not tidiness: it is the sole dependency
+  // of the Hazbot button's effect, so lowering it runs that effect's cleanup, which
+  // cancels an open deferred by the avatar's scale-up. Without it a press made just
+  // before the reset lands its level back into the map afterwards.
+  //
+  // A driving tour has to survive, though: the Clear All tours instruct this very click
+  // as their first step, so tearing the tour down here leaves their second step
+  // unreachable. A deferred open has no tour yet, so the two states cannot overlap.
   public resetHazbotFeedback() {
-    this.showHazbotFeedback = false;
+    if (!this.hazbotTourActive) this.showHazbotFeedback = false;
     this.hazbotFeedbackLevels.clear();
     this.hazbotLastFeedbackShown = undefined;
   }

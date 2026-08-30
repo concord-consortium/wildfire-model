@@ -166,16 +166,15 @@ export const HazbotButton = observer(function HazbotButton() {
   // robot avatar is hidden, since the robot is shown inside the coach mark instead.
   // The intro popover keeps the enlarged-robot `.coached` state (it anchors to the
   // robot); only the tour swaps to `.noHazbot`.
-  const [tourActive, setTourActive] = useState(false);
   useEffect(() => {
-    // The closed branch is the only writer that clears `tourActive` for a panel taken
-    // down from outside the component (a run start, Clear All): the tour engine's own
-    // onDestroyed clears it on the `cleanup`-skipped branch, which a programmatic
+    // The closed branch is the only writer that clears `hazbotTourActive` for a panel
+    // taken down from outside the component (a run start, Clear All): the tour engine's
+    // own onDestroyed clears it on the `cleanup`-skipped branch, which a programmatic
     // teardown never reaches. Clearing it here rather than at each external writer is
     // what keeps `.noHazbot` off the render that reopens the panel.
-    if (!ui.showHazbotFeedback) { setTourActive(false); return; }
+    if (!ui.showHazbotFeedback) { ui.hazbotTourActive = false; return; }
     if (!avatarRef.current) return;
-    setTourActive(false); // fresh open starts in the intro (enlarged-robot) state
+    ui.hazbotTourActive = false; // fresh open starts in the intro (enlarged-robot) state
     const engine = getAnalysisEngine();
     const { used: matched } = readCategories(engine);
     const ruleSetId = engine?.ruleSet?.id ?? null;
@@ -225,7 +224,7 @@ export const HazbotButton = observer(function HazbotButton() {
         ruleSetId, categoryId: matched, stepCount: steps.length, skippedSteps,
         feedbackLevel: selected?.level ?? null,
       });
-      setTourActive(true);
+      ui.hazbotTourActive = true;
       lastStepIndex = 0;
       tourEngine = createCoachmarksEngine({
         actionGated: true,                       // gated nav/keyboard/focus + wait-for-target
@@ -257,7 +256,7 @@ export const HazbotButton = observer(function HazbotButton() {
               feedbackLevel: selected?.level ?? null,
             });
           }
-          if (!cleanup) { phase = "done"; ui.showHazbotFeedback = false; setTourActive(false); }
+          if (!cleanup) { phase = "done"; ui.showHazbotFeedback = false; ui.hazbotTourActive = false; }
         },
       });
       tourEngine.drive(steps);
@@ -321,6 +320,10 @@ export const HazbotButton = observer(function HazbotButton() {
       // Programmatic teardown: set `cleanup` BEFORE destroying so neither engine's
       // onDestroyed launches a tour or logs a Completed/Dismissed event.
       cleanup = true;
+      // hazbotTourActive must be false whenever no tour is driving: it gates both
+      // resetHazbotFeedback() and the `.noHazbot` class, and the store outlives this
+      // component.
+      ui.hazbotTourActive = false;
       // The `intro || tourEngine` term is not redundant with the run gate: this
       // cleanup is registered BEFORE the popover opens (openOnce is deferred to the
       // avatar's transitionend, with a 400ms fallback), so a run started in that window
@@ -346,7 +349,7 @@ export const HazbotButton = observer(function HazbotButton() {
   // Writing the flag rather than destroying the engines keeps this a no-op when nothing
   // is open, since MobX suppresses a same-value assignment: no reaction, no re-render and
   // no log. Lowering the flag is the whole teardown: the panel effect's closed branch
-  // clears `tourActive` from there.
+  // clears `hazbotTourActive` from there.
   useEffect(() => {
     if (!runInProgress) return;
     ui.showHazbotFeedback = false;
@@ -373,12 +376,12 @@ export const HazbotButton = observer(function HazbotButton() {
   // button while a run is in progress). coached and noHazbot are mutually exclusive (see
   // the effect). `noHazbot` is conjoined with the panel flag so the state cannot be
   // reached while the panel is closed: it carries pointer-events:none and no `disabled`
-  // attribute, so a stale tourActive would leave the button unclickable.
+  // attribute, so a stale hazbotTourActive would leave the button unclickable.
   const wrapClassName = [
     css.hazbotButtonWrap,
     pulsing ? css.ready : "",
-    (ui.showHazbotFeedback && !tourActive) ? css.coached : "",
-    (ui.showHazbotFeedback && tourActive) ? css.noHazbot : "",
+    (ui.showHazbotFeedback && !ui.hazbotTourActive) ? css.coached : "",
+    (ui.showHazbotFeedback && ui.hazbotTourActive) ? css.noHazbot : "",
     runInProgress ? css.runDisabled : "",
   ].filter(Boolean).join(" ");
 
