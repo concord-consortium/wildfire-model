@@ -197,6 +197,7 @@ export const HazbotButton = observer(function HazbotButton() {
         popoverOffset: 27,
         showButtons: ["next", "close"],
         doneBtnText: tourDoneLabel,
+        nextBtnText: "Continue",                 // only rendered when a gated step's anchor is dead
         onHighlightStarted: (_el, _step, { state }) => { lastStepIndex = state.activeIndex; },
         onCancelRequested: () => {
           tourCancelled = true;
