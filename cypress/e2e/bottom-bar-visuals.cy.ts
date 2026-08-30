@@ -2,8 +2,8 @@
 //
 // Visual-regression guard for the WM-23 bottom-bar layout. Locks in the
 // deterministic geometry: per-widget border widths, inter-widget gaps
-// (3 px default; -1 px at the three abutting bubble seams: Spark <->
-// Restart, Restart <-> Start, and Fireline <-> Helitack), default-state
+// (3 px default; -1 px at the four abutting bubble seams: Spark <-> Restart,
+// Restart <-> Start, Start <-> Speed, and Fireline <-> Helitack), default-state
 // highlight opacity and the Setup button's selected-state highlight, the
 // "Fireline" label, and the fullscreen container's 62 x 62 dimensions
 // with computed background-size / repeat / position.
@@ -47,15 +47,17 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     widgetRect("spark-button").should((r) => expect(r.width).to.eq(62));
     widgetRect("restart-button").should((r) => expect(r.width).to.eq(62));
     widgetRect("start-button").should((r) => expect(r.width).to.eq(62));
+    // Speed is 97 content + 2 border, per the board's 97/99 group.
+    widgetRect("speed-control").should((r) => expect(r.width).to.eq(99));
     widgetRect("fireline-button").should((r) => expect(r.width).to.eq(67));
     widgetRect("helitack-button").should((r) => expect(r.width).to.eq(67));
   });
 
-  it("shrink-wraps the controls cluster to its eight widget groups", () => {
-    // .mainContainer sizes to its contents, so this is the sum of the eight
+  it("shrink-wraps the controls cluster to its nine widget groups", () => {
+    // .mainContainer sizes to its contents, so this is the sum of the nine
     // widget widths, their gaps, and the trailing widgetGroup margin
     cy.get('[class*="mainContainer"]').should(($m) => {
-      expect($m[0].getBoundingClientRect().width).to.eq(576);
+      expect($m[0].getBoundingClientRect().width).to.eq(674);
     });
   });
 
@@ -68,15 +70,17 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     // Two gap values are expected:
     //   3 px (default): 4 px widgetGroup margin-right minus the next
     //     widget's 1 px margin-left.
-    //   -1 px (abutting): the Spark, Restart and Fireline widgetGroups
-    //     carry margin-right:0 so the next widget's -1 px margin-left
-    //     pulls the bubbles into a 1 px border overlap. This produces the
-    //     "two bubbles touching at the side" look the designer wants for
-    //     Spark <-> Restart, Restart <-> Start, and Fireline <-> Helitack.
+    //   -1 px (abutting): the Spark, Restart, Start and Fireline
+    //     widgetGroups carry margin-right:0 so the next widget's -1 px
+    //     margin-left pulls the bubbles into a 1 px border overlap. This
+    //     produces the "two bubbles touching at the side" look the designer
+    //     wants for Spark <-> Restart, Restart <-> Start, Start <-> Speed,
+    //     and Fireline <-> Helitack.
     const rects: { left: number; right: number }[] = [];
     const ids = [
       "clear-all-button", "terrain-button", "vegetation-key-switch", "spark-button",
-      "restart-button", "start-button", "fireline-button", "helitack-button"
+      "restart-button", "start-button", "speed-control", "fireline-button",
+      "helitack-button"
     ];
     ids.forEach((id) =>
       widgetRect(id).then((r) => { rects.push({ left: r.left, right: r.right }); })
@@ -88,8 +92,9 @@ describe("Bottom-bar visual regression (WM-23)", () => {
       expect(rects[3].left - rects[2].right, "Vegetation Key -> Spark").to.eq(3);
       expect(rects[4].left - rects[3].right, "Spark -> Restart (abuts)").to.eq(-1);
       expect(rects[5].left - rects[4].right, "Restart -> Start (abuts)").to.eq(-1);
-      expect(rects[6].left - rects[5].right, "Start -> Fireline").to.eq(3);
-      expect(rects[7].left - rects[6].right, "Fireline -> Helitack (abuts)").to.eq(-1);
+      expect(rects[6].left - rects[5].right, "Start -> Speed (abuts)").to.eq(-1);
+      expect(rects[7].left - rects[6].right, "Speed -> Fireline").to.eq(3);
+      expect(rects[8].left - rects[7].right, "Fireline -> Helitack (abuts)").to.eq(-1);
     });
   });
 
@@ -127,11 +132,18 @@ describe("Bottom-bar visual regression (WM-23)", () => {
 
   // .leftContainer and .rightContainer are both flex: 1 with no min-width: 0, so
   // neither can shrink below its own content: past the row's intrinsic minimum it
-  // does not compress or wrap, it overflows the fixed bar. That minimum is 824px
-  // (576 of controls, plus the right container's 194 floor of Hazbot 122 + 10 +
-  // fullscreen 62, plus the left container's 54), against the 1241 x 529 viewport
-  // the target Chromebook reports. Visited with a rule-set because the Hazbot
-  // button is what sets that floor, and it only renders for a loaded one.
+  // does not compress or wrap, it overflows the fixed bar. Measured, the row fits
+  // at 921 and overflows at 920: 674 of controls, plus the right container's 194
+  // floor of Hazbot 122 + 10 + fullscreen 62, plus the left container's 53.3.
+  // That is against the 1241 x 529 viewport the target Chromebook reports.
+  // Visited with a rule-set because the Hazbot button is what sets the right
+  // container's floor, and it only renders for a loaded one.
+  //
+  // The left container's 53.3 is its floor only at or below the 960px logo
+  // breakpoint (bottom-bar.scss); above it the large logo raises the floor to
+  // 140. So the row fits at 1008 and up, overflows from 961 to 1007 (costing the
+  // fullscreen toggle), and fits again from 921 to 960. Closing that band means
+  // moving the logo breakpoint, which is a design question of its own.
   it("fits the target Chromebook's viewport without overflowing the bar", () => {
     cy.visit(`${APP_URL}&hazbotRules=25`);
     cy.window().its("sim.dataReady").should("eq", true);
