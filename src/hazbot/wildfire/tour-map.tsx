@@ -16,7 +16,9 @@ import mountainImg from "../../assets/hazbot/mountain.png";
 // rendered in a simplified v1 form per the spec's resolved decoupled-ring decision:
 //   - 25/2 and the conditional spark steps (23/4, 33/4, 35/6) anchor the bubble +
 //     ring to the Spark button rather than "centered top (no pointer)" + decoupled ring;
-//   - 44/3 and 46/3 ring the Fireline button only (not Fireline + Helitack + Start);
+//   - 44/3 and 46/3 ring the Start button, the only control their step names that is
+//     live at that point (fireLineEnabled needs a run in progress, and both tours open
+//     on Restart);
 //   - 34's `0.` intensity-scale pointer is deferred (the tour is its 3 arrowText steps).
 // The authored instruction text is unaffected in every case.
 
@@ -125,15 +127,15 @@ export const tourMap: Record<string, Record<number, TourFactory>> = {
   "41": {
     2: () => [anchor("clear-all-button"), anchor("start-button")],
   },
-  // 44: Clear All -> Start; and a Restart -> Fireline (ring Fireline only, v1).
+  // 44: Clear All -> Start; and a Restart -> Start.
   "44": {
     2: () => [anchor("clear-all-button"), anchor("start-button")],
-    3: () => [anchor("restart-button"), anchor("fireline-button")],
+    3: () => [anchor("restart-button"), anchor("start-button")],
   },
-  // 46: Clear All -> Start; Restart -> Fireline; Restart -> Start.
+  // 46: Clear All -> Start; Restart -> Start; Restart -> Start.
   "46": {
     2: () => [anchor("clear-all-button"), anchor("start-button")],
-    3: () => [anchor("restart-button"), anchor("fireline-button")],
+    3: () => [anchor("restart-button"), anchor("start-button")],
     4: () => [anchor("restart-button"), anchor("start-button")],
   },
 };

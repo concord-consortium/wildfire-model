@@ -78,6 +78,27 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
     expect(nonTerminalViewports).toEqual([]);
   });
 
+  // Every tour opens on Restart or Clear All, both of which leave the run stopped, so a
+  // control that only enables mid-run is dead for the whole tour. Anchoring a step to one
+  // rings a button the student cannot click.
+  const NEEDS_A_RUN_IN_PROGRESS = ["fireline-button", "helitack-button"];
+
+  it("no step anchors a control that only enables while a run is in progress", () => {
+    const offenders: string[] = [];
+    for (const rs of Object.keys(tourMap)) {
+      for (const cat of Object.keys(tourMap[rs]).map(Number)) {
+        for (const ctx of CTXS) {
+          tourMap[rs][cat](ctx).forEach((step, i) => {
+            if (step.kind === "anchor" && NEEDS_A_RUN_IN_PROGRESS.includes(step.testid)) {
+              offenders.push(`${rs}/${cat} step ${i + 1}: ${step.testid}`);
+            }
+          });
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
   // Anchors that can open a tour but deliberately carry no SATISFIED_BY predicate:
   // `terrain-button` is only dead in a state where `restart-button` is still live, so a
   // tour never reaches it as a droppable opener, and `terrain-next` lives inside the
