@@ -80,7 +80,7 @@ window.test.placeSparkInZone(1)      // spark at zone 1 center
 window.test.placeFireLineInZone(0)   // two markers spanning zone 0 width (forms a line at zone center)
 window.test.placeHelitackInZone(1)   // helitack drop at zone 1 center; also emits the `Helitack` log event so the Hazbot engine sees the drop (WM-28)
 window.test.zoneBounds(0)            // { minX, maxX, minY, maxY, centerX, centerY } in model ft
-window.test.resetHazbotFeedbackLevels() // clear every category's Hazbot feedback level, so the next click on each shows level 1 again; also closes an open Hazbot popover (WM-46)
+window.test.resetHazbotFeedbackLevels() // clear every category's Hazbot feedback level, so the next click on each shows level 1 again; also closes an open intro popover, but leaves a driving coach-mark tour alone
 ```
 
 These compute zone extents from `simulation.cells[].zoneIdx`, so they work across any preset (2-zone, 3-zone, custom `zoneIndex`).
@@ -141,7 +141,7 @@ Also exposed in [src/models/stores.ts](src/models/stores.ts):
 
 - **Restart** stops the running sim and returns to the pre-Start state. **Sparks stay placed**, terrain settings stay set. Factor variables (e.g. `setVegetation`) persist across runs by design — they track *user history*, not current state
 - **Clear All** is a full reset: returns spark count to the preset default, clears terrain customizations, forces user back through Terrain Setup before Spark/Start re-enable
-- **Clear All also clears Hazbot's per-category feedback levels**, so every category opens on level 1 again; **Restart does not**. To reset the levels without losing the terrain setup, call `window.test.resetHazbotFeedbackLevels()`
+- **Clear All also clears Hazbot's per-category feedback levels**, so every category opens on level 1 again; **Restart does not**. To reset the levels without losing the terrain setup, call `window.test.resetHazbotFeedbackLevels()`. Neither route closes a coach-mark tour that is driving: the Clear All tours instruct that click as their own first step, so the tour has to survive it
 
 When testing categories that require fresh spark placement (e.g. Category 4 → Category 5), use Clear All, not Restart.
 
