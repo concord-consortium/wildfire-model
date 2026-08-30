@@ -1,5 +1,5 @@
 import React from "react";
-import { render, renderHook, screen } from "@testing-library/react";
+import { fireEvent, render, renderHook, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "mobx-react";
 import { createStores } from "../models/stores";
@@ -278,6 +278,8 @@ describe("Log events", () => {
       expect(params.wind).toHaveProperty("scaleFactor");
       expect(params).toHaveProperty("towns");
       expect(params).toHaveProperty("fireLineMarkers");
+      expect(params.speedMultiplier).toBe(1);
+      expect(params.speedLabel).toBe("1x");
     });
 
     it("replaces 2D arrays with metadata strings", async () => {
@@ -303,6 +305,36 @@ describe("Log events", () => {
         (call: unknown[]) => call[0] === "SimulationStarted"
       );
       expect(startedCall[1].elevation).toMatch(/^2D array \[\d+x\d+\]$/);
+    });
+  });
+
+  describe("SpeedChanged", () => {
+    // Driven through the Slider's hidden range input, as terrain-panel.test.tsx
+    // drives the drought and wind sliders. A pointer gesture cannot work here:
+    // MUI resolves every position through getBoundingClientRect, which jsdom
+    // reports as all zeros, so every click lands on the first mark regardless of
+    // where it was aimed. Arrow keys reach MUI through the input's `change`
+    // event, which jsdom does not implement either.
+    it("logs the previous and new multiplier with the tick's label", async () => {
+      act(() => {
+        stores.simulation.dataReady = true;
+        stores.simulation.sparks.push(new Vector2(50000, 50000));
+      });
+
+      render(
+        <Provider stores={stores}>
+          <BottomBar />
+        </Provider>
+      );
+
+      // eslint-disable-next-line testing-library/no-node-access
+      const input = screen.getByTestId("speed-control").querySelector("input")!;
+      fireEvent.change(input, { target: { value: "2" } });
+
+      const call = mockLog.mock.calls.find((c: unknown[]) => c[0] === "SpeedChanged");
+      expect(call).toBeDefined();
+      expect(call[1]).toEqual({ previousMultiplier: 1, multiplier: 2, label: "2x" });
+      expect(stores.simulation.speedIndex).toBe(2);
     });
   });
 

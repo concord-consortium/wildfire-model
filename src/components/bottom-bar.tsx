@@ -323,6 +323,8 @@ export class BottomBar extends BaseComponent<IProps, IState> {
         scaleFactor: config.windScaleFactor
       };
       configSnapshot.towns = config.towns;
+      configSnapshot.speedMultiplier = simulation.speedMultiplier;
+      configSnapshot.speedLabel = simulation.speedLabel;
 
       log("SimulationStarted", configSnapshot);
       simulation.start();

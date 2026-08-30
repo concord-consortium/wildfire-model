@@ -3,6 +3,7 @@ import { observer } from "mobx-react";
 import Slider from "@mui/material/Slider";
 import { useStores } from "../use-stores";
 import { SPEEDS } from "../models/simulation";
+import { log } from "../log";
 import css from "./speed-control.scss";
 
 const MARKS = SPEEDS.map((speed, index) => ({ value: index, label: speed.label }));
@@ -20,8 +21,18 @@ interface IProps {
 export const SpeedControl = observer(function WrappedComponent({ disabled }: IProps) {
   const { simulation } = useStores();
 
+  // Logged from onChange rather than onChangeCommitted, unlike the setup-panel
+  // sliders: Speed is live during a run, so a drag really does run the fire at each
+  // tick it crosses, and committing would discard the speeds the model actually ran
+  // at. No same-value guard is needed: MUI does not fire onChange for a no-op.
   const handleChange = (event: Event, value: number | number[]) => {
+    const previousMultiplier = simulation.speedMultiplier;
     simulation.setSpeedIndex(value as number);
+    log("SpeedChanged", {
+      previousMultiplier,
+      multiplier: simulation.speedMultiplier,
+      label: simulation.speedLabel
+    });
   };
 
   return (
