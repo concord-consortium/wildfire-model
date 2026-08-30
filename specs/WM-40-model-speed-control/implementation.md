@@ -16,15 +16,15 @@ that pass established, and what it corrected:
   gap is **-1** and Speed-to-Fireline is **3**.
 - **All eight bottom-bar states reproduce the board**, including state 5, where Speed is live while
   Start is disabled, and the Setup-wizard state the board never drew.
-- **No existing Jest test needs changing.** The suite on this branch measures **1022 passed of 1022 across 82 suites** (re-measured 2026-08-29), and the plan only adds tests: five in `speed.test.ts` and one in `log-events.test.tsx`. Re-measure before quoting a post-implementation total in a PR body.
+- **No existing Jest test needs changing.** The suite measured **1022 passed of 1022 across 82 suites** before this work; shipped, it measures **1031 of 1031 across 84**, the plan having only added tests: six in `speed.test.ts`, one in `speed-control.test.tsx`, one in `log-events.test.tsx` and one in `bottom-bar.test.tsx`. Re-measure before quoting a total in a PR body.
 - **Exactly two Cypress assertions fail**, both in `bottom-bar-visuals.cy.ts`, and
   `bottom-bar-state-machine.cy.ts` passes untouched at 11 of 11. Speed is an addition there, not a repair.
 - **The row has two intrinsic minima, because the logo swaps at 960px.** The left container's floor
   is 140 with the large logo and 53.3 with the small one (`bottom-bar.scss:332-340`), so with Speed the
-  bar fits at 1008+, **overflows from 961 to 1007**, fits from 922 to 960, and overflows below. The
-  Cypress comment's existing 824 and its floor of 54 are correct for the shipped bar; an earlier draft
-  of this plan replaced them with 1008 / 140, which are the large-logo figures read at a viewport where
-  the small logo renders. See the Cypress step.
+  bar fits at 1008+, **overflows from 961 to 1007**, fits from 921 to 960, and overflows below. The
+  Cypress comment's inherited floor of 54 is a rounding of that 53.3 and runs the derived total a pixel
+  high; an earlier draft of this plan instead replaced it with 1008 / 140, which are the large-logo
+  figures read at a viewport where the small logo renders. See the Cypress step.
 - **MUI does not fire `onChange` for a no-op selection.** Clicking the already-selected tick, on the
   thumb or off it, and arrow-keying at the max all emit nothing, so the same-value guard an earlier
   draft carried was dead code. What a gesture does emit is measured in the logging step.
@@ -36,7 +36,9 @@ that pass established, and what it corrected:
   `.speedControl` wrapper inside the widget group. Measured, that wrapper is exactly coincident with
   `.content` (97 wide, inset 1px inside the 99px group), so it is dropped and the rules hang off
   `.content`. Hovering the "Speed" header still triggers the thumb ring, because the header is inside
-  `.content`.
+  `.content`. With the wrapper gone, `.content` takes `width: 100%` rather than repeating the group's
+  97px, matching `vegetation-key-switch.scss:5-8` ("Fill the widget group, which owns the width"); the
+  group is content-box, so 100% resolves to exactly its 97px.
 
 ## Implementation Plan
 
@@ -52,7 +54,7 @@ from `window.sim` with nothing rendered.
 - `src/models/simulation.ts`: the array, the observable, the extracted formula, the reset
 - `src/models/speed.test.ts`: new; the boundary guarantees and the multiplier's behavior
 
-**Estimated diff size**: ~170 lines
+**Diff size**: 181 insertions, 13 deletions (measured on the shipped commit)
 
 Add above the class in `src/models/simulation.ts`:
 
@@ -73,8 +75,8 @@ export const SPEEDS = [
 ];
 export const DEFAULT_SPEED_INDEX = 1;
 
-// Extracted from rafCallback so the relationship between the multiplier and the
-// per-frame timestep can be asserted directly, without a rAF loop.
+// Standalone so the multiplier's effect on the per-frame timestep can be asserted
+// without a rAF loop.
 export const computeTimeStep = (
   config: { modelDayInSeconds: number; maxTimeStep: number },
   speedMultiplier: number,
@@ -110,10 +112,16 @@ Add to the class, beside `setupChanged`:
     return SPEEDS[this.speedIndex].label;
   }
 
+  // Clamped rather than trusted: speedMultiplier is read once per animation frame,
+  // so an index off the end of SPEEDS would throw on every frame of a run.
   @action.bound public setSpeedIndex(index: number) {
-    this.speedIndex = index;
+    this.speedIndex = Math.max(0, Math.min(SPEEDS.length - 1, Math.round(index)));
   }
 ```
+
+The slider cannot produce an out-of-range index, but `window.sim` can, and this phase's whole
+surface is `window.sim`. The setter is the only place that can make the invalid state unreachable,
+so it clamps there rather than guarding at each read.
 
 Replace the timestep block inside `rafCallback` (the comments move to `computeTimeStep` above):
 
@@ -180,6 +188,18 @@ describe("model speed", () => {
     expect(fast / normal).toBeCloseTo(2, 10);
   });
 
+  it("clamps an out-of-range index to the nearest tick", async () => {
+    const sim = await newSim();
+
+    sim.setSpeedIndex(SPEEDS.length);
+    expect(sim.speedIndex).toBe(SPEEDS.length - 1);
+    expect(sim.speedMultiplier).toBe(SPEEDS[SPEEDS.length - 1].multiplier);
+
+    sim.setSpeedIndex(-1);
+    expect(sim.speedIndex).toBe(0);
+    expect(sim.speedMultiplier).toBe(SPEEDS[0].multiplier);
+  });
+
   it("keeps the selected speed across restart() and resets it on reload()", async () => {
     const sim = await newSim();
     sim.setSpeedIndex(0);
@@ -232,10 +252,7 @@ describe("model speed", () => {
   //
   // The second assertion is the bound on the first, not a separate guarantee: it
   // pins that this test is able to fail, so a retune that crosses the hour is
-  // caught rather than passing silently. The shipped multipliers give a
-  // 23.93-minute ceiling against a 60-minute bucket; 6x gives 71.80. Neither 60
-  // nor 1440 is named here. If a future change legitimately moves the clamp, both
-  // assertions move together.
+  // caught rather than passing silently.
   it("bounds timeInHours to one per tick at the fastest shipped speed, and not above it", async () => {
     const maxHourJump = async (multiplier: number) => {
       const sim = await newSim();
@@ -274,7 +291,7 @@ turns it from inert into a trap.
 - `src/components/bottom-bar.tsx`: `speedEnabled` getter, the widget group, Start's modifier class
 - `src/components/bottom-bar.scss`: `.startButton`, `.speedControl` (width plus the Select-state bubble), and deleting the orphaned `.slider`
 
-**Estimated diff size**: ~245 lines
+**Diff size**: 244 insertions, 31 deletions (measured on the shipped commit)
 
 New file `src/components/speed-control.tsx`:
 
@@ -292,16 +309,12 @@ interface IProps {
   disabled: boolean;
 }
 
-// `step={null}` puts MUI on a different code path from every other slider in this
-// repo: a falsy step resolves each pointer position to the nearest mark instead of
-// rounding to a step, in the move, pointerdown and mousedown handlers alike. That
-// is what makes a click anywhere on the rail snap to a tick, and what makes a drag
-// jump tick to tick, with no code of ours.
+// `step={null}` makes MUI resolve a pointer position to the nearest mark rather
+// than rounding, so clicks and drags land on ticks with no code of ours.
 //
-// `track={false}` is load-bearing rather than cosmetic. MUI computes a mark's
-// active state as "is this the selected value" only in the trackless mode; with a
-// visible track it marks every value at or below the selection, which would render
-// 0.5x bold alongside 1x. The bold-the-selected-label rule depends on it.
+// `track={false}` is load-bearing: MUI counts only the selected value as an active
+// mark in the trackless mode, where a visible track marks every value at or below
+// it and would bold 0.5x alongside 1x.
 export const SpeedControl = observer(function WrappedComponent({ disabled }: IProps) {
   const { simulation } = useStores();
 
@@ -340,9 +353,9 @@ are the existing tokens rather than the literals the board reports:
 ```scss
 @import "./common.scss";
 
+// Fill the widget group, which owns the width.
 .content {
-  width: 97px;
-  box-sizing: border-box;
+  width: 100%;
   padding-top: 4px;
   text-align: center;
 }
@@ -451,9 +464,8 @@ are the existing tokens rather than the literals the board reports:
 // Fades the content only, leaving the widget group's white bubble and its 1px
 // border at full opacity, which is both the board and the bar's existing rule for
 // buttons. Fading the group instead renders its border at rgb(187,187,187)
-// against every neighbor's rgb(121,121,121), along the top of the bar and across
-// the seam it shares with Start. No grayscale filter: unlike the button rule it
-// would be a no-op, since the control is already achromatic.
+// against every neighbor's rgb(121,121,121). No grayscale filter: unlike the
+// button rule it would be a no-op, since the control is already achromatic.
 .disabled {
   opacity: 0.35;
 
@@ -469,10 +481,9 @@ import { SpeedControl } from "./speed-control";
 
 ```tsx
   // `ready` rather than `startEnabled`: the latter carries `&& !simulationEnded`,
-  // and the board draws Speed enabled after a run, where Start is not. The
-  // showTerrainUI term is not on the board, which never draws the wizard; every
-  // other control in the bar locks while it is open, and without it Speed is the
-  // only live control in a fully grayed bar.
+  // and Speed stays live after a run, where Start does not. Every other control in
+  // the bar locks while the terrain wizard is open, so Speed does too; without the
+  // showTerrainUI term it would be the only live control in a fully grayed bar.
   get speedEnabled() {
     const { simulation, ui } = this.stores;
     return simulation.ready && !ui.showTerrainUI;
@@ -516,10 +527,10 @@ In `src/components/bottom-bar.scss`, add beside `.restart`:
     // The board's Select state turns the bubble #dfdfdf as well as the thumb's
     // ring, and the ring is white, so on a white bubble it is invisible. Hover
     // gets this from the `hoverable` class, but MUI takes no pointer capture
-    // (useSlider.js:539-541 listens on the document), so a drag that leaves the
-    // bubble drops :hover while Mui-active stays on the thumb. This is the only
-    // selector that reaches the group from the thumb's state; the control's own
-    // stylesheet lives inside .content and cannot style an ancestor.
+    // (useSlider.js listens on the document), so a drag that leaves the bubble
+    // drops :hover while Mui-active stays on the thumb. This is the only selector
+    // that reaches the group from the thumb's state; the control's own stylesheet
+    // lives inside .content and cannot style an ancestor.
     // :global is required: without it css-loader hashes Mui-active.
     &:has(:global(.Mui-active)) {
       background: $hoverColor;
@@ -548,13 +559,12 @@ describe("SpeedControl", () => {
   });
 
   // Guards `track={false}`. MUI treats a mark as active by "is this the selected
-  // value" only in the trackless mode (Slider.js:597-601); with a track it marks
-  // every value at or below the selection, which would bold 0.5x and 1x here too.
+  // value" only in the trackless mode; with a track it marks every value at or
+  // below the selection, which would bold 0.5x and 1x here too.
   //
   // Asserted at the fastest tick deliberately. At the slowest tick the two modes
   // render identically ([active, inactive, inactive] either way), so an assertion
-  // there cannot catch the prop's removal. At index 2 trackless gives one active
-  // label and tracked gives three.
+  // there cannot catch the prop's removal.
   it("bolds only the selected label", () => {
     stores.simulation.setSpeedIndex(2);
     render(
@@ -593,11 +603,16 @@ is reviewable without it.
 - `LOGGED-EVENTS.md`: one new row, and the `SimulationStarted` row's parameter list
 - `src/components/log-events.test.tsx`: assertions for both
 
-**Estimated diff size**: ~70 lines
+**Diff size**: 49 insertions, 2 deletions (measured on the shipped commit)
 
 Both payloads carry the label as well as the multiplier. The multiplier is what makes the log
 arithmetically usable; the label is the only record of which position the student actually chose.
 Once the two are allowed to diverge, neither reconstructs the other.
+
+Both are read back off the model's computeds rather than re-derived from the slider's index, so the
+event cannot disagree with the pace the model actually holds. `setSpeedIndex` clamps, so re-indexing
+`SPEEDS` with the raw value would give the payload a second, unclamped source of truth for the same
+number.
 
 In `speed-control.tsx`, add the import the previous step deliberately left out:
 
@@ -610,25 +625,17 @@ programmatic changes from `window.sim` and from tests do not log, which is the p
 `VegetationKeySwitch` sets:
 
 ```tsx
-  // Logged from onChange rather than onChangeCommitted, which is the opposite of
-  // the other sliders in this repo (terrain-panel.tsx logs ZoneUpdated on commit).
-  // Those are setup-panel controls whose intermediate values never reach a running
-  // model. Speed is live during a run, so a drag really does run the fire at each
-  // tick it crosses, and this event exists to keep model time and wall clock
-  // interconvertible. Committing would log one value per gesture and discard the
-  // speeds the model actually ran at.
-  //
-  // No same-value guard is needed: MUI does not fire onChange for a no-op. Verified
-  // on the built control -- clicking the already-selected tick, on the thumb or off
-  // it, and arrow-keying at the max all emit nothing.
+  // Logged from onChange rather than onChangeCommitted, unlike the setup-panel
+  // sliders: Speed is live during a run, so a drag really does run the fire at each
+  // tick it crosses, and committing would discard the speeds the model actually ran
+  // at. No same-value guard is needed: MUI does not fire onChange for a no-op.
   const handleChange = (event: Event, value: number | number[]) => {
-    const index = value as number;
-    const previous = SPEEDS[simulation.speedIndex];
-    simulation.setSpeedIndex(index);
+    const previousMultiplier = simulation.speedMultiplier;
+    simulation.setSpeedIndex(value as number);
     log("SpeedChanged", {
-      previousMultiplier: previous.multiplier,
-      multiplier: SPEEDS[index].multiplier,
-      label: SPEEDS[index].label
+      previousMultiplier,
+      multiplier: simulation.speedMultiplier,
+      label: simulation.speedLabel
     });
   };
 ```
@@ -708,8 +715,10 @@ the failure list is complete rather than predicted.
 **Files affected**:
 - `cypress/e2e/bottom-bar-visuals.cy.ts`
 - `cypress/e2e/bottom-bar-state-machine.cy.ts`
+- `src/components/bottom-bar.test.tsx`: the Setup-wizard lockout gains a Speed case
 
-**Estimated diff size**: ~60 lines
+**Diff size**: 46 insertions, 30 deletions across the two Cypress specs, plus 10 insertions in
+`bottom-bar.test.tsx` (measured on the shipped commits)
 
 In `bottom-bar-visuals.cy.ts`, two assertions fail and both are one number:
 
@@ -739,15 +748,26 @@ Two further edits that no failure forces:
 - The per-widget width test passes today only because it does not mention Speed. Add
   `widgetRect("speed-control").should((r) => expect(r.width).to.eq(99));` so the 97px content box is
   actually covered.
-- The viewport test's explanatory comment stays correct in its arithmetic but goes stale in its
-  input: it derives 824 from "576 of controls, plus the right container's 194 floor, plus the left
-  container's 54", and the 576 becomes 674. Update the controls term and add a sentence recording that
-  the left floor is 54 only at or below the 960px logo breakpoint (`bottom-bar.scss:332-340`), 140
-  above it, so with Speed the bar fits at 1008+, **overflows from 961 to 1007**, and fits again from
-  922 to 960. The band costs the fullscreen toggle in that range. It is documented rather than fixed:
-  the bar already overflows below 824 today, and closing the band means moving the logo breakpoint,
-  which is a design question for its own ticket. The assertion itself passes unchanged at 1241 x 529,
-  with 233px of headroom.
+- The viewport test's explanatory comment goes stale in its input and in its arithmetic. It derives
+  824 from "576 of controls, plus the right container's 194 floor, plus the left container's 54", and
+  the 576 becomes 674. The **54 is a rounding**: the small-logo left container measures 53.3, so the
+  derived total is one pixel high, and the row measurably fits at **921** and overflows at **920**
+  (re-measured in Chrome on the head commit: leftContainer 53.3, mainContainer 674, rightContainer
+  194, bar scrollWidth 921 against clientWidth 921). State the measured boundary as the authority and
+  the arithmetic as its explanation, rather than a derived 922 that the browser contradicts. Add a
+  sentence recording that 53.3 is the floor only at or below the 960px logo breakpoint
+  (`bottom-bar.scss:332-340`), 140 above it, so with Speed the bar fits at 1008+, **overflows from 961
+  to 1007**, and fits again from 921 to 960. The band costs the fullscreen toggle in that range. It is
+  documented rather than fixed: the bar already overflows below its floor today, and closing the band
+  means moving the logo breakpoint, which is a design question for its own ticket. The assertion
+  itself passes unchanged at 1241 x 529.
+
+`bottom-bar.test.tsx`'s `describe("model controls while the Setup wizard is open")` also gains a
+Speed case. That block is the Jest home for the `showTerrainUI` term, which is the one part of the
+enable predicate this spec chose rather than read off the board, and without a case there the term
+can be deleted with the Jest suite still green. It cannot reuse `expectButtonState`, which calls
+`toBeDisabled()` on the element carrying the testid: the Slider's is a non-form `<span>`, so the case
+reaches the hidden range input the same way the logging test does.
 
 In `bottom-bar-state-machine.cy.ts`, all 11 cases pass untouched, so this is purely an addition.
 `expectButtonStates` gains a `speed` key, which is a required field on its object literal, so all
@@ -787,13 +807,13 @@ without a new case: `:204` is mid-run so `ready` holds, and `:241` has the spark
 ## Open Questions
 
 ### RESOLVED: Should this story correct the stale arithmetic in the Cypress viewport comment?
-**Context**: `bottom-bar-visuals.cy.ts`'s viewport test carries a comment deriving the row's intrinsic minimum as 824 from a left-container floor of 54. Both are correct for the shipped bar: re-measured 2026-08-29, the bar fits at 823 and overflows at 815. The floor is 54 only at or below the 960px logo breakpoint and 140 above it, so with Speed the row fits at 1008+, overflows from 961 to 1007 (losing the fullscreen toggle), and fits again from 922 to 960. The assertion passes either way at 1241 x 529, so nothing is broken.
+**Context**: `bottom-bar-visuals.cy.ts`'s viewport test carries a comment deriving the row's intrinsic minimum as 824 from a left-container floor of 54. The 54 is a rounding of the small logo's 53.3, so the derivation runs a pixel high in both eras. The floor is 53.3 only at or below the 960px logo breakpoint and 140 above it, so with Speed the row fits at 1008+, overflows from 961 to 1007 (losing the fullscreen toggle), and fits again from 921 to 960. The assertion passes either way at 1241 x 529, so nothing is broken.
 **Options considered**:
 - A) Update the comment's 576 to 674, record both logo regimes and the 961-1007 band, and leave the breakpoint alone.
 - B) Update only the parts the geometry change makes wrong, leaving the 54 for its own ticket.
 - C) Leave the comment alone; no assertion reads it.
 
-**Decision**: **A.** Doug, 2026-08-29, revised after re-measurement. The comment sits in a file this story already edits and the story invalidates its 576. The band is documented, not fixed: closing it means moving the logo breakpoint, which is a design question for its own ticket, and the bar already overflows below 824 today.
+**Decision**: **A.** Doug, 2026-08-29, revised after re-measurement. The comment sits in a file this story already edits and the story invalidates its 576. The shipped comment states the measured 921 / 920 boundary rather than a derived total, since measurement on the head commit contradicted the rounded arithmetic. The band is documented, not fixed: closing it means moving the logo breakpoint, which is a design question for its own ticket, and the bar already overflows below its floor today.
 
 ### RESOLVED: Where should the two boundary tests live?
 **Context**: The plan puts both in a new `src/models/speed.test.ts`. Each drives a different subject, though: the day boundary constructs a real `FireEngine`, which `fire-engine.test.ts` already has a fixture for, and the hour boundary drives `sim.tick()` the way `simulation.test.ts` already does. The question was whether the repo colocates tests with the module under test.
