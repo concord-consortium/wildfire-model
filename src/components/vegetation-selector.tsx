@@ -1,6 +1,6 @@
 import React from "react";
 import { Slider } from "@mui/material";
-import { TerrainType, Vegetation, vegetationLabels } from "../types";
+import { TerrainType, Vegetation, vegetationDisplayLabels } from "../types";
 import { generateMarks, vegetationIcons } from "./vertical-selectors";
 
 import css from "./vertical-selectors.scss";
@@ -28,10 +28,7 @@ const getIcons = (terrainType: TerrainType, forestWithSuppressionAvailable: bool
 };
 
 const getMarks = (terrainType: TerrainType, forestWithSuppressionAvailable: boolean) => {
-  // Display-only lowercasing of "With" per designer review; the canonical
-  // vegetationLabels value stays "Forest With Suppression" since the Hazbot
-  // engine matches readings against it (see hazbot/wildfire/sim-props.ts).
-  const labelsArray = Object.values(vegetationLabels).map((l) => l.replace("With Suppression", "with Suppression"));
+  const labelsArray = Object.values(vegetationDisplayLabels);
   if (terrainType === TerrainType.Mountains) {
     if (forestWithSuppressionAvailable) {
       // no grass

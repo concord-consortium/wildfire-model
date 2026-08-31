@@ -340,6 +340,33 @@ describe("vegetation selector", () => {
     const drought = screen.getByTestId("drought-slider").querySelector("input");
     expect(drought).toHaveValue("2");
   });
+
+  // Setup shows the full display spelling; only the map's zone labels abbreviate it.
+  it("offers the full 'Forest with Suppression' spelling on the vegetation slider", () => {
+    render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+    // Zone 0 is Mountains, the only terrain whose slider offers the option.
+    expect(screen.getByTestId("vegetation-slider")).toBeInTheDocument();
+    expect(screen.getByText("Forest with Suppression")).toBeInTheDocument();
+  });
+
+  it("captions the wind panel's zone summary with the full spelling", async () => {
+    render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+    const nextButtons = screen.getAllByRole("button", { name: /next/i });
+    await userEvent.click(nextButtons[nextButtons.length - 1]);
+    expect(screen.getByTestId("terrain-wind")).toBeInTheDocument();
+    // Zone 2's vegetation is ForestWithSuppression. getByText rather than an
+    // exact textContent comparison: the caption's non-breaking space is
+    // collapsed by testing-library's normalizer but not by string equality.
+    expect(screen.getByText("Forest with Suppression")).toBeInTheDocument();
+  });
 });
 
 describe("setupChanged", () => {
@@ -652,23 +679,6 @@ describe("setupChanged", () => {
     await userEvent.click(screen.getByTestId("terrain-cancel"));
     // reachedWind is a high-water mark, panel is where the student stood, so
     // this is the path where the two disagree.
-    expect(cancelPayload()).toMatchObject({ panel: "conditions", reachedWind: true });
-  });
-
-  // eslint-disable-next-line max-len
-  it("(o) reach the wind panel, click a zone tile, Cancel — the tile jump does not erase reachedWind", async () => {
-    render(
-      <Provider stores={stores}>
-        <TerrainPanel />
-      </Provider>
-    );
-    await goToCreatePanel();
-    expect(screen.getByTestId("terrain-wind")).toBeInTheDocument();
-    // What simulation-info.tsx writes when a zone info tile is clicked. The
-    // write forces the wizard back to the conditions panel.
-    act(() => { stores.ui.terrainUISelectedZone = 1; });
-    expect(screen.queryByTestId("terrain-wind")).not.toBeInTheDocument();
-    await userEvent.click(screen.getByTestId("terrain-cancel"));
     expect(cancelPayload()).toMatchObject({ panel: "conditions", reachedWind: true });
   });
 

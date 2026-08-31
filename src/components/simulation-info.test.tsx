@@ -1,9 +1,9 @@
 import React from "react";
 import { act, render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
 import { SimulationInfo } from "./simulation-info";
+import { droughtLabels, Vegetation, vegetationAbbreviatedLabels } from "../types";
 
 describe("Simulation Info component", () => {
   let stores = createStores();
@@ -11,7 +11,7 @@ describe("Simulation Info component", () => {
     stores = createStores();
   });
 
-  it("renders zone info buttons", () => {
+  it("renders a zone info label for every zone", () => {
     render(
       <Provider stores={stores}>
         <SimulationInfo />
@@ -20,28 +20,35 @@ describe("Simulation Info component", () => {
     expect(screen.getAllByTestId("zone-info")).toHaveLength(stores.simulation.zones.length);
   });
 
-  it("opens terrain panel UI when one of the zone buttons is clicked", async () => {
+  it("names the vegetation and drought level on every zone label", () => {
     render(
       <Provider stores={stores}>
         <SimulationInfo />
       </Provider>
     );
-    expect(stores.ui.showTerrainUI).toEqual(false);
+    const zones = stores.simulation.zones;
+    expect(zones.length).toBeGreaterThan(1);
+    const vegetationNames = screen.getAllByTestId("zone-vegetation-name");
+    const droughtNames = screen.getAllByTestId("zone-drought-name");
+    expect(vegetationNames).toHaveLength(zones.length);
+    expect(droughtNames).toHaveLength(zones.length);
+    zones.forEach((zone, idx) => {
+      expect(vegetationNames[idx].textContent).toEqual(vegetationAbbreviatedLabels[zone.vegetation]);
+      expect(droughtNames[idx].textContent).toEqual(droughtLabels[zone.droughtLevel]);
+    });
+  });
 
-    // Open terrain panel
-    await userEvent.click(screen.getAllByTestId("zone-info")[0]);
-    expect(stores.ui.showTerrainUI).toEqual(true);
-    expect(stores.ui.terrainUISelectedZone).toEqual(0);
-
-    // Change zone
-    await userEvent.click(screen.getAllByTestId("zone-info")[1]);
-    expect(stores.ui.showTerrainUI).toEqual(true);
-    expect(stores.ui.terrainUISelectedZone).toEqual(1);
-
-    // Change zone
-    await userEvent.click(screen.getAllByTestId("zone-info")[2]);
-    expect(stores.ui.showTerrainUI).toEqual(true);
-    expect(stores.ui.terrainUISelectedZone).toEqual(2);
+  it("abbreviates Forest with Suppression on the map label", () => {
+    stores.simulation.zones[0].vegetation = Vegetation.ForestWithSuppression;
+    render(
+      <Provider stores={stores}>
+        <SimulationInfo />
+      </Provider>
+    );
+    // getByText rather than an exact textContent comparison: the abbreviation's
+    // non-breaking space is collapsed by testing-library's normalizer but not by
+    // string equality.
+    expect(screen.getByText("Forest w Suppr.")).toBeInTheDocument();
   });
 
   it("renders the wind reading in MPH, scaled up from the model's internal units", () => {
@@ -62,21 +69,5 @@ describe("Simulation Info component", () => {
       stores.simulation.setWindSpeed(1.1);
     });
     expect(screen.getByTestId("wind-meter-label").textContent).toEqual("6 MPH from the NNE");
-  });
-
-  it("locks zone buttons when simulation is started", () => {
-    render(
-      <Provider stores={stores}>
-        <SimulationInfo />
-      </Provider>
-    );
-
-    expect(screen.queryByTestId("lock-icon")).not.toBeInTheDocument();
-
-    act(() => {
-      stores.simulation.simulationStarted = true;
-    });
-
-    expect(screen.getAllByTestId("lock-icon").length).toEqual(stores.simulation.zones.length);
   });
 });
