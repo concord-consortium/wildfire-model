@@ -12,11 +12,40 @@ Teachers at the ISLAND workshop reported the model's pace working against them i
 
 This story landed last of the four Sprint 24 bottom-bar stories (WM-52 removed the Fire Intensity Scale, WM-47 renamed and moved Reload to Clear All, WM-48 added the Vegetation Key), so it owns the finished row and re-derives the gap chain from the board's table in one pass.
 
+## Amended 2026-08-31: the multipliers were retuned and the labels were not
+
+Trudi asked for the outer speeds to be pushed further out (WM-40 comment 42399) and confirmed that
+the **labels should stay as drawn** (comment 42415). The shipped pairing is therefore:
+
+| Tick label | Multiplier |
+|---|---|
+| `0.5x` | **0.25** |
+| `1x` | 1 |
+| `2x` | **4** |
+
+Her reason: *"we know that they picked faster/slower and that is all that matters."* This is the
+divergence the `SPEEDS` array was built to allow, so it cost one edit and no design change. **The
+labels are correct as drawn and must not be "fixed" to match**; both log payloads already carry the
+label and the multiplier separately, which is what keeps a session readable under a diverging label.
+
+**5x is the ceiling, and 4x is inside it.** Measured by driving `sim.tick()` at each multiplier's
+per-tick ceiling: 4x gives a 47.87-minute tick and 5x gives 59.83, both under the graph's 60-minute
+sampling bucket, while 6x gives 71.80 and skips an hour. `speed.test.ts`'s hour-boundary case needed
+no change, since it reads the fastest multiplier out of the array and still pivots on a hypothetical
+6x. End-to-end in the browser, on separate page loads: 45.2, 179.1 and 718.1 model minutes per real
+second, i.e. 0.25x and 4.01x of the default.
+
+**A further retune is still open, and 5x is the number that constrains it.** Trudi's original note
+floated a 3x fast end and she has since gone past it, so the values remain hers to set after a
+classroom run rather than settled here. Neither end is technically constrained anywhere near the
+values in play: the slow end has no floor, and the fast end has the ~5x ceiling above, which
+`speed.test.ts` now asserts directly rather than leaving to prose.
+
 ## Requirements
 
 - A three-position speed control renders in the bottom bar **between Start/Pause and Fireline**, as its own widget group at **97px content / 99px border box**.
 - **The Speed group abuts Start on its left** and takes the standard 3px gap to Fireline on its right. The board draws Start Control at 592-652 and Speed Control at 652-749, so there is no gap between them; Fireline Control starts at 754, five content-box pixels further on, which is the standard gap. The abutment follows the repo's existing idiom: the **preceding** group zeroes its `margin-right` and the next group's `-1px margin-left` pulls it flush, as `.restart` and `.fireLineButton` already do (`bottom-bar.scss:141-143`, `:158-165`). Start's widget group carries no modifier class today (`bottom-bar.tsx:189`), so this adds one, and the change is to Start rather than to the Speed group. Measured live: with the abutment the row is **671px across four coincident seams**; without it, 675px across three.
-- The three positions are labeled **0.5x**, **1x** and **2x**, and the model runs at the corresponding multiple of its authored pace. **1x is the default.**
+- The three positions are labeled **0.5x**, **1x** and **2x**. **1x is the default.** The model originally ran at the multiple each label names; see *Amended 2026-08-31* above, which retunes the outer two so the labels no longer match their multipliers.
 - The selected tick's label renders **Lato Bold 700**; the other two render **Lato Regular 400**. All three are 14px `#434343`.
 - **The slot styling copies the setup panel's vertical selectors** (`vertical-selectors.scss`), which is the repo's closest `rail` / `mark` / `markLabel` / `thumb` structure, **except for the thumb and the disabled rule**. The thumb takes the horizontal asset, `slider-thumb-small.svg` at `width/height: 24px; background-size: 140%`, because Speed is horizontal and that is the variant whose chevrons point left and right. The disabled rule is the board's, not either slider's `opacity: 0.25`. The full stylesheet ships as `src/components/speed-control.scss`, measured against the board layer by layer rather than derived, and it is the authority over this summary.
 - **The slider's values are tick indices (0, 1, 2), not the multipliers.** MUI positions marks by `valueToPercent(mark.value, min, max)`, so using 0.5 / 1 / 2 as values would place the middle tick at 33% of the rail instead of the board's ~51%. The multipliers and their labels live in one indexed array, one entry per tick, so neither can be retuned or reordered without the other. That pairing is what the array guarantees; whether a label's drawn text matches its own multiplier is a separate question, and the requirement below deliberately leaves them free to diverge.
@@ -108,8 +137,7 @@ Layout comes from the *Updated Wildfire Controls and Labels* board (`.../screen/
 - **Accessibility review**, per the standing scope for this repo.
 ## Not Yet Implemented
 
-- **The multiplier retune.** Trudi's note reserves the values for testing (*"maybe fast should be 3x and slow should be .25 ... we can test it!"*). Shipped as the board draws them, 0.5 / 1 / 2, in one indexed array so a retune is a one-line edit. The owner is Trudi, since it is her note and a question about what students experience; the moment is after the first classroom run. Recorded rather than ticketed, because a ticket for a retune nobody has evidence for yet would be a placeholder. Two inputs the owner will want: neither end is technically constrained anywhere near the values in play (the fast-end ceiling is about 5x, from the graph's hourly sampling), and the slow end is the one currently serving its use case least well.
-- **The 0.5x slow end may not buy enough reaction time.** The workshop complaint had two halves; 2x answers "fires take too long" directly, but a slow-down only answers "the fire finished before I saw it" if the student slows down *before* the moment of interest. At 0.5x a student reacting one second late has lost half the phenomenon; at 0.25x, a quarter. Not overruled so much as deferred to evidence, and logged as the specific thing to watch for in the first classroom run.
+- **The 0.5x slow end may not buy enough reaction time.** *(Now live: the slow tick runs at 0.25 as of the 2026-08-31 amendment, which is the quarter case this bullet names.)* The workshop complaint had two halves; 2x answers "fires take too long" directly, but a slow-down only answers "the fire finished before I saw it" if the student slows down *before* the moment of interest. At 0.5x a student reacting one second late has lost half the phenomenon; at 0.25x, a quarter. Not overruled so much as deferred to evidence, and logged as the specific thing to watch for in the first classroom run.
 - **The 961-1007px overflow band.** Adding the 99px Speed group moves the row's minimum from 824 to 921 and opens a band where the large logo is still drawn but no longer fits, costing the fullscreen toggle. Documented in the Cypress viewport comment rather than fixed: the bar already overflows below its floor today, so this is the same known narrow-viewport behavior at a higher threshold rather than a new failure mode, and closing it means moving the logo breakpoint, which is a design question for its own ticket. The target Chromebook clears it by 233px.
 - **The `Mui-focusVisible` latch makes the board's Hover row unreachable after a click.** The 1.0 Select ring hangs off `:active, .Mui-active, .Mui-focusVisible`, verbatim what `wind-circular-control.scss` and `vertical-selectors.scss` already write, and MUI applies `Mui-focusVisible` on a *mouse* gesture until the hidden input blurs. Speed is the first slider in the bar whose container also changes color, so the consequence is visible here and on neither of the others. Dropping `:global(.Mui-focusVisible)` would restore the board's Hover row at the cost of making Speed the one slider in the repo whose thumb states differ from the other two, for a difference visible only in a state the board does not draw. The repo idiom wins; it is one line to flip if Michael wants the board's row back, and is worth raising in PR review.
 - **The `ui.showTerrainUI` term in the enable predicate is this spec's addition, not the board's.** The wizard is a state the board never draws, and every other control in the bar locks while it is open; without the term Speed is the only live control in a fully grayed bar. One boolean to flip, and worth raising with Michael in PR review alongside the latch above.

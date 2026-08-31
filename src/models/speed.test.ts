@@ -6,6 +6,8 @@ import { Zone } from "./zone";
 import { getDefaultConfig } from "../config";
 
 const FRAME_MIN = 16.7 / 60000;   // one 60 FPS frame, in minutes
+const SLOW_RATIO = SPEEDS[0].multiplier / SPEEDS[1].multiplier;
+const FAST_RATIO = SPEEDS[2].multiplier / SPEEDS[1].multiplier;
 
 const newSim = async () => {
   const sim = new SimulationModel({
@@ -21,8 +23,8 @@ describe("model speed", () => {
   it("scales the per-frame timestep by exactly the multiplier at 60 FPS", () => {
     const config = getDefaultConfig();
     const [slow, normal, fast] = SPEEDS.map(s => computeTimeStep(config, s.multiplier, FRAME_MIN));
-    expect(slow / normal).toBeCloseTo(0.5, 10);
-    expect(fast / normal).toBeCloseTo(2, 10);
+    expect(slow / normal).toBeCloseTo(SLOW_RATIO, 10);
+    expect(fast / normal).toBeCloseTo(FAST_RATIO, 10);
   });
 
   // The three-term Math.min invites the reading that a slow frame collapses the
@@ -33,8 +35,8 @@ describe("model speed", () => {
     const slowFrame = 100 / 60000;
     const [slow, normal, fast] = SPEEDS.map(s => computeTimeStep(config, s.multiplier, slowFrame));
     expect(normal).toBeLessThan(86400 / config.modelDayInSeconds * slowFrame);   // the clamp is engaged
-    expect(slow / normal).toBeCloseTo(0.5, 10);
-    expect(fast / normal).toBeCloseTo(2, 10);
+    expect(slow / normal).toBeCloseTo(SLOW_RATIO, 10);
+    expect(fast / normal).toBeCloseTo(FAST_RATIO, 10);
   });
 
   it("keeps the selected speed across restart() and resets it on reload()", async () => {
@@ -111,10 +113,11 @@ describe("model speed", () => {
   // burn data and shifts every later index of the logged burnRates array against
   // its "index 0 = hour 1" contract.
   //
-  // The second assertion is the bound on the first, not a separate guarantee: it
-  // pins that this test is able to fail, so a retune that crosses the hour is
-  // caught rather than passing silently.
-  it("bounds timeInHours to one per tick at the fastest shipped speed, and not above it", async () => {
+  // Three assertions: the shipped fastest speed holds, 5x still holds, and 6x does
+  // not. The last two bracket the wall rather than restating the first, so a retune
+  // has a ceiling to aim below, and the failing case pins that this test is able to
+  // fail at all.
+  it("bounds timeInHours to one per tick at the fastest shipped speed, and puts the wall between 5x and 6x", async () => {
     const maxHourJump = async (multiplier: number) => {
       const sim = await newSim();
       const ceiling = computeTimeStep(sim.config, multiplier, Infinity);
@@ -131,6 +134,7 @@ describe("model speed", () => {
 
     const fastest = Math.max(...SPEEDS.map(speed => speed.multiplier));
     expect(await maxHourJump(fastest)).toBeLessThanOrEqual(1);
+    expect(await maxHourJump(5)).toBeLessThanOrEqual(1);
     expect(await maxHourJump(6)).toBeGreaterThan(1);
   });
 });
