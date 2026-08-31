@@ -162,11 +162,13 @@ export const HazbotButton = observer(function HazbotButton() {
   const avatarRef = useRef<HTMLSpanElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    // The closed branch is the only writer that clears `hazbotTourActive` for a panel
-    // taken down from outside the component (a run start, Clear All): the tour engine's
-    // own onDestroyed clears it on the `cleanup`-skipped branch, which a programmatic
-    // teardown never reaches. Clearing it here rather than at each external writer is
-    // what keeps `.noHazbot` off the render that reopens the panel.
+    // Two writers clear `hazbotTourActive`, and they cover different moments. The effect
+    // cleanup below clears it during teardown and unmount, and runs first when an open
+    // panel is taken down from outside the component (a run start, Clear All). This
+    // closed branch then holds the invariant on every later render: the flag is false
+    // whenever the component renders with no panel open. Both are needed because the
+    // store outlives the component, and the second is what keeps `.noHazbot` off the
+    // render that reopens the panel.
     if (!ui.showHazbotFeedback) { ui.hazbotTourActive = false; return; }
     if (!avatarRef.current) return;
     ui.hazbotTourActive = false; // fresh open starts in the intro (enlarged-robot) state

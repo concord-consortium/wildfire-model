@@ -132,8 +132,9 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
 
   // Anchors that can open a tour but deliberately carry no SATISFIED_BY predicate:
   // `terrain-button` is only dead in a state where `restart-button` is still live, so a
-  // tour never reaches it as a droppable opener, and `terrain-next` lives inside the
-  // Setup panel, which is closed whenever a tour is built.
+  // tour never reaches it as a droppable opener, and every `terrain-next` step is
+  // preceded by `terrain-button`, which has no predicate either, so the skip always
+  // stops there and can never promote `terrain-next` to the front of a tour.
   const NO_SKIP_PREDICATE = ["terrain-button", "terrain-next"];
 
   it("every non-terminal anchor either has a skip predicate or is a declared omission", () => {

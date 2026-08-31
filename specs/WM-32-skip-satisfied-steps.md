@@ -32,7 +32,7 @@ It affects all 32 coaching tours, and there were three distinct routes into the 
 - A gated step whose anchor is un-clickable renders a Continue button, so no gated step can be a dead end. Evaluated at step entry as well as on mutation. While the anchor is clickable the step stays gated exactly as before, so the affordance can never skip a step the student could have acted on.
 - The signal is reversible and per-step, so it needs its own hook: `useTargetWatcher` cancels the tour under `onTargetLost: "close"` and disconnects after firing, so it cannot report an anchor coming back live.
 - The button reads "Continue", set by the app via `nextBtnText`; the library default stays "Next".
-- Published as `0.0.1-pre.10` and repinned before the wildfire branch is pushed.
+- Published as `0.0.1-pre.11` and repinned before the wildfire branch is pushed. `pre.11` also changes how the outline ring follows a moving target, which affects **every** anchored tour step, not only the gated ones: check the ring while scrolling, resizing, and moving panels.
 
 **The WM-46 regression fix.**
 
@@ -79,12 +79,12 @@ It affects all 32 coaching tours, and there were three distinct routes into the 
 - **The residual mid-tour dead end.** A run now tears the coach mark down (`runInProgress` clears `ui.showHazbotFeedback`), which closes the specific repro this spec named. The general case is not proven gone, since a route that kills an anchor without starting a run would still strand the student, but the repro has to be re-derived before it is filed as its own ticket.
 - **Four content items for Trudi**, all out of scope and none blocking. (1) The three Clear All tours' second step is reachable for the first time and its instruction cannot be followed as authored: after a Clear All the student must place sparks before Start enables, and no step says so. (2) On 44/3 and 46/3 the ring moves to Start, but the step still asks for a Fireline and a Helitack, and the run gate removes the coach mark the moment Start is pressed. (3) A reopened tour opens on a later step with no textual acknowledgment; decided as intentional, but she may disagree. (4) Same family as (1) on the spark tours: after a Restart the 13 two-step tours leave a single coach mark, and on several that lone instruction cannot be followed as authored (25/3 still shows both sparks on the map with the Spark button grayed).
 - **Two bolding near-duplicates in the sheet**: "Make sure there is a **Spark** in each zone." against "a spark", and "Place one **Spark** in Zone 1..." against "one spark".
-- **Trusted publishing for `coachmarks`.** `pre.10` was published from a developer machine using a granular access token with bypass-2FA enabled, which is the token type npm is deprecating. The org already runs OIDC trusted publishing for `accessibility-tools`; adopting it here also raises a convention question, since that repo keeps `0.0.0-development` in `package.json` and stamps the version from the git tag while `coachmarks` commits real versions.
+- **Trusted publishing for `coachmarks`.** `pre.11` was published from a developer machine using a granular access token with bypass-2FA enabled, which is the token type npm is deprecating. The org already runs OIDC trusted publishing for `accessibility-tools`; adopting it here also raises a convention question, since that repo keeps `0.0.0-development` in `package.json` and stamps the version from the git tag while `coachmarks` commits real versions.
 
 ## Decisions
 
 ### Does the per-step Continue button ship inside WM-32, or as its own ticket?
-Both ship under WM-32. The library is authored in house and deliberately pre-v1, so a `pre.10` publish and repin is routine rather than an outside dependency.
+Both ship under WM-32. The library is authored in house and deliberately pre-v1, so a `pre.11` publish and repin is routine rather than an outside dependency.
 
 ### Does anything read `stepCount` or `lastStepIndex` off the tour events?
 No consumer outside `hazbot-button.test.tsx`; no Cypress spec and no script. Already settled in the closed WM-31 spec, which recorded that WM-32 would resolve these to driven coordinates with `skippedSteps` reconciling.
