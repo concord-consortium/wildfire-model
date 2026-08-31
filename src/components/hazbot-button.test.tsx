@@ -1,7 +1,9 @@
 import React from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { Provider } from "mobx-react";
-import { HazbotButton, parseFeedback } from "./hazbot-button";
+import { HazbotButton, parseFeedback, dropSatisfiedLeadingSteps, SATISFIED_BY } from "./hazbot-button";
+import { BottomBar } from "./bottom-bar";
+import { Vector2 } from "three";
 import { createStores } from "../models/stores";
 import * as logModule from "../log";
 import { getAnalysisEngine } from "../hazbot/wildfire";
@@ -39,6 +41,13 @@ let cm: { highlight: jest.Mock; drive: jest.Mock; destroy: jest.Mock };
 
 function renderWithStores(stores = createStores()) {
   return { stores, ...render(<Provider stores={stores}><HazbotButton /></Provider>) };
+}
+
+// BottomBar renders HazbotButton, so openPanel()/activateShowMe() drive through it
+// unchanged. Needed only where a case turns on a control's rendered `disabled` state,
+// which the bare button cannot show.
+function renderBar(stores = createStores()) {
+  return { stores, ...render(<Provider stores={stores}><BottomBar /></Provider>) };
 }
 
 // The run lifecycle in store terms. The button reads simulation.runInProgress
@@ -334,17 +343,30 @@ describe("Hazbot feedback panel", () => {
   });
 });
 
-// A coaching engine: ruleSet.id "23" with category 2 (a [Show me] coaching category
-// present in tour-data.generated). The intro reads engine.ruleSet.{id,categories}.
-// Shared by the two coach-mark describes below.
-function coachingEngine() {
+// A coaching engine whose category 2 is a [Show me] coaching category present in
+// tour-data.generated. The intro reads engine.ruleSet.{id,categories}. Shared by the two
+// coach-mark describes below. Ruleset "23" opens on Restart and runs three steps; "41" is
+// the two-step Clear All shape, which no ruleset-23 tour has.
+function coachingEngine(id = "23") {
   return {
     ruleSet: {
-      id: "23",
+      id,
       categories: [{ id: 2, feedback: "Hazbot: Looks like defaults. I can help!\n[Show me]" }],
     },
   } as unknown as ReturnType<typeof getAnalysisEngine>;
 }
+
+// A run that has started and finished: Restart is live and Setup is dead, while
+// runInProgress stays false so the Hazbot button is still clickable. createStores()
+// leaves both skip predicates satisfied, so a case that means "nothing done yet"
+// has to say so.
+const afterARun = () => {
+  const stores = createStores();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (stores.simulation as any).engine = { fireDidStop: true };
+  stores.simulation.simulationStarted = true;
+  return stores;
+};
 
 // Record every engine created (intro then tour) with its opts + spies.
 let engines: Array<{
@@ -370,12 +392,50 @@ function activateShowMe() {
   act(() => { engines[0].opts.onDestroyed(); });
 }
 
+// Driven with synthetic step arrays rather than buildTour output: build-tour.ts never
+// stamps advanceOn on a terminal step, so on real input the two guards always fire
+// together and neither can be shown to matter on its own.
+describe("dropSatisfiedLeadingSteps guards", () => {
+  const gatedStep = (testid: string) => ({
+    target: `[data-testid="${testid}"]`,
+    advanceOn: { event: "click" as const },
+  });
+
+  it("never drops the terminal step, even when every step is satisfied", () => {
+    const sim = createStores().simulation;   // nothing run, nothing placed: both predicates true
+    const steps = [gatedStep("restart-button"), gatedStep("restart-button")];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const kept = dropSatisfiedLeadingSteps(steps as any, sim);
+    expect(kept).toHaveLength(1);
+  });
+
+  it("stops at an ungated step, so a satisfied step behind it is kept too", () => {
+    const sim = createStores().simulation;
+    const steps = [
+      { target: '[data-testid="restart-button"]' },   // no advanceOn
+      gatedStep("restart-button"),
+    ];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const kept = dropSatisfiedLeadingSteps(steps as any, sim);
+    expect(kept).toHaveLength(2);
+  });
+
+  it("keeps a leading step whose anchor has no satisfied-by predicate", () => {
+    const sim = createStores().simulation;
+    expect(SATISFIED_BY["terrain-button"]).toBeUndefined();
+    const steps = [gatedStep("terrain-button"), gatedStep("start-button")];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const kept = dropSatisfiedLeadingSteps(steps as any, sim);
+    expect(kept).toHaveLength(2);
+  });
+});
+
 describe("Hazbot walk-through tour", () => {
   beforeEach(useCoachingEngine);
 
   it("launches a gated tour on [Show me]: destroys intro, drives a tour engine, logs HazbotShowMeClicked", () => {
     const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
-    renderWithStores();
+    renderWithStores(afterARun());
     openPanel();
     // Intro engine: badge suppressed, not gated.
     expect(engines).toHaveLength(1);
@@ -392,9 +452,78 @@ describe("Hazbot walk-through tour", () => {
     expect(engines[1].drive).toHaveBeenCalledTimes(1);
     const driven = engines[1].drive.mock.calls[0][0];
     expect(driven).toHaveLength(3); // 23/2 is a 3-step tour
+    // Restart is live after a run, so the opener is kept.
+    expect(driven[0].target).toBe('[data-testid="restart-button"]');
     expect(logSpy).toHaveBeenCalledWith(
-      "HazbotShowMeClicked", { ruleSetId: "23", categoryId: 2, stepCount: 3, feedbackLevel: 1 },
+      "HazbotShowMeClicked",
+      { ruleSetId: "23", categoryId: 2, stepCount: 3, skippedSteps: 0, feedbackLevel: 1 },
     );
+  });
+
+  it("drops a leading gated step the student has already satisfied, and counts it in the log", () => {
+    const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    renderWithStores();                     // simulationStarted false: already restarted
+    openPanel();
+    activateShowMe();
+    const driven = engines[1].drive.mock.calls[0][0];
+    expect(driven).toHaveLength(2);         // terrain-button has no predicate, so the loop stops
+    expect(driven[0].target).toBe('[data-testid="terrain-button"]');
+    expect(engines[1].opts.showProgress).toBe(true);   // 2 steps left, so the counter stays
+    expect(logSpy).toHaveBeenCalledWith(
+      "HazbotShowMeClicked",
+      { ruleSetId: "23", categoryId: 2, stepCount: 2, skippedSteps: 1, feedbackLevel: 1 },
+    );
+  });
+
+  it("keeps a step whose control is only suppressed by the Setup panel", () => {
+    const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    mockGetEngine.mockReturnValue(coachingEngine("41"));
+    const stores = createStores();
+    stores.simulation.sparks.push(new Vector2(1, 1));   // reloadEnabled true: NOT cleared
+    stores.ui.showTerrainUI = true;                     // ...but clear-all renders disabled
+    renderBar(stores);
+    expect(screen.getByTestId("clear-all-button")).toBeDisabled();
+    expect(stores.simulation.reloadEnabled).toBe(true);
+    openPanel();
+    activateShowMe();
+    const driven = engines[1].drive.mock.calls[0][0];
+    expect(driven).toHaveLength(2);                     // nothing dropped
+    expect(driven[0].target).toBe('[data-testid="clear-all-button"]');
+    expect(logSpy).toHaveBeenCalledWith(
+      "HazbotShowMeClicked",
+      { ruleSetId: "41", categoryId: 2, stepCount: 2, skippedSteps: 0, feedbackLevel: 1 },
+    );
+  });
+
+  it("drops nothing on a Clear All tour's first open, when a spark is still placed", () => {
+    const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    mockGetEngine.mockReturnValue(coachingEngine("41"));
+    const stores = createStores();
+    // A student only reaches one of these categories by running a model, which needs a
+    // spark, so reloadEnabled is true at first open.
+    stores.simulation.sparks.push(new Vector2(1, 1));
+    renderWithStores(stores);
+    openPanel();
+    activateShowMe();
+    const driven = engines[1].drive.mock.calls[0][0];
+    expect(driven).toHaveLength(2);
+    expect(driven[0].target).toBe('[data-testid="clear-all-button"]');
+    expect(logSpy).toHaveBeenCalledWith(
+      "HazbotShowMeClicked",
+      { ruleSetId: "41", categoryId: 2, stepCount: 2, skippedSteps: 0, feedbackLevel: 1 },
+    );
+  });
+
+  it("suppresses the progress counter when a skip leaves a single step", () => {
+    jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    mockGetEngine.mockReturnValue(coachingEngine("41"));
+    renderBar();                            // no sparks, setupChanged false: Clear All is satisfied
+    openPanel();
+    activateShowMe();
+    const driven = engines[1].drive.mock.calls[0][0];
+    expect(driven).toHaveLength(1);
+    expect(driven[0].target).toBe('[data-testid="start-button"]');
+    expect(engines[1].opts.showProgress).toBe(false);   // "Step 1 of 1" never renders
   });
 
   it("swaps the button to the faded .noHazbot state during the tour (intro keeps .coached)", () => {
@@ -417,14 +546,15 @@ describe("Hazbot walk-through tour", () => {
 
   it("logs HazbotTourCompleted on the terminal Done (tour onDestroyed without cancel)", () => {
     const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
-    const { stores } = renderWithStores();
+    const { stores } = renderWithStores(afterARun());
     openPanel();
     activateShowMe();
     // Walk the step index forward, then complete via Done.
     act(() => { engines[1].opts.onHighlightStarted(undefined, {}, { state: { activeIndex: 2 } }); });
     act(() => { engines[1].opts.onDestroyed(); });
     expect(logSpy).toHaveBeenCalledWith(
-      "HazbotTourCompleted", { ruleSetId: "23", categoryId: 2, lastStepIndex: 2, feedbackLevel: 1 },
+      "HazbotTourCompleted",
+      { ruleSetId: "23", categoryId: 2, lastStepIndex: 2, skippedSteps: 0, feedbackLevel: 1 },
     );
     expect(logSpy).not.toHaveBeenCalledWith("HazbotTourDismissed", expect.anything());
     expect(stores.ui.showHazbotFeedback).toBe(false);
@@ -432,14 +562,15 @@ describe("Hazbot walk-through tour", () => {
 
   it("logs HazbotTourDismissed (not Completed) on ×/Escape (tour onCancelRequested)", () => {
     const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
-    renderWithStores();
+    renderWithStores(afterARun());
     openPanel();
     activateShowMe();
     act(() => { engines[1].opts.onHighlightStarted(undefined, {}, { state: { activeIndex: 1 } }); });
     act(() => { engines[1].opts.onCancelRequested(); });
     expect(engines[1].destroy).toHaveBeenCalled();
     expect(logSpy).toHaveBeenCalledWith(
-      "HazbotTourDismissed", { ruleSetId: "23", categoryId: 2, lastStepIndex: 1, feedbackLevel: 1 },
+      "HazbotTourDismissed",
+      { ruleSetId: "23", categoryId: 2, lastStepIndex: 1, skippedSteps: 0, feedbackLevel: 1 },
     );
     expect(logSpy).not.toHaveBeenCalledWith("HazbotTourCompleted", expect.anything());
   });
@@ -631,6 +762,9 @@ describe("Hazbot feedback levels", () => {
     }
 
     expect(cm.highlight).not.toHaveBeenCalled();
+    // No tour is driving yet, so the reset still lowers the flag: that lowering is what
+    // cancels the deferral.
+    expect(stores.ui.showHazbotFeedback).toBe(false);
     expect(stores.ui.hazbotFeedbackLevels.size).toBe(0);
     expect(stores.ui.hazbotLastFeedbackShown).toBeUndefined();
     expect(logSpy).not.toHaveBeenCalledWith("HazbotFeedbackShown", expect.anything());
@@ -795,7 +929,10 @@ describe("Run-start coach-mark teardown (WM-31)", () => {
     expect(screen.getByTestId("hazbot-button")).toBeDisabled();
     expect(logSpy).toHaveBeenCalledWith(
       "HazbotCoachMarkHiddenByRun",
-      { ruleSetId: "23", categoryId: 2, phase: "intro", lastStepIndex: null, feedbackLevel: 1 },
+      {
+        ruleSetId: "23", categoryId: 2, phase: "intro",
+        lastStepIndex: null, skippedSteps: null, feedbackLevel: 1,
+      },
     );
     // The real engine fires onDestroyed FROM destroy(); the mock does not, so drive it
     // or everything below is asserted against a callback that never ran. It is the
@@ -819,7 +956,10 @@ describe("Run-start coach-mark teardown (WM-31)", () => {
     expect(engines[1].destroy).toHaveBeenCalled();
     expect(logSpy).toHaveBeenCalledWith(
       "HazbotCoachMarkHiddenByRun",
-      { ruleSetId: "23", categoryId: 2, phase: "tour", lastStepIndex: 1, feedbackLevel: 1 },
+      {
+        ruleSetId: "23", categoryId: 2, phase: "tour",
+        lastStepIndex: 1, skippedSteps: 1, feedbackLevel: 1,
+      },
     );
     act(() => { engines[1].opts.onDestroyed(); });
     expect(logSpy).not.toHaveBeenCalledWith("HazbotTourCompleted", expect.anything());
@@ -860,31 +1000,48 @@ describe("Run-start coach-mark teardown (WM-31)", () => {
     expect(wrap().className).toMatch(/coached/);
   });
 
-  it("never shows the tour's click-blocking faded state while the panel is closed", () => {
+  it("keeps a driving tour through a Clear All, and does not leave .noHazbot stuck after it", () => {
     jest.spyOn(logModule, "log").mockImplementation(() => undefined);
     const { stores } = renderWithStores();
     openPanel();
     activateShowMe();
     expect(wrap().className).toMatch(/noHazbot/);
-    // Clear All, the production route into resetHazbotFeedback(). It tears the tour down
-    // through the effect's cleanup path, which by design skips the tour engine's own
-    // setTourActive(false) so neither engine mis-logs. `.noHazbot` carries
-    // pointer-events:none and no `disabled` attribute, so a stale tourActive leaves the
-    // button permanently unclickable.
+    // Clear All, the production route into resetHazbotFeedback(). The three Clear All
+    // tours instruct this very click as their first step, so the tour has to survive it.
     act(() => { stores.ui.resetHazbotFeedback(); });
+    expect(wrap().className).toMatch(/noHazbot/);
+    expect(stores.ui.showHazbotFeedback).toBe(true);
+    expect(engines).toHaveLength(2);
+    // ...and the state is not permanent. `.noHazbot` carries pointer-events:none and no
+    // `disabled` attribute, so a stale flag leaves the button silently unclickable.
+    act(() => { engines[1].opts.onDestroyed(); });
     expect(wrap().className).not.toMatch(/noHazbot/);
     expect(screen.getByTestId("hazbot-button")).not.toBeDisabled();
   });
 
-  it("reopening after a Clear All never commits .noHazbot either", () => {
+  it("clears the tour flag when the button unmounts mid-tour", () => {
+    jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+    const stores = createStores();
+    const { unmount } = renderWithStores(stores);
+    openPanel();
+    activateShowMe();
+    expect(stores.ui.hazbotTourActive).toBe(true);
+    // The store outlives the component, and the flag gates resetHazbotFeedback(), so an
+    // unmount that left it set would suppress every later reset.
+    unmount();
+    expect(stores.ui.hazbotTourActive).toBe(false);
+  });
+
+  it("reopening after a completed tour never commits .noHazbot either", () => {
     jest.spyOn(logModule, "log").mockImplementation(() => undefined);
     const { stores } = renderWithStores();
     openPanel();
     activateShowMe();
+    act(() => { engines[1].opts.onDestroyed(); });   // "Got it!" closes the tour
     act(() => { stores.ui.resetHazbotFeedback(); });
     // Same observer technique as the run-route case above: what is asserted is every
-    // committed value across the reopen, not the final one. A tourActive cleared only on
-    // the next open paints one frame of the tour's faded state first.
+    // committed value across the reopen, not the final one. A flag cleared only on the
+    // next open paints one frame of the tour's faded state first.
     const seen: string[] = [];
     const observer = new MutationObserver(() => undefined);
     observer.observe(wrap(), { attributes: true, attributeFilter: ["class"], attributeOldValue: true });
@@ -929,13 +1086,14 @@ describe("Run-start coach-mark teardown (WM-31)", () => {
 
   it("still logs a plain dismiss as HazbotTourDismissed when no run is involved", () => {
     const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
-    renderWithStores();
+    renderWithStores(afterARun());
     openPanel();
     activateShowMe();
     act(() => { engines[1].opts.onCancelRequested(); });
     act(() => { engines[1].opts.onDestroyed(); });
     expect(logSpy).toHaveBeenCalledWith(
-      "HazbotTourDismissed", { ruleSetId: "23", categoryId: 2, lastStepIndex: 0, feedbackLevel: 1 },
+      "HazbotTourDismissed",
+      { ruleSetId: "23", categoryId: 2, lastStepIndex: 0, skippedSteps: 0, feedbackLevel: 1 },
     );
     expect(logSpy).not.toHaveBeenCalledWith("HazbotCoachMarkHiddenByRun", expect.anything());
     expect(logSpy).not.toHaveBeenCalledWith("HazbotTourCompleted", expect.anything());
