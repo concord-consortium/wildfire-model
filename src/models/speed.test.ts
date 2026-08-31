@@ -20,6 +20,23 @@ const newSim = async () => {
 };
 
 describe("model speed", () => {
+  // Everything else in this file derives its expectations from SPEEDS, which keeps the
+  // suite retune-proof but also blind to a retune: reverting the array would leave the
+  // rest of these tests green. This is the one assertion that pins what actually ships.
+  //
+  // Both halves of each pair are deliberate and neither may drift on its own. The
+  // multipliers are Trudi's, and the labels are hers too: the outer ticks run at a
+  // quarter and four times the authored pace while still reading "0.5x" and "2x",
+  // because a student only needs to know they picked slower or faster.
+  it("ships 0.25 / 1 / 4 behind the drawn labels 0.5x / 1x / 2x", () => {
+    expect(SPEEDS).toEqual([
+      { multiplier: 0.25, label: "0.5x" },
+      { multiplier: 1, label: "1x" },
+      { multiplier: 4, label: "2x" }
+    ]);
+    expect(SPEEDS[DEFAULT_SPEED_INDEX].label).toBe("1x");
+  });
+
   it("scales the per-frame timestep by exactly the multiplier at 60 FPS", () => {
     const config = getDefaultConfig();
     const [slow, normal, fast] = SPEEDS.map(s => computeTimeStep(config, s.multiplier, FRAME_MIN));

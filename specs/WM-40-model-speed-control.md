@@ -30,10 +30,19 @@ label and the multiplier separately, which is what keeps a session readable unde
 
 **5x is the ceiling, and 4x is inside it.** Measured by driving `sim.tick()` at each multiplier's
 per-tick ceiling: 4x gives a 47.87-minute tick and 5x gives 59.83, both under the graph's 60-minute
-sampling bucket, while 6x gives 71.80 and skips an hour. `speed.test.ts`'s hour-boundary case needed
-no change, since it reads the fastest multiplier out of the array and still pivots on a hypothetical
-6x. End-to-end in the browser, on separate page loads: 45.2, 179.1 and 718.1 model minutes per real
-second, i.e. 0.25x and 4.01x of the default.
+sampling bucket, while 6x gives 71.80 and skips an hour. **`speed.test.ts`'s hour-boundary case now
+asserts three multipliers rather than two**: the shipped fastest, taken from the array so a retune
+carries it; an explicit **5x**, which pins the ceiling itself rather than leaving it to this prose;
+and **6x**, which must exceed the hour and is what keeps the other two able to fail. 5x clears the
+bucket by only 0.17 minutes, which is too thin a margin to leave unasserted. End-to-end in the
+browser, on separate page loads: 45.2, 179.1 and 718.1 model minutes per real second, i.e. 0.25x and
+4.01x of the default.
+
+**The shipped pairs are pinned by their own test.** Every other assertion touching speed derives its
+expectations from `SPEEDS`, which keeps them retune-proof but blind to a retune: reverting the array
+would leave them all green. `speed.test.ts` therefore opens with a contract test asserting the three
+label and multiplier pairs literally, since both halves are deliberate decisions and neither may
+drift on its own.
 
 **A further retune is still open, and 5x is the number that constrains it.** Trudi's original note
 floated a 3x fast end and she has since gone past it, so the values remain hers to set after a
