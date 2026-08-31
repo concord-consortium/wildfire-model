@@ -4,7 +4,7 @@ import userEvent from "@testing-library/user-event";
 import { createStores } from "../models/stores";
 import { Provider } from "mobx-react";
 import { TerrainPanel } from "./terrain-panel";
-import { Vegetation, TerrainType } from "../types";
+import { Vegetation, TerrainType, DroughtLevel } from "../types";
 import { Zone } from "../models/zone";
 
 const mockLog = jest.fn();
@@ -104,6 +104,167 @@ describe("zone UI", () => {
       </Provider>
     );
     expect(screen.getAllByTestId("zone-option")).toHaveLength(3);
+  });
+});
+
+describe("zone vegetation texture", () => {
+  let stores = createStores();
+  beforeEach(() => {
+    stores = createStores();
+    stores.ui.showTerrainUI = true;
+  });
+
+  const renderPanelOnZonesScreen = (zoneOptions = defaultTwoZones) => {
+    stores.simulation.zones = zoneOptions.map(opt => new Zone(opt));
+    stores.simulation.config.zonesCount = zoneOptions.length === 3 ? 3 : 2;
+    return render(
+      <Provider stores={stores}>
+        <TerrainPanel />
+      </Provider>
+    );
+  };
+
+  const renderPanelOnWindScreen = async (zoneOptions = defaultTwoZones) => {
+    const view = renderPanelOnZonesScreen(zoneOptions);
+    const nextButtons = screen.getAllByRole("button", { name: /next/i });
+    await userEvent.click(nextButtons[nextButtons.length - 1]);
+    return view;
+  };
+
+  // eslint-disable-next-line testing-library/no-node-access
+  const textures = (c: HTMLElement) => Array.from(c.querySelectorAll(".vegetationTexture")) as HTMLElement[];
+  // eslint-disable-next-line testing-library/no-node-access
+  const terrainImages = (c: HTMLElement) => Array.from(c.querySelectorAll(".terrainImage")) as HTMLElement[];
+  // eslint-disable-next-line testing-library/no-node-access
+  const layerWrappers = (c: HTMLElement) => Array.from(c.querySelectorAll(".terrainLayers"));
+  // eslint-disable-next-line testing-library/no-node-access
+  const badges = (c: HTMLElement) => Array.from(c.querySelectorAll(".vegetationPreview"));
+
+  it("draws no texture layer when the Vegetation Key is off", () => {
+    stores.ui.showVegetationKey = false;
+    const { container } = renderPanelOnZonesScreen();
+    expect(terrainImages(container)).toHaveLength(2);
+    expect(textures(container)).toHaveLength(0);
+  });
+
+  it("draws one texture layer per zone when the Vegetation Key is on", () => {
+    stores.ui.showVegetationKey = true;
+    const { container } = renderPanelOnZonesScreen();
+    expect(textures(container)).toHaveLength(2);
+  });
+
+  it("keeps the texture after the image that holds the river", () => {
+    stores.ui.showVegetationKey = true;
+    const { container } = renderPanelOnZonesScreen();
+    const layers = textures(container);
+    expect(layers).toHaveLength(2);
+    layers.forEach(tex => {
+      /* eslint-disable testing-library/no-node-access */
+      const image = tex.parentElement!.querySelector(".terrainImage")!;
+      // The two are absolutely positioned at z-index auto, so tree order decides
+      // which paints on top. Ordered before, the river inside .terrainImage would
+      // cover the glyphs; the board draws them crossing it.
+      expect(image.querySelector(".riverOverlay")).not.toBeNull();
+      const kids = Array.from(tex.parentElement!.children);
+      /* eslint-enable testing-library/no-node-access */
+      expect(kids.indexOf(tex)).toBeGreaterThan(kids.indexOf(image));
+    });
+  });
+
+  it("tints the terrain relief with its zone's drought color", () => {
+    const { container } = renderPanelOnZonesScreen([
+      { ...defaultTwoZones[0], droughtLevel: DroughtLevel.NoDrought },
+      { ...defaultTwoZones[1], droughtLevel: DroughtLevel.SevereDrought }
+    ]);
+    // The art is neutral gray, so this color is the whole of the drought treatment.
+    expect(terrainImages(container).map(i => i.style.backgroundColor))
+      .toEqual(["rgb(2, 212, 10)", "rgb(200, 161, 69)"]);
+  });
+
+  it("keeps the vegetation badge above the texture and inside the faded wrapper", () => {
+    stores.ui.showVegetationKey = true;
+    const { container } = renderPanelOnZonesScreen();
+    const wrappers = layerWrappers(container);
+    expect(wrappers).toHaveLength(2);
+    wrappers.forEach(wrapper => {
+      /* eslint-disable testing-library/no-node-access */
+      const badge = wrapper.querySelector(".vegetationPreview")!;
+      const texture = wrapper.querySelector(".vegetationTexture")!;
+      // Inside the wrapper, or the badge stops fading with its zone and renders at
+      // double strength on every unselected zone.
+      expect(wrapper.contains(badge)).toBe(true);
+      // After the texture, or the texture covers it.
+      const kids = Array.from(wrapper.children);
+      /* eslint-enable testing-library/no-node-access */
+      expect(kids.indexOf(badge)).toBeGreaterThan(kids.indexOf(texture));
+    });
+  });
+
+  it("masks each zone with its own vegetation tile", () => {
+    stores.ui.showVegetationKey = true;
+    // defaultThreeZones is Forest / Shrub / ForestWithSuppression.
+    const { container } = renderPanelOnZonesScreen(defaultThreeZones);
+    expect(textures(container).map(t => t.style.maskImage)).toEqual([
+      "url(terrain-textures/forest.svg)",
+      "url(terrain-textures/shrub.svg)",
+      // The one case where enum-name arithmetic would produce the wrong file.
+      "url(terrain-textures/forest-with-suppression.svg)"
+    ]);
+  });
+
+  it("inks each zone from its own drought level", () => {
+    stores.ui.showVegetationKey = true;
+    // defaultThreeZones is drought medium / mild / none.
+    const { container } = renderPanelOnZonesScreen(defaultThreeZones);
+    expect(textures(container).map(t => t.style.backgroundColor))
+      .toEqual(["rgb(66, 79, 18)", "rgb(45, 70, 11)", "rgb(0, 64, 1)"]);
+  });
+
+  it("adds and removes the texture when the key is toggled with the wizard open", () => {
+    stores.ui.showVegetationKey = false;
+    const { container } = renderPanelOnZonesScreen();
+    expect(textures(container)).toHaveLength(0);
+    act(() => { stores.ui.showVegetationKey = true; });
+    expect(textures(container)).toHaveLength(2);
+    act(() => { stores.ui.showVegetationKey = false; });
+    expect(textures(container)).toHaveLength(0);
+  });
+
+  it("follows the selected zone's vegetation and drought as the wizard changes them", () => {
+    stores.ui.showVegetationKey = true;
+    // Zone 1 is Plains because a Mountains zone's vegetation slider does not offer
+    // Grass. Zone 2 is left alone, so each assertion below names both zones and a
+    // texture that ignored its own zone could not pass.
+    const { container } = renderPanelOnZonesScreen([
+      {
+        vegetation: Vegetation.Shrub,
+        moistureContent: 0.14,
+        droughtLevel: DroughtLevel.MediumDrought,
+        terrainType: TerrainType.Plains
+      },
+      defaultTwoZones[0]
+    ]);
+    const masks = () => textures(container).map(t => t.style.maskImage);
+    const inks = () => textures(container).map(t => t.style.backgroundColor);
+    expect(masks()).toEqual(["url(terrain-textures/shrub.svg)", "url(terrain-textures/forest.svg)"]);
+    expect(inks()).toEqual(["rgb(66, 79, 18)", "rgb(66, 79, 18)"]);
+
+    // eslint-disable-next-line testing-library/no-node-access
+    const vegetationSlider = screen.getByTestId("vegetation-slider").querySelector("input")!;
+    fireEvent.change(vegetationSlider, { target: { value: String(Vegetation.Grass) } });
+    expect(masks()).toEqual(["url(terrain-textures/grass.svg)", "url(terrain-textures/forest.svg)"]);
+
+    // eslint-disable-next-line testing-library/no-node-access
+    const droughtSlider = screen.getByTestId("drought-slider").querySelector("input")!;
+    fireEvent.change(droughtSlider, { target: { value: String(DroughtLevel.NoDrought) } });
+    expect(inks()).toEqual(["rgb(0, 64, 1)", "rgb(66, 79, 18)"]);
+  });
+
+  it("textures the read-only wind recap, where the badge is not drawn", async () => {
+    stores.ui.showVegetationKey = true;
+    const { container } = await renderPanelOnWindScreen();
+    expect(textures(container)).toHaveLength(2);
+    expect(badges(container)).toHaveLength(0);
   });
 });
 

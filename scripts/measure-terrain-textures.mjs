@@ -19,8 +19,11 @@
  *   128 is the shader's neutral point, so this is what makes each zone render as
  *   its true drought color with the glyphs sitting on top. A background off
  *   neutral tints the whole zone and corrupts the drought coding the simulation
- *   uses to communicate with students. The MEAN is reported too, but with
- *   discrete glyphs it legitimately sits below 128 and is not the thing to tune.
+ *   uses to communicate with students. The tiles themselves draw on a transparent
+ *   field, so the neutral is painted under them here exactly as the runtime
+ *   loader paints it; what this checks is that nothing in the artwork covers it.
+ *   The MEAN is reported too, but with discrete glyphs it legitimately sits below
+ *   128 and is not the thing to tune.
  *
  *   SD is the tile's contrast, and is what decides whether it reads as a surface
  *   or as flat gray once it is repeated ~7x across the terrain and viewed at a
@@ -42,6 +45,10 @@ import { promisify } from "util";
 
 const TILE_DIR = join(dirname(fileURLToPath(import.meta.url)), "..", "src", "public", "terrain-textures");
 const RASTER_SIZE = 512;
+// Must match TILE_FIELD in src/components/view-3d/terrain-textures.ts: the tiles
+// carry a transparent field, so whatever rasterizes one paints the neutral field
+// under it. Measuring without the prefill reads the field as 0, not 128.
+const TILE_FIELD = "#808080";
 const BACKGROUND_TOLERANCE = 2;
 const MIN_SD = 12;
 
@@ -118,6 +125,8 @@ const load = src => new Promise((res, rej) => {
     const c = document.createElement("canvas");
     c.width = c.height = ${RASTER_SIZE};
     const ctx = c.getContext("2d");
+    ctx.fillStyle = "${TILE_FIELD}";
+    ctx.fillRect(0, 0, ${RASTER_SIZE}, ${RASTER_SIZE});
     ctx.drawImage(img, 0, 0, ${RASTER_SIZE}, ${RASTER_SIZE});
     const d = ctx.getImageData(0, 0, ${RASTER_SIZE}, ${RASTER_SIZE}).data;
     const n = ${RASTER_SIZE} * ${RASTER_SIZE};

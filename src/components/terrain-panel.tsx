@@ -287,13 +287,15 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
             currentPanel !== 0 &&
             <div className={css.zones}>
             {
-              renderZones(
+              renderZones({
                 zones,
                 selectedZone,
-                currentPanel === WIND_PANEL,
-                zones.length,
-                handleZoneChange
-              )
+                readonly: currentPanel === WIND_PANEL,
+                zonesCount: zones.length,
+                showVegetationKey: ui.showVegetationKey,
+                glyphContrast: config.terrainGlyphContrast,
+                onChange: handleZoneChange
+              })
             }
             </div>
           }
