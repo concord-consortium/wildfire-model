@@ -139,11 +139,11 @@ describe("Bottom-bar visual regression (WM-23)", () => {
   // Visited with a rule-set because the Hazbot button is what sets the right
   // container's floor, and it only renders for a loaded one.
   //
-  // The left container's 53.3 is its floor only at or below the 960px logo
-  // breakpoint (bottom-bar.scss); above it the large logo raises the floor to
-  // 140. So the row fits at 1008 and up, overflows from 961 to 1007 (costing the
-  // fullscreen toggle), and fits again from 921 to 960. Closing that band means
-  // moving the logo breakpoint, which is a design question of its own.
+  // The left container's 53.3 is its floor with the small logo; the large one raises
+  // it to 140, which is why the logo breakpoint sits at 1008 rather than lower: below
+  // that the large logo does not fit and the row overflows, costing the fullscreen
+  // toggle. 921 is the floor with the small logo and the row overflows below it at any
+  // breakpoint, which is the pre-existing narrow-viewport behavior.
   it("fits the target Chromebook's viewport without overflowing the bar", () => {
     cy.visit(`${APP_URL}&hazbotRules=25`);
     cy.window().its("sim.dataReady").should("eq", true);
@@ -152,6 +152,33 @@ describe("Bottom-bar visual regression (WM-23)", () => {
     cy.get('[class*="bottomBar"]').should(($bar) => {
       expect($bar[0].scrollWidth, "bottom bar content width").to.be.at.most($bar[0].clientWidth);
     });
+  });
+
+  // The large logo may only be drawn where the row can still hold it. Swapping it in
+  // below 1008 overflows the bar even though a narrower viewport fits, so the failure is
+  // non-monotonic: wider is not always safer. 1000 is inside the band that shape produces.
+  it("does not overflow just below the logo breakpoint, where the wider logo would not fit", () => {
+    cy.visit(`${APP_URL}&hazbotRules=25`);
+    cy.window().its("sim.dataReady").should("eq", true);
+    cy.get('[class*="hazbotButton"]').should("exist");
+    cy.viewport(1000, 800);
+    cy.get('[class*="bottomBar"]').should(($bar) => {
+      expect($bar[0].scrollWidth, "bottom bar content width").to.be.at.most($bar[0].clientWidth);
+    });
+  });
+
+  // A max-width and a min-width query that share a bound both match at it, hiding both
+  // logos so none renders. 960 is in the list because it is the bound a reader is most
+  // likely to reach for, being where the small logo starts to be the one that fits.
+  it("renders exactly one logo at and around the breakpoint", () => {
+    cy.visit(`${APP_URL}&hazbotRules=25`);
+    cy.window().its("sim.dataReady").should("eq", true);
+    for (const width of [1008, 1007, 960]) {
+      cy.viewport(width, 800);
+      cy.get('[class*="bottomBar"] svg[class*="logo"]')
+        .filter((_i, el) => getComputedStyle(el).display !== "none")
+        .should("have.length", 1);
+    }
   });
 
   it("renders the fullscreen container at 62 x 62 with 42 x 42 centered background", () => {

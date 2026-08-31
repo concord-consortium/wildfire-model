@@ -354,12 +354,17 @@ $overflowHeight: 11px;
   pointer-events: none;
 }
 
-@media (max-width: 960px) {
+// The large logo is drawn only where the row can still hold it. Its 140px floor plus the
+// controls (674) and the right container (194, set by the Hazbot button) needs 1008; the
+// small logo's 53.3 floor brings that down to 921. Swapping at anything below 1008 draws a
+// logo that does not fit and pushes the fullscreen toggle off the right edge. The two
+// queries must not both match at the boundary, or neither logo renders.
+@media (max-width: 1007px) {
   .logo {
     display: none;
   }
 }
-@media (min-width: 960px) {
+@media (min-width: 1008px) {
   .logoSmall {
     display: none;
   }
