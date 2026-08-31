@@ -177,12 +177,11 @@ const float WF_GLYPH_INK = 0.165;
  * makes burnt terrain render its vegetation glyphs as legible gray rather than
  * black-on-black, with no separate ash color to hand-pick.
  *
- * MIRRORED IN TYPESCRIPT at terrain-glyph-colors.test.ts. Jest has no WebGL, so
- * that file reimplements this function to pin the five stroke colors the design
- * board authored against the terrain colors and contrast targets they were
- * derived from. It guards the inputs, not this body: an edit here will not turn
- * it red. If the derivation changes, change the mirror too, or the test goes on
- * asserting a formula that no longer ships.
+ * MIRRORED IN TYPESCRIPT as glyphInkHex in terrain-colors.ts, which the Setup
+ * panel calls to ink its thumbnail textures in CSS. terrain-glyph-colors.test.ts
+ * pins the five stroke colors that mirror produces, so an edit to the mirror
+ * turns it red; an edit to this body does not. If the derivation changes, change
+ * the mirror too, or the panel paints an ink the model no longer draws.
  */
 vec3 wfInk(vec3 base, float ratio) {
   float baseLum = dot(base, vec3(0.2126, 0.7152, 0.0722));

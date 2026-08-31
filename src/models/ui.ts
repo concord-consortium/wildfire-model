@@ -15,7 +15,6 @@ export class UIModel {
   // in stores.ts, so ?showVegetationKey=true opens a task with the key already on.
   @observable public showVegetationKey = false;
   @observable public showTerrainUI = false;
-  @observable public terrainUISelectedZone?: number = undefined;
   @observable public maxSparks: number;
 
   @observable public interaction: Interaction | null = null;

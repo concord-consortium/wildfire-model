@@ -2,7 +2,7 @@
 //
 // Browser-level regression guard for the bottom-bar lifecycle state machine.
 // Covers each of the eight states by driving the real bottom-bar in a running
-// app, asserting the HTML `disabled` attribute of all eight controls; states 1-7
+// app, asserting the HTML `disabled` attribute of all nine controls; states 1-7
 // follow the Zeplin matrix, and state 8 (the Setup-open lockout) has no artboard.
 // Catches full-page reactivity wiring breaks, @observer-decoration regressions, and
 // build-tooling failures that the React-Testing-Library tests in bottom-bar.test.tsx
@@ -64,13 +64,17 @@ const APP_URL = "/?preset=plainsTwoZone&hazbotRules=23";
 
 const expectButtonStates = (states: {
   setup: boolean; spark: boolean; clearAll: boolean; restart: boolean;
-  startStop: boolean; fireLine: boolean; helitack: boolean; hazbot: boolean;
+  startStop: boolean; speed: boolean; fireLine: boolean; helitack: boolean; hazbot: boolean;
 }) => {
   cy.get("[data-testid='terrain-button']").should(states.setup ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='spark-button']").should(states.spark ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='clear-all-button']").should(states.clearAll ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='restart-button']").should(states.restart ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='start-button']").should(states.startStop ? "not.be.disabled" : "be.disabled");
+  // Speed is not a button: MUI puts `disabled` on the Slider's hidden range input,
+  // the same element setDroughtSlider reaches for.
+  cy.get("[data-testid='speed-control'] input")
+    .should(states.speed ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='fireline-button']").should(states.fireLine ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='helitack-button']").should(states.helitack ? "not.be.disabled" : "be.disabled");
   cy.get("[data-testid='hazbot-button']").should(states.hazbot ? "not.be.disabled" : "be.disabled");
@@ -119,7 +123,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
   it("state 1 (Default): Setup + Spark enabled; rest disabled", () => {
     expectButtonStates({
       setup: true, spark: true,
-      clearAll: false, restart: false, startStop: false,
+      clearAll: false, restart: false, startStop: false, speed: false,
       fireLine: false, helitack: false, hazbot: true,
     });
   });
@@ -135,7 +139,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     cy.contains("button", /create/i).click();
     expectButtonStates({
       setup: true, spark: true,
-      clearAll: true, restart: false, startStop: false,
+      clearAll: true, restart: false, startStop: false, speed: false,
       fireLine: false, helitack: false, hazbot: true,
     });
   });
@@ -144,7 +148,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     expectButtonStates({
       setup: true, spark: true,
-      clearAll: true, restart: false, startStop: true,
+      clearAll: true, restart: false, startStop: true, speed: true,
       fireLine: false, helitack: false, hazbot: true,
     });
   });
@@ -155,7 +159,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     cy.window().its("sim.simulationRunning").should("eq", true);
     expectButtonStates({
       setup: false, spark: false,
-      clearAll: true, restart: true, startStop: true,
+      clearAll: true, restart: true, startStop: true, speed: true,
       fireLine: true, helitack: true, hazbot: false,
     });
   });
@@ -175,7 +179,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     });
     expectButtonStates({
       setup: false, spark: false,
-      clearAll: true, restart: true, startStop: false,
+      clearAll: true, restart: true, startStop: false, speed: true,
       fireLine: false, helitack: false, hazbot: true,
     });
   });
@@ -187,7 +191,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     cy.window().its("sim.simulationStarted").should("eq", false);
     expectButtonStates({
       setup: true, spark: true,
-      clearAll: true, restart: false, startStop: true,
+      clearAll: true, restart: false, startStop: true, speed: true,
       fireLine: false, helitack: false, hazbot: true,
     });
   });
@@ -203,7 +207,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     cy.window().its("sim.simulationRunning").should("eq", false);
     expectButtonStates({
       setup: false, spark: false,
-      clearAll: true, restart: true, startStop: true,
+      clearAll: true, restart: true, startStop: true, speed: true,
       fireLine: true, helitack: true, hazbot: false,
     });
     // Clicking it again disarms, and the button stays available.
@@ -227,7 +231,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     cy.window().its("sim.setupChanged").should("eq", false);
     expectButtonStates({
       setup: true, spark: true,
-      clearAll: false, restart: false, startStop: false,
+      clearAll: false, restart: false, startStop: false, speed: false,
       fireLine: false, helitack: false, hazbot: true,
     });
   });
@@ -240,14 +244,14 @@ describe("Bottom-bar state machine (WM-24)", () => {
     // what makes the post-open assertion below able to fail.
     expectButtonStates({
       setup: true, spark: true,
-      clearAll: true, restart: false, startStop: true,
+      clearAll: true, restart: false, startStop: true, speed: true,
       fireLine: false, helitack: false, hazbot: true,
     });
     cy.get("[data-testid='terrain-button']").click();
     cy.get("[data-testid='terrain-header']").should("be.visible");
     expectButtonStates({
       setup: true, spark: false,
-      clearAll: false, restart: false, startStop: false,
+      clearAll: false, restart: false, startStop: false, speed: false,
       fireLine: false, helitack: false, hazbot: true,
     });
   });

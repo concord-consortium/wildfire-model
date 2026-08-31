@@ -65,6 +65,7 @@ export function translate(
     case "ChartTabHidden":
     case "VegetationKeyShown":
     case "VegetationKeyHidden":
+    case "SpeedChanged":
     case "AnalysisEngineActivated":
     default:
       return { kind: "no-op" };

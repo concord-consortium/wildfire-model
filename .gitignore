@@ -5,7 +5,8 @@ node_modules
 yalc.lock
 npm-error.log
 .DS_Store
-./cypress/screenshots
+cypress/screenshots/
+cypress/downloads/
 tmp/
 
 # Editors

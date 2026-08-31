@@ -6,7 +6,7 @@
     </defs>
     <g id="forest-with-suppression" stroke="none" fill="none" fill-rule="evenodd" stroke-width="1">
         <g id="Group">
-            <rect id="Rectangle" fill="#808080" x="0" y="0" width="256" height="256"></rect>
+            <rect id="Rectangle" fill="none" x="0" y="0" width="256" height="256"></rect>
             <g id="Clipped">
                 <mask id="mask-2" fill="white">
                     <use xlink:href="#path-1"></use>

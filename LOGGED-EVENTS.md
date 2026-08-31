@@ -9,7 +9,7 @@ All model coordinates are in feet. Normalized coordinates (x, y) are relative to
 
 | Event | Parameters | When |
 |-------|-----------|------|
-| `SimulationStarted` | `{ preset, modelWidth, modelHeight, gridWidth, cellSize, gridHeight, elevation, unburntIslands, zoneIndex, maxTimeStep, modelDayInSeconds, windSpeed, windDirection, neighborsDist, minCellBurnTime, heightmapMaxElevation, tpiBands, tpiMarginFraction, tpiDebug, zonesCount, fillTerrainEdges, riverData, windScaleFactor, showModelDimensions, fireLineDelay, helitackDelay, maxFireLineLength, helitackDropRadius, showBurnIndex, showCoordsOnClick, unburntIslandProbability, fireSurvivalProbability, droughtIndexLocked, severeDroughtAvailable, riverColor, fireLineAvailable, helitackAvailable, forestWithSuppressionAvailable, changeWindOnDay, newWindDirection, newWindSpeed, logMonitor, sparks: [{ x, y, zoneIdx, tpi?: [number \| null] }], zones: [{ vegetation, terrainType, droughtLevel }], wind: { speed, direction, scaleFactor }, towns, fireLineMarkers: [{ x, y, elevation }] }` | User clicks Start. Large array fields (elevation, unburntIslands, zoneIndex) are logged as metadata strings or URLs, not raw data. Each spark's `tpi` is its multi-scale Topographic Position Index (one entry per `tpiBands` concentric band; negative = valley, positive = ridge/peak; `null` for a band with no usable cell; omitted for a spark on an excluded terrain-edge cell) — used by the Hazbot SparksAtTopAndBottom predicate. |
+| `SimulationStarted` | `{ preset, modelWidth, modelHeight, gridWidth, cellSize, gridHeight, elevation, unburntIslands, zoneIndex, maxTimeStep, modelDayInSeconds, windSpeed, windDirection, neighborsDist, minCellBurnTime, heightmapMaxElevation, tpiBands, tpiMarginFraction, tpiDebug, zonesCount, fillTerrainEdges, riverData, windScaleFactor, showModelDimensions, fireLineDelay, helitackDelay, maxFireLineLength, helitackDropRadius, showBurnIndex, showCoordsOnClick, unburntIslandProbability, fireSurvivalProbability, droughtIndexLocked, severeDroughtAvailable, riverColor, fireLineAvailable, helitackAvailable, forestWithSuppressionAvailable, changeWindOnDay, newWindDirection, newWindSpeed, logMonitor, sparks: [{ x, y, zoneIdx, tpi?: [number \| null] }], zones: [{ vegetation, terrainType, droughtLevel }], wind: { speed, direction, scaleFactor }, towns, fireLineMarkers: [{ x, y, elevation }], speedMultiplier, speedLabel }` | User clicks Start. Large array fields (elevation, unburntIslands, zoneIndex) are logged as metadata strings or URLs, not raw data. Each spark's `tpi` is its multi-scale Topographic Position Index (one entry per `tpiBands` concentric band; negative = valley, positive = ridge/peak; `null` for a band with no usable cell; omitted for a spark on an excluded terrain-edge cell) — used by the Hazbot SparksAtTopAndBottom predicate. |
 | `SimulationStopped` | `{ outcome: { durationMinutes, durationHours, zones: [{ zoneIndex, burnPercentage, burnedAcres, burnRates: [number], maxBurnRate, timeOfMaxBurnRate }], towns: [{ name, burned }] } }` | Simulation is stopped — either by user clicking Stop/Pause or by entering Fire Line mode. Includes outcome snapshot so data is available even if the student closes the browser without restarting. `burnRates` is an array of numbers (thousands of acres/hour) where index 0 = hour 1, index 1 = hour 2, etc. |
 | `SimulationEnded` | `{ reason: "ByItself" \| "SimulationRestarted" \| "SimulationReloaded" \| "TopBarReloadButtonClicked", outcome: { durationMinutes, durationHours, zones: [{ zoneIndex, burnPercentage, burnedAcres, burnRates: [number], maxBurnRate, timeOfMaxBurnRate }], towns: [{ name, burned }] } }` | Fire burns out naturally, or user restarts/reloads. `burnRates` is an array of numbers (thousands of acres/hour) where index 0 = hour 1, index 1 = hour 2, etc. |
 | `SimulationRestarted` | — | User clicks Restart (bottom bar) |
@@ -43,15 +43,27 @@ All model coordinates are in feet. Normalized coordinates (x, y) are relative to
 | Event | Parameters | When |
 |-------|-----------|------|
 | `TerrainPanelButtonClicked` | — | User clicks the Setup button: opens Terrain Setup, or no-ops when it is already open. Not an open count: a click on the already-open button logs too. |
-| `TerrainPanelClosed` | `{ reason: "cancel", changed: boolean, panel: "zones" \| "conditions" \| "wind", reachedWind: boolean }` | User leaves Terrain Setup without saving, via the Cancel button. `changed` is true when the wizard held an edit that was discarded. `panel` is the panel they left **from**, not the step number shown on screen, which differs between the master model and the activities. `reachedWind` is whether they ever got to the wind panel during this visit, which is not the same question: Previous and a zone-info-tile click both walk a student back off it, so `panel: "conditions"` with `reachedWind: true` is a normal reading. With the bottom bar's model controls locked while the wizard is open, this is the only close-without-commit route, so a `reason` other than `"cancel"` does not occur today; the parameter marks the boundary against older logs, which carry no parameters at all. |
+| `TerrainPanelClosed` | `{ reason: "cancel", changed: boolean, panel: "zones" \| "conditions" \| "wind", reachedWind: boolean }` | User leaves Terrain Setup without saving, via the Cancel button. `changed` is true when the wizard held an edit that was discarded. `panel` is the panel they left **from**, not the step number shown on screen, which differs between the master model and the activities. `reachedWind` is whether they ever got to the wind panel during this visit, which is not the same question: Previous walks a student back off it, so `panel: "conditions"` with `reachedWind: true` is a normal reading. With the bottom bar's model controls locked while the wizard is open, this is the only close-without-commit route, so a `reason` other than `"cancel"` does not occur today; the parameter marks the boundary against older logs, which carry no parameters at all. |
 | `TerrainPanelSettingsSaved` | — | User clicks Create in Terrain Setup |
 | `TerrainPanelZoneChanged` | `{ zone }` | User switches zone tab in Terrain Setup |
 | `TerrainPanelNextButtonClicked` | — | User clicks Next in Terrain Setup |
 | `TerrainPanelPreviousButtonClicked` | — | User clicks Previous in Terrain Setup |
 | `ZoneUpdated` | `{ zone, terrain?, vegetation?, moisture? }` | User changes a zone property |
 | `ZonesCountChanged` | `{ count }` | User changes number of zones |
-| `ZoneButtonClicked` | `{ zone }` | User clicks a zone info button on the main view |
 | `WindUpdated` | `{ angle, direction }` (direction change) or `{ speed }` (speed change) | User changes wind direction or speed in Terrain Setup |
+
+### `ZoneButtonClicked` stopped firing (WM-49)
+
+The zone labels on the main view used to open Terrain Setup on the zone that was clicked, and
+`ZoneButtonClicked` recorded that click. WM-49 made the labels displays: there is no click, so
+the event has no trigger and the series ends. It stopped firing with the release deployed on
+**<deploy date, filled in at release>**, tagged **<release tag>**. Sessions after that date carry
+none, and that absence is the removal rather than a gap in collection or a deploy fault.
+
+**No payload field marks the boundary**, so it has to be read from timestamps. The four notes
+under the Hazbot table anchor on `appRulesVersion`, which is a rules counter that does not apply
+here; `ZoneButtonClicked` fired on every page, Hazbot-enabled or not, and no other version-like
+field reaches the payload.
 
 ## Graph
 
@@ -71,6 +83,7 @@ All model coordinates are in feet. Normalized coordinates (x, y) are relative to
 | `FullscreenDisabled` | — | User exits fullscreen mode |
 | `VegetationKeyShown` | — | User switches the Vegetation Key on |
 | `VegetationKeyHidden` | — | User switches the Vegetation Key off |
+| `SpeedChanged` | `{ previousMultiplier, multiplier, label }` | User moves the bottom bar's Speed control. `multiplier` is the model's pace relative to its authored `modelDayInSeconds`; `label` is the tick's drawn text. The two are stored separately and are allowed to diverge, so read `label` for what the student saw and `multiplier` for converting model time to wall clock. One gesture can emit more than one event: a click emits one, a drag emits one per tick it crosses, and a click on the already-selected tick emits none. Each records a pace the model genuinely ran at, so fold consecutive events rather than counting them as decisions. |
 
 ## Hazbot
 

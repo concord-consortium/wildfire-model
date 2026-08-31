@@ -9,37 +9,26 @@
   flex-direction: row;
   flex-wrap: nowrap;
   justify-content: center;
+  gap: 10px;
 
   .zone {
-    display: flex;
-    margin: 10px;
-    margin-left: auto;
-    margin-right: auto;
-    width: 124px;
-    height: 34px;
+    box-sizing: border-box;
+    width: 170px;
+    height: 60px;
+    // Holds the full 170 when the row is crowded; the container's gap is then a
+    // floor the labels cannot give back.
+    flex-shrink: 0;
     border-radius: 4px;
-    padding: 6px 10px 4px 6px;
-    border: solid 1px $controlGray;
+    // The design measures its insets from outside the 1px border, so 7 puts the
+    // title 5px down and leaves row 2 fitting inside 170.
+    padding: 4px 7px 7px;
+    border: solid 1px #ffffff;
     background-color: $zone1Red;
+    display: flex;
+    flex-direction: column;
+    margin: 10px auto;
+    // Without this the 3D canvas paints over the label.
     z-index: 2;
-    position: relative;
-
-    .lockIcon {
-      position: absolute;
-      right: -12px;
-      top: 4px;
-      width: 24px;
-      height: 24px;
-    }
-
-    &.active:hover {
-      box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.5);
-      cursor: pointer;
-    }
-
-    &.active:active {
-      box-shadow: 0 0 0 4px rgba(255, 255, 255, 1);
-    }
 
     &.zone1 {
       background-color: $zone1Red;
@@ -50,42 +39,70 @@
     &.zone3 {
       background-color: $zone3Orange;
     }
-    .icon {
-      width: 30px;
-      height: 30px;
-      padding-right: 8px;
+
+    .titleRow {
       display: flex;
-      align-items: flex-end;
-      // Vegetation SVGs ship with both a gray (.dark-outline) and a white
-      // outline rect at the same position; use only the white one here.
-      svg rect:global(.dark-outline) {
-        display: none;
-      }
-      &.droughtIcon {
-        width: 22px;
-        height: 30px;
-      }
-    }
-    .zoneText {
-      display: inline-block;
-      width: 58px;
-      height: 30px;
+      // Centered as a unit, so the center moves with the terrain type's width.
+      justify-content: center;
+      align-items: baseline;
+      gap: 5px;
+      height: 17px;
       color: $controlText;
 
-      .zoneName {
+      .zoneName, .bullet {
         font-family: Lato;
-        font-weight: bold;
         font-size: 14px;
-        text-align: center;
-        position: relative;
-        top: -1px;
+        font-weight: bold;
       }
-
       .terrain {
         font-family: 'Roboto Condensed';
         font-size: 14px;
         font-weight: normal;
-        text-align: center;
+      }
+    }
+
+    .conditionsRow {
+      display: flex;
+      align-items: flex-start;
+      // 1 + 7 + 28 + 4 + 48 + 4 + 20 + 4 + 45 + 7 + 1 = 169, so the row fits the
+      // 170 box with the icons at their intrinsic size. Only this row is budget
+      // constrained; the title row keeps the design's 5px.
+      gap: 4px;
+      margin-top: 2px;
+
+      .icon {
+        flex-shrink: 0;
+        // The asset's intrinsic size, which keeps its outline stroke at 1.5px.
+        width: 28px;
+        height: 28px;
+        // Vegetation SVGs ship with both a gray (.dark-outline) and a white
+        // outline rect at the same position; use only the white one here.
+        svg rect:global(.dark-outline) {
+          display: none;
+        }
+        &.droughtIcon {
+          width: 20px;
+        }
+      }
+
+      .name {
+        // Guard: the row keeps only 1px of slack, so any future deficit would
+        // wrap "w Suppr." to a third line the 28px band cannot show.
+        flex-shrink: 0;
+        width: 48px;
+        height: 28px;
+        font-family: 'Roboto Condensed';
+        font-size: 14px;
+        font-weight: normal;
+        line-height: 14px;
+        color: $controlText;
+        // A fixed two-line band: one-line names center in it, two-line names fill it.
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+      .droughtName {
+        width: 45px;
       }
     }
   }
