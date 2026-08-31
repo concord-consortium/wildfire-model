@@ -1,8 +1,8 @@
 import { ReactNode, isValidElement } from "react";
 import { tourMap, TourContext } from "./tour-map";
 import { tourData } from "./tour-data.generated";
-import { ANCHOR_TESTIDS } from "./anchor-testids";
-import { SATISFIED_BY } from "../../components/hazbot-button";
+import { ANCHOR_TESTIDS, AnchorTestId } from "./anchor-testids";
+import { SATISFIED_BY } from "./satisfied-steps";
 
 // Exercise both branches of every conditional factory.
 const CTXS: TourContext[] = [{ sparkZoneCount: 1 }, { sparkZoneCount: 2 }];
@@ -109,7 +109,7 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
   // Every tour opens on Restart or Clear All, both of which leave the run stopped, so a
   // control that only enables mid-run is dead for the whole tour. Anchoring a step to one
   // rings a button the student cannot click.
-  const NEEDS_A_RUN_IN_PROGRESS = ["fireline-button", "helitack-button"];
+  const NEEDS_A_RUN_IN_PROGRESS: AnchorTestId[] = ["fireline-button", "helitack-button"];
 
   it("no step anchors a control that only enables while a run is in progress", () => {
     const offenders: string[] = [];
@@ -135,10 +135,10 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
   // tour never reaches it as a droppable opener, and every `terrain-next` step is
   // preceded by `terrain-button`, which has no predicate either, so the skip always
   // stops there and can never promote `terrain-next` to the front of a tour.
-  const NO_SKIP_PREDICATE = ["terrain-button", "terrain-next"];
+  const NO_SKIP_PREDICATE: AnchorTestId[] = ["terrain-button", "terrain-next"];
 
   it("every non-terminal anchor either has a skip predicate or is a declared omission", () => {
-    const nonTerminal: string[] = [];
+    const nonTerminal: AnchorTestId[] = [];
     for (const rs of Object.keys(tourMap)) {
       for (const cat of Object.keys(tourMap[rs]).map(Number)) {
         for (const ctx of CTXS) {
@@ -153,7 +153,7 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
     }
     expect(nonTerminal.length).toBeGreaterThan(0);
     const undeclared = nonTerminal
-      .filter((t) => !SATISFIED_BY[t as keyof typeof SATISFIED_BY])
+      .filter((t) => !SATISFIED_BY[t as keyof typeof SATISFIED_BY])   // SATISFIED_BY is partial over the anchors
       .filter((t) => !NO_SKIP_PREDICATE.includes(t));
     expect(undeclared).toEqual([]);
   });

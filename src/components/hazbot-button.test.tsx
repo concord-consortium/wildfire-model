@@ -1,7 +1,8 @@
 import React from "react";
 import { render, screen, fireEvent, act } from "@testing-library/react";
 import { Provider } from "mobx-react";
-import { HazbotButton, parseFeedback, dropSatisfiedLeadingSteps, SATISFIED_BY } from "./hazbot-button";
+import { HazbotButton, parseFeedback } from "./hazbot-button";
+import { dropSatisfiedLeadingSteps, SATISFIED_BY } from "../hazbot/wildfire/satisfied-steps";
 import { BottomBar } from "./bottom-bar";
 import { Vector2 } from "three";
 import { createStores } from "../models/stores";
@@ -411,13 +412,18 @@ describe("dropSatisfiedLeadingSteps guards", () => {
 
   it("stops at an ungated step, so a satisfied step behind it is kept too", () => {
     const sim = createStores().simulation;
+    // Three steps, not two: with two, the trailing satisfied step is also protected by
+    // being terminal, so the assertion cannot tell that the scan stopped at the ungated
+    // step. The middle step here is satisfied and non-terminal, so it is kept only
+    // because the scan stopped in front of it.
     const steps = [
       { target: '[data-testid="restart-button"]' },   // no advanceOn
-      gatedStep("restart-button"),
+      gatedStep("restart-button"),                    // satisfied, and not terminal
+      gatedStep("start-button"),
     ];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const kept = dropSatisfiedLeadingSteps(steps as any, sim);
-    expect(kept).toHaveLength(2);
+    expect(kept).toHaveLength(3);
   });
 
   it("keeps a leading step whose anchor has no satisfied-by predicate", () => {
@@ -448,6 +454,9 @@ describe("Hazbot walk-through tour", () => {
     expect(engines[1].opts.showProgress).toBe(true);
     expect(engines[1].opts.progressText).toBe("Step {{current}} of {{total}}");
     expect(engines[1].opts.doneBtnText).toBe("Got it!");
+    // The coachmarks package tests that the gated Next button renders; this pins that
+    // the app supplies the label it is meant to render.
+    expect(engines[1].opts.nextBtnText).toBe("Continue");
     expect(engines[1].opts.showAvatar).toBeUndefined(); // badge shown on tour (library default)
     expect(engines[1].drive).toHaveBeenCalledTimes(1);
     const driven = engines[1].drive.mock.calls[0][0];
@@ -517,7 +526,7 @@ describe("Hazbot walk-through tour", () => {
   it("suppresses the progress counter when a skip leaves a single step", () => {
     jest.spyOn(logModule, "log").mockImplementation(() => undefined);
     mockGetEngine.mockReturnValue(coachingEngine("41"));
-    renderBar();                            // no sparks, setupChanged false: Clear All is satisfied
+    renderWithStores();                     // no sparks, setupChanged false: Clear All is satisfied
     openPanel();
     activateShowMe();
     const driven = engines[1].drive.mock.calls[0][0];
@@ -1012,6 +1021,7 @@ describe("Run-start coach-mark teardown (WM-31)", () => {
     expect(wrap().className).toMatch(/noHazbot/);
     expect(stores.ui.showHazbotFeedback).toBe(true);
     expect(engines).toHaveLength(2);
+    expect(engines[1].destroy).not.toHaveBeenCalled();   // the tour survived, not just the flag
     // ...and the state is not permanent. `.noHazbot` carries pointer-events:none and no
     // `disabled` attribute, so a stale flag leaves the button silently unclickable.
     act(() => { engines[1].opts.onDestroyed(); });

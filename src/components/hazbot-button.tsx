@@ -7,7 +7,7 @@ import { getAnalysisEngine, selectFeedback, WildfireDefaults, WildfireReading } 
 import { buildTour } from "../hazbot/wildfire/build-tour";
 import { tourData } from "../hazbot/wildfire/tour-data.generated";
 import { TourContext } from "../hazbot/wildfire/tour-map";
-import { AnchorTestId } from "../hazbot/wildfire/anchor-testids";
+import { dropSatisfiedLeadingSteps } from "../hazbot/wildfire/satisfied-steps";
 import { CategorySelection, computeCategorySelectionForEngine, Engine } from "../hazbot/engine";
 import { createCoachmarksEngine, EngineHandle, EngineStep } from "@concord-consortium/coachmarks";
 import { SimulationModel } from "../models/simulation";
@@ -54,40 +54,6 @@ export function parseFeedback(raw: string): { body: string; label: string } {
   return { body: text.trim(), label };
 }
 
-// What "already satisfied" means, per anchor. Each predicate references the getter that
-// owns that control's enabled state rather than re-deriving it, so there is one source of
-// truth. NOT the rendered `disabled` attribute: `clear-all-button` is disabled by
-// `ui.showTerrainUI` too (bottom-bar.tsx), and a control the Setup panel is suppressing is
-// not a step the student has done. An anchor with no entry here is never dropped.
-export const SATISFIED_BY: Partial<Record<AnchorTestId, (sim: SimulationModel) => boolean>> = {
-  "restart-button": (sim) => !sim.restartEnabled,      // nothing to restart
-  "clear-all-button": (sim) => !sim.reloadEnabled,     // nothing to clear
-};
-
-// Drop leading gated steps the student has already satisfied, so a re-opened tour starts at
-// the first step they have NOT done. Every tour opens with "First, Restart your model" or
-// "First, click Clear All to reset your model", and both controls disable themselves once
-// used, so a tour rebuilt from index 0 would gate on a dead button.
-//
-// Two guards, each owning a different rule:
-//  - `i < steps.length - 1` is the collapse-to-zero guarantee. The terminal step is never
-//    dropped, so a tour always has something to show.
-//  - `!step.advanceOn` restricts dropping to click-gated steps. An ungated step (a viewport
-//    bubble) is not something the student can satisfy, so it is never treated as satisfied.
-export function dropSatisfiedLeadingSteps(
-  steps: EngineStep[], simulation: SimulationModel,
-): EngineStep[] {
-  let i = 0;
-  while (i < steps.length - 1) {
-    const step = steps[i] as { target?: string; advanceOn?: unknown };
-    if (!step.target || !step.advanceOn) break;
-    const testid = step.target.match(/^\[data-testid="(.+)"\]$/)?.[1] as AnchorTestId | undefined;
-    const satisfied = testid && SATISFIED_BY[testid];
-    if (!satisfied?.(simulation)) break;
-    i++;
-  }
-  return i === 0 ? steps : steps.slice(i);
-}
 
 // The Hazbot Analysis button (bottom bar), a MobX `observer` child of BottomBar.
 // Clicking it opens the coach-mark feedback panel (the effect below) and logs the
