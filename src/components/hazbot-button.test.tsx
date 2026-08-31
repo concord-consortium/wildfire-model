@@ -343,13 +343,14 @@ describe("Hazbot feedback panel", () => {
   });
 });
 
-// A coaching engine: ruleSet.id "23" with category 2 (a [Show me] coaching category
-// present in tour-data.generated). The intro reads engine.ruleSet.{id,categories}.
-// Shared by the two coach-mark describes below.
-function coachingEngine() {
+// A coaching engine whose category 2 is a [Show me] coaching category present in
+// tour-data.generated. The intro reads engine.ruleSet.{id,categories}. Shared by the two
+// coach-mark describes below. Ruleset "23" opens on Restart and runs three steps; "41" is
+// the two-step Clear All shape, which no ruleset-23 tour has.
+function coachingEngine(id = "23") {
   return {
     ruleSet: {
-      id: "23",
+      id,
       categories: [{ id: 2, feedback: "Hazbot: Looks like defaults. I can help!\n[Show me]" }],
     },
   } as unknown as ReturnType<typeof getAnalysisEngine>;
@@ -366,17 +367,6 @@ const afterARun = () => {
   stores.simulation.simulationStarted = true;
   return stores;
 };
-
-// The 41/2 tour: `clear-all-button` then `start-button`, the Clear All shape none of
-// the 23 tours has.
-function coachingEngine41() {
-  return {
-    ruleSet: {
-      id: "41",
-      categories: [{ id: 2, feedback: "Hazbot: Looks like defaults. I can help!\n[Show me]" }],
-    },
-  } as unknown as ReturnType<typeof getAnalysisEngine>;
-}
 
 // Record every engine created (intro then tour) with its opts + spies.
 let engines: Array<{
@@ -406,14 +396,14 @@ function activateShowMe() {
 // stamps advanceOn on a terminal step, so on real input the two guards always fire
 // together and neither can be shown to matter on its own.
 describe("dropSatisfiedLeadingSteps guards", () => {
-  const gatedDeadStep = (testid: string) => ({
+  const gatedStep = (testid: string) => ({
     target: `[data-testid="${testid}"]`,
     advanceOn: { event: "click" as const },
   });
 
   it("never drops the terminal step, even when every step is satisfied", () => {
     const sim = createStores().simulation;   // nothing run, nothing placed: both predicates true
-    const steps = [gatedDeadStep("restart-button"), gatedDeadStep("restart-button")];
+    const steps = [gatedStep("restart-button"), gatedStep("restart-button")];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const kept = dropSatisfiedLeadingSteps(steps as any, sim);
     expect(kept).toHaveLength(1);
@@ -423,7 +413,7 @@ describe("dropSatisfiedLeadingSteps guards", () => {
     const sim = createStores().simulation;
     const steps = [
       { target: '[data-testid="restart-button"]' },   // no advanceOn
-      gatedDeadStep("restart-button"),
+      gatedStep("restart-button"),
     ];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const kept = dropSatisfiedLeadingSteps(steps as any, sim);
@@ -433,7 +423,7 @@ describe("dropSatisfiedLeadingSteps guards", () => {
   it("keeps a leading step whose anchor has no satisfied-by predicate", () => {
     const sim = createStores().simulation;
     expect(SATISFIED_BY["terrain-button"]).toBeUndefined();
-    const steps = [gatedDeadStep("terrain-button"), gatedDeadStep("start-button")];
+    const steps = [gatedStep("terrain-button"), gatedStep("start-button")];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const kept = dropSatisfiedLeadingSteps(steps as any, sim);
     expect(kept).toHaveLength(2);
@@ -487,7 +477,7 @@ describe("Hazbot walk-through tour", () => {
 
   it("keeps a step whose control is only suppressed by the Setup panel", () => {
     const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
-    mockGetEngine.mockReturnValue(coachingEngine41());
+    mockGetEngine.mockReturnValue(coachingEngine("41"));
     const stores = createStores();
     stores.simulation.sparks.push(new Vector2(1, 1));   // reloadEnabled true: NOT cleared
     stores.ui.showTerrainUI = true;                     // ...but clear-all renders disabled
@@ -507,7 +497,7 @@ describe("Hazbot walk-through tour", () => {
 
   it("drops nothing on a Clear All tour's first open, when a spark is still placed", () => {
     const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
-    mockGetEngine.mockReturnValue(coachingEngine41());
+    mockGetEngine.mockReturnValue(coachingEngine("41"));
     const stores = createStores();
     // A student only reaches one of these categories by running a model, which needs a
     // spark, so reloadEnabled is true at first open.
@@ -526,7 +516,7 @@ describe("Hazbot walk-through tour", () => {
 
   it("suppresses the progress counter when a skip leaves a single step", () => {
     jest.spyOn(logModule, "log").mockImplementation(() => undefined);
-    mockGetEngine.mockReturnValue(coachingEngine41());
+    mockGetEngine.mockReturnValue(coachingEngine("41"));
     renderBar();                            // no sparks, setupChanged false: Clear All is satisfied
     openPanel();
     activateShowMe();

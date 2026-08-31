@@ -85,10 +85,12 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
 
   it("no step anchors a control that only enables while a run is in progress", () => {
     const offenders: string[] = [];
+    let examined = 0;
     for (const rs of Object.keys(tourMap)) {
       for (const cat of Object.keys(tourMap[rs]).map(Number)) {
         for (const ctx of CTXS) {
           tourMap[rs][cat](ctx).forEach((step, i) => {
+            examined++;
             if (step.kind === "anchor" && NEEDS_A_RUN_IN_PROGRESS.includes(step.testid)) {
               offenders.push(`${rs}/${cat} step ${i + 1}: ${step.testid}`);
             }
@@ -96,6 +98,7 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
         }
       }
     }
+    expect(examined).toBeGreaterThan(0);
     expect(offenders).toEqual([]);
   });
 
@@ -132,15 +135,19 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
   it("no step after the first opens with a connective, so any of them reads as an opener", () => {
     const LEADING_CONNECTIVE = /^\s*(first|second|third|then|now|next|also|finally)\b/i;
     const offenders: string[] = [];
+    let examined = 0;
     for (const ruleSetId of Object.keys(tourData)) {
       for (const categoryId of Object.keys(tourData[ruleSetId]).map(Number)) {
         tourData[ruleSetId][categoryId].steps.forEach((step, i) => {
-          if (i > 0 && LEADING_CONNECTIVE.test(step.text)) {
+          if (i === 0) return;
+          examined++;
+          if (LEADING_CONNECTIVE.test(step.text)) {
             offenders.push(`${ruleSetId}/${categoryId} step ${i + 1}: ${JSON.stringify(step.text)}`);
           }
         });
       }
     }
+    expect(examined).toBeGreaterThan(0);
     expect(offenders).toEqual([]);
   });
 

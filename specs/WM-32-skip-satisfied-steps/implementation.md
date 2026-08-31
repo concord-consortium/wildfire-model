@@ -96,7 +96,7 @@ block. Export the hook from `src/index.ts` only if the demo needs it; the app do
 
 ```diff
 +  const targetUnclickable = useTargetUnclickable(
-+    anchored ? ((spec as AnchoredPopover).element ?? null) : null,
++    anchored ? (spec as AnchoredPopover).element : null,
 +  );
 -  const showNext = showButtons.includes("next") && (!actionGated || isLast);
 +  const showNext =
@@ -158,8 +158,7 @@ import { AnchorTestId } from "../hazbot/wildfire/anchor-testids";
 // owns that control's enabled state rather than re-deriving it, so there is one source of
 // truth. NOT the rendered `disabled` attribute: `clear-all-button` is disabled by
 // `ui.showTerrainUI` too (bottom-bar.tsx), and a control the Setup panel is suppressing is
-// not a step the student has done. An anchor with no entry here is never dropped; the
-// tour-map test below fails until a new leading anchor declares what satisfied means for it.
+// not a step the student has done. An anchor with no entry here is never dropped.
 export const SATISFIED_BY: Partial<Record<AnchorTestId, (sim: SimulationModel) => boolean>> = {
   "restart-button": (sim) => !sim.restartEnabled,      // nothing to restart
   "clear-all-button": (sim) => !sim.reloadEnabled,     // nothing to clear
@@ -168,8 +167,7 @@ export const SATISFIED_BY: Partial<Record<AnchorTestId, (sim: SimulationModel) =
 // Drop leading gated steps the student has already satisfied, so a re-opened tour starts at
 // the first step they have NOT done. Every tour opens with "First, Restart your model" or
 // "First, click Clear All to reset your model", and both controls disable themselves once
-// used, so a tour rebuilt from index 0 would gate on a dead button with no way forward: an
-// intermediate gated step renders no Next button.
+// used, so a tour rebuilt from index 0 would gate on a dead button.
 //
 // Two guards, each owning a different rule:
 //  - `i < steps.length - 1` is the collapse-to-zero guarantee. The terminal step is never
@@ -265,6 +263,9 @@ It also changes what the existing suite sees, and this is the one thing to get r
 ```ts
 const afterARun = () => {
   const stores = createStores();
+  // The run has to read as *ended*, not merely started: WM-31 disables the Hazbot button
+  // for the whole of a run, so simulationStarted alone leaves openPanel() opening nothing.
+  (stores.simulation as any).engine = { fireDidStop: true };
   stores.simulation.simulationStarted = true;   // Restart live, Setup dead
   return stores;
 };
@@ -547,6 +548,20 @@ All open questions are resolved, so this is a straight build.
 7. Docs: the four `LOGGED-EVENTS.md` rows (all four gain `skippedSteps`; `HazbotCoachMarkHiddenByRun` additionally has its Fireline-anchor clause rewritten) (no `APP_RULES_VERSION` bump; the presence of `skippedSteps` is the release marker), the `docs/hazbot-update-workflow.md` convention, `CLAUDE.md:83` and `:144`, and the `tour-map.tsx:19` file header.
 8. Re-walk the live verification on the current rulesets: 23/2 (Restart, 3 steps), 25/2 (Restart, 2 steps, collapses to one anchored step), 25/3 (Restart, 2 steps, collapses to one **viewport** step, the shape none of the others covers) and 41/2 (Clear All, 2 steps, now reaching its terminal).
 9. Raise the three content items with Trudi at review handoff, and the no-bump decision with Sam in the same handoff.
+
+## Deviations from this plan, as built
+
+Recorded during the build. Everything else landed as written above.
+
+- **`afterARun()` as specced disables the Hazbot button.** The helper set only `simulationStarted = true`, which makes `runInProgress` (`simulationStarted && !simulationEnded`) true, and WM-31 disables the button for the whole of a run, so `openPanel()` opened nothing. The built helper also assigns `engine = { fireDidStop: true }` so the run reads as *ended*: Restart live, Setup dead, `runInProgress` false.
+- **The helper's comment lost a clause this story makes false.** The planned text said a tour rebuilt from index 0 "would gate on a dead button with no way forward: an intermediate gated step renders no Next button". The Continue affordance in the same story is exactly what removes the "no way forward", so the clause is gone.
+- **`?? null` dropped from the `popover.tsx` hook call.** `AnchoredPopover.element` is `HTMLElement`, not optional, so the coalesce was dead code. The call now reads `anchored ? (spec as AnchoredPopover).element : null`, matching the `useTargetWatcher` call three lines below it.
+- **The "does not drop a leading step the student can still act on" case was folded into `:376`.** With `:376` given `afterARun()` it already drove the identical setup and asserted the same length and payload, so a separate case was a duplicate. Its one distinct assertion, that `driven[0]` is still the `restart-button` step, moved into `:376`.
+- **Tests landed with the code they cover, not batched at step 6.** Each commit is green on its own, which a single trailing test commit could not give.
+- **Three test additions the plan did not list**, each covering a line nothing else could fail on. The effect cleanup's `ui.hazbotTourActive = false` is a no-op on every dep-change route, so only an unmount case reaches it. The Fireline ring move changed no step count and no allowlist, so `tour-map.test.ts` passed either way until a guard was added stating the real rule: no step may anchor a control that only enables while a run is in progress. The hook also gained a live-anchor mount case and an observer-disconnect case.
+- **`hazbot-feedback-changes` was 15 commits ahead of `main`, not 16**, and it has since been fast-forwarded into `main`; the library work is on `WM-32-continue-affordance` cut from there. The `pre.9` bump was folded into `c70cd4c` rather than standing alone, so the standalone `chore:` bump commit follows `265e299` (`pre.8`), which is the older precedent.
+
+**Still outstanding**: `npm publish` of `0.0.1-pre.10`. The wildfire pin already reads `0.0.1-pre.10` and the local tree is wired through `yalc`, so nothing is blocked, but the wildfire branch must not be pushed until the publish lands.
 
 ## Self-Review
 

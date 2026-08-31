@@ -161,11 +161,6 @@ export const HazbotButton = observer(function HazbotButton() {
   // Completed/Dismissed event.
   const avatarRef = useRef<HTMLSpanElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  // True while the walk-through tour is running (after [Show me]). Drives the
-  // "No Hazbot Default" button state (Zeplin): the button fades to 35% and the
-  // robot avatar is hidden, since the robot is shown inside the coach mark instead.
-  // The intro popover keeps the enlarged-robot `.coached` state (it anchors to the
-  // robot); only the tour swaps to `.noHazbot`.
   useEffect(() => {
     // The closed branch is the only writer that clears `hazbotTourActive` for a panel
     // taken down from outside the component (a run start, Clear All): the tour engine's
@@ -371,12 +366,14 @@ export const HazbotButton = observer(function HazbotButton() {
     log("HazbotButtonClicked", { matchedCategory: best, categoryUsed: used, categoryCurrent: current });
   };
 
-  // Wrapper state classes: `ready` (pulse halo), `coached` (intro enlarged-robot,
-  // intro only), `noHazbot` (faded button while the tour runs), `runDisabled` (faded
-  // button while a run is in progress). coached and noHazbot are mutually exclusive (see
-  // the effect). `noHazbot` is conjoined with the panel flag so the state cannot be
-  // reached while the panel is closed: it carries pointer-events:none and no `disabled`
-  // attribute, so a stale hazbotTourActive would leave the button unclickable.
+  // Wrapper state classes: `ready` (pulse halo), `coached` (intro enlarged-robot, intro
+  // only, since the intro anchors to the robot), `noHazbot` (the Zeplin "No Hazbot
+  // Default" state, worn while the tour runs: the button fades to 35% and the robot
+  // avatar is hidden, since the robot shows inside the coach mark instead), `runDisabled`
+  // (faded button while a run is in progress). coached and noHazbot are mutually
+  // exclusive (see the effect). `noHazbot` is conjoined with the panel flag so the state
+  // cannot be reached while the panel is closed: it carries pointer-events:none and no
+  // `disabled` attribute, so a stale hazbotTourActive would leave the button unclickable.
   const wrapClassName = [
     css.hazbotButtonWrap,
     pulsing ? css.ready : "",
