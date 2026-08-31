@@ -45,6 +45,7 @@ export function buildTour(
           position: a.position,
           description,
           ...(a.image ? { image: a.image } : {}),
+          ...(a.offsetY != null ? { viewportOffset: { y: a.offsetY } } : {}),
         },
       };
     }

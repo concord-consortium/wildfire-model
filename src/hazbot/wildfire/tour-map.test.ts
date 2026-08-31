@@ -1,10 +1,36 @@
-import { tourMap, TourContext, StepAnchor } from "./tour-map";
+import { ReactNode, isValidElement } from "react";
+import { tourMap, TourContext } from "./tour-map";
 import { tourData } from "./tour-data.generated";
 import { ANCHOR_TESTIDS } from "./anchor-testids";
 
 // Exercise both branches of every conditional factory.
 const CTXS: TourContext[] = [{ sparkZoneCount: 1 }, { sparkZoneCount: 2 }];
 const anchorSet = new Set<string>(ANCHOR_TESTIDS);
+
+// How wide a popover figure may be declared. The coachmarks hazbot theme gives the popover a 280px
+// box with 3px borders and 12px content padding, then floats a 52px Hazbot avatar (-5px/+12px side
+// margins) at its top-left. A figure's <img> is a block-level replaced element, so it may not overlap
+// that float's margin box: declare it wider and it silently drops onto its own line below the avatar.
+const POPOVER_CONTENT_WIDTH = 280 - 2 * 3 - 2 * 12;
+const AVATAR_MARGIN_BOX = -5 + 52 + 12;
+const MAX_FIGURE_WIDTH = POPOVER_CONTENT_WIDTH - AVATAR_MARGIN_BOX;
+
+/** Keyed `ruleSet/category` so a failure names the offending entry. */
+const emittedFigures = () => {
+  const figures: { key: string; image: ReactNode }[] = [];
+  for (const rs of Object.keys(tourMap)) {
+    for (const cat of Object.keys(tourMap[rs]).map(Number)) {
+      for (const ctx of CTXS) {
+        for (const step of tourMap[rs][cat](ctx)) {
+          if (step.kind === "viewport" && step.image) {
+            figures.push({ key: `${rs}/${cat}`, image: step.image });
+          }
+        }
+      }
+    }
+  }
+  return figures;
+};
 
 describe("tourMap invariants (WM-17 acceptance criteria)", () => {
   it("map coverage: every coaching category (has tourData) has exactly one map entry, no orphans", () => {
@@ -54,7 +80,9 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
       expect(oneSpark.length).toBe(bothSparks.length);
       // Missing-spark branch rings the Spark button; both-sparks branch is a viewport bubble.
       expect(oneSpark[1]).toEqual({ kind: "anchor", testid: "spark-button" });
-      expect(bothSparks[1]).toEqual({ kind: "viewport", position: "top-center", image: undefined });
+      expect(bothSparks[1]).toEqual({
+        kind: "viewport", position: "top-center", image: undefined, offsetY: 37,
+      });
     }
   });
 
@@ -77,10 +105,49 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
     expect(nonTerminalViewports).toEqual([]);
   });
 
-  it("25/4 carries a popover image on its centered-top step", () => {
+  it("25/4's terminal step is a centered-top viewport bubble", () => {
     const step = tourMap["25"][4]({ sparkZoneCount: 2 })[1];
     expect(step).toMatchObject({ kind: "viewport", position: "top-center" });
-    const viewport = step as Extract<StepAnchor, { kind: "viewport" }>;
-    expect(viewport.image).toBeTruthy();
+  });
+
+  // The close button is a 30px disc translated -40%, so it protrudes 9px above the popover's
+  // border box. A viewport step flush to the top of the screen therefore renders it off-screen.
+  it("every viewport step is inset far enough below the top bar to keep the close button on screen", () => {
+    const CLOSE_BTN_OVERHANG = 9;
+    const TOP_BAR_HEIGHT = 22;
+    const steps: { key: string; offsetY?: number }[] = [];
+    for (const rs of Object.keys(tourMap)) {
+      for (const cat of Object.keys(tourMap[rs]).map(Number)) {
+        for (const ctx of CTXS) {
+          for (const step of tourMap[rs][cat](ctx)) {
+            if (step.kind === "viewport") steps.push({ key: `${rs}/${cat}`, offsetY: step.offsetY });
+          }
+        }
+      }
+    }
+    expect(steps.length).toBeGreaterThan(0);
+    const clipped = steps.filter(s => (s.offsetY ?? 0) - CLOSE_BTN_OVERHANG < TOP_BAR_HEIGHT);
+    expect(clipped.map(s => `${s.key}: offsetY=${s.offsetY ?? 0}`)).toEqual([]);
+  });
+
+  it("every popover figure is an <img> with declared dimensions that fit beside the avatar", () => {
+    const figures = emittedFigures();
+    expect(figures.map(f => f.key)).toContain("25/4");
+
+    const problems: string[] = [];
+    for (const { key, image } of figures) {
+      if (!isValidElement(image) || image.type !== "img") {
+        problems.push(`${key}: figure is not an <img>`);
+        continue;
+      }
+      const { width, height } = image.props as { width?: number; height?: number };
+      if (!width || width <= 0 || !height || height <= 0) {
+        problems.push(`${key}: figure declares width=${width} height=${height}`);
+      } else if (width > MAX_FIGURE_WIDTH) {
+        problems.push(`${key}: figure declares ${width}px wide, max is ${MAX_FIGURE_WIDTH}px`);
+      }
+    }
+    // Deduped: a factory that ignores its context emits the same figure on both branches.
+    expect(Array.from(new Set(problems))).toEqual([]);
   });
 });
