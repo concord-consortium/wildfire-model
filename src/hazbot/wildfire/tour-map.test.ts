@@ -153,7 +153,7 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
     }
     expect(nonTerminal.length).toBeGreaterThan(0);
     const undeclared = nonTerminal
-      .filter((t) => !SATISFIED_BY[t as keyof typeof SATISFIED_BY])   // SATISFIED_BY is partial over the anchors
+      .filter((t) => !SATISFIED_BY[t])
       .filter((t) => !NO_SKIP_PREDICATE.includes(t));
     expect(undeclared).toEqual([]);
   });

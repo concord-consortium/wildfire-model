@@ -29,7 +29,6 @@ export const SATISFIED_BY: Partial<Record<AnchorTestId, (sim: SimulationModel) =
 //    dropped, so a tour always has something to show.
 //  - `!step.advanceOn` restricts dropping to click-gated steps. An ungated step (a viewport
 //    bubble) is not something the student can satisfy, so it is never treated as satisfied.
-
 export function dropSatisfiedLeadingSteps(
   steps: EngineStep[], simulation: SimulationModel,
 ): EngineStep[] {

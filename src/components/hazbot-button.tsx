@@ -54,7 +54,6 @@ export function parseFeedback(raw: string): { body: string; label: string } {
   return { body: text.trim(), label };
 }
 
-
 // The Hazbot Analysis button (bottom bar), a MobX `observer` child of BottomBar.
 // Clicking it opens the coach-mark feedback panel (the effect below) and logs the
 // matched category. It reads the engine directly (getAnalysisEngine() +

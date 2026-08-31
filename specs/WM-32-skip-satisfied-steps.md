@@ -32,7 +32,7 @@ It affects all 32 coaching tours, and there were three distinct routes into the 
 - A gated step whose anchor is un-clickable renders a Continue button, so no gated step can be a dead end. Evaluated at step entry as well as on mutation. While the anchor is clickable the step stays gated exactly as before, so the affordance can never skip a step the student could have acted on.
 - The signal is reversible and per-step, so it needs its own hook: `useTargetWatcher` cancels the tour under `onTargetLost: "close"` and disconnects after firing, so it cannot report an anchor coming back live.
 - The button reads "Continue", set by the app via `nextBtnText`; the library default stays "Next".
-- Published as `0.0.1-pre.11` and repinned before the wildfire branch is pushed. `pre.11` also changes how the outline ring follows a moving target, which affects **every** anchored tour step, not only the gated ones: check the ring while scrolling, resizing, and moving panels.
+- Published as `0.0.1-pre.11` and repinned before the wildfire branch is pushed. `pre.11` also changes how the outline ring follows a moving target, which affects **every** anchored tour step rather than only the gated ones. **Verified on the merged tree** by driving 23/2 and measuring `.coachmarks-outline-ring` against its anchor's rect across five viewport sizes: the anchor moved as much as 343px horizontally and 190px vertically and the two centers stayed identical, off by 0px in both axes each time. Scrolling and opening the graph panel are not cases the app can reach: the bottom bar is fixed, so its anchors do not move under either.
 
 **The WM-46 regression fix.**
 
