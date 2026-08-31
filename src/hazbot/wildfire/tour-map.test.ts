@@ -80,7 +80,9 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
       expect(oneSpark.length).toBe(bothSparks.length);
       // Missing-spark branch rings the Spark button; both-sparks branch is a viewport bubble.
       expect(oneSpark[1]).toEqual({ kind: "anchor", testid: "spark-button" });
-      expect(bothSparks[1]).toEqual({ kind: "viewport", position: "top-center", image: undefined });
+      expect(bothSparks[1]).toEqual({
+        kind: "viewport", position: "top-center", image: undefined, offsetY: 37,
+      });
     }
   });
 
@@ -106,6 +108,26 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
   it("25/4's terminal step is a centered-top viewport bubble", () => {
     const step = tourMap["25"][4]({ sparkZoneCount: 2 })[1];
     expect(step).toMatchObject({ kind: "viewport", position: "top-center" });
+  });
+
+  // The close button is a 30px disc translated -40%, so it protrudes 9px above the popover's
+  // border box. A viewport step flush to the top of the screen therefore renders it off-screen.
+  it("every viewport step is inset far enough below the top bar to keep the close button on screen", () => {
+    const CLOSE_BTN_OVERHANG = 9;
+    const TOP_BAR_HEIGHT = 22;
+    const steps: { key: string; offsetY?: number }[] = [];
+    for (const rs of Object.keys(tourMap)) {
+      for (const cat of Object.keys(tourMap[rs]).map(Number)) {
+        for (const ctx of CTXS) {
+          for (const step of tourMap[rs][cat](ctx)) {
+            if (step.kind === "viewport") steps.push({ key: `${rs}/${cat}`, offsetY: step.offsetY });
+          }
+        }
+      }
+    }
+    expect(steps.length).toBeGreaterThan(0);
+    const clipped = steps.filter(s => (s.offsetY ?? 0) - CLOSE_BTN_OVERHANG < TOP_BAR_HEIGHT);
+    expect(clipped.map(s => `${s.key}: offsetY=${s.offsetY ?? 0}`)).toEqual([]);
   });
 
   it("every popover figure is an <img> with declared dimensions that fit beside the avatar", () => {

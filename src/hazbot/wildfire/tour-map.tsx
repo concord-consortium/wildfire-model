@@ -31,8 +31,9 @@ export type StepAnchor =
   // the Setup-panel terminal sits to the panel's RIGHT so it clears the tall panel.
   | { kind: "anchor"; testid: AnchorTestId; side?: PopoverSide; align?: PopoverAlign }
   // No-pointer bubble centered at top; no ring (a ViewportPopover has no ring).
-  // Optional figure rendered in the popover's image slot.
-  | { kind: "viewport"; position: "top-center"; image?: ReactNode };
+  // Optional figure rendered in the popover's image slot. `offsetY` insets the bubble
+  // from the top of the viewport.
+  | { kind: "viewport"; position: "top-center"; image?: ReactNode; offsetY?: number };
 
 /** Live sim state read at open time, for conditional steps. */
 export interface TourContext {
@@ -45,7 +46,12 @@ export type TourFactory = (ctx: TourContext) => StepAnchor[];
 // Shorthand builders for readability.
 const anchor = (testid: AnchorTestId, side?: PopoverSide, align?: PopoverAlign): StepAnchor =>
   ({ kind: "anchor", testid, ...(side && { side }), ...(align && { align }) });
-const viewportTop = (image?: ReactNode): StepAnchor => ({ kind: "viewport", position: "top-center", image });
+// The top bar is 22px ($topBarHeight, common.scss) and the design puts the popover's outer
+// border 15px below it. Flush to the viewport top the close button is cut off: it is a 30px
+// disc translated -40%, so it protrudes 9px above the border box and lands off-screen.
+const VIEWPORT_TOP_OFFSET = 22 + 15;
+const viewportTop = (image?: ReactNode): StepAnchor =>
+  ({ kind: "viewport", position: "top-center", image, offsetY: VIEWPORT_TOP_OFFSET });
 
 // The Setup-panel terminal bubble: anchored to the RIGHT of the panel (vertically
 // centered) rather than above it. The panel is tall (~465px) and horizontally centered
