@@ -143,6 +143,31 @@ $overflowHeight: 11px;
     margin-right: 0;
   }
 
+  // Speed bubble abuts the Start bubble (no gap). Same trick as .placeSpark /
+  // .restart: zero the right margin and the next group's -1px left margin pulls
+  // it flush.
+  .startButton {
+    margin-right: 0;
+  }
+
+  // 97 px of content inside the shared 1 px border, per the board's 97/99 group.
+  // The control fills this, so the width lives here only, as .vegetationKey does.
+  .speedControl {
+    width: 97px;
+
+    // The board's Select state turns the bubble #dfdfdf as well as the thumb's
+    // ring, and the ring is white, so on a white bubble it is invisible. Hover
+    // gets this from the `hoverable` class, but MUI takes no pointer capture
+    // (useSlider.js listens on the document), so a drag that leaves the bubble
+    // drops :hover while Mui-active stays on the thumb. This is the only selector
+    // that reaches the group from the thumb's state; the control's own stylesheet
+    // lives inside .content and cannot style an ancestor.
+    // :global is required: without it css-loader hashes Mui-active.
+    &:has(:global(.Mui-active)) {
+      background: $hoverColor;
+    }
+  }
+
   // Fireline and Helitack each get their own widgetGroup so each has a
   // rounded bubble top, per designer ("two bubbles that abut, not one
   // shared bubble"). Each inner MUI Button is locked to 65px so the
@@ -329,44 +354,19 @@ $overflowHeight: 11px;
   pointer-events: none;
 }
 
-@media (max-width: 960px) {
+// The large logo is drawn only where the row can still hold it. Its 140px floor plus the
+// controls (674) and the right container (194, set by the Hazbot button) needs 1008; the
+// small logo's 53.3 floor brings that down to 921. Swapping at anything below 1008 draws a
+// logo that does not fit and pushes the fullscreen toggle off the right edge. The two
+// queries must not both match at the boundary, or neither logo renders.
+@media (max-width: 1007px) {
   .logo {
     display: none;
   }
 }
-@media (min-width: 960px) {
+@media (min-width: 1008px) {
   .logoSmall {
     display: none;
-  }
-}
-
-.slider {
-  margin: 10px auto;
-  text-align: center;
-  font-size: 12px;
-
-  .disabled {
-    opacity: 0.25;
-
-    .thumb {
-      width: 20px;
-      height: 20px;
-      margin-left: -8.5px;
-      margin-top: -8.5px;
-    }
-  }
-  .thumb {
-    width: 20px;
-    height: 20px;
-    margin-left: -8.5px;
-    margin-top: -8.5px;
-    &:hover, &:active {
-      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.5)
-    }
-  }
-  span{
-    margin-top: 2px;
-    font-size: 9px;
   }
 }
 

@@ -528,6 +528,7 @@ describe("model controls while the Setup wizard is open", () => {
 
   // The wizard can only be open before the run starts, so Restart, Fire Line
   // and Helitack are already disabled by simulationStarted and need no guard.
+  // Spark, Clear All, Start and Speed each need one, and have a case below.
   const renderWithWizardOpen = () => {
     seedState(stores, 3);
     stores.ui.showTerrainUI = true;
@@ -547,6 +548,15 @@ describe("model controls while the Setup wizard is open", () => {
   it("disables Start", () => {
     renderWithWizardOpen();
     expectButtonState("start-button", false);
+  });
+
+  // Not expectButtonState: that calls toBeDisabled() on the element carrying the
+  // testid, and the Slider's is a non-form span. MUI puts disabled on its hidden
+  // range input.
+  it("disables Speed", () => {
+    renderWithWizardOpen();
+    // eslint-disable-next-line testing-library/no-node-access
+    expect(screen.getByTestId("speed-control").querySelector("input")).toBeDisabled();
   });
 
   it("leaves Setup enabled and marks it selected", () => {
