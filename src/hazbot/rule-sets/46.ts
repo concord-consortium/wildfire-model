@@ -40,9 +40,9 @@ export const ruleSet46: RuleSet<WildfireDefaults> = {
       feedbackRound3: `Hazbot: In this investigation, you must try to contain the fire with **helitacks** and **firelines**! Scroll down and see if you can answer the questions!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
-2. Fireline and Helitack buttons outlined (both are disabled) and Start button outlined; coach mark points to Fireline/Helitack buttons`,
+2. Start button outlined; coach mark points to Start button`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 2)
-2. Hazbot: Add both a **Fireline** and a **Helitack** while the model is running. Click **Start** to begin! (Step 2 of 2)
+2. Hazbot: After you click **Start,** add both a **Fireline** and a **Helitack** while the model is running. (Step 2 of 2)
 [Got it!]`,
       expression: "ranSimulation WITH DefaultVars AND NOT (Fireline OR Helitack)",
     },
@@ -51,7 +51,7 @@ export const ruleSet46: RuleSet<WildfireDefaults> = {
       studentAction: "Ran with original settings and with at least one fireline or helitack, but without first running with original settings with neither fireline nor helitack",
       feedback: `Hazbot: Did you try running the model **without firelines and helitacks** to see where the fire spreads first?
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the instructions under "Concord Wildfire Investigation" again.
+      feedbackRound2: `Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again!
 [Show me]`,
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
@@ -100,7 +100,7 @@ export const ruleSet46: RuleSet<WildfireDefaults> = {
   repeatFeedback: {
     id: 100,
     studentAction: "Student repeats run after success and wants more feedback from Hazbot",
-    feedback: `Hazbot: Make sure you have answered all the questions on this page!
+    feedback: `Hazbot: Great job on this investigation! Keep working through the activity!
 [Got it!]`,
   },
 };

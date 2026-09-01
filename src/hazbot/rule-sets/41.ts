@@ -57,7 +57,7 @@ without changed variables.`,
   repeatFeedback: {
     id: 100,
     studentAction: "Student repeats run after success and wants more feedback from Hazbot",
-    feedback: `Hazbot: Make sure you have answered all the questions on this page!
+    feedback: `Hazbot: Great job on this investigation! Keep working through the activity!
 [Got it!]`,
   },
 };

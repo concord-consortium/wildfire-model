@@ -28,7 +28,7 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
 3. Next button on the Setup panel outlined; coach mark points to Next button`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
 2. Hazbot: Click the **Setup** button. (Step 2 of 3)
-3. Hazbot: Set one zone to forest and the other zone to forest with suppression. Then run the model again. (Step 3 of 3)
+3. Hazbot: Set one zone to **forest** and the other zone to **forest with suppression**. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation AND NOT setAnyVar",
     },
@@ -37,7 +37,7 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with different terrains between the zones",
       feedback: `Hazbot: To compare forest types, make sure **both zones have mountains. Do not change the terrain.**
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the instructions under "Tree Survival Investigation" again.
+      feedbackRound2: `Hazbot: Go up and look at the instructions under "Tree Survival Investigation" again. Do both zones have mountains?
 [Show me]`,
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
@@ -46,16 +46,16 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
 2. Hazbot: Click the **Setup** button. (Step 2 of 3)
-3. Hazbot: Click each zone and make sure the terrain is mountains in both zones. Then run the model again. (Step 3 of 3)
+3. Hazbot: Click each zone and make sure the terrain is **mountains** in both zones. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "setAnyVar AND ranSimulation WITH NOT UniformTerrainTypes",
     },
     {
       id: 4,
       studentAction: "Ran the simulation with the same terrain in both zones but without assigning forest with and without suppression to each zone",
-      feedback: `Hazbot: Let’s focus on **forests with and without suppression** in the vegetation settings. Also, check the same drought level in each zone.
+      feedback: `Hazbot: Let’s focus on **forests with and without suppression** in the vegetation settings. Also, set the same **drought** level in each zone.
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the instructions under "Tree Survival Investigation" again.
+      feedbackRound2: `Hazbot: Go up and look at the instructions under "Tree Survival Investigation" again. The instructions tell you how to set up the model!
 [Show me]`,
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
@@ -64,7 +64,7 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
 3. Next button on the Setup panel outlined; coach mark points to Next button`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
 2. Hazbot: Click the **Setup** button. (Step 2 of 3)
-3. Hazbot: Set one zone to forest and the other zone to forest with suppression. And check the same drought in both zones. Then run the model again. (Step 3 of 3)
+3. Hazbot: Set one zone to **forest** and the other zone to **forest with suppression**. Also, make sure the **drought** level is the same. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "setAnyVar AND ranSimulation WITH UniformTerrainTypes AND NOT ForestWAWOSuppression",
     },
@@ -73,7 +73,7 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with forest and forest with suppression assigned but with different drought levels between the zones",
       feedback: `Hazbot: To compare forest types, make sure the both zones have the **same drought level**!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the model hint again.
+      feedbackRound2: `Hazbot: Go up and look at the instructions under "Tree Survival Investigation" again. Is your drought level the same in both zones?
 [Show me]`,
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
@@ -82,7 +82,7 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
 3. Setup panel outlined; coach mark points to Setup panel`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 3)
 2. Hazbot: Click the **Setup** button. (Step 2 of 3)
-3. Hazbot: Click each zone and make sure the drought is the same. Then run the model again. (Step 3 of 3)
+3. Hazbot: Click each zone and make sure the **drought** is the same. Then run the model again. (Step 3 of 3)
 [Got it!]`,
       expression: "ranSimulation WITH UniformTerrainTypes AND ForestWAWOSuppression AND NOT UniformDroughtLevels",
     },
@@ -91,7 +91,7 @@ export const ruleSet35: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with forest with and without suppression, same drought and terrain types between zones, but without a spark in each zone",
       feedback: `Hazbot: I don’t see a **spark in both zones.** Add one spark to each so you can compare wildfire spread.
 [Show me]`,
-      feedbackRound2: `Hazbot: Go down and look at the questions you need to answer.
+      feedbackRound2: `Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again!
 [Show me]`,
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,

@@ -19,7 +19,7 @@ export const tourData: Record<string, Record<number, TourData>> = {
     ] },
     4: { stepCount: 2, doneLabel: "Got it!", steps: [
       { text: "First, **Restart** your model." },
-      { text: "Place one spark in Zone 1 and one spark in Zone 2, then run the model again." },
+      { text: "Place a **spark** in Zone 1 and a **spark** in Zone 2, then run the model again." },
     ] },
   },
   "24": {
@@ -49,7 +49,7 @@ export const tourData: Record<string, Record<number, TourData>> = {
     ] },
     3: { stepCount: 2, doneLabel: "Got it!", steps: [
       { text: "**Restart** your model first." },
-      { text: "Place one spark in Zone 1 and one spark in Zone 2, then run the model again." },
+      { text: "Move your sparks! Put one **spark** in Zone 1 and one **spark** in Zone 2, then run the model again." },
     ] },
     4: { stepCount: 2, doneLabel: "Got it!", steps: [
       { text: "**Restart** your model first." },
@@ -86,12 +86,12 @@ export const tourData: Record<string, Record<number, TourData>> = {
     2: { stepCount: 3, doneLabel: "Got it!", steps: [
       { text: "First, **Restart** your model." },
       { text: "Click the **Setup** button." },
-      { text: "Click each zone and change the vegetation to forest in one zone and forest with suppression in the other zone. Then run the model again." },
+      { text: "Click each zone and change the vegetation to **forest** in one zone and **forest with suppression** in the other zone. Then run the model again." },
     ] },
     3: { stepCount: 3, doneLabel: "Got it!", steps: [
       { text: "First, **Restart** your model." },
       { text: "Click the **Setup** button." },
-      { text: "Click each zone and change the vegetation to forest in one zone and forest with suppression in the other zone. Then run the model again." },
+      { text: "Click each zone and change the vegetation to **forest** in one zone and **forest with suppression** in the other zone. Then run the model again." },
     ] },
     4: { stepCount: 2, doneLabel: "Got it!", steps: [
       { text: "First, **Restart** your model." },
@@ -100,7 +100,7 @@ export const tourData: Record<string, Record<number, TourData>> = {
     5: { stepCount: 3, doneLabel: "Got it!", steps: [
       { text: "First, **Restart** your model." },
       { text: "Click the **Setup** button." },
-      { text: "Click each zone and adjust the drought level. Then run the model again." },
+      { text: "Click each zone and adjust the drought to be the **same** level. Then run the model again." },
     ] },
   },
   "34": {
@@ -124,22 +124,22 @@ export const tourData: Record<string, Record<number, TourData>> = {
     2: { stepCount: 3, doneLabel: "Got it!", steps: [
       { text: "First, **Restart** your model." },
       { text: "Click the **Setup** button." },
-      { text: "Set one zone to forest and the other zone to forest with suppression. Then run the model again." },
+      { text: "Set one zone to **forest** and the other zone to **forest with suppression**. Then run the model again." },
     ] },
     3: { stepCount: 3, doneLabel: "Got it!", steps: [
       { text: "First, **Restart** your model." },
       { text: "Click the **Setup** button." },
-      { text: "Click each zone and make sure the terrain is mountains in both zones. Then run the model again." },
+      { text: "Click each zone and make sure the terrain is **mountains** in both zones. Then run the model again." },
     ] },
     4: { stepCount: 3, doneLabel: "Got it!", steps: [
       { text: "First, **Restart** your model." },
       { text: "Click the **Setup** button." },
-      { text: "Set one zone to forest and the other zone to forest with suppression. And check the same drought in both zones. Then run the model again." },
+      { text: "Set one zone to **forest** and the other zone to **forest with suppression**. Also, make sure the **drought** level is the same. Then run the model again." },
     ] },
     5: { stepCount: 3, doneLabel: "Got it!", steps: [
       { text: "First, **Restart** your model." },
       { text: "Click the **Setup** button." },
-      { text: "Click each zone and make sure the drought is the same. Then run the model again." },
+      { text: "Click each zone and make sure the **drought** is the same. Then run the model again." },
     ] },
     6: { stepCount: 2, doneLabel: "Got it!", steps: [
       { text: "First, **Restart** your model." },
@@ -159,7 +159,7 @@ export const tourData: Record<string, Record<number, TourData>> = {
     ] },
     3: { stepCount: 2, doneLabel: "Got it!", steps: [
       { text: "First, **Restart** your model." },
-      { text: "Add both a **Fireline** and a **Helitack** while the model is running. Click **Start** to begin!" },
+      { text: "After you click **Start,** add both a **Fireline** and a **Helitack** while the model is running." },
     ] },
   },
   "46": {
@@ -169,7 +169,7 @@ export const tourData: Record<string, Record<number, TourData>> = {
     ] },
     3: { stepCount: 2, doneLabel: "Got it!", steps: [
       { text: "First, **Restart** your model." },
-      { text: "Add both a **Fireline** and a **Helitack** while the model is running. Click **Start** to begin!" },
+      { text: "After you click **Start,** add both a **Fireline** and a **Helitack** while the model is running." },
     ] },
     4: { stepCount: 2, doneLabel: "Got it!", steps: [
       { text: "First, **Restart** your model." },

@@ -48,9 +48,9 @@ in a single or multiple trials.`,
       feedbackRound3: `Hazbot: In this investigation, you must try to contain the fire with **helitacks** and **firelines**! Scroll down and see if you can answer the questions!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
-2. Fireline and Helitack buttons outlined (both are disabled) and Start button outlined; coach mark points to Fireline/Helitack buttons`,
+2. Start button outlined; coach mark points to Start button`,
       arrowText: `1. Hazbot: First, **Restart** your model. (Step 1 of 2)
-2. Hazbot: Add both a **Fireline** and a **Helitack** while the model is running. Click **Start** to begin! (Step 2 of 2)
+2. Hazbot: After you click **Start,** add both a **Fireline** and a **Helitack** while the model is running. (Step 2 of 2)
 [Got it!]`,
       expression: "NOT (usedFireline AND usedHelitack) AND ranSimulation WITH DefaultVars",
     },

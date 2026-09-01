@@ -12,13 +12,10 @@ import mountainsImg from "../../assets/hazbot/mountains-with-labels.png";
 // FACTORY (not a literal array) because a few categories branch on live sim state
 // (spark coverage), so the emitted steps are computed at open time.
 //
-// Anchors are derived from each category's authored `visualFeedback`. Three cues are
+// Anchors are derived from each category's authored `visualFeedback`. Two cues are
 // rendered in a simplified v1 form per the spec's resolved decoupled-ring decision:
 //   - 25/2 and the conditional spark steps (23/4, 33/4, 35/6) anchor the bubble +
 //     ring to the Spark button rather than "centered top (no pointer)" + decoupled ring;
-//   - 44/3 and 46/3 ring the Start button, the only control named in their step that is
-//     live at that point (fireLineEnabled needs a run in progress, and both tours open
-//     on Restart);
 //   - 34's `0.` intensity-scale pointer is deferred (the tour is its 3 arrowText steps).
 // The authored instruction text is unaffected in every case.
 
