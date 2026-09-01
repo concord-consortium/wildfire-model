@@ -310,8 +310,8 @@ export const HazbotButton = observer(function HazbotButton() {
 
   // Writing the flag rather than destroying the engines keeps this a no-op when nothing
   // is open, since MobX suppresses a same-value assignment: no reaction, no re-render and
-  // no log. Lowering the flag is the whole teardown: the panel effect's closed branch
-  // clears `hazbotTourActive` from there.
+  // no log. Lowering the flag is the whole teardown: it re-runs the panel effect, whose
+  // cleanup destroys the engines and clears `hazbotTourActive`.
   useEffect(() => {
     if (!runInProgress) return;
     ui.showHazbotFeedback = false;

@@ -158,6 +158,32 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
     expect(undeclared).toEqual([]);
   });
 
+  // `terrain-next` carries no skip predicate, and it is safe only because the skip can
+  // never reach it: every occurrence sits behind `terrain-button`, which has no predicate
+  // either, so the scan always stops in front of it. That is a property of the tour data
+  // rather than of the skip, so nothing else would notice it changing.
+  it("never places terrain-next in a tour without terrain-button ahead of it", () => {
+    const offenders: string[] = [];
+    let examined = 0;
+    for (const rs of Object.keys(tourMap)) {
+      for (const cat of Object.keys(tourMap[rs]).map(Number)) {
+        for (const ctx of CTXS) {
+          const steps = tourMap[rs][cat](ctx);
+          steps.forEach((step, i) => {
+            if (step.kind !== "anchor" || step.testid !== "terrain-next") return;
+            examined++;
+            const precededByTerrainButton = steps
+              .slice(0, i)
+              .some((s) => s.kind === "anchor" && s.testid === "terrain-button");
+            if (!precededByTerrainButton) offenders.push(`${rs}/${cat} step ${i + 1}`);
+          });
+        }
+      }
+    }
+    expect(examined).toBeGreaterThan(0);
+    expect(offenders).toEqual([]);
+  });
+
   // The skip can promote any step to be the tour's opener, so a step that opens with a
   // connective would point back at one the student never saw. A hit means read the line,
   // not that the line is certainly wrong.
