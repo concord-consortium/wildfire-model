@@ -127,13 +127,13 @@ export const HazbotButton = observer(function HazbotButton() {
   const avatarRef = useRef<HTMLSpanElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    // Two writers clear `hazbotTourActive`, and they cover different moments. The effect
-    // cleanup below clears it during teardown and unmount, and runs first when an open
-    // panel is taken down from outside the component (a run start, Clear All). This
-    // closed branch then holds the invariant on every later render: the flag is false
-    // whenever the component renders with no panel open. Both are needed because the
-    // store outlives the component, and the second is what keeps `.noHazbot` off the
-    // render that reopens the panel.
+    // Four places clear `hazbotTourActive`, each owning a different moment: this closed
+    // branch, the fresh-open reset just below, the tour's own onDestroyed, and the effect
+    // cleanup. None is redundant, because the store outlives the component. The cleanup
+    // is the one that runs first when an open panel is taken down from outside the
+    // component (a run start, Clear All); this branch then holds the invariant on every
+    // later render, which is what keeps `.noHazbot` off the render that reopens the
+    // panel.
     if (!ui.showHazbotFeedback) { ui.hazbotTourActive = false; return; }
     if (!avatarRef.current) return;
     ui.hazbotTourActive = false; // fresh open starts in the intro (enlarged-robot) state

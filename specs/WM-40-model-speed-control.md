@@ -40,7 +40,10 @@ browser, on separate page loads: 45.2, 179.1 and 718.1 model minutes per real se
 
 **The graph's limit is not only about dropped samples, and the other half widens with the multiplier.**
 The amendment above argues the 5x ceiling from sample loss, which is the half a longer tick does not
-reach at 4x. The half it does reach is a sampling offset. `graph.tsx` records its acres reading in an
+reach at 4x. The half it does reach is a sampling offset. **It is pre-existing behavior, not
+introduced by the retune**: `graph.tsx`, `chart-store.ts` and the burn-rate computation in
+`getOutcomeData` are all untouched by this work. What the retune changes is its size.
+`graph.tsx` records its acres reading in an
 effect keyed on `simulation.timeInHours`, so the reading is taken on the first tick *after* the hour
 rolls over, a varying distance past the boundary. `getOutcomeData` then divides by
 `rawData[i].time - rawData[i - 1].time`, which is always exactly 1 because `IRawBurnDataPoint.time`
@@ -50,8 +53,10 @@ whole hour, and that offset scales directly with the multiplier: roughly 3.0 mod
 
 **No index shifts**, so the logged `burnRates` array keeps its "index 0 = hour 1" contract and the
 graph is unaffected. How much it moves any single burn-rate value depends on how fast acreage is
-changing at that moment, so it is not a fixed multiple, but the offset itself is four times wider
-than it was. **Unticketed and deliberately not fixed here**: it changes the meaning of a field
+changing at that moment, so it is not a fixed multiple. Against the **previously shipped** fastest
+tick it has doubled, 23.93 minutes at the old 2x to 47.87 at the new 4x; the four-fold figure is the
+1x-to-4x ratio within the current set, which is the wrong comparison for asking what this change
+did. **Unticketed and deliberately not fixed here**: it changes the meaning of a field
 already logged under a merged story, so it wants its own ticket. The fix is small, storing
 `simulation.time` alongside the whole hour and dividing by the real elapsed interval, with no change
 to the graph.
