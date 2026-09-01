@@ -19,8 +19,7 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with only default values.",
       feedback: `Hazbot: Looks like you haven’t changed the **Setup** yet. I can help!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the instructions under "Drought Investigation" again. The instructions tell you how to set up the model!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go up and look at the instructions under \"Drought Investigation\" again. The instructions tell you how to set up the model! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
@@ -37,8 +36,7 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with incorrect zone setup values",
       feedback: `Hazbot: Hmm, it looks like your zone setups do not match the photos. Let's change that so we can compare zones!
 [Show me]`,
-      feedbackRound2: `Hazbot: If you need help setting up the model, go up and look at the model hint again!
-[Show me]`,
+      feedbackRound2: "Hazbot: If you need help setting up the model, go up and look at the model hint again! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
@@ -55,8 +53,7 @@ export const ruleSet23: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with correct zone setups but without one spark in each zone.",
       feedback: `Hazbot: I don't see a spark in each zone. Let's make sure that **both zones** have one spark!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button

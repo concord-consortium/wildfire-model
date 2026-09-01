@@ -19,8 +19,7 @@ export const ruleSet44: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with a changed vegetation type, drought, or wind.",
       feedback: `Hazbot: Looks like you changed the Setup. Let’s run the model using the original settings!
 [Show me]`,
-      feedbackRound2: `Hazbot: If you have changed the model setup, click **Clear All** to reset the model and run it again!
-[Show me]`,
+      feedbackRound2: "Hazbot: If you have changed the model setup, click **Clear All** to reset the model and run it again! [Okay]",
       feedbackRound3: `Hazbot: In this investigation, you will run the model **without** changing the setup! Scroll down and look at the questions!
 [Okay]`,
       visualFeedback: `1. Clear All button outlined; coach mark points to Clear All button
@@ -43,8 +42,7 @@ with helitacks only
 in a single or multiple trials.`,
       feedback: `Hazbot: Try using both the **firelines and helitacks!**
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the instructions under "Fire Containment Investigation" again. Try using **helitacks** and **firelines** to contain the fire!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go up and look at the instructions under \"Fire Containment Investigation\" again. Try using **helitacks** and **firelines** to contain the fire! [Okay]",
       feedbackRound3: `Hazbot: In this investigation, you must try to contain the fire with **helitacks** and **firelines**! Scroll down and see if you can answer the questions!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button

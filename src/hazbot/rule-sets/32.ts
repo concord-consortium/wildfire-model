@@ -19,8 +19,7 @@ export const ruleSet32: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with default setup values only",
       feedback: `Hazbot: Looks like you haven’t changed the **Setup** yet. I can help!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the instructions under "Vegetation Investigation" again. The instructions tell you how to set up the model!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go up and look at the instructions under \"Vegetation Investigation\" again. The instructions tell you how to set up the model! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
@@ -37,8 +36,7 @@ export const ruleSet32: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with a zone setting changed but without three different vegetation types assigned (one per zone)",
       feedback: `Hazbot: Hmm, I don’t see all vegetation types. Let’s set the zones to grass, shrub, and forest!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the instructions under "Vegetation Investigation" again. Did you set each zone to a different type of vegetation?
-[Show me]`,
+      feedbackRound2: "Hazbot: Go up and look at the instructions under \"Vegetation Investigation\" again. Did you set each zone to a different type of vegetation? [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
@@ -55,8 +53,7 @@ export const ruleSet32: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with 3 different vegetation types assigned (one in each zone) and different drought levels between zones",
       feedback: `Hazbot: To compare vegetation, make sure the drought level is the same for each zone!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
@@ -73,8 +70,7 @@ export const ruleSet32: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with 3 different vegetations (one in each zone), same drought, but without one spark in each zone)",
       feedback: `Hazbot: I don’t see three sparks. Add one spark in each zone so you can compare wildfire spread!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button

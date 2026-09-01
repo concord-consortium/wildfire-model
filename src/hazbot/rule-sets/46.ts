@@ -19,8 +19,7 @@ export const ruleSet46: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with changed vegetation type, drought, or wind.",
       feedback: `Hazbot: Looks like you changed the Setup. Let’s run the model using the original settings!
 [Show me]`,
-      feedbackRound2: `Hazbot: If you have changed the model setup, click **Clear All** to reset the model and run it again!
-[Show me]`,
+      feedbackRound2: "Hazbot: If you have changed the model setup, click **Clear All** to reset the model and run it again! [Okay]",
       feedbackRound3: `Hazbot: In this investigation, you will run the model **without** changing the setup! Scroll down and look at the questions!
 [Okay]`,
       visualFeedback: `1. Clear All button outlined; coach mark points to Clear All button
@@ -35,8 +34,7 @@ export const ruleSet46: RuleSet<WildfireDefaults> = {
       studentAction: "Ran with original settings and with neither fireline nor helitack (but did not do the next step of running with fireline or helitack yet)",
       feedback: `Hazbot: Try using **firelines and helitacks** to contain the fire!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the instructions under "Concord Wildfire Investigation" again. Try using **helitacks** and **firelines** to contain the fire!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go up and look at the instructions under \"Concord Wildfire Investigation\" again. Try using **helitacks** and **firelines** to contain the fire! [Okay]",
       feedbackRound3: `Hazbot: In this investigation, you must try to contain the fire with **helitacks** and **firelines**! Scroll down and see if you can answer the questions!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
@@ -51,8 +49,7 @@ export const ruleSet46: RuleSet<WildfireDefaults> = {
       studentAction: "Ran with original settings and with at least one fireline or helitack, but without first running with original settings with neither fireline nor helitack",
       feedback: `Hazbot: Did you try running the model **without firelines and helitacks** to see where the fire spreads first?
 [Show me]`,
-      feedbackRound2: `Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart the model; coach mark points to Restart button

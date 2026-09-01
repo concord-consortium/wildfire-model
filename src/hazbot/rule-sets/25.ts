@@ -19,8 +19,7 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with only one spark",
       feedback: `Hazbot: I see only 1 spark. Make sure **each zone** has a spark!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the instructions under "Mountain Investigation" again. The instructions tell you how to set up the model!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go up and look at the instructions under \"Mountain Investigation\" again. The instructions tell you how to set up the model! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
@@ -35,8 +34,7 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with two sparks in the same zone.",
       feedback: `Hazbot: I see 2 sparks in the same zone. Let's make sure that **each zone** has 1 spark!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the instructions under "Mountain Investigation" again. The instructions tell you how to set up the model!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go up and look at the instructions under \"Mountain Investigation\" again. The instructions tell you how to set up the model! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
@@ -51,8 +49,7 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation and placed two sparks, but not at the top and bottom of the mountain",
       feedback: `Hazbot: Make sure to place one spark at the bottom of a mountain and one at the top!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the hints under "Mountain Investigation" again. The hint will help you decide where to place your sparks!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go up and look at the hints under \"Mountain Investigation\" again. The hint will help you decide where to place your sparks! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
@@ -67,8 +64,7 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with one spark at the top and one at the bottom of the mountain but with different zone setups.",
       feedback: `Hazbot: Looks like the two zones are different. Make sure they have the same vegetation and drought!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button

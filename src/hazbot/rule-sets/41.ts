@@ -19,8 +19,7 @@ export const ruleSet41: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with a changed vegetation type, drought, or wind.",
       feedback: `Hazbot: Let’s run the model using the original settings!
 [Show me]`,
-      feedbackRound2: `Hazbot: If you have changed the model setup, click **Clear All** to reset the model and run it again!
-[Show me]`,
+      feedbackRound2: "Hazbot: If you have changed the model setup, click **Clear All** to reset the model and run it again! [Okay]",
       feedbackRound3: `Hazbot: In this investigation, you will run the model 3 times **without** changing the setup! Scroll down to take a snapshot of your model!
 [Okay]`,
       visualFeedback: `1. Clear All button outlined; coach mark points to Clear All button

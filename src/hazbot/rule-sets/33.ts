@@ -19,8 +19,7 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with default setup values only",
       feedback: `Hazbot: Looks like you haven’t changed the **Setup** yet. I can help!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the instructions under "Fire Suppression Investigation" again. The instructions tell you how to set up the model!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go up and look at the instructions under \"Fire Suppression Investigation\" again. The instructions tell you how to set up the model! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
@@ -37,8 +36,7 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with other zone setup variables changed but without assigning forest with and without suppression",
       feedback: `Hazbot: Don't forget to compare the two types of forest. I can help!
 [Show me]`,
-      feedbackRound2: `Hazbot: If you need help setting up the model, go up and look at the model hint again!
-[Show me]`,
+      feedbackRound2: "Hazbot: If you need help setting up the model, go up and look at the model hint again! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
@@ -55,8 +53,7 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with zones with forest and forest w/ suppression, and a spark not placed in each zone",
       feedback: `Hazbot: I do not see a spark in each zone. Let’s put one in each so you can compare wildfire spread.
 [Show me]`,
-      feedbackRound2: `Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
@@ -73,8 +70,7 @@ export const ruleSet33: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with zones with forest and forest w/ suppression, a spark placed in each zone, but different drought between the zones",
       feedback: `Hazbot: To compare forest types, make sure the drought level is the same in each zone!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button

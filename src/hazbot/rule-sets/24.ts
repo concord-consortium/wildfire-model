@@ -19,8 +19,7 @@ export const ruleSet24: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with only default values.",
       feedback: `Hazbot: Looks like you haven’t changed the **Setup** yet. I can help!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the instructions under "Wind Investigation" again. The instructions tell you how to set up the model!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go up and look at the instructions under \"Wind Investigation\" again. The instructions tell you how to set up the model! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
@@ -39,8 +38,7 @@ export const ruleSet24: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation with zone setups changed but without wind speed or wind direction changed.",
       feedback: `Hazbot: Let’s focus on wind. You can change the wind in the model **Setup**!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the instructions under "Wind Investigation" again. The instructions tell you how to set up the model!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go up and look at the instructions under \"Wind Investigation\" again. The instructions tell you how to set up the model! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
@@ -59,8 +57,7 @@ export const ruleSet24: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation once with a different wind speed or a direction",
       feedback: `Hazbot: Keep going! Set up the model with **different wind settings** to compare!
 [Show me]`,
-      feedbackRound2: `Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, try changing the wind settings and run the model again!
-[Show me]`,
+      feedbackRound2: "Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, try changing the wind settings and run the model again! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
