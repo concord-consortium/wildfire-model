@@ -17,7 +17,7 @@ interface IProps {
 //
 // `track={false}` is load-bearing: MUI counts only the selected value as an active
 // mark in the trackless mode, where a visible track marks every value at or below
-// it and would bold 0.5x alongside 1x.
+// it and would bold every slower tick alongside the selected one.
 export const SpeedControl = observer(function WrappedComponent({ disabled }: IProps) {
   const { simulation } = useStores();
 

@@ -19,8 +19,7 @@ export const ruleSet34: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation(s) with default setup values only",
       feedback: `Hazbot: Looks like you haven’t changed the **Setup** yet. What conditions do you think will produce a **high intensity fire**?
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the instructions under "Fire Intensity Investigation" again.
-[Show me]`,
+      feedbackRound2: "Hazbot: Go up and look at the instructions under \"Fire Intensity Investigation\" again. The instructions tell you how to set up the model! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `0. Arrow pointing to the Intensity scale
@@ -38,8 +37,7 @@ export const ruleSet34: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation, with drought or wind changed but vegetation unchanged.",
       feedback: `Hazbot: Keep experimenting! Try different types of vegetation to produce an even more **high intensity fire**?
 [Show me]`,
-      feedbackRound2: `Hazbot: Go up and look at the model hint again.
-[Show me]`,
+      feedbackRound2: "Hazbot: Go up and look at the instructions under \"Fire Intensity Investigation\" again. Have you tried different vegetation? [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `0. Arrow pointing to the Intensity scale
@@ -57,8 +55,7 @@ export const ruleSet34: RuleSet<WildfireDefaults> = {
       studentAction: "Ran the simulation, with vegetation changed but not wind or drought changed.",
       feedback: `Hazbot: Great job experimenting with different types of vegetation. Try changing the drought level or wind to produce an even more **high intensity fire!**
 [Show me]`,
-      feedbackRound2: `Hazbot: Go down and look at the questions you need to answer.
-[Show me]`,
+      feedbackRound2: "Hazbot: Go down and look at the questions. Can you answer the questions with what you have learned so far? If not, come back, review the instructions, and run again! [Okay]",
       feedbackRound3: `Hazbot: I'm all out of ideas! Please ask your teacher or a classmate for help!
 [Okay]`,
       visualFeedback: `0. Arrow pointing to the Intensity scale

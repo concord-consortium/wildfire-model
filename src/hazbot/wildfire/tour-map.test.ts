@@ -1,8 +1,8 @@
 import { ReactNode, isValidElement } from "react";
 import { tourMap, TourContext } from "./tour-map";
 import { tourData } from "./tour-data.generated";
-import { ANCHOR_TESTIDS } from "./anchor-testids";
-import { SATISFIED_BY } from "../../components/hazbot-button";
+import { ANCHOR_TESTIDS, AnchorTestId } from "./anchor-testids";
+import { SATISFIED_BY } from "./satisfied-steps";
 
 // Exercise both branches of every conditional factory.
 const CTXS: TourContext[] = [{ sparkZoneCount: 1 }, { sparkZoneCount: 2 }];
@@ -109,7 +109,7 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
   // Every tour opens on Restart or Clear All, both of which leave the run stopped, so a
   // control that only enables mid-run is dead for the whole tour. Anchoring a step to one
   // rings a button the student cannot click.
-  const NEEDS_A_RUN_IN_PROGRESS = ["fireline-button", "helitack-button"];
+  const NEEDS_A_RUN_IN_PROGRESS: AnchorTestId[] = ["fireline-button", "helitack-button"];
 
   it("no step anchors a control that only enables while a run is in progress", () => {
     const offenders: string[] = [];
@@ -132,12 +132,13 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
 
   // Anchors that can open a tour but deliberately carry no SATISFIED_BY predicate:
   // `terrain-button` is only dead in a state where `restart-button` is still live, so a
-  // tour never reaches it as a droppable opener, and `terrain-next` lives inside the
-  // Setup panel, which is closed whenever a tour is built.
-  const NO_SKIP_PREDICATE = ["terrain-button", "terrain-next"];
+  // tour never reaches it as a droppable opener, and every `terrain-next` step is
+  // preceded by `terrain-button`, which has no predicate either, so the skip always
+  // stops there and can never promote `terrain-next` to the front of a tour.
+  const NO_SKIP_PREDICATE: AnchorTestId[] = ["terrain-button", "terrain-next"];
 
   it("every non-terminal anchor either has a skip predicate or is a declared omission", () => {
-    const nonTerminal: string[] = [];
+    const nonTerminal: AnchorTestId[] = [];
     for (const rs of Object.keys(tourMap)) {
       for (const cat of Object.keys(tourMap[rs]).map(Number)) {
         for (const ctx of CTXS) {
@@ -152,9 +153,35 @@ describe("tourMap invariants (WM-17 acceptance criteria)", () => {
     }
     expect(nonTerminal.length).toBeGreaterThan(0);
     const undeclared = nonTerminal
-      .filter((t) => !SATISFIED_BY[t as keyof typeof SATISFIED_BY])
+      .filter((t) => !SATISFIED_BY[t])
       .filter((t) => !NO_SKIP_PREDICATE.includes(t));
     expect(undeclared).toEqual([]);
+  });
+
+  // `terrain-next` carries no skip predicate, and it is safe only because the skip can
+  // never reach it: every occurrence sits behind `terrain-button`, which has no predicate
+  // either, so the scan always stops in front of it. That is a property of the tour data
+  // rather than of the skip, so nothing else would notice it changing.
+  it("never places terrain-next in a tour without terrain-button ahead of it", () => {
+    const offenders: string[] = [];
+    let examined = 0;
+    for (const rs of Object.keys(tourMap)) {
+      for (const cat of Object.keys(tourMap[rs]).map(Number)) {
+        for (const ctx of CTXS) {
+          const steps = tourMap[rs][cat](ctx);
+          steps.forEach((step, i) => {
+            if (step.kind !== "anchor" || step.testid !== "terrain-next") return;
+            examined++;
+            const precededByTerrainButton = steps
+              .slice(0, i)
+              .some((s) => s.kind === "anchor" && s.testid === "terrain-button");
+            if (!precededByTerrainButton) offenders.push(`${rs}/${cat} step ${i + 1}`);
+          });
+        }
+      }
+    }
+    expect(examined).toBeGreaterThan(0);
+    expect(offenders).toEqual([]);
   });
 
   // The skip can promote any step to be the tour's opener, so a step that opens with a

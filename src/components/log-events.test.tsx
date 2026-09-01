@@ -9,6 +9,7 @@ import { Vector2 } from "three";
 import { act } from "react-dom/test-utils";
 import { reaction } from "mobx";
 import { Interaction } from "../models/ui";
+import { SPEEDS, DEFAULT_SPEED_INDEX } from "../models/simulation";
 import { renderFireLineInteraction, terrainPointerEvent } from "./view-3d/fire-line-interaction-test-helpers";
 import { useFireLinePlacementCancel } from "./use-fire-line-placement-cancel";
 
@@ -329,12 +330,18 @@ describe("Log events", () => {
 
       // eslint-disable-next-line testing-library/no-node-access
       const input = screen.getByTestId("speed-control").querySelector("input")!;
-      fireEvent.change(input, { target: { value: "2" } });
+      const fastest = SPEEDS.length - 1;
+      expect(fastest).not.toBe(DEFAULT_SPEED_INDEX);   // or the move logs nothing
+      fireEvent.change(input, { target: { value: String(fastest) } });
 
       const call = mockLog.mock.calls.find((c: unknown[]) => c[0] === "SpeedChanged");
       expect(call).toBeDefined();
-      expect(call[1]).toEqual({ previousMultiplier: 1, multiplier: 2, label: "2x" });
-      expect(stores.simulation.speedIndex).toBe(2);
+      expect(call[1]).toEqual({
+        previousMultiplier: SPEEDS[DEFAULT_SPEED_INDEX].multiplier,
+        multiplier: SPEEDS[fastest].multiplier,
+        label: SPEEDS[fastest].label
+      });
+      expect(stores.simulation.speedIndex).toBe(fastest);
     });
   });
 

@@ -32,14 +32,21 @@ const DEFAULT_ZONE_DIVISION = {
 // MUI positions a mark at valueToPercent(mark.value, min, max), so values of
 // 0.5 / 1 / 2 would put the middle tick at 33% of the rail instead of half way.
 //
-// `label` is deliberately its own field rather than a formatting of `multiplier`.
-// The two are allowed to diverge, so that the pace can be retuned (0.4 behind a
-// "0.5x" tick, say) without redrawing the artboard. Nothing should assert that a
-// label agrees with its multiplier.
+// `label` is deliberately its own field rather than a formatting of `multiplier`,
+// and the outer two ticks genuinely diverge: they run at a quarter and four times
+// the authored pace while reading "0.5x" and "2x". That is intentional: the student
+// only needs to know they picked slower or faster. Do not "correct" a label to match
+// its multiplier, and do not assert that the two agree.
+//
+// The fastest multiplier is bounded by the graph, not by the fire model: it samples
+// once per model hour, so a per-tick timestep over 60 model minutes drops a sample
+// and shifts every later index of the logged `burnRates` against its "index 0 =
+// hour 1" contract. 5x is the last multiplier that stays inside the hour; see the
+// hour-boundary case in `speed.test.ts`, which pins where that wall is.
 export const SPEEDS = [
-  { multiplier: 0.5, label: "0.5x" },
+  { multiplier: 0.25, label: "0.5x" },
   { multiplier: 1, label: "1x" },
-  { multiplier: 2, label: "2x" }
+  { multiplier: 4, label: "2x" }
 ];
 export const DEFAULT_SPEED_INDEX = 1;
 

@@ -7,7 +7,7 @@ import { getAnalysisEngine, selectFeedback, WildfireDefaults, WildfireReading } 
 import { buildTour } from "../hazbot/wildfire/build-tour";
 import { tourData } from "../hazbot/wildfire/tour-data.generated";
 import { TourContext } from "../hazbot/wildfire/tour-map";
-import { AnchorTestId } from "../hazbot/wildfire/anchor-testids";
+import { dropSatisfiedLeadingSteps } from "../hazbot/wildfire/satisfied-steps";
 import { CategorySelection, computeCategorySelectionForEngine, Engine } from "../hazbot/engine";
 import { createCoachmarksEngine, EngineHandle, EngineStep } from "@concord-consortium/coachmarks";
 import { SimulationModel } from "../models/simulation";
@@ -52,41 +52,6 @@ export function parseFeedback(raw: string): { body: string; label: string } {
   const label = token ? token[1].trim() : "";
   if (token) text = text.slice(0, token.index);
   return { body: text.trim(), label };
-}
-
-// What "already satisfied" means, per anchor. Each predicate references the getter that
-// owns that control's enabled state rather than re-deriving it, so there is one source of
-// truth. NOT the rendered `disabled` attribute: `clear-all-button` is disabled by
-// `ui.showTerrainUI` too (bottom-bar.tsx), and a control the Setup panel is suppressing is
-// not a step the student has done. An anchor with no entry here is never dropped.
-export const SATISFIED_BY: Partial<Record<AnchorTestId, (sim: SimulationModel) => boolean>> = {
-  "restart-button": (sim) => !sim.restartEnabled,      // nothing to restart
-  "clear-all-button": (sim) => !sim.reloadEnabled,     // nothing to clear
-};
-
-// Drop leading gated steps the student has already satisfied, so a re-opened tour starts at
-// the first step they have NOT done. Every tour opens with "First, Restart your model" or
-// "First, click Clear All to reset your model", and both controls disable themselves once
-// used, so a tour rebuilt from index 0 would gate on a dead button.
-//
-// Two guards, each owning a different rule:
-//  - `i < steps.length - 1` is the collapse-to-zero guarantee. The terminal step is never
-//    dropped, so a tour always has something to show.
-//  - `!step.advanceOn` restricts dropping to click-gated steps. An ungated step (a viewport
-//    bubble) is not something the student can satisfy, so it is never treated as satisfied.
-export function dropSatisfiedLeadingSteps(
-  steps: EngineStep[], simulation: SimulationModel,
-): EngineStep[] {
-  let i = 0;
-  while (i < steps.length - 1) {
-    const step = steps[i] as { target?: string; advanceOn?: unknown };
-    if (!step.target || !step.advanceOn) break;
-    const testid = step.target.match(/^\[data-testid="(.+)"\]$/)?.[1] as AnchorTestId | undefined;
-    const satisfied = testid && SATISFIED_BY[testid];
-    if (!satisfied?.(simulation)) break;
-    i++;
-  }
-  return i === 0 ? steps : steps.slice(i);
 }
 
 // The Hazbot Analysis button (bottom bar), a MobX `observer` child of BottomBar.
@@ -162,11 +127,13 @@ export const HazbotButton = observer(function HazbotButton() {
   const avatarRef = useRef<HTMLSpanElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
-    // The closed branch is the only writer that clears `hazbotTourActive` for a panel
-    // taken down from outside the component (a run start, Clear All): the tour engine's
-    // own onDestroyed clears it on the `cleanup`-skipped branch, which a programmatic
-    // teardown never reaches. Clearing it here rather than at each external writer is
-    // what keeps `.noHazbot` off the render that reopens the panel.
+    // Four places clear `hazbotTourActive`, each owning a different moment: this closed
+    // branch, the fresh-open reset just below, the tour's own onDestroyed, and the effect
+    // cleanup. None is redundant, because the store outlives the component. The cleanup
+    // is the one that runs first when an open panel is taken down from outside the
+    // component (a run start, Clear All); this branch then holds the invariant on every
+    // later render, which is what keeps `.noHazbot` off the render that reopens the
+    // panel.
     if (!ui.showHazbotFeedback) { ui.hazbotTourActive = false; return; }
     if (!avatarRef.current) return;
     ui.hazbotTourActive = false; // fresh open starts in the intro (enlarged-robot) state
@@ -343,8 +310,8 @@ export const HazbotButton = observer(function HazbotButton() {
 
   // Writing the flag rather than destroying the engines keeps this a no-op when nothing
   // is open, since MobX suppresses a same-value assignment: no reaction, no re-render and
-  // no log. Lowering the flag is the whole teardown: the panel effect's closed branch
-  // clears `hazbotTourActive` from there.
+  // no log. Lowering the flag is the whole teardown: it re-runs the panel effect, whose
+  // cleanup destroys the engines and clears `hazbotTourActive`.
   useEffect(() => {
     if (!runInProgress) return;
     ui.showHazbotFeedback = false;
