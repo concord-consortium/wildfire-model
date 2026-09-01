@@ -56,8 +56,9 @@ graph is unaffected. How much it moves any single burn-rate value depends on how
 changing at that moment, so it is not a fixed multiple. Against the **previously shipped** fastest
 tick it has doubled, 23.93 minutes at the old 2x to 47.87 at the new 4x; the four-fold figure is the
 1x-to-4x ratio within the current set, which is the wrong comparison for asking what this change
-did. **Unticketed and deliberately not fixed here**: it changes the meaning of a field
-already logged under a merged story, so it wants its own ticket. The fix is small, storing
+did. **Filed as WM-58 and deliberately not fixed here**: it changes the meaning of a field
+already logged under a merged story, so previously collected and newly collected data would stop
+meaning the same thing, which is a deliberate decision rather than a quiet correction. The fix is small, storing
 `simulation.time` alongside the whole hour and dividing by the real elapsed interval, with no change
 to the graph.
 
