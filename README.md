@@ -73,11 +73,14 @@ S3 deployment is handled by GitHub Actions using OIDC for AWS authentication. Th
 You do not need to build locally to deploy.
 
 Each branch is published at `https://models-resources.concord.org/wildfire-model/branch/<name>/index.html`.
+`https://wildfire.concord.org/` is the same content under a friendlier name, so the URLs at the top
+of this README and the ones here serve the same builds.
 
-Note that `<name>` is not always the branch name: the deploy action strips a leading story-id-shaped
-prefix, so `WM-30-model-controls` publishes to `/branch/model-controls/` and `sprint-24-review-feedback`
-to `/branch/review-feedback/`. A branch whose first segment has no number, such as
-`hazbot-content-updates`, keeps its full name. Check the deployment's URL rather than assuming.
+Note that `<name>` is not always the branch name: the deploy action strips a leading
+*letters-digits-* pair, matching `^[A-Za-z]{2,}-[0-9]+-`. So `WM-30-model-controls` publishes to
+`/branch/model-controls/` and `sprint-24-review-feedback` to `/branch/review-feedback/`, while
+`hazbot-content-updates` keeps its full name, because `content` is not a number. Check the
+deployment's URL rather than assuming.
 
 See [doc/deploy.md](doc/deploy.md) for how deploys work in this repo, and
 [deploy-setup.md in starter-projects](https://github.com/concord-consortium/starter-projects/blob/main/doc/deploy-setup.md)
@@ -112,18 +115,23 @@ Four steps. The release notes live in the [GitHub releases](https://github.com/c
    from [dev-templates](https://github.com/concord-consortium/dev-templates), rather than by hand:
 
    ```sh
-   # in a dev-templates checkout, with JIRA_USER and JIRA_TOKEN set
-   node scripts/release-notes-jira.mjs WM "WM v<version>"
+   # in a dev-templates checkout: cd scripts, npm install, and put JIRA_USER and
+   # JIRA_TOKEN in scripts/.env (the dependencies and the .env both live there,
+   # not at the repo root)
+   npm run release-notes-jira WM "<version>"
    ```
 
-   Stories become *Features & Improvements*, bugs become *Bug Fixes*, and chores, tasks and anything
-   labeled `under-the-hood` become *Under the Hood*. It warns about any issue carrying the fix
-   version that is not yet done, and flags a conflicting `no-release` label rather than dropping the
-   issue silently.
+   The fix version is the bare number, e.g. `1.6.0`. The WM project names its versions that way;
+   the `LARA v5.0.0` shape in the script's own usage message is LARA's convention, and passing it
+   here matches nothing.
 
-   **This selects on Jira fix version, and fix versions are not currently maintained** as stories are
-   completed. They have to be set on the release's stories first; with none set the script reports
-   "No stories found" and exits. Release 1.6.0 was written by hand for that reason.
+   Stories become *Features & Improvements*, bugs become *Bug Fixes*, and chores, tasks and anything
+   labeled `under-the-hood` become *Under the Hood*.
+
+   This selects on Jira fix version, so the release's stories need theirs set before you run it.
+   Read the output before pasting it: everything the query misses is dropped silently, with no
+   warning. It takes only issues that are Done or Closed *and* typed Story, Bug, Chore or Task, so
+   an unfinished story, or one filed as a Design Task or a Release, is simply absent.
 
    Paste the output into a new GitHub release on the tag, titled
    `Version <version> - released <Month> <D>, <YYYY>`. Pass `slack` as a third argument for a
@@ -147,7 +155,7 @@ Four steps. The release notes live in the [GitHub releases](https://github.com/c
    `s3://models-resources/wildfire-model/index.html`, so the tag's CI run must have finished first or
    there is nothing to copy.
 
-### Testing
+## Testing
 
 Run `npm test` to run jest tests. Run `npm run test:full` to run jest and Cypress tests.
 
