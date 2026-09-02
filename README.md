@@ -85,7 +85,7 @@ for how the AWS side is set up.
 
 ## Releasing
 
-Three steps. The release notes live in the [GitHub releases](https://github.com/concord-consortium/wildfire-model/releases);
+Four steps. The release notes live in the [GitHub releases](https://github.com/concord-consortium/wildfire-model/releases);
 `CHANGELOG.md` is an unused template and is not part of this process.
 
 1. Bump the version in `package.json` and `package-lock.json`, and commit to `master`:
@@ -129,10 +129,23 @@ Three steps. The release notes live in the [GitHub releases](https://github.com/
    `Version <version> - released <Month> <D>, <YYYY>`. Pass `slack` as a third argument for a
    Slack-formatted version to share.
 
-Pushing the tag triggers a second CI run, because [`ci.yml`](.github/workflows/ci.yml) is `on: push`
-and that matches tags. **Tagging does not publish the release build.** Promoting a version to the
-top-level `index.html` is a separate manual step: run the
-[`release.yml`](.github/workflows/release.yml) workflow via `workflow_dispatch`, giving it the tag.
+4. Publish it. Pushing the tag in step 2 triggered a second CI run, because
+   [`ci.yml`](.github/workflows/ci.yml) is `on: push` and that matches tags, and that run deployed
+   the build to `.../wildfire-model/version/<tag>/`. **Nothing is live yet**: promoting that build to
+   the top-level `index.html` is a separate manual step.
+
+   From the CLI:
+
+   ```sh
+   gh workflow run release.yml -f version=v<version>
+   ```
+
+   Or from the web UI: **Actions** tab, **Release** workflow in the left sidebar, **Run workflow**,
+   enter the tag (e.g. `v1.6.0`) in the *version* field, **Run workflow**.
+
+   Either way it copies `s3://models-resources/wildfire-model/version/<tag>/index-top.html` over
+   `s3://models-resources/wildfire-model/index.html`, so the tag's CI run must have finished first or
+   there is nothing to copy.
 
 ### Testing
 
