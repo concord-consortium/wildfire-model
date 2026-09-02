@@ -55,7 +55,7 @@ export const ruleSet25: RuleSet<WildfireDefaults> = {
       visualFeedback: `1. Restart button outlined; coach mark points to Restart button
 2. Coach mark (no pointer) with images of the bottom of a mountain and top of a mountain  plus arrows pointing to these, centered top`,
       arrowText: `1. Hazbot: **Restart** your model first. (Step 1 of 2)
-2. Hazbot: Place one spark at the **bottom of a mountain** in one zone and one spark at the **top of a mountain** in the other zone, then run the model again. (Step 2 of 2)
+2. Hazbot: Move your sparks! Place one spark at the **bottom of a mountain** in one zone and one spark at the **top of a mountain** in the other zone, then run the model again. (Step 2 of 2)
 [Got it!]`,
       expression: "ranSimulation WITH OneSparkPerZone AND NOT SparksAtTopAndBottom",
     },

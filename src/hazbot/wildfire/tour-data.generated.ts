@@ -53,7 +53,7 @@ export const tourData: Record<string, Record<number, TourData>> = {
     ] },
     4: { stepCount: 2, doneLabel: "Got it!", steps: [
       { text: "**Restart** your model first." },
-      { text: "Place one spark at the **bottom of a mountain** in one zone and one spark at the **top of a mountain** in the other zone, then run the model again." },
+      { text: "Move your sparks! Place one spark at the **bottom of a mountain** in one zone and one spark at the **top of a mountain** in the other zone, then run the model again." },
     ] },
     5: { stepCount: 3, doneLabel: "Got it!", steps: [
       { text: "First, **Restart** your model." },
