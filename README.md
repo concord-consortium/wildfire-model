@@ -16,14 +16,13 @@ https://wildfire.concord.org/branch/master/index.html
 
 Available presets:
 
-https://github.com/concord-consortium/wildfire-model/blob/production/src/presets.ts
+https://github.com/concord-consortium/wildfire-model/blob/master/src/presets.ts
 
 All the available options can be seen here (including default values):
 
-https://github.com/concord-consortium/wildfire-model/blob/production/src/config.ts
+https://github.com/concord-consortium/wildfire-model/blob/master/src/config.ts
 
-Note that these URLs point to production branch. If you're working with `master` or other branch, you might
-want to replace `production` with your branch name.
+These point at `master`. Replace `master` with a branch name to read that branch's values.
 
 The final configuration is build using default configuration, preset options and URL parameters.
 URL parameters have higher priority than preset options (so it's possible to customize a preset).
@@ -69,30 +68,94 @@ You *do not* need to build to deploy the code, that is automatic.  See more info
 
 ## Deployment
 
-Production releases to S3 are based on the contents of the /dist folder and are built automatically by Travis
-for each branch pushed to GitHub and each merge into production.
+S3 deployment is handled by GitHub Actions using OIDC for AWS authentication. The `s3-deploy` job in
+[`ci.yml`](.github/workflows/ci.yml) runs on every push and writes to `models-resources/wildfire-model/`.
+You do not need to build locally to deploy.
 
-Merges into production are deployed to https://wildfire.concord.org.
+Each branch is published at `https://models-resources.concord.org/wildfire-model/branch/<name>/index.html`.
+`https://wildfire.concord.org/` is the same content under a friendlier name, so the URLs at the top
+of this README and the ones here serve the same builds.
 
-Other branches are deployed to https://wildfire.concord.org/branch/<name>.
+Note that `<name>` is not always the branch name: the deploy action strips a leading
+*letters-digits-* pair, matching `^[A-Za-z]{2,}-[0-9]+-`. So `WM-30-model-controls` publishes to
+`/branch/model-controls/` and `sprint-24-review-feedback` to `/branch/review-feedback/`, while
+`hazbot-content-updates` keeps its full name, because `content` is not a number. Check the
+deployment's URL rather than assuming.
 
-You can view the status of all the branch deploys [here](https://travis-ci.org/concord-consortium/wildfire-model/branches).
+See [doc/deploy.md](doc/deploy.md) for how deploys work in this repo, and
+[deploy-setup.md in starter-projects](https://github.com/concord-consortium/starter-projects/blob/main/doc/deploy-setup.md)
+for how the AWS side is set up.
 
-To deploy a production release:
+## Releasing
 
-1. Increment version number in package.json
-2. Create new entry in CHANGELOG.md
-3. Run `git log --pretty=oneline --reverse <last release tag>...HEAD | grep '#' | grep -v Merge` and add contents (after edits if needed to CHANGELOG.md)
-4. Run `npm run build`
-5. Copy asset size markdown table from previous release and change sizes to match new sizes in `dist`
-6. Create `release-<version>` branch and commit changes, push to GitHub, create PR and merge
-7. Checkout master and pull
-8. Checkout production
-9. Run `git merge master --no-ff`
-10. Push production to GitHub
-11. Use https://github.com/concord-consortium/wildfire-model/releases to create a new release tag
+Four steps. The release notes live in the [GitHub releases](https://github.com/concord-consortium/wildfire-model/releases);
+`CHANGELOG.md` is an unused template and is not part of this process.
 
-### Testing
+1. Bump the version in `package.json` and `package-lock.json`, and commit to `master`:
+
+   ```sh
+   npm version <version> --no-git-tag-version
+   git commit package.json package-lock.json -m "build: Update to v<version>"
+   git push origin master
+   ```
+
+   The commit message is a bare subject with no body and no ticket id.
+
+2. Tag that commit, annotated, and push the tag:
+
+   ```sh
+   git tag -a v<version> <sha> -m "Version v<version>"
+   git push origin v<version>
+   ```
+
+   Create the tag locally rather than from the GitHub releases UI, which produces a lightweight tag.
+
+3. Generate the release notes with
+   [`release-notes-jira.mjs`](https://github.com/concord-consortium/dev-templates/blob/main/scripts/release-notes-jira.mjs)
+   from [dev-templates](https://github.com/concord-consortium/dev-templates), rather than by hand:
+
+   ```sh
+   # in a dev-templates checkout: cd scripts, npm install, and put JIRA_USER and
+   # JIRA_TOKEN in scripts/.env (the dependencies and the .env both live there,
+   # not at the repo root)
+   npm run release-notes-jira WM "<version>"
+   ```
+
+   The fix version is the bare number, e.g. `1.6.0`. The WM project names its versions that way;
+   the `LARA v5.0.0` shape in the script's own usage message is LARA's convention, and passing it
+   here matches nothing.
+
+   Stories become *Features & Improvements*, bugs become *Bug Fixes*, and chores, tasks and anything
+   labeled `under-the-hood` become *Under the Hood*.
+
+   This selects on Jira fix version, so the release's stories need theirs set before you run it.
+   Read the output before pasting it: everything the query misses is dropped silently, with no
+   warning. It takes only issues that are Done or Closed *and* typed Story, Bug, Chore or Task, so
+   an unfinished story, or one filed as a Design Task or a Release, is simply absent.
+
+   Paste the output into a new GitHub release on the tag, titled
+   `Version <version> - released <Month> <D>, <YYYY>`. Pass `slack` as a third argument for a
+   Slack-formatted version to share.
+
+4. Publish it. Pushing the tag in step 2 triggered a second CI run, because
+   [`ci.yml`](.github/workflows/ci.yml) is `on: push` and that matches tags, and that run deployed
+   the build to `.../wildfire-model/version/<tag>/`. **Nothing is live yet**: promoting that build to
+   the top-level `index.html` is a separate manual step.
+
+   From the CLI:
+
+   ```sh
+   gh workflow run release.yml -f version=v<version>
+   ```
+
+   Or from the web UI: **Actions** tab, **Release** workflow in the left sidebar, **Run workflow**,
+   enter the tag (e.g. `v1.6.0`) in the *version* field, **Run workflow**.
+
+   Either way it copies `s3://models-resources/wildfire-model/version/<tag>/index-top.html` over
+   `s3://models-resources/wildfire-model/index.html`, so the tag's CI run must have finished first or
+   there is nothing to copy.
+
+## Testing
 
 Run `npm test` to run jest tests. Run `npm run test:full` to run jest and Cypress tests.
 
@@ -119,10 +182,3 @@ Inside of your `package.json` file:
 Starter Projects are Copyright 2020 (c) by the Concord Consortium and is distributed under the [MIT license](http://www.opensource.org/licenses/MIT).
 
 See license.md for the complete license text.
-
-## Deployment
-
-S3 deployment is handled by GitHub Actions using OIDC for AWS authentication. See
-[deploy-setup.md in starter-projects](https://github.com/concord-consortium/starter-projects/blob/main/doc/deploy-setup.md)
-for how the AWS side is set up, and [doc/deploy.md](doc/deploy.md) for how deploys work
-in this repo.
