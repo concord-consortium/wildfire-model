@@ -107,7 +107,7 @@ describe("BottomBar component", () => {
     expect(stores.ui.showTerrainUI).toBe(false);
     await userEvent.click(screen.getByTestId("terrain-button"));
     expect(stores.ui.showTerrainUI).toBe(true);
-    // Cancel and Next/Create are the only ways out, so the Setup button is
+    // Cancel and Next/OK! are the only ways out, so the Setup button is
     // open-only: clicking it again must not close the wizard.
     await userEvent.click(screen.getByTestId("terrain-button"));
     expect(stores.ui.showTerrainUI).toBe(true);

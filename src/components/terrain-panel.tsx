@@ -356,7 +356,7 @@ export const TerrainPanel: React.FC<IProps> = observer(function WrappedComponent
                   Previous
                 </Button>
                 <Button className={`${css.continueButton} ${css.createButton}`} onClick={applyAndClose}>
-                  Create
+                  OK!
                 </Button>
               </div>
             </div>
