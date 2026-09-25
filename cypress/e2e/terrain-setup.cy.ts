@@ -24,7 +24,7 @@ context("Test First Page In Terrain Setup", () => {
       terrain.getTwoZoneSetup("exist");
       terrain.verifyRadioButtonChecked(0);
       terrain.verifyRadioButtonUnchecked(1);
-      terrain.getPrevButton().should("not.exist")
+      terrain.getPrevButton().should("not.exist");
       // Jest computes no styles, so the fill-less Cancel and the footer gap are
       // only observable here.
       terrain.getCancelButton()
