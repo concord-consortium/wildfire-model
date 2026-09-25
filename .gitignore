@@ -8,6 +8,7 @@ npm-error.log
 cypress/screenshots/
 cypress/downloads/
 tmp/
+.playwright-mcp/
 
 # Editors
 .idea
