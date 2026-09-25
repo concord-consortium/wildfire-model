@@ -60,11 +60,12 @@
     height: 24px;
     // The rotated variant, whose chevrons point left and right. The repo splits
     // the two by orientation: horizontal sliders take `-small`, the vertical
-    // setup-panel selectors take the unrotated `slider-thumb.svg`. 140% is what
-    // makes the asset's Outer circle exactly fill the box (20 of a 28px viewBox),
-    // which is why the wind meter uses the same figure at a different size.
-    background-image: url("../assets/slider-thumb-small.svg");
-    background-size: 140%;
+    // setup-panel selectors take the unrotated `slider-thumb.svg`. This copy's
+    // viewBox is cropped to the circle so it draws at exactly the box size:
+    // Chrome renders the 28px original unevenly at a fractional scale such as
+    // 140% of 24px.
+    background-image: url("../assets/slider-thumb-small-circle.svg");
+    background-size: 100%;
     background-position: center;
     background-repeat: no-repeat;
     background-color: transparent;
