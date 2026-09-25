@@ -128,7 +128,7 @@ Multiple categories can match simultaneously, and the **highest-numbered ✓** r
 | Goal | How |
 |------|-----|
 | Run sim with defaults | `window.test.placeSparkInZone(0)` → click **Start** |
-| Change vegetation in zone N | Open **Terrain Setup**, switch to Zone N tab (if multi-zone), click the desired vegetation label, **Next** → **Create** |
+| Change vegetation in zone N | Open **Terrain Setup**, switch to Zone N tab (if multi-zone), click the desired vegetation label, **Next** → **OK!** |
 | Change drought in zone N | Same flow, click **Mild Drought** / **Medium Drought** (Severe gated by `severeDroughtAvailable=true`) |
 | Set wind | `window.sim.setWindDirection(N); window.sim.wind.speed = M;` before clicking Start |
 | Place spark per zone | `window.test.placeSparkInZone(zoneIdx)` for each zone (uses zone centroid in model ft) |

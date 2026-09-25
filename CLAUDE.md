@@ -149,7 +149,7 @@ When testing categories that require fresh spark placement (e.g. Category 4 → 
 
 - **Don't dispatch synthetic `PointerEvent`s to the Three.js canvas.** It crashes `OrbitControls` (`releasePointerCapture: No active pointer`), surfaces a full-page error overlay, and blocks further interaction. Page reload is the only recovery. Use `window.test.*` for map interactions instead
 - **The runtime error overlay** (red panel) intercepts all clicks until dismissed. If interactions stop working, screenshot first to check for it
-- **Spark count of `2` with a disabled Spark button** typically means you're inside the Terrain Setup dialog. Walk through Next → Create to exit and re-enable Spark
+- **Spark count of `2` with a disabled Spark button** typically means you're inside the Terrain Setup dialog. Walk through Next → OK! to exit and re-enable Spark
 - **Canvas `browser_click` lands at center**, which for two-zone presets sits on the zone-0/zone-1 boundary. Don't expect it to consistently land in a specific zone — use `window.test.placeSparkInZone(zoneIdx)`
 - **Factor variables don't reset on page reload either** if you have hot-reload state preserved — fully navigate to the URL again to start clean
 - **Trivial-input rejection**: some rulesets (e.g. 23) fail closed on degenerate setups (single zone, single spark). If a category that "should" fire doesn't, check the ruleset for a guard
