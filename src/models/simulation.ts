@@ -779,6 +779,7 @@ export class SimulationModel {
     }
     this.lastHelitackTimestamp = this.time;
     this.helitackActionOrder = ++this.interventionCount;
+    this.updateCellsStateFlag();
   }
 
   @action.bound public setWindDirection(direction: number) {
