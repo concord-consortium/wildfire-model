@@ -58,8 +58,8 @@ export class TerrainSetup {
   getPrevButton() {
     return cy.get(".MuiButton-text").contains("Previous");
   }
-  getCreateButton() {
-    return cy.get(".MuiButton-text").contains("Create");
+  getOkButton() {
+    return cy.get(".MuiButton-text").contains("OK!");
   }
 
   ////////////////////////

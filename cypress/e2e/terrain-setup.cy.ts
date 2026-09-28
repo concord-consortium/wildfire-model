@@ -24,7 +24,7 @@ context("Test First Page In Terrain Setup", () => {
       terrain.getTwoZoneSetup("exist");
       terrain.verifyRadioButtonChecked(0);
       terrain.verifyRadioButtonUnchecked(1);
-      terrain.getPrevButton().should("not.exist")
+      terrain.getPrevButton().should("not.exist");
       // Jest computes no styles, so the fill-less Cancel and the footer gap are
       // only observable here.
       terrain.getCancelButton()
@@ -36,7 +36,7 @@ context("Test First Page In Terrain Setup", () => {
       terrain.getInstructions().should("exist").and("contain", "Adjust conditions in each zone");
       terrain.getAllZones().should("have.length", "3");
       terrain.getNextButton().should("be.visible").click();
-      terrain.getCreateButton().should("exist").and("be.visible").click();
+      terrain.getOkButton().should("exist").and("be.visible").click();
       modelInfo.getZoneInfo().should("have.length", "3");
       modelInfo.getZoneName(0).should("contain", "Zone 1");
       modelInfo.getZoneName(1).should("contain", "Zone 2");
@@ -55,7 +55,7 @@ context("Test First Page In Terrain Setup", () => {
       terrain.getNextButton().should("be.visible").click();
       terrain.getAllZones().should("have.length", "2");
       terrain.getNextButton().should("be.visible").click();
-      terrain.getCreateButton().should("exist").and("be.visible").click();
+      terrain.getOkButton().should("exist").and("be.visible").click();
       modelInfo.getZoneInfo().should("have.length", "2");
       modelInfo.getZoneName(0).should("contain", "Zone 1");
       modelInfo.getZoneName(1).should("contain", "Zone 2");

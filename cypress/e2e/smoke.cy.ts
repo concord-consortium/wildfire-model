@@ -90,7 +90,7 @@ context("Wildfire Smoke Test", () => {
       terrain.getPrevButton().should("exist").and("be.visible");
     // });
     // it('creates the terrain with create button', () => {
-      terrain.getCreateButton().should("exist").and("be.visible").click();
+      terrain.getOkButton().should("exist").and("be.visible").click();
     });
   });
 

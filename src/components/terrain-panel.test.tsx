@@ -382,29 +382,29 @@ describe("setupChanged", () => {
   const cancelPayload = () =>
     mockLog.mock.calls.find((c: unknown[]) => c[0] === "TerrainPanelClosed")![1];
 
-  const goToCreatePanel = async () => {
+  const goToWindPanel = async () => {
     // beforeEach sets zonesCount=2 so we start on panel 1 (zone-edit).
-    // One Next press → panel 2 (wind), where the Create button lives.
+    // One Next press → panel 2 (wind), where the OK! button lives.
     const nextButtons = screen.getAllByRole("button", { name: /next/i });
     await userEvent.click(nextButtons[nextButtons.length - 1]);
   };
 
-  const clickCreate = async () => {
-    await userEvent.click(screen.getByRole("button", { name: /create/i }));
+  const clickOk = async () => {
+    await userEvent.click(screen.getByRole("button", { name: "OK!" }));
   };
 
-  it("(a) Create with no field changes — setupChanged stays false", async () => {
+  it("(a) click OK! with no field changes — setupChanged stays false", async () => {
     render(
       <Provider stores={stores}>
         <TerrainPanel />
       </Provider>
     );
-    await goToCreatePanel();
-    await clickCreate();
+    await goToWindPanel();
+    await clickOk();
     expect(stores.simulation.setupChanged).toBe(false);
   });
 
-  it("(b) change drought, Create — setupChanged becomes true [diff-before-mutate canary]", async () => {
+  it("(b) change drought, click OK! — setupChanged becomes true [diff-before-mutate canary]", async () => {
     render(
       <Provider stores={stores}>
         <TerrainPanel />
@@ -413,8 +413,8 @@ describe("setupChanged", () => {
     // eslint-disable-next-line testing-library/no-node-access
     const droughtSlider = screen.getByTestId("drought-slider").querySelector("input")!;
     fireEvent.change(droughtSlider, { target: { value: "3" } });
-    await goToCreatePanel();
-    await clickCreate();
+    await goToWindPanel();
+    await clickOk();
     expect(stores.simulation.setupChanged).toBe(true);
     // This is the canary for the diff-before-mutate ordering. A broken
     // post-mutate implementation would produce setupChanged=false because the
@@ -422,7 +422,7 @@ describe("setupChanged", () => {
     // the wizard-local state also at the same value.
   });
 
-  it("(c) change drought, change back, Create — setupChanged stays false (empty diff)", async () => {
+  it("(c) change drought, change back, click OK! — setupChanged stays false (empty diff)", async () => {
     render(
       <Provider stores={stores}>
         <TerrainPanel />
@@ -432,8 +432,8 @@ describe("setupChanged", () => {
     const droughtSlider = screen.getByTestId("drought-slider").querySelector("input")!;
     fireEvent.change(droughtSlider, { target: { value: "3" } });
     fireEvent.change(droughtSlider, { target: { value: "2" } });
-    await goToCreatePanel();
-    await clickCreate();
+    await goToWindPanel();
+    await clickOk();
     expect(stores.simulation.setupChanged).toBe(false);
   });
 
@@ -459,7 +459,7 @@ describe("setupChanged", () => {
     expect(stores.ui.showTerrainUI).toBe(false);
   });
 
-  it("(e) start from setupChanged=true, Create with no changes — setupChanged stays true", async () => {
+  it("(e) start from setupChanged=true, click OK! with no changes — setupChanged stays true", async () => {
     stores.simulation.setSetupChanged(true);
     // beforeEach already sets ui.showTerrainUI=true. render(...) below mounts
     // the component, and the snapshot-capture useEffect fires once on mount
@@ -472,29 +472,29 @@ describe("setupChanged", () => {
         <TerrainPanel />
       </Provider>
     );
-    await goToCreatePanel();
-    await clickCreate();
+    await goToWindPanel();
+    await clickOk();
     expect(stores.simulation.setupChanged).toBe(true);
   });
 
-  it("(f) change wind speed, Create — setupChanged becomes true", async () => {
+  it("(f) change wind speed, click OK! — setupChanged becomes true", async () => {
     render(
       <Provider stores={stores}>
         <TerrainPanel />
       </Provider>
     );
-    await goToCreatePanel();
+    await goToWindPanel();
     // eslint-disable-next-line testing-library/no-node-access
     const speedSlider = screen.getByTestId("wind-speed-slider").querySelector("input")!;
     fireEvent.change(speedSlider, { target: { value: "15" } });
-    await clickCreate();
+    await clickOk();
     expect(stores.simulation.setupChanged).toBe(true);
     // Wind direction coverage lives in setup-snapshot.test.ts (WindDial is a
     // custom SVG with no <input> element).
   });
 
   // eslint-disable-next-line max-len
-  it("(g) change zonesCount (2 → 3), Create — setupChanged becomes true", async () => {
+  it("(g) change zonesCount (2 → 3), click OK! — setupChanged becomes true", async () => {
     // Require config.zonesCount === undefined so the wizard starts on the
     // zones-count panel.
     stores.simulation.config.zonesCount = undefined as any;
@@ -510,45 +510,45 @@ describe("setupChanged", () => {
     const threeZonesInput = container.querySelector('input[type="radio"][value="3"]') as HTMLInputElement;
     expect(threeZonesInput).not.toBeNull();
     fireEvent.click(threeZonesInput);
-    // Walk through Next twice (panel 0 → 1 → 2) before clicking Create.
+    // Walk through Next twice (panel 0 → 1 → 2) before clicking OK!
     const nextButtons = () => screen.getAllByRole("button", { name: /next/i });
     await userEvent.click(nextButtons()[nextButtons().length - 1]);
     await userEvent.click(nextButtons()[nextButtons().length - 1]);
-    await clickCreate();
+    await clickOk();
     expect(stores.simulation.setupChanged).toBe(true);
   });
 
   // eslint-disable-next-line max-len
-  it("(h) snapshot refreshes on re-open: change drought, Create, reset, reopen, no change, Create — setupChanged stays false [canary for stale-snapshot bug]", async () => {
+  it("(h) snapshot refreshes on re-open: change drought, click OK!, reset, reopen, no change, click OK! — setupChanged stays false [canary for stale-snapshot bug]", async () => {
     render(
       <Provider stores={stores}>
         <TerrainPanel />
       </Provider>
     );
-    // First Create: change drought 2 → 3.
+    // First OK! click: change drought 2 → 3.
     // eslint-disable-next-line testing-library/no-node-access
     const droughtSlider1 = screen.getByTestId("drought-slider").querySelector("input")!;
     fireEvent.change(droughtSlider1, { target: { value: "3" } });
-    await goToCreatePanel();
-    await clickCreate();
+    await goToWindPanel();
+    await clickOk();
     expect(stores.simulation.setupChanged).toBe(true);
     expect(stores.simulation.zones[0].droughtLevel).toBe(3);
 
     // Reset the flag via the setSetupChanged setter (see contract comment in
     // simulation.ts). We can't use reload() — it would wipe simulation.zones
-    // back to the preset defaults; we specifically want the post-first-Create
+    // back to the preset defaults; we specifically want the post-first-OK!
     // state (drought=3) to remain live so the re-opened wizard's snapshot
     // captures the new baseline.
     stores.simulation.setSetupChanged(false);
 
     // Re-open the wizard. applyAndClose flipped showTerrainUI to false at the
-    // end of the first Create; flipping it back to true here re-fires the
+    // end of the first OK! click; flipping it back to true here re-fires the
     // snapshot-capture effect (deps: [simulation, ui.showTerrainUI]).
     act(() => { stores.ui.showTerrainUI = true; });
 
-    // No field change. Walk to Create panel and Create.
-    await goToCreatePanel();
-    await clickCreate();
+    // No field change. Walk to the wind panel and click OK!
+    await goToWindPanel();
+    await clickOk();
     // If the snapshot refreshed on re-open: snapshot=3, live wizard=3,
     // diff is empty, setSetupChanged NOT called, flag stays false. ✓
     // If the snapshot is stale at drought=2: snapshot=2, live wizard=3,
@@ -654,9 +654,9 @@ describe("setupChanged", () => {
     // eslint-disable-next-line testing-library/no-node-access
     const droughtSlider = screen.getByTestId("drought-slider").querySelector("input")!;
     fireEvent.change(droughtSlider, { target: { value: "3" } });
-    await goToCreatePanel();
+    await goToWindPanel();
     expect(screen.getByTestId("terrain-wind")).toBeInTheDocument();
-    expect(footerLabels()).toEqual(["Cancel", "Previous", "Create"]);
+    expect(footerLabels()).toEqual(["Cancel", "Previous", "OK!"]);
     await userEvent.click(screen.getByTestId("terrain-cancel"));
     expect(stores.simulation.zones[0].droughtLevel).toBe(2);
     expect(stores.simulation.zones[1].droughtLevel).toBe(1);
@@ -673,7 +673,7 @@ describe("setupChanged", () => {
         <TerrainPanel />
       </Provider>
     );
-    await goToCreatePanel();
+    await goToWindPanel();
     expect(screen.getByTestId("terrain-wind")).toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: /previous/i }));
     await userEvent.click(screen.getByTestId("terrain-cancel"));
@@ -689,7 +689,7 @@ describe("setupChanged", () => {
         <TerrainPanel />
       </Provider>
     );
-    await goToCreatePanel();
+    await goToWindPanel();
     await userEvent.click(screen.getByTestId("terrain-cancel"));
     expect(cancelPayload()).toMatchObject({ panel: "wind", reachedWind: true });
 

@@ -129,14 +129,14 @@ describe("Bottom-bar state machine (WM-24)", () => {
   });
 
   it("state 2 (SetupChanged): Clear All enabled; otherwise Default", () => {
-    // Open Setup, change drought on zone 0, click Create.
+    // Open Setup, change drought on zone 0, then click OK!
     cy.get("[data-testid='terrain-button']").click();
     cy.get("[data-testid='terrain-header']").should("be.visible");
     // Wizard starts at panel 1 (zone-edit) for plainsTwoZone.
     setDroughtSlider(3);
-    // Walk to wind panel, click Create.
+    // Walk to wind panel, click OK!
     cy.contains("button", /next/i).click();
-    cy.contains("button", /create/i).click();
+    cy.contains("button", "OK!").click();
     expectButtonStates({
       setup: true, spark: true,
       clearAll: true, restart: false, startStop: false, speed: false,
@@ -220,7 +220,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
     cy.get("[data-testid='terrain-button']").click();
     setDroughtSlider(3);
     cy.contains("button", /next/i).click();
-    cy.contains("button", /create/i).click();
+    cy.contains("button", "OK!").click();
     // Now Clear All
     cy.get("[data-testid='clear-all-button']").click();
     cy.window().its("sim.dataReady").should("eq", true);
@@ -237,7 +237,7 @@ describe("Bottom-bar state machine (WM-24)", () => {
   });
 
   // State 8: SetupOpen — the wizard locks the model controls, so Cancel and
-  // Next/Create are the only ways out. Setup stays enabled and its click is inert.
+  // Next/OK! are the only ways out. Setup stays enabled and its click is inert.
   it("state 8 (SetupOpen): Setup and Hazbot stay enabled; Spark/Clear All/Start locked out", () => {
     cy.window().then((win: Window) => { debugHooks(win).test.placeSparkInZone(0); });
     // Assert the pre-state first: from SparkPlaced all three are live, which is
