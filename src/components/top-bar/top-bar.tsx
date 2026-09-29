@@ -4,6 +4,7 @@ import { Dialog } from "./dialog";
 import css from "./top-bar.scss";
 import { log } from "../../log";
 import { useStores } from "../../use-stores";
+import { logSimulationEnded } from "../../interactive-state";
 
 interface IProps {
   projectName: string;
@@ -12,16 +13,12 @@ interface IProps {
 }
 
 export const TopBar: React.FC<IProps> = ({ projectName, aboutContent, shareContent }: IProps) => {
-  const { simulation, chartStore } = useStores();
+  const stores = useStores();
   const [shareOpen, setShareOpen] = React.useState<boolean>(false);
   const [aboutOpen, setAboutOpen] = React.useState<boolean>(false);
 
   const handleReload = () => {
-    simulation.simulationEndedLogged = true;
-    log("SimulationEnded", {
-      reason: "TopBarReloadButtonClicked",
-      outcome: simulation.getOutcomeData(chartStore)
-    });
+    logSimulationEnded(stores, "TopBarReloadButtonClicked");
     log("TopBarReloadButtonClicked");
     // Give some time for the log message to be delivered. Note it goes only to the parent window using postMessage,
     // so we don't have to wait for network request.

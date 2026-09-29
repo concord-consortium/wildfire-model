@@ -12,6 +12,7 @@ import { Interaction } from "../models/ui";
 import { SPEEDS, DEFAULT_SPEED_INDEX } from "../models/simulation";
 import { renderFireLineInteraction, terrainPointerEvent } from "./view-3d/fire-line-interaction-test-helpers";
 import { useFireLinePlacementCancel } from "./use-fire-line-placement-cancel";
+import { logSimulationEnded } from "../interactive-state";
 
 // Mock the log module
 const mockLog = jest.fn();
@@ -159,7 +160,7 @@ describe("Log events", () => {
   describe("SimulationEnded - natural end (ByItself)", () => {
     // These tests replicate the MobX reaction from app.tsx directly,
     // since rendering AppComponent pulls in the full component tree.
-    const setupNaturalEndReaction = (simulation: typeof stores.simulation, chartStore: typeof stores.chartStore) => {
+    const setupNaturalEndReaction = (simulation: typeof stores.simulation) => {
       return reaction(
         () => ({
           running: simulation.simulationRunning,
@@ -167,23 +168,19 @@ describe("Log events", () => {
         }),
         ({ running, fireDidStop }, prev) => {
           if (prev.running && !running && fireDidStop && !simulation.simulationEndedLogged) {
-            simulation.simulationEndedLogged = true;
-            mockLog("SimulationEnded", {
-              reason: "ByItself",
-              outcome: simulation.getOutcomeData(chartStore)
-            });
+            logSimulationEnded(stores, "ByItself");
           }
         }
       );
     };
 
     it("fires when fire burns out naturally", () => {
-      const { simulation, chartStore } = stores;
+      const { simulation } = stores;
       simulation.simulationStarted = true;
       simulation.simulationRunning = true;
       (simulation as any).engine = { fireDidStop: false, burnedCellsInZone: {} };
 
-      const dispose = setupNaturalEndReaction(simulation, chartStore);
+      const dispose = setupNaturalEndReaction(simulation);
 
       // Simulate fire burning out
       (simulation as any).engine.fireDidStop = true;
@@ -202,12 +199,12 @@ describe("Log events", () => {
     });
 
     it("does NOT double-fire when simulationEndedLogged guard is set", () => {
-      const { simulation, chartStore } = stores;
+      const { simulation } = stores;
       simulation.simulationStarted = true;
       simulation.simulationRunning = true;
       (simulation as any).engine = { fireDidStop: true, burnedCellsInZone: {} };
 
-      const dispose = setupNaturalEndReaction(simulation, chartStore);
+      const dispose = setupNaturalEndReaction(simulation);
 
       // Simulate what handleRestart does: set guard before stopping
       simulation.simulationEndedLogged = true;
@@ -222,12 +219,12 @@ describe("Log events", () => {
     });
 
     it("does NOT fire when simulation is stopped by user (fireDidStop is false)", () => {
-      const { simulation, chartStore } = stores;
+      const { simulation } = stores;
       simulation.simulationStarted = true;
       simulation.simulationRunning = true;
       (simulation as any).engine = { fireDidStop: false, burnedCellsInZone: {} };
 
-      const dispose = setupNaturalEndReaction(simulation, chartStore);
+      const dispose = setupNaturalEndReaction(simulation);
 
       // User clicks Stop — simulationRunning goes false but fireDidStop stays false
       simulation.simulationRunning = false;

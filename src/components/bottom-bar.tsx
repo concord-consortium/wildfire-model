@@ -25,6 +25,7 @@ import TerrainThreeHighlightIcon from "../assets/bottom-bar/terrain-three_highli
 import { Interaction } from "../models/ui";
 import { IconButton } from "./icon-button";
 import { log } from "../log";
+import { logSimulationEnded } from "../interactive-state";
 import { AnalysisEngineProvider } from "../hazbot/engine";
 import { APP_RULES_VERSION, getAnalysisEngine } from "../hazbot/wildfire";
 import { HazbotButton } from "./hazbot-button";
@@ -334,11 +335,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   public handleRestart = () => {
     const { simulation, ui } = this.stores;
     if (simulation.simulationStarted) {
-      simulation.simulationEndedLogged = true;
-      log("SimulationEnded", {
-        reason: "SimulationRestarted",
-        outcome: simulation.getOutcomeData(this.stores.chartStore)
-      });
+      logSimulationEnded(this.stores, "SimulationRestarted");
     }
     this.stores.chartStore.reset();
     cancelFireLinePlacement(simulation, ui, "restart");
@@ -350,11 +347,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   public handleClearAll = () => {
     const { simulation, ui } = this.stores;
     if (simulation.simulationStarted) {
-      simulation.simulationEndedLogged = true;
-      log("SimulationEnded", {
-        reason: "SimulationReloaded",
-        outcome: simulation.getOutcomeData(this.stores.chartStore)
-      });
+      logSimulationEnded(this.stores, "SimulationReloaded");
     }
     this.stores.chartStore.reset();
     // Clear All clears Hazbot's per-category feedback levels too, so a full
