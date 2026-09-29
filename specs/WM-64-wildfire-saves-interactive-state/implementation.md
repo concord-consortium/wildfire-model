@@ -47,7 +47,7 @@ export interface ISavedRunState {
   version: 1;
   identity: { preset: string; gridWidth: number; gridHeight: number; zonesCount: number; appVersion: string };
   setup: {
-    zones: Array<{ vegetation: number; terrainType: number; droughtLevel: number }>;
+    zones: Array<{ vegetation: Vegetation; terrainType: TerrainType; droughtLevel: DroughtLevel }>;
     wind: { speed: number; direction: number };
     speedIndex: number;
     sparks: Array<[number, number]>;                         // model ft
@@ -58,13 +58,13 @@ export interface ISavedRunState {
   endReason: string;                                         // the SimulationEnded reason
   outcome: unknown;                                          // getOutcomeData(), as logged
   burnSamples: Array<Array<[number, number]>>;               // per zone, [hour, thousands of acres to 4 dp]
-  annotations: Array<{ hour: number; kind: string; actionOrder: number }>; // the graph's fire-line and helitack markers
+  annotations: Array<{ hour: number; kind: AnnotationEventKind; actionOrder: number }>; // the graph's fire-line and helitack markers
   burnMap: string;                                           // 2 bits per cell, base64
 }
 ```
 
-- `encodeBurnMap(cells)` / `decodeBurnMap(b64, cellCount)`: codes 0 unburnt, 1 burning, 2 burnt, 3 burnt-and-survived, four per byte, low bits first, base64 via `btoa`/`atob` over a binary string. Decoding rejects a string whose decoded length is not `ceil(cellCount / 4)`.
-- `buildSavedState(simulation, chartStore, endReason)`: reads everything above, the annotations from `chartStore.chart.annotations` (`value`, `eventKind`, `actionOrder`); `outcome` is `simulation.getOutcomeData(chartStore)` so it is byte-for-byte what the log carries. Every array and object it takes from the model or the chart is copied (segments, drops, sparks, samples, annotations), because the API deep-freezes the state it stores. `appVersion` is `require("../../package.json").version`: `tsconfig.json` compiles to CommonJS, so a named `import { version }` becomes a `require` of the whole module and bundles all of `package.json` (measured: 4.6 KB, `devDependencies` included), while the direct member access is shaken down to the version string (measured: a 203-byte bundle).
+- `encodeBurnMap(cells)` / `decodeBurnMap(b64, cellCount)`: codes 0 unburnt, 1 burning, 2 burnt, 3 burnt-and-survived, four per byte, low bits first, base64 via `btoa`/`atob` over a binary string. Decoding returns `undefined` for invalid base64 or a string whose decoded length is not `ceil(cellCount / 4)`. The packing is arithmetic (`Math.floor`, `%`, powers of 4) rather than bit operators, since the repo lints with `no-bitwise`.
+- `buildSavedState(simulation, chartStore, endReason)`: reads everything above, the annotations from `chartStore.chart.annotations` (`value`, `eventKind`, `actionOrder`); `outcome` is `simulation.getOutcomeData(chartStore)` so it is byte-for-byte what the log carries. Every array and object it takes from the model or the chart is copied (segments, drops, sparks, samples, annotations), because the API deep-freezes the state it stores. `appVersion` is `require("../../package.json").version`: `tsconfig.json` compiles to CommonJS, so a named `import { version }` becomes a `require` of the whole module and bundles all of `package.json` (measured: 4.6 KB, `devDependencies` included), while the direct member access is shaken down to the version string (measured: a 203-byte bundle). The tsconfig's `types` leaves out Node, so the module declares `require` locally, which also keeps the lint rules against `require` quiet. The saved wind is the student's setting (`userDefinedWind` when a scheduled wind change has replaced it, otherwise `wind`). `SimulationModel.config` is typed `IUrlConfig`, which it already was at runtime, so `config.preset` is readable.
 - `validateSavedState(value, simulation)`: returns `{ ok: true, state }` or `{ ok: false, reason }` for a non-object, a version other than 1, an identity mismatch (preset, grid size, and the zone count only when `config.zonesCount` fixes it; otherwise 2 or 3 fits, since the Setup wizard lets the student pick), `setup.zones` or `burnSamples` not one entry per saved zone, zone values outside the `Vegetation` / `TerrainType` / `DroughtLevel` enums, a `speedIndex` outside `SPEEDS`, any spark, segment endpoint or drop point outside `0 <= x < modelWidth` and `0 <= y < modelHeight` (non-finite included), a drop time or `time` that is not a finite non-negative number, an annotation kind other than `FIRE_LINE_EVENT` / `HELITACK_EVENT`, or a burn map of the wrong length. The bounds check is load-bearing: `buildFireLine` and `setHelitackPoint` index `cells` unchecked, so a finite point past the grid throws mid-restore and a negative `x` lands on a cell in the previous row (both measured).
 
 Tests: encode/decode round trip over every code at a non-multiple-of-4 cell count; `decodeBurnMap` rejects short and long input; `buildSavedState` on a model with a fire line and a drop carries both and an outcome equal to `getOutcomeData`; each `validateSavedState` rejection reason, including a point one cell past each edge; a state passed through the real, unmocked `setInteractiveState` leaves the model's lists writable; and the size of a built state for the default grid is under 20 KB (R9), asserted on `JSON.stringify(state).length`.
@@ -79,13 +79,14 @@ Tests: encode/decode round trip over every code at a non-multiple-of-4 cell coun
 - `src/models/saved-state.ts`: `applySavedState(simulation, chartStore, state): Promise<void>`.
 - `src/models/simulation.ts`: `@observable restoredRunEnded`, folded into `simulationEnded`, cleared in `restart()`.
 - `src/models/chart-store.ts`: `restoreBurnData(samples, annotations)` and an observable `restoreVersion`.
-- `src/components/graph.tsx`: the dataset construction in `updateChartData` and `updateChartColors` moves into a helper that also builds a zone's dataset from its restored samples; the `Annotation` literal the two annotation effects build moves into `buildEventAnnotation(kind, hour, actionOrder)`, which owns each kind's `thickness` and `dashArray`, so a restored marker is built the way the live one was; an effect on `restoreVersion`, declared after the zones-count effect (which empties the datasets when the count changes, as a restore on a student-picked zone count can), rebuilds every dataset and adds the saved annotations through that helper; the `dataReady`, per-hour and both annotation effects skip while `simulation.restoredRunEnded` is set.
+- `src/components/graph.tsx`: the dataset construction in `updateChartData` and `updateChartColors` moves into a helper that also builds a zone's dataset from its restored samples; the `Annotation` literal the two annotation effects build moves into `buildEventAnnotation(kind, hour, actionOrder)`, which owns each kind's `thickness` and `dashArray`, so a restored marker is built the way the live one was; an effect on `restoreVersion`, declared after the zones-count effect (which empties the datasets when the count changes, as a restore on a student-picked zone count can), rebuilds every dataset and adds the saved annotations through that helper; the `dataReady`, per-hour and both annotation effects skip while `simulation.restoredRunEnded` is set (the `dataReady` effect still names the chart and its axes first, so a graph mounted after a restore is labeled). Each zone's color and dash are set when its dataset is created, so the separate `updateChartColors` pass goes.
 - `src/models/saved-state.test.ts`: restore tests.
+- `src/components/graph.test.tsx` (new): the rendered-graph tests, with `Chart` mocked.
 
 **Estimated diff size**: ~320 lines
 
 `applySavedState`, in order:
-1. `simulation.updateZones(zones)` with `Zone`s built from the saved enums (which also resizes a model whose student picked a different zone count in Setup), then `await simulation.dataReadyPromise` (it repopulates the cells), then `restoredRunEnded = true`, so every graph effect below is already skipping.
+1. `restoredRunEnded = true` first, so every graph effect is already skipping when `updateZones` flips `dataReady`; then `simulation.updateZones(zones)` with `Zone`s built from the saved enums (which also resizes a model whose student picked a different zone count in Setup), then `await simulation.dataReadyPromise` (it repopulates the cells). Nothing reads the flag as "ended" yet, since `simulationEnded` also needs `simulationStarted`, set in step 5.
 2. Wind (`setWindSpeed`, `setWindDirection`), `setSpeedIndex`, and sparks (`sparks.length = 0`, then `addSpark` for each).
 3. Each fire-line segment through `buildFireLine`, then each drop through `setHelitackPoint`, both with the model's `time` set to the drop's time so the recorded timestamps match.
 4. The burn map last, since a drop resets burning cells in its radius: each cell's `fireState` and `isFireSurvivor` from its code.
@@ -111,13 +112,15 @@ Tests (Jest, on a model loaded with a test preset): a state built from a run wit
 - `src/index.tsx`: calls `initInteractiveState(stores)`.
 - `src/components/bottom-bar.tsx` (Restart, Clear All), `src/components/app.tsx` (burn-out), `src/components/top-bar/top-bar.tsx` (reload): each replaces its `SimulationEnded` block with `logSimulationEnded(stores, reason)`, before any reset.
 - `src/models/ui.ts`: `@observable readOnly = false`.
-- `src/interactive-state.test.ts` (new), with `@concord-consortium/lara-interactive-api` mocked.
+- `src/interactive-state.test.tsx` (new), with `@concord-consortium/lara-interactive-api` mocked; it renders `BottomBar` and `TopBar` for the Restart, Clear All and reload routes.
+- `src/components/app.test.tsx`: the burn-out route, through the rendered `AppComponent`.
+- `src/components/log-events.test.tsx`: its copy of the burn-out reaction calls `logSimulationEnded`.
 
 **Estimated diff size**: ~290 lines
 
 `initInteractiveState(stores)`:
 - Returns immediately when `!inIframe()` (R8).
-- `getInitInteractiveMessage()` then: in `"report"` mode sets `ui.readOnly = true` and, with an `interactiveState` (portal-report sends no init without one, so nothing may wait on the message), waits for `simulation.dataReadyPromise`, runs `validateSavedState`, and applies it when valid, writing the rejection reason to `console.warn` otherwise (R7; portal-report drops log messages, R10). In `"runtime"` mode it ignores the `interactiveState` entirely (R5).
+- `getInitInteractiveMessage()` then: in `"report"` mode sets `ui.readOnly = true` and, with an `interactiveState` (portal-report sends no init without one, so nothing may wait on the message), waits for `simulation.dataReadyPromise`, runs `validateSavedState`, and applies it when valid, writing the rejection reason to `console.warn` otherwise (R7; portal-report drops log messages, R10). A state that passes validation but throws while it is drawn is warned about the same way, and the model is reset with `chartStore.reset()` and `simulation.reload()`, so a half-drawn run is never left on screen. In `"runtime"` mode it ignores the `interactiveState` entirely (R5).
 
 `logSimulationEnded(stores, reason)` is the four sites' shared block: it reads `firstEnd = simulation.simulationStarted && !simulation.simulationEndedLogged` before touching anything, sets `simulationEndedLogged = true`, logs `SimulationEnded` with `getOutcomeData`, and calls `saveRun` when `firstEnd`. That test is exactly "this run's first end" with no new flag: `start()` clears `simulationEndedLogged`, so a burn-out reads it false and the Restart, Clear All or reload that follows reads it true; a Restart after a pause reads it false; a reload with no run reads `simulationStarted` false. Each site keeps its own condition for logging at all, so what is logged is unchanged: Restart and Clear All still call it only when `simulationStarted`, the reload button always, and the burn-out reaction only when `!simulationEndedLogged`.
 
@@ -135,8 +138,8 @@ Tests: standalone does nothing and never calls `getInitInteractiveMessage`; a ru
 - `src/components/bottom-bar.tsx`: every action button's `disabled`, and the `SpeedControl`'s, also checks `ui.readOnly`; the Hazbot button does not render.
 - `src/components/view-3d/spark.tsx`: markers are not draggable when `ui.readOnly`. After a restore `simulationStarted` already locks them (`lockOnSimStart`), but the fresh view shown for an invalid state has not started.
 - `src/components/view-3d/` interaction hooks (`use-place-spark-interaction.tsx`, `use-draw-fire-line-interaction.tsx`, `use-helitack-interaction.ts`): inert when `ui.readOnly`.
-- `src/components/top-bar/top-bar.tsx`: the reload button is hidden.
-- Tests beside each (`bottom-bar.test.tsx` and the interaction tests).
+- `src/components/top-bar/top-bar.tsx`: the reload button is hidden (an empty placeholder keeps Share and About on the right). `TopBar` becomes an `observer`, since `readOnly` arrives with the init message after the first render.
+- Tests beside each: `bottom-bar.test.tsx`, `top-bar.test.tsx`, and `view-3d/read-only-interactions.test.tsx` for the three interaction hooks and spark dragging.
 
 **Estimated diff size**: ~120 lines
 

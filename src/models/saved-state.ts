@@ -10,7 +10,6 @@ export const SAVED_STATE_VERSION = 1;
 
 // A member access on require() bundles only the version; a named import bundles all of package.json.
 declare const require: (id: string) => { version: string };
-// eslint-disable-next-line @typescript-eslint/no-require-imports, @typescript-eslint/no-var-requires
 const APP_VERSION = require("../../package.json").version;
 
 const BURNT_SURVIVOR_CODE = 3;
