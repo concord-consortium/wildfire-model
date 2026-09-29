@@ -1,6 +1,7 @@
 import { SimulationModel, SPEEDS } from "./simulation";
 import { ChartStore } from "./chart-store";
 import { Cell, FireState } from "./cell";
+import { Zone } from "./zone";
 import { DroughtLevel, TerrainType, Vegetation } from "../types";
 import { AnnotationEventKind, isAnnotationEventKind } from "../charts/components/annotation-icons";
 import { Annotation } from "../charts/models/chart-annotation";
@@ -17,6 +18,12 @@ const CODES_PER_CELL = 4;
 const CELLS_PER_BYTE = 4;
 
 export type FireLineSegment = [number, number, number, number];
+
+export interface ISavedAnnotation {
+  hour: number;
+  kind: AnnotationEventKind;
+  actionOrder: number;
+}
 
 export interface ISavedRunState {
   version: typeof SAVED_STATE_VERSION;
@@ -37,7 +44,7 @@ export interface ISavedRunState {
   outcome: unknown;
   // Per zone, [hour, thousands of acres].
   burnSamples: Array<Array<[number, number]>>;
-  annotations: Array<{ hour: number; kind: AnnotationEventKind; actionOrder: number }>;
+  annotations: ISavedAnnotation[];
   // 2 bits per cell, four cells per byte, low bits first, base64.
   burnMap: string;
 }
@@ -181,4 +188,42 @@ export const validateSavedState = (value: unknown, simulation: SimulationModel):
   }
 
   return { ok: true, state: value as ISavedRunState };
+};
+
+// Draws a validated run as it ended. The ended flag goes first so the graph's live effects skip
+// every change below, and the burn map goes last because a helitack drop resets burning cells.
+export const applySavedState = async (simulation: SimulationModel, chartStore: ChartStore, state: ISavedRunState) => {
+  const { setup } = state;
+  simulation.restoredRunEnded = true;
+  simulation.updateZones(setup.zones.map(z => new Zone(z)));
+  await simulation.dataReadyPromise;
+
+  simulation.setWindSpeed(setup.wind.speed);
+  simulation.setWindDirection(setup.wind.direction);
+  simulation.setSpeedIndex(setup.speedIndex);
+  simulation.sparks.length = 0;
+  setup.sparks.forEach(([x, y]) => simulation.addSpark(x, y));
+
+  setup.fireLineSegments.forEach(([x1, y1, x2, y2]) => simulation.buildFireLine({ x: x1, y: y1 }, { x: x2, y: y2 }));
+  setup.helitackDrops.forEach(({ x, y, time }) => {
+    simulation.time = time;
+    simulation.setHelitackPoint(x, y);
+  });
+
+  const codes = decodeBurnMap(state.burnMap, simulation.cells.length);
+  if (!codes) {
+    throw new Error("the burn map does not fit the grid");
+  }
+  simulation.cells.forEach((cell, i) => {
+    cell.isFireSurvivor = codes[i] === BURNT_SURVIVOR_CODE;
+    cell.fireState = cell.isFireSurvivor ? FireState.Burnt : codes[i];
+  });
+
+  simulation.time = state.time;
+  simulation.simulationStarted = true;
+  simulation.simulationRunning = false;
+  simulation.updateCellsStateFlag();
+  simulation.updateCellsElevationFlag();
+
+  chartStore.restoreBurnData(state.burnSamples, state.annotations);
 };

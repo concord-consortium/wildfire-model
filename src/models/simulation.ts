@@ -115,6 +115,8 @@ export class SimulationModel {
   @observable public cellsElevationFlag = 0;
   @observable public simulationEndedLogged = false;
   @observable public setupChanged = false;
+  // A run restored from a saved state has no engine, so it is marked ended directly.
+  @observable public restoredRunEnded = false;
 
   @observable public speedIndex = DEFAULT_SPEED_INDEX;
 
@@ -193,14 +195,15 @@ export class SimulationModel {
     }
   }
 
-  // True when simulationStarted && !simulationRunning && engine.fireDidStop.
-  // Reactivity contract: simulationRunning carries the edge — engine?.fireDidStop
+  // True when simulationStarted && !simulationRunning && (engine.fireDidStop || restoredRunEnded).
+  // Reactivity contract: simulationRunning carries the edge, and engine?.fireDidStop
   // is a discriminator read only. The supported tick() path sets
   // simulationRunning = false when engine.fireDidStop becomes true, so the
   // computed re-evaluates when expected. Future refactorers: do not rely on
-  // fireDidStop driving reactivity directly.
+  // fireDidStop driving reactivity directly. A restore sets restoredRunEnded
+  // before simulationStarted, so simulationStarted carries that edge.
   @computed public get simulationEnded() {
-    return this.simulationStarted && !this.simulationRunning && !!this.engine?.fireDidStop;
+    return this.simulationStarted && !this.simulationRunning && (!!this.engine?.fireDidStop || this.restoredRunEnded);
   }
 
   // True from the first Start until the fire stops burning, pauses included: a run the
@@ -477,6 +480,7 @@ export class SimulationModel {
   @action.bound public restart() {
     this.simulationRunning = false;
     this.simulationStarted = false;
+    this.restoredRunEnded = false;
     this.cells.forEach(cell => cell.reset());
     this.fireLineMarkers.length = 0;
     // Fresh arrays rather than emptied ones: a saved interactive state may have frozen the old ones.

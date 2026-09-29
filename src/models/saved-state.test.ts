@@ -8,20 +8,21 @@ import { FIRE_LINE_EVENT, HELITACK_EVENT } from "../charts/components/annotation
 import { DroughtLevel, TerrainType, Vegetation } from "../types";
 import { ISimulationConfig } from "../config";
 import {
-  ISavedRunState, SAVED_STATE_VERSION, buildSavedState, decodeBurnMap, encodeBurnMap, validateSavedState
+  ISavedRunState, SAVED_STATE_VERSION, applySavedState, buildSavedState, decodeBurnMap, encodeBurnMap,
+  validateSavedState
 } from "./saved-state";
 import packageJson from "../../package.json";
 
 
 const MODEL_WIDTH = 120000;
 const MODEL_HEIGHT = 80000;
-const CELL_SIZE = 500;
+const CELL_SIZE = 1000;
 
 const createSim = async (overrides: Partial<ISimulationConfig> = {}) => {
   const sim = new SimulationModel({
     modelWidth: MODEL_WIDTH,
     modelHeight: MODEL_HEIGHT,
-    gridWidth: 240,
+    gridWidth: MODEL_WIDTH / CELL_SIZE,
     sparks: [[30000, 40000], [90000, 40000]],
     zones: [
       { terrainType: TerrainType.Plains, vegetation: Vegetation.Grass, droughtLevel: DroughtLevel.MildDrought },
@@ -98,7 +99,7 @@ describe("buildSavedState", () => {
 
     expect(state.version).toBe(SAVED_STATE_VERSION);
     expect(state.identity).toEqual({
-      preset: "default", gridWidth: 240, gridHeight: 160, zonesCount: 2, appVersion: packageJson.version
+      preset: "default", gridWidth: 120, gridHeight: 80, zonesCount: 2, appVersion: packageJson.version
     });
     expect(state.setup.zones).toEqual([
       { terrainType: TerrainType.Plains, vegetation: Vegetation.Grass, droughtLevel: DroughtLevel.MildDrought },
@@ -146,6 +147,7 @@ describe("buildSavedState", () => {
 
   it("stays under 20 KB for a 50-hour, 3-zone run on the default grid", async () => {
     const sim = await createSim({
+      gridWidth: 240,
       zones: [
         { terrainType: TerrainType.Plains, vegetation: Vegetation.Grass, droughtLevel: DroughtLevel.MildDrought },
         { terrainType: TerrainType.Plains, vegetation: Vegetation.Shrub, droughtLevel: DroughtLevel.MediumDrought },
@@ -194,8 +196,8 @@ describe("validateSavedState", () => {
   it("rejects a state saved for another preset or grid", () => {
     const state = copy(baseState);
     expect(rejectionOf({ ...state, identity: { ...state.identity, preset: "hillThreeZone" } }, sim)).toMatch(/preset/);
-    expect(rejectionOf({ ...state, identity: { ...state.identity, gridWidth: 120 } }, sim)).toMatch(/grid/);
-    expect(rejectionOf({ ...state, identity: { ...state.identity, gridHeight: 80 } }, sim)).toMatch(/grid/);
+    expect(rejectionOf({ ...state, identity: { ...state.identity, gridWidth: 240 } }, sim)).toMatch(/grid/);
+    expect(rejectionOf({ ...state, identity: { ...state.identity, gridHeight: 160 } }, sim)).toMatch(/grid/);
     expect(rejectionOf({ ...state, identity: undefined }, sim)).toMatch(/identity/);
   });
 
@@ -309,5 +311,105 @@ describe("validateSavedState", () => {
     expect(rejectionOf({ ...state, burnMap: state.burnMap.slice(0, -8) }, sim)).toMatch(/burn map/);
     expect(rejectionOf({ ...state, burnMap: state.burnMap + "AAAA" }, sim)).toMatch(/burn map/);
     expect(rejectionOf({ ...state, burnMap: 42 }, sim)).toMatch(/burn map/);
+  });
+});
+
+describe("applySavedState", () => {
+  const DROP_CELL = 40 * 120 + 60;
+
+  const createRunToRestore = async () => {
+    const run = await createEndedRun();
+    run.sim.setSpeedIndex(2);
+    run.sim.setWindSpeed(12);
+    run.sim.setWindDirection(135);
+    // Reignited after the drop, so replaying the drop after the map would put it out.
+    run.sim.cells[DROP_CELL].fireState = FireState.Burning;
+    return run;
+  };
+
+  it("reproduces every cell's fire state, survivor flag, helitack count and fire-line flag", async () => {
+    const { sim: source, chartStore: sourceChart } = await createRunToRestore();
+    const state = copy(buildSavedState(source, sourceChart, "Restart"));
+    const target = await createSim();
+
+    await applySavedState(target, new ChartStore(), state);
+
+    expect(source.cells[DROP_CELL].helitackDropCount).toBeGreaterThan(0);
+    expect(source.cells.some(c => c.isFireLine)).toBe(true);
+    const cellState = (c: Cell) => [c.fireState, c.isFireSurvivor, c.helitackDropCount, c.isFireLine];
+    const differing = target.cells.filter((cell, i) =>
+      JSON.stringify(cellState(cell)) !== JSON.stringify(cellState(source.cells[i]))
+    );
+    expect(target.cells).toHaveLength(source.cells.length);
+    expect(differing).toHaveLength(0);
+  });
+
+  it("applies the setup and marks the run ended at its duration", async () => {
+    const { sim: source, chartStore: sourceChart } = await createRunToRestore();
+    const target = await createSim({ sparks: [] });
+
+    await applySavedState(target, new ChartStore(), copy(buildSavedState(source, sourceChart, "Restart")));
+
+    expect(target.zones.map(z => z.vegetation)).toEqual([Vegetation.Grass, Vegetation.Forest]);
+    expect(target.zones.map(z => z.droughtLevel)).toEqual([DroughtLevel.MildDrought, DroughtLevel.SevereDrought]);
+    expect(target.wind).toEqual({ speed: 12, direction: 135 });
+    expect(target.speedIndex).toBe(2);
+    expect(target.sparks.map(s => [s.x, s.y])).toEqual([[30000, 40000], [90000, 40000]]);
+    expect(target.time).toBe(125.5);
+    expect(target.simulationEnded).toBe(true);
+    expect(target.startEnabled).toBe(false);
+    expect(target.engine).toBeNull();
+
+    target.restart();
+    expect(target.simulationEnded).toBe(false);
+    expect(target.startEnabled).toBe(true);
+    expect(target.restoredRunEnded).toBe(false);
+  });
+
+  it("resizes a model whose zone count differs from the saved run", async () => {
+    const { sim: source, chartStore: sourceChart } = await createRunToRestore();
+    const target = await createSim({
+      zones: [
+        { terrainType: TerrainType.Plains, vegetation: Vegetation.Shrub, droughtLevel: DroughtLevel.NoDrought },
+        { terrainType: TerrainType.Plains, vegetation: Vegetation.Shrub, droughtLevel: DroughtLevel.NoDrought },
+        { terrainType: TerrainType.Plains, vegetation: Vegetation.Shrub, droughtLevel: DroughtLevel.NoDrought }
+      ]
+    });
+
+    await applySavedState(target, new ChartStore(), copy(buildSavedState(source, sourceChart, "Restart")));
+
+    expect(target.zonesCount).toBe(2);
+    expect(new Set(target.cells.map(c => c.zoneIdx))).toEqual(new Set([0, 1]));
+  });
+
+  it("hands the graph the saved samples and markers", async () => {
+    const { sim: source, chartStore: sourceChart } = await createRunToRestore();
+    const state = copy(buildSavedState(source, sourceChart, "Restart"));
+    const chartStore = new ChartStore();
+    const versionBefore = chartStore.restoreVersion;
+
+    await applySavedState(await createSim(), chartStore, state);
+
+    expect(chartStore.rawBurnData).toEqual(
+      state.burnSamples.map((zone: Array<[number, number]>) => zone.map(([time, acres]) => ({ time, acres })))
+    );
+    expect(chartStore.restoredAnnotations).toEqual(state.annotations);
+    expect(chartStore.restoreVersion).toBe(versionBefore + 1);
+  });
+
+  it("restores from a frozen state and leaves the graph's samples writable", async () => {
+    const { sim: source, chartStore: sourceChart } = await createRunToRestore();
+    const state = buildSavedState(source, sourceChart, "Restart");
+    const deepFreeze = (o: any): any => {
+      Object.values(o).forEach(v => v && typeof v === "object" && deepFreeze(v));
+      return Object.freeze(o);
+    };
+    const chartStore = new ChartStore();
+
+    await applySavedState(await createSim(), chartStore, deepFreeze(state));
+
+    chartStore.rawBurnData[0][0].acres = 5;
+    chartStore.rawBurnData[0].push({ time: 3, acres: 1 });
+    expect(chartStore.rawBurnData[0]).toHaveLength(4);
   });
 });
