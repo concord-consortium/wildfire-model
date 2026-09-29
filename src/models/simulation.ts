@@ -2,7 +2,7 @@ import { action, computed, observable, makeObservable } from "mobx";
 import { IWindProps, Town } from "../types";
 import { Cell, CellOptions, FireState } from "./cell";
 import { ChartStore } from "./chart-store";
-import { ISimulationConfig, getResolvedConfig } from "../config";
+import { ISimulationConfig, IUrlConfig, getResolvedConfig } from "../config";
 import { Vector2 } from "three";
 import { getElevationData, getRiverData, getUnburntIslandsData, getZoneIndex } from "./utils/data-loaders";
 import { Zone } from "./zone";
@@ -77,7 +77,7 @@ export const computeTimeStep = (
 // on management and interactions handling. Core calculations are delegated to FireEngine.
 // Also, all the observable properties should be here, so the view code can observe them.
 export class SimulationModel {
-  public config: ISimulationConfig;
+  public config: IUrlConfig;
   public prevTickTime: number | null;
   public dataReadyPromise: Promise<void>;
   public engine: FireEngine | null = null;
