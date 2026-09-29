@@ -13,6 +13,10 @@ import { TownMarkersContainer } from "./town-marker";
 import { log } from "../../log";
 import Shutterbug from "shutterbug";
 import { cameraDebugStore } from "./camera-debug-store";
+import {
+  CAMERA_FIT_FOV_DEG, computeOrbitPivot, DESIGN_CAMERA_POS, DESIGN_PLANE_HEIGHT, DESIGN_TARGET_POS,
+  TOP_DOWN_CENTER_OFFSET_PX
+} from "./orbit-pivot";
 
 // This needs to be a separate component, as useThree depends on context provided by <Canvas> component.
 const ShutterbugSupport = () => {
@@ -33,21 +37,6 @@ const ShutterbugSupport = () => {
 // composition reads the same on a wide Chromebook screen as on a narrower
 // embedded viewport. Re-fits whenever the viewport size or design pose changes.
 const TERRAIN_FIT_MARGIN = 1.05;
-// Design FOV. Must match the value the PerspectiveCamera ends up rendering at.
-// Hardcoded rather than read from `camera.fov` because the fitter effect runs
-// before drei's PerspectiveCamera has applied its fov prop (the r3f Canvas
-// default is 75, not our 33).
-const CAMERA_FIT_FOV_DEG = 33;
-// Default camera pose, chosen by the PIs via the ?cameraSettings=true panel and
-// captured on the default preset. In view units (PLANE_WIDTH = 1). CameraFitter
-// preserves this look-angle and design distance, pulling farther back only on
-// narrow viewports.
-const DESIGN_CAMERA_POS = { x: 0.5, y: -0.35, z: 1.285 };
-const DESIGN_TARGET_POS = { x: 0.5, y: 0.263, z: 0.15 };
-// planeHeight of the preset the pose was captured on (default: 80000/120000).
-// The depth-axis (y) components scale by planeHeight / this so the framing
-// adapts to presets with a different model aspect ratio.
-const DESIGN_PLANE_HEIGHT = 80000 / 120000;
 
 const CameraFitter = ({ targetPos, designPos }: {
   targetPos: [number, number, number];
@@ -59,10 +48,11 @@ const CameraFitter = ({ targetPos, designPos }: {
   // Clear the guard whenever the viewport size or design pose changes so the
   // next frame recalculates the distance. Without this the camera would stay
   // at the stale fit after a browser/embed resize and could reintroduce the
-  // narrow-viewport clipping the fitter exists to prevent.
+  // narrow-viewport clipping the fitter exists to prevent. Also on a new
+  // OrbitControls instance, which drei swaps in at mount, dropping the first fit.
   useEffect(() => {
     fittedRef.current = false;
-  }, [size.width, size.height, targetPos, designPos]);
+  }, [size.width, size.height, targetPos, designPos, controls]);
   // Runs every frame but short-circuits after the latest successful fit. We
   // need to wait for OrbitControls to be mounted (so we can call its
   // update() and have it re-derive its internal spherical from the new
@@ -121,6 +111,10 @@ const CameraFitter = ({ targetPos, designPos }: {
 
     camera.position.copy(target).addScaledVector(offsetDir, distance);
     camera.updateProjectionMatrix();
+    // Placed from the design target so the default view never moves, but orbiting a pivot further
+    // along the same line of sight, which centers the straight-down view between labels and bar.
+    const pivot = computeOrbitPivot(camera.position, lookDir, h, size.height, CAMERA_FIT_FOV_DEG, TOP_DOWN_CENTER_OFFSET_PX);
+    (controls as unknown as { target: THREE.Vector3 }).target.copy(pivot);
     // Re-sync OrbitControls' internal spherical so it doesn't snap back to
     // its captured-at-mount position on the next frame.
     (controls as unknown as { update?: () => void }).update?.();
@@ -159,9 +153,8 @@ export const View3d = observer(function View3d() {
   const simulation = stores.simulation;
   const ui = stores.ui;
   // Scale the design pose's depth axis by planeHeight so other-aspect presets
-  // stay framed. Memoize so drei's PerspectiveCamera and OrbitControls don't see
-  // a "new" array literal each re-render and re-apply position/target, which
-  // would overwrite the CameraFitter's mount-time fit.
+  // stay framed. Memoize so CameraFitter doesn't see a "new" array literal each
+  // re-render and re-fit, which would snap a tilted camera back to the default pose.
   const yScale = planeHeight(simulation) / DESIGN_PLANE_HEIGHT;
   const cameraPos = useMemo<[number, number, number]>(
     () => [DESIGN_CAMERA_POS.x, DESIGN_CAMERA_POS.y * yScale, DESIGN_CAMERA_POS.z], [yScale]
@@ -199,9 +192,10 @@ export const View3d = observer(function View3d() {
         <PerspectiveCamera makeDefault={true} fov={fov} up={DEFAULT_UP}/>
         <CameraFitter targetPos={targetPos} designPos={cameraPos}/>
         {cameraSettingsEnabled && <CameraDebugTracker/>}
+        {/* Target is intentionally NOT passed: CameraFitter owns it (otherwise
+            drei would apply the prop to each new instance over the fit). */}
         <OrbitControls
           makeDefault={true}
-          target={targetPos}
           enableDamping={true}
           enableRotate={!ui.dragging} // disable rotation when something is being dragged
           enablePan={cameraSettingsEnabled}
