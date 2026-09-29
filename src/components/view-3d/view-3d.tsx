@@ -39,10 +39,11 @@ const ShutterbugSupport = () => {
 // embedded viewport. Re-fits whenever the viewport size or design pose changes.
 const TERRAIN_FIT_MARGIN = 1.05;
 
-const CameraFitter = ({ targetPos, designPos, offsetPx }: {
+const CameraFitter = ({ targetPos, designPos, offsetPx, fovDeg }: {
   targetPos: [number, number, number];
   designPos: [number, number, number];
   offsetPx: number;
+  fovDeg: number;   // the fov the camera renders at, which sets the pivot's px-per-unit scale
 }) => {
   const { camera, size, controls } = useThree();
   const simulation = useStores().simulation;
@@ -54,7 +55,7 @@ const CameraFitter = ({ targetPos, designPos, offsetPx }: {
   // OrbitControls instance, which drei swaps in at mount, dropping the first fit.
   useEffect(() => {
     fittedRef.current = false;
-  }, [size.width, size.height, targetPos, designPos, offsetPx, controls]);
+  }, [size.width, size.height, targetPos, designPos, offsetPx, fovDeg, controls]);
   // Runs every frame but short-circuits after the latest successful fit. We
   // need to wait for OrbitControls to be mounted (so we can call its
   // update() and have it re-derive its internal spherical from the new
@@ -115,7 +116,7 @@ const CameraFitter = ({ targetPos, designPos, offsetPx }: {
     camera.updateProjectionMatrix();
     // Placed from the design target so the default view never moves, but orbiting a pivot further
     // along the same line of sight, which centers the straight-down view between labels and bar.
-    const pivot = computeOrbitPivot(camera.position, lookDir, h, size.height, CAMERA_FIT_FOV_DEG, offsetPx);
+    const pivot = computeOrbitPivot(camera.position, lookDir, h, size.height, fovDeg, offsetPx);
     (controls as unknown as { target: THREE.Vector3 }).target.copy(pivot);
     // Re-sync OrbitControls' internal spherical so it doesn't snap back to
     // its captured-at-mount position on the next frame.
@@ -195,7 +196,7 @@ export const View3d = observer(function View3d() {
         {/* Position is intentionally NOT passed: CameraFitter owns it (otherwise
             drei would re-apply the prop on subsequent renders and clobber the fit). */}
         <PerspectiveCamera makeDefault={true} fov={fov} up={DEFAULT_UP}/>
-        <CameraFitter targetPos={targetPos} designPos={cameraPos} offsetPx={centerOffsetPx}/>
+        <CameraFitter targetPos={targetPos} designPos={cameraPos} offsetPx={centerOffsetPx} fovDeg={fov}/>
         <TopDownFraming targetPos={targetPos} designPos={cameraPos}/>
         {cameraSettingsEnabled && <CameraDebugTracker/>}
         {/* Target is intentionally NOT passed: CameraFitter owns it (otherwise

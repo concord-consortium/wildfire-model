@@ -25,6 +25,11 @@ describe("topDownZoom", () => {
     expect(1 - near).toBeLessThan(0.1 * (1 - top));
   });
 
+  it("keeps the zoom positive when the margin is wider than the gap allows", () => {
+    expect(topDownZoom({ ...base, polar: 0, marginPx: 186 })).toBeCloseTo(0.1, 12);
+    expect(topDownZoom({ ...base, polar: 0, marginPx: 1000 })).toBeCloseTo(0.1, 12);
+  });
+
   it("does nothing with no margin, and never enlarges a model that already fits", () => {
     expect(topDownZoom({ ...base, polar: 0, marginPx: 0 })).toBe(1);
     expect(topDownZoom({ ...base, polar: 0, silhouettePx: 200 })).toBe(1);

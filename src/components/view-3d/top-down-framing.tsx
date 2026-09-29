@@ -14,13 +14,16 @@ export interface TopDownZoomInput {
   marginPx: number;
 }
 
+// Floor for the zoom, so a margin wider than the gap allows cannot collapse or flip the projection.
+const MIN_TOP_DOWN_ZOOM = 0.1;
+
 // The zoom that shrinks the straight-down model until it clears the gap between the zone labels
 // and the bottom bar by marginPx at both edges: 1 at the default pose and flatter, eased toward
 // straight down, where the matching image shift is exact. Never enlarges.
 export const topDownZoom = ({ polar, designPolar, canvasHeight, silhouettePx, marginPx }: TopDownZoomInput) => {
   if (marginPx <= 0 || silhouettePx <= 0) return 1;
   const gapPx = canvasHeight - LABEL_STRIP_PX - BAR_OVERLAP_PX;
-  const zTop = Math.min(1, (gapPx - 2 * marginPx) / silhouettePx);
+  const zTop = THREE.MathUtils.clamp((gapPx - 2 * marginPx) / silhouettePx, MIN_TOP_DOWN_ZOOM, 1);
   const t = THREE.MathUtils.smoothstep(1 - polar / designPolar, 0, 1);
   return 1 - t * (1 - zTop);
 };
