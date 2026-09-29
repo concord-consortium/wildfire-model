@@ -118,6 +118,10 @@ export class SimulationModel {
 
   @observable public speedIndex = DEFAULT_SPEED_INDEX;
 
+  // Kept because the markers are consumed when a line is built; a saved run replays these.
+  public fireLineSegments: Array<[number, number, number, number]> = [];
+  public helitackDrops: Array<{ x: number; y: number; time: number }> = [];
+
   constructor(presetConfig?: Partial<ISimulationConfig>) {
     makeObservable(this);
     this.load(presetConfig);
@@ -475,6 +479,9 @@ export class SimulationModel {
     this.simulationStarted = false;
     this.cells.forEach(cell => cell.reset());
     this.fireLineMarkers.length = 0;
+    // Fresh arrays rather than emptied ones: a saved interactive state may have frozen the old ones.
+    this.fireLineSegments = [];
+    this.helitackDrops = [];
     this.lastFireLineTimestamp = -Infinity;
     this.lastHelitackTimestamp = -Infinity;
     this.interventionCount = 0;
@@ -746,6 +753,7 @@ export class SimulationModel {
   }
 
   @action.bound public buildFireLine(start: ICoords, end: ICoords) {
+    this.fireLineSegments.push([start.x, start.y, end.x, end.y]);
     const startGridX = Math.floor(start.x / this.config.cellSize);
     const startGridY = Math.floor(start.y / this.config.cellSize);
     const endGridX = Math.floor(end.x / this.config.cellSize);
@@ -759,6 +767,7 @@ export class SimulationModel {
   }
 
   @action.bound public setHelitackPoint(px: number, py: number) {
+    this.helitackDrops.push({ x: px, y: py, time: this.time });
     const startGridX = Math.floor(px / this.config.cellSize);
     const startGridY = Math.floor(py / this.config.cellSize);
     const cell = this.cells[getGridIndexForLocation(startGridX, startGridY, this.gridWidth)];
