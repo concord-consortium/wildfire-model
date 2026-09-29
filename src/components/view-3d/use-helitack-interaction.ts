@@ -7,7 +7,7 @@ import { Event } from "three";
 export const useHelitackInteraction = () => {
   const { simulation, ui } = useStores();
   return {
-    active: ui.interaction === Interaction.Helitack,
+    active: !ui.readOnly && ui.interaction === Interaction.Helitack,
     onPointerDown: (e: Event) => {
       const ratio = ftToViewUnit(simulation);
       const x = e.point.x / ratio;

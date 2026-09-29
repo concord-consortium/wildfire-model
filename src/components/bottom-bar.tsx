@@ -76,7 +76,8 @@ export class BottomBar extends BaseComponent<IProps, IState> {
 
   get sparkEnabled() {
     const { simulation, ui } = this.stores;
-    return !simulation.simulationStarted
+    return !ui.readOnly
+      && !simulation.simulationStarted
       && !ui.showTerrainUI
       && simulation.canAddSpark
       && ui.interaction !== Interaction.PlaceSpark;
@@ -88,7 +89,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
   // showTerrainUI term it would be the only live control in a fully grayed bar.
   get speedEnabled() {
     const { simulation, ui } = this.stores;
-    return simulation.ready && !ui.showTerrainUI;
+    return !ui.readOnly && simulation.ready && !ui.showTerrainUI;
   }
 
   get fireLineEnabled() {
@@ -96,7 +97,8 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     // canAddFireLineMarker already gates on config.fireLineAvailable + cooldown
     // + 2-marker capacity (see simulation.ts:109-117). Unlike Spark and Helitack,
     // the button stays live while its own interaction is armed so it can cancel it.
-    return simulation.simulationStarted
+    return !ui.readOnly
+      && simulation.simulationStarted
       && !simulation.simulationEnded
       && (simulation.canAddFireLineMarker || ui.interaction === Interaction.DrawFireLine);
   }
@@ -105,7 +107,8 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     const { simulation, ui } = this.stores;
     // canUseHelitack already gates on config.helitackAvailable + cooldown
     // (see simulation.ts:119-127).
-    return simulation.simulationStarted
+    return !ui.readOnly
+      && simulation.simulationStarted
       && !simulation.simulationEnded
       && simulation.canUseHelitack
       && ui.interaction !== Interaction.Helitack;
@@ -155,7 +158,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               className={css.playbackButton}
               data-testid="clear-all-button"
               onClick={this.handleClearAll}
-              disabled={!simulation.reloadEnabled || ui.showTerrainUI}
+              disabled={ui.readOnly || !simulation.reloadEnabled || ui.showTerrainUI}
               disableRipple={true}
             >
               <span><ClearAllIcon/><span className={css.playbackButtonLabel}>Clear All</span></span>
@@ -165,7 +168,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
             <IconButton
               icon={simulation.zonesCount < 3 ? <TerrainIcon /> : <TerrainThreeIcon />}
               highlightIcon={simulation.zonesCount < 3 ? <TerrainHighlightIcon /> : <TerrainThreeHighlightIcon />}
-              disabled={!simulation.setupEnabled}
+              disabled={ui.readOnly || !simulation.setupEnabled}
               selected={ui.showTerrainUI}
               buttonText="Setup"
               dataTest="terrain-button"
@@ -191,7 +194,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               className={css.playbackButton}
               data-testid="restart-button"
               onClick={this.handleRestart}
-              disabled={!simulation.restartEnabled}
+              disabled={ui.readOnly || !simulation.restartEnabled}
               disableRipple={true}
             >
               <span><RestartIcon/><span className={css.playbackButtonLabel}>Restart</span></span>
@@ -200,7 +203,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
           <div className={`${css.widgetGroup} ${css.startButton}`}>
             <Button
               onClick={this.handleStart}
-              disabled={!simulation.startEnabled || ui.showTerrainUI}
+              disabled={ui.readOnly || !simulation.startEnabled || ui.showTerrainUI}
               className={css.playbackButton}
               data-testid="start-button"
               disableRipple={true}
@@ -253,7 +256,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               useAnalysisEngine() here without re-plumbing the mount. NOT a
               `.widgetGroup`: the button is a self-contained #c1daff pill, no white
               bubble. */}
-          {hazbotEngine?.ruleSet && (
+          {hazbotEngine?.ruleSet && !ui.readOnly && (
             <div className={css.hazbotButton}>
               <AnalysisEngineProvider engine={hazbotEngine} appRulesVersion={APP_RULES_VERSION}>
                 <HazbotButton />

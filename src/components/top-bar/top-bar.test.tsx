@@ -1,5 +1,5 @@
 import * as React from "react";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "mobx-react";
 import { createStores } from "../../models/stores";
@@ -26,6 +26,24 @@ describe("TopBar component", () => {
       await userEvent.click(screen.getByTestId("reload"));
       await new Promise((resolve) => setTimeout(resolve, 150));
       expect(reloadMock).toHaveBeenCalled();
+    });
+  });
+
+  describe("in read-only report mode", () => {
+    it("hides the reload button, including when read-only arrives after the first render", () => {
+      const stores = createStores();
+      render(
+        <Provider stores={stores}>
+          <TopBar projectName="Test" />
+        </Provider>
+      );
+      expect(screen.getByTestId("reload")).toBeInTheDocument();
+      act(() => {
+        stores.ui.readOnly = true;
+      });
+      expect(screen.queryByTestId("reload")).not.toBeInTheDocument();
+      expect(screen.getByTestId("share")).toBeInTheDocument();
+      expect(screen.getByTestId("about")).toBeInTheDocument();
     });
   });
 

@@ -520,6 +520,56 @@ describe("BottomBar edge cases", () => {
   });
 });
 
+describe("model controls in read-only report mode", () => {
+  let stores = createStores();
+  beforeEach(() => {
+    stores = createStores();
+  });
+
+  // eslint-disable-next-line testing-library/no-node-access
+  const speedInput = () => screen.getByTestId("speed-control").querySelector("input");
+
+  // Each control is checked in a state where it is otherwise enabled, so read-only is what disables it.
+  it.each([
+    ["terrain-button", 3],
+    ["spark-button", 3],
+    ["clear-all-button", 3],
+    ["start-button", 3],
+    ["restart-button", 4],
+    ["fireline-button", 4],
+    ["helitack-button", 4]
+  ] as const)("disables %s", (testid, state) => {
+    seedState(stores, state);
+    const { unmount } = render(<Provider stores={stores}><BottomBar /></Provider>);
+    expectButtonState(testid, true);
+    unmount();
+
+    stores.ui.readOnly = true;
+    render(<Provider stores={stores}><BottomBar /></Provider>);
+    expectButtonState(testid, false);
+  });
+
+  it("disables Speed", () => {
+    seedState(stores, 3);
+    const { unmount } = render(<Provider stores={stores}><BottomBar /></Provider>);
+    expect(speedInput()).not.toBeDisabled();
+    unmount();
+
+    stores.ui.readOnly = true;
+    render(<Provider stores={stores}><BottomBar /></Provider>);
+    expect(speedInput()).toBeDisabled();
+  });
+
+  it("leaves the Vegetation Key switch usable", async () => {
+    seedState(stores, 5);
+    stores.ui.readOnly = true;
+    render(<Provider stores={stores}><BottomBar /></Provider>);
+    const before = stores.ui.showVegetationKey;
+    await userEvent.click(screen.getByTestId("vegetation-key-switch"));
+    expect(stores.ui.showVegetationKey).toBe(!before);
+  });
+});
+
 describe("model controls while the Setup wizard is open", () => {
   let stores = createStores();
   beforeEach(() => {
@@ -611,6 +661,12 @@ describe("BottomBar Hazbot button (WM-6)", () => {
   it("renders the Hazbot button when a rule-set is loaded (?hazbotRules=23)", () => {
     render(<Provider stores={stores}><BottomBar /></Provider>);
     expect(screen.getByTestId("hazbot-button")).toBeInTheDocument();
+  });
+
+  it("does NOT render the Hazbot button in read-only report mode", () => {
+    stores.ui.readOnly = true;
+    render(<Provider stores={stores}><BottomBar /></Provider>);
+    expect(screen.queryByTestId("hazbot-button")).toBeNull();
   });
 
   it("does NOT render the Hazbot button for an invalid rule-set id (?hazbotRules=99)", () => {

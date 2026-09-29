@@ -1,4 +1,5 @@
 import * as React from "react";
+import { observer } from "mobx-react";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { Dialog } from "./dialog";
 import css from "./top-bar.scss";
@@ -12,7 +13,7 @@ interface IProps {
   shareContent?: JSX.Element;
 }
 
-export const TopBar: React.FC<IProps> = ({ projectName, aboutContent, shareContent }: IProps) => {
+export const TopBar: React.FC<IProps> = observer(function TopBar({ projectName, aboutContent, shareContent }: IProps) {
   const stores = useStores();
   const [shareOpen, setShareOpen] = React.useState<boolean>(false);
   const [aboutOpen, setAboutOpen] = React.useState<boolean>(false);
@@ -37,7 +38,9 @@ export const TopBar: React.FC<IProps> = ({ projectName, aboutContent, shareConte
 
   return (
     <div className={css.topBar}>
-      <span className={css.textButton} data-testid="reload" onClick={handleReload}><RefreshIcon /></span>
+      {stores.ui.readOnly
+        ? <span />
+        : <span className={css.textButton} data-testid="reload" onClick={handleReload}><RefreshIcon /></span>}
       <span>
         <span data-testid="share" className={css.textButton} onClick={handleShareOpen}>Share</span>
         <span data-testid="about" className={css.textButton} onClick={handleAboutOpen}>About</span>
@@ -58,4 +61,4 @@ export const TopBar: React.FC<IProps> = ({ projectName, aboutContent, shareConte
       </Dialog>
     </div>
   );
-};
+});
