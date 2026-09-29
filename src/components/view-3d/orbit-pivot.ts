@@ -15,6 +15,8 @@ export const DESIGN_TARGET_POS = { x: 0.5, y: 0.263, z: 0.15 };
 // The depth-axis (y) components scale by planeHeight / this so the framing
 // adapts to presets with a different model aspect ratio.
 export const DESIGN_PLANE_HEIGHT = 80000 / 120000;
+// How far the student can tilt from straight down (polar angle 0).
+export const MAX_POLAR_ANGLE = Math.PI * 0.4;
 
 // The HTML that covers the canvas: the zone labels (60px plus a 10px margin) from the canvas top,
 // and the bottom bar's overlap of the canvas bottom. The Cypress framing test guards both against
@@ -24,6 +26,9 @@ export const BAR_OVERLAP_PX = 22;
 // How far below the canvas center, in CSS px, the top-down view should put the model's center: the
 // middle of the uncovered gap.
 export const TOP_DOWN_CENTER_OFFSET_PX = (LABEL_STRIP_PX - BAR_OVERLAP_PX) / 2;
+// Space, in CSS px, the straight-down model should leave between itself and the zone labels and
+// the bottom bar. 0 leaves the model at the size the orbit radius gives it.
+export const TOP_DOWN_MARGIN_PX = 0;
 
 // The orbit target on the camera's line of sight at which a straight-down view shows the model's
 // ground-level center `offsetPx` CSS px below the canvas center. Seen from above, the camera sits

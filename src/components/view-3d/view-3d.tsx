@@ -15,8 +15,9 @@ import Shutterbug from "shutterbug";
 import { cameraDebugStore } from "./camera-debug-store";
 import {
   CAMERA_FIT_FOV_DEG, computeOrbitPivot, DESIGN_CAMERA_POS, DESIGN_PLANE_HEIGHT, DESIGN_TARGET_POS,
-  TOP_DOWN_CENTER_OFFSET_PX
+  MAX_POLAR_ANGLE, TOP_DOWN_CENTER_OFFSET_PX
 } from "./orbit-pivot";
+import { TopDownFraming } from "./top-down-framing";
 
 // This needs to be a separate component, as useThree depends on context provided by <Canvas> component.
 const ShutterbugSupport = () => {
@@ -38,9 +39,10 @@ const ShutterbugSupport = () => {
 // embedded viewport. Re-fits whenever the viewport size or design pose changes.
 const TERRAIN_FIT_MARGIN = 1.05;
 
-const CameraFitter = ({ targetPos, designPos }: {
+const CameraFitter = ({ targetPos, designPos, offsetPx }: {
   targetPos: [number, number, number];
   designPos: [number, number, number];
+  offsetPx: number;
 }) => {
   const { camera, size, controls } = useThree();
   const simulation = useStores().simulation;
@@ -52,7 +54,7 @@ const CameraFitter = ({ targetPos, designPos }: {
   // OrbitControls instance, which drei swaps in at mount, dropping the first fit.
   useEffect(() => {
     fittedRef.current = false;
-  }, [size.width, size.height, targetPos, designPos, controls]);
+  }, [size.width, size.height, targetPos, designPos, offsetPx, controls]);
   // Runs every frame but short-circuits after the latest successful fit. We
   // need to wait for OrbitControls to be mounted (so we can call its
   // update() and have it re-derive its internal spherical from the new
@@ -113,7 +115,7 @@ const CameraFitter = ({ targetPos, designPos }: {
     camera.updateProjectionMatrix();
     // Placed from the design target so the default view never moves, but orbiting a pivot further
     // along the same line of sight, which centers the straight-down view between labels and bar.
-    const pivot = computeOrbitPivot(camera.position, lookDir, h, size.height, CAMERA_FIT_FOV_DEG, TOP_DOWN_CENTER_OFFSET_PX);
+    const pivot = computeOrbitPivot(camera.position, lookDir, h, size.height, CAMERA_FIT_FOV_DEG, offsetPx);
     (controls as unknown as { target: THREE.Vector3 }).target.copy(pivot);
     // Re-sync OrbitControls' internal spherical so it doesn't snap back to
     // its captured-at-mount position on the next frame.
@@ -123,8 +125,8 @@ const CameraFitter = ({ targetPos, designPos }: {
   return null;
 };
 
-// Pushes the live camera position + OrbitControls target into cameraDebugStore
-// each frame so the top-bar camera-settings panel can display them. Also
+// Pushes the live camera position, OrbitControls target and polar angle into
+// cameraDebugStore each frame so the top-bar camera-settings panel can display them. Also
 // exposes the camera + controls on window.debugCamera so a designer or test
 // harness can imperatively set a pose without dispatching pointer events.
 const CameraDebugTracker = () => {
@@ -144,6 +146,8 @@ const CameraDebugTracker = () => {
     if (sp[0] !== px || sp[1] !== py || sp[2] !== pz || st[0] !== t.x || st[1] !== t.y || st[2] !== t.z) {
       cameraDebugStore.setPose([px, py, pz], [t.x, t.y, t.z]);
     }
+    const polarDeg = THREE.MathUtils.radToDeg((controls as unknown as { getPolarAngle: () => number }).getPolarAngle());
+    if (polarDeg !== cameraDebugStore.polarDeg) cameraDebugStore.setPolarDeg(polarDeg);
   });
   return null;
 };
@@ -167,6 +171,7 @@ export const View3d = observer(function View3d() {
   // When the cameraSettings dev panel is active, the panel's FOV slider drives
   // the camera's FOV; otherwise the camera uses the default design FOV.
   const fov = cameraSettingsEnabled ? cameraDebugStore.fov : CAMERA_FIT_FOV_DEG;
+  const centerOffsetPx = cameraSettingsEnabled ? cameraDebugStore.centerOffsetPx : TOP_DOWN_CENTER_OFFSET_PX;
 
   return (
     /* eslint-disable react/no-unknown-property */
@@ -190,7 +195,8 @@ export const View3d = observer(function View3d() {
         {/* Position is intentionally NOT passed: CameraFitter owns it (otherwise
             drei would re-apply the prop on subsequent renders and clobber the fit). */}
         <PerspectiveCamera makeDefault={true} fov={fov} up={DEFAULT_UP}/>
-        <CameraFitter targetPos={targetPos} designPos={cameraPos}/>
+        <CameraFitter targetPos={targetPos} designPos={cameraPos} offsetPx={centerOffsetPx}/>
+        <TopDownFraming targetPos={targetPos} designPos={cameraPos}/>
         {cameraSettingsEnabled && <CameraDebugTracker/>}
         {/* Target is intentionally NOT passed: CameraFitter owns it (otherwise
             drei would apply the prop to each new instance over the fit). */}
@@ -203,7 +209,7 @@ export const View3d = observer(function View3d() {
           zoomSpeed={0.5}
           minDistance={0.8}
           maxDistance={5}
-          maxPolarAngle={Math.PI * 0.4}
+          maxPolarAngle={MAX_POLAR_ANGLE}
           minAzimuthAngle={-Math.PI * 0.25}
           maxAzimuthAngle={Math.PI * 0.25}
         />
