@@ -13,7 +13,7 @@ The first three steps are one branch and one branch deploy: they ship the fix wi
 **Summary**: Moves OrbitControls' target from `DESIGN_TARGET_POS` to a pivot on the default line of sight, computed from the fitted camera and the canvas height so that the top-down end of the tilt is centered in the gap between the zone labels and the bottom bar. The camera is still placed from `DESIGN_TARGET_POS`, so the default view does not move. Delivers R1 to R6.
 
 **Files affected**:
-- `src/components/view-3d/orbit-pivot.ts` (new): the pivot formula and the offset constant.
+- `src/components/view-3d/orbit-pivot.ts` (new): the pivot formula and the offset constant. It also holds the design pose and fit fov (`CAMERA_FIT_FOV_DEG`, `DESIGN_CAMERA_POS`, `DESIGN_TARGET_POS`, `DESIGN_PLANE_HEIGHT`), moved from `view-3d.tsx` so the unit and Cypress tests import the values the app ships rather than copies.
 - `src/components/view-3d/orbit-pivot.test.ts` (new): unit tests for the formula.
 - `src/components/view-3d/view-3d.tsx`: `CameraFitter` sets `controls.target` to the pivot; the fit guard also resets when the OrbitControls instance changes; the `target` prop comes off `<OrbitControls>`.
 
@@ -91,7 +91,7 @@ Verified with a throwaway version of exactly this change (plainsTwoZone, ground 
 **Summary**: Adds R8's controls to the `?cameraSettings=true` panel: a tilt slider, a center-offset input and a top-down-margin input, all live, with both values in the Copy snippet. The margin implements option B as a projection change (a zoom and a matching vertical image shift that grow toward the straight-down end), so it needs no custom orbit behavior and cannot move the default view.
 
 **Files affected**:
-- `src/components/view-3d/orbit-pivot.ts`: `TOP_DOWN_MARGIN_PX = 0`, next to the offset constant, so the store and the framing component both import it from a module with no React or store dependencies (defining it in `top-down-framing.tsx` would make the store and that component import each other).
+- `src/components/view-3d/orbit-pivot.ts`: `MAX_POLAR_ANGLE` (0.4π), shared by OrbitControls' `maxPolarAngle` and the tilt slider's range; and `TOP_DOWN_MARGIN_PX = 0`, next to the offset constant, so the store and the framing component both import it from a module with no React or store dependencies (defining it in `top-down-framing.tsx` would make the store and that component import each other).
 - `src/components/view-3d/camera-debug-store.ts`: `polarDeg` (live readout), `centerOffsetPx`, `topDownMarginPx`, setters.
 - `src/components/view-3d/top-down-framing.tsx` (new): a pure `topDownZoom` helper and the per-frame component that applies it.
 - `src/components/view-3d/top-down-framing.test.ts` (new): unit tests for `topDownZoom`.
@@ -146,21 +146,21 @@ The panel is a single fixed 32px row, and at the 1241px Chromebook width the thr
 **Summary**: R7. A Cypress spec at the target Chromebook viewport that projects the plane's corners through the live camera and asserts the straight-down framing and the unchanged default pose. jsdom does no WebGL or layout, so this cannot live in Jest; Cypress already renders the canvas in CI (`smoke.cy.ts`, `workspace.cy.ts`) and already uses this viewport (`bottom-bar-visuals.cy.ts`).
 
 **Files affected**:
-- `cypress/e2e/terrain-tilt-framing.cy.ts` (new)
+- `cypress/e2e/terrain-tilt-framing.cy.ts` (new): imports the design pose and `MAX_POLAR_ANGLE` from `orbit-pivot.ts`, so the expected default pose and the sweep's end follow the shipped values.
 
 **Estimated diff size**: ~115 lines
 
 Visits `/?cameraSettings=true&preset=plainsTwoZone` at `cy.viewport(1241, 529)`, waits for `win.debugCamera`, then:
-- asserts the camera position is `DESIGN_CAMERA_POS` `(0.5, -0.35, 1.285)` to 3 places (R3);
+- waits for, and asserts, the default pose: camera position `DESIGN_CAMERA_POS` `(0.5, -0.35, 1.285)` to 3 places and look direction along `DESIGN_TARGET_POS - DESIGN_CAMERA_POS` (R3). The look direction is what makes the wait safe; see the resolved question "What the Cypress test must wait for";
 - sets the polar angle to 0.0001, calls `update()` until damping settles, projects the four ground corners and compares them with the zone labels' bottom and the bottom bar's top: both margins non-negative and within 4px of each other (R1);
 - sweeps the polar angle from 0° to 72° in 10° steps plus 72° itself, asserting both margins non-negative at each (R5). The whole range was measured inside the gap at this viewport (0° 100-455 to 72° 188-293 in 92-463), so the sweep fails only if a later change lets the middle of the tilt drift.
-- **graph open (R6):** at `cy.viewport(900, 700)`, clicks `[data-testid="right-panel-tab"]` to open the graph, then asserts the default camera sits where the fitter's pull-back puts it for the 569px-wide canvas, `(0.5, -0.675, 1.888)` to 3 places (R3 on the pull-back path), and repeats the straight-down check (margins non-negative and within 4px of each other; measured 105/106 in the 92-634 gap). 900 x 700 rather than the Chromebook size because there the graph actually moves the camera; at 1241 x 529 it changes nothing, so a check there could not fail.
+- **graph open (R6):** at `cy.viewport(900, 700)`, clicks `[data-testid="right-panel-tab"]` to open the graph, then waits for the default pose at the fitter's pulled-back position for the 569px-wide canvas, `(0.5, -0.675, 1.888)` to 3 places, looking along the design direction (R3 on the pull-back path), and repeats the straight-down check (margins non-negative and within 4px of each other; measured 105/106 in the 92-634 gap). 900 x 700 rather than the Chromebook size because there the graph actually moves the camera; at 1241 x 529 it changes nothing, so a check there could not fail.
 
-R4 (the tilt, azimuth and zoom limits, damping and speeds unchanged) gets no dedicated test, by decision: no step touches those props, the tuning margin changes `camera.zoom` rather than OrbitControls' distance limits, and the angle sweep above already walks the full tilt range. A test would only restate the prop values.
+R4 (the tilt, azimuth and zoom limits, damping and speeds unchanged) gets no dedicated test, by decision: no step changes those values (`maxPolarAngle` only moves to the shared `MAX_POLAR_ANGLE`, still 0.4π), the tuning margin changes `camera.zoom` rather than OrbitControls' distance limits, and the angle sweep above already walks the full tilt range. A test would only restate the prop values.
 
-Mutation check before committing: with the pivot line in `CameraFitter` commented out, the R1 assertion fails (margins -57 / 66).
+Mutation checks: with the pivot line in `CameraFitter` removed, all four tests fail at the default-pose wait (the live controls keep targeting the origin); with `TOP_DOWN_CENTER_OFFSET_PX` set to 0, three of the four tests fail with the model 17px under the labels.
 
-Selectors: the zone labels are `[data-testid="zone-info"]` (bottom edge = max of their boxes) and the bottom bar is the first `[class*="bottomBar"]`. The straight-down wait is not solved yet; see the open question "What the Cypress test must wait for".
+Selectors: the zone labels are `[data-testid="zone-info"]` (bottom edge = max of their boxes) and the bottom bar is the first `[class*="bottomBar"]`.
 
 ---
 
@@ -178,14 +178,17 @@ Selectors: the zone labels are `[data-testid="zone-info"]` (bottom edge = max of
 
 <!-- Implementation-focused questions only. Requirements questions go in requirements.md. -->
 
-### OPEN: What the Cypress test must wait for
-**Context**: Built as described in "Regression guard in Cypress", the test waited until the camera sat at `DESIGN_CAMERA_POS`, then tilted and measured in the same tick. It was flaky: across three headless Chrome runs (`CI=true npx cypress run --browser chrome`) a different straight-down check failed each time, once 456px and once 43px under the labels, while the same check passed on the other runs. Waiting on the camera position is not enough, because the camera sits at the design position both before and after `CameraFitter` sets the pivot. The cause was not found.
+### RESOLVED: What the Cypress test must wait for
+**Context**: Waiting only for the camera to reach `DESIGN_CAMERA_POS` was flaky (2 of 3 headless runs failed a straight-down check). A per-frame timeline of the page load shows why. drei mounts a first OrbitControls instance, then replaces it. The fit applied to the first instance leaves the camera at the design position, but the new instance targets `(0, 0, 0)` for about 100ms, until the guard reset on `controls` lets the fit run again and set the pivot. During that window the position check already passes, and a test that tilts then orbits around the origin.
 **Options considered**:
-- A) Also wait until `controls.target` is off the design target and unchanged across a few frames.
-- B) Also wait until the canvas size is stable (a late resize re-fits and re-computes the pivot).
+- A) Wait until `controls.target` is off the design target and unchanged across a few frames.
+- B) Wait until the canvas size is stable.
 - C) Recompute the expected pivot in the test and wait for `controls.target` to equal it.
+- D) Wait for the camera's look direction as well as its position.
 
-**Decision**: Not made. Find which of the above the failures come from before choosing (log the canvas height, the target and the camera position into the assertion message, since the browser console does not reach `cypress run`'s output).
+**Decision**: **D.** The camera looks along the design direction only after the pivot is set on the live instance (it looks straight down while the target is the origin), and R3 asks for the look direction anyway. A fails because `(0, 0, 0)` is itself stable for several frames; B fails because the canvas height never changes (463px throughout); C would copy the pivot formula into the test. Five runs in a row passed (20 test executions).
+
+The ~100ms window is also visible to a student as a few frames of a wrong view on load. It is not new: master shows a different wrong direction for 150 to 250ms at the same point (the prop-applied target on a camera still being placed). Out of scope here.
 
 ### RESOLVED: Judgment call: hardcode the 24px offset or measure the DOM
 **Context**: The offset comes from the label strip and the bottom bar's overlap, both HTML outside the canvas.
