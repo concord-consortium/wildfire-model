@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { useStores } from "../../use-stores";
@@ -39,6 +39,10 @@ export const TopDownFraming = ({ targetPos, designPos }: {
   const simulation = useStores().simulation;
   const lastKey = useRef("");
   const maxElevation = useRef({ flag: -1, value: 0 });
+  const designPolar = useMemo(
+    () => new THREE.Vector3(...designPos).sub(new THREE.Vector3(...targetPos)).angleTo(new THREE.Vector3(...DEFAULT_UP)),
+    [targetPos, designPos]
+  );
 
   useFrame(() => {
     const perspective = camera as THREE.PerspectiveCamera;
@@ -66,8 +70,6 @@ export const TopDownFraming = ({ targetPos, designPos }: {
     const depth = distance + orbit.target.z - maxElevation.current.value;
     const tanHalf = Math.tan(THREE.MathUtils.degToRad(perspective.fov) / 2);
     const silhouettePx = planeHeight(simulation) * size.height / (2 * depth * tanHalf);
-    const offsetDir = new THREE.Vector3(...designPos).sub(new THREE.Vector3(...targetPos));
-    const designPolar = offsetDir.angleTo(new THREE.Vector3(...DEFAULT_UP));
 
     const zoom = topDownZoom({ polar, designPolar, canvasHeight: size.height, silhouettePx, marginPx });
     if (zoom === 1 && !applied) return;

@@ -12,6 +12,8 @@ describe("CameraSettingsPanel", () => {
     cameraDebugStore.setCenterOffsetPx(TOP_DOWN_CENTER_OFFSET_PX);
     cameraDebugStore.setTopDownMarginPx(TOP_DOWN_MARGIN_PX);
     cameraDebugStore.setPolarDeg(0);
+    cameraDebugStore.setPose([0, 0, 0], [0, 0, 0]);
+    cameraDebugStore.setDesignTarget([0, 0, 0]);
     delete (window as unknown as DebugWindow).debugCamera;
   });
 
@@ -50,5 +52,19 @@ describe("CameraSettingsPanel", () => {
     const snippet = writeText.mock.calls[0][0] as string;
     expect(snippet).toContain("\ncenterOffsetPx: 31\n");
     expect(snippet).toMatch(/\ntopDownMarginPx: 12$/);
+  });
+
+  it("copies the design target and the orbit pivot as separate lines", async () => {
+    const writeText = jest.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });
+    cameraDebugStore.setDesignTarget([0.5, 0.263, 0.15]);
+    cameraDebugStore.setPose([0.5, -0.35, 1.285], [0.5, 0.4, -0.1]);
+    render(<CameraSettingsPanel/>);
+    fireEvent.click(screen.getByText("Copy"));
+    await screen.findByText("Copied");
+    const snippet = writeText.mock.calls[0][0] as string;
+    expect(snippet).toContain("\ndesignTarget: [0.500, 0.263, 0.150]\n");
+    expect(snippet).toContain("\norbitPivot: [0.500, 0.400, -0.100]\n");
+    expect(snippet).not.toMatch(/^target:/m);
   });
 });

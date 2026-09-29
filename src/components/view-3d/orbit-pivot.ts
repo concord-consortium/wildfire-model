@@ -18,9 +18,10 @@ export const DESIGN_PLANE_HEIGHT = 80000 / 120000;
 // How far the student can tilt from straight down (polar angle 0).
 export const MAX_POLAR_ANGLE = Math.PI * 0.4;
 
-// The HTML that covers the canvas: the zone labels (60px plus a 10px margin) from the canvas top,
-// and the bottom bar's overlap of the canvas bottom. The Cypress framing test guards both against
-// layout drift.
+// The HTML that covers the canvas: the zone labels from the canvas top (`.zone` in
+// simulation-info.scss, 60px plus a 10px margin), and the bottom bar's overlap of the canvas bottom
+// (`.mainContent` in app.scss sits $topBarHeight down but is sized as if it did not). The Cypress
+// framing test guards both against layout drift.
 export const LABEL_STRIP_PX = 70;
 export const BAR_OVERLAP_PX = 22;
 // How far below the canvas center, in CSS px, the top-down view should put the model's center: the

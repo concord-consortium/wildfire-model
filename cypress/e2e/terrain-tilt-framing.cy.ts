@@ -54,7 +54,7 @@ const marginsAt = (win: TestWindow, polar: number) => {
   const canvas = doc.querySelector("canvas")!.getBoundingClientRect();
   const labelsBottom = Math.max(...Array.from(doc.querySelectorAll('[data-testid="zone-info"]'))
     .map(el => el.getBoundingClientRect().bottom));
-  const barTop = doc.querySelector('[class*="bottomBar"]')!.getBoundingClientRect().top;
+  const barTop = doc.querySelector('[data-testid="bottom-bar"]')!.getBoundingClientRect().top;
   const h = win.sim.config.modelHeight / win.sim.config.modelWidth;
   const ys = [[0, 0], [1, 0], [0, h], [1, h]].map(([x, y]) =>
     canvas.top + (1 - camera.position.clone().set(x, y, 0).project(camera).y) / 2 * canvas.height);
@@ -108,6 +108,7 @@ describe("Terrain tilt framing (WM-59)", () => {
     });
 
     it("keeps the default look direction at the pulled-back distance and centers the straight-down view", () => {
+      // Measured in the running app: the fitter's pulled-back position for this 569px-wide canvas.
       expectDefaultPose([0.5, -0.675, 1.888]);
       debugCamera().then(expectCenteredStraightDown);
     });

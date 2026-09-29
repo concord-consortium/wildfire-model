@@ -14,26 +14,32 @@ interface DebugCamera {
 }
 const debugCamera = () => (window as unknown as { debugCamera?: DebugCamera }).debugCamera;
 
+const fmtVec = (v: [number, number, number]) => `[${fmt(v[0])}, ${fmt(v[1])}, ${fmt(v[2])}]`;
+
+// designTarget is what DESIGN_TARGET_POS holds; orbitPivot is what an orbited camera looks at. Pasting
+// the pivot as the design target would move the default view on narrow viewports.
 const buildSnippet = (
   pos: [number, number, number],
-  target: [number, number, number],
+  designTarget: [number, number, number],
+  orbitPivot: [number, number, number],
   fov: number,
   centerOffsetPx: number,
   topDownMarginPx: number
 ) =>
-`cameraPos: [${fmt(pos[0])}, ${fmt(pos[1])}, ${fmt(pos[2])}]
-target: [${fmt(target[0])}, ${fmt(target[1])}, ${fmt(target[2])}]
+`cameraPos: ${fmtVec(pos)}
+designTarget: ${fmtVec(designTarget)}
+orbitPivot: ${fmtVec(orbitPivot)}
 fov: ${Math.round(fov)}
 centerOffsetPx: ${centerOffsetPx}
 topDownMarginPx: ${topDownMarginPx}`;
 
 export const CameraSettingsPanel: React.FC = observer(function CameraSettingsPanel() {
-  const { position, target, fov, polarDeg, centerOffsetPx, topDownMarginPx } = cameraDebugStore;
+  const { position, designTarget, orbitPivot, fov, polarDeg, centerOffsetPx, topDownMarginPx } = cameraDebugStore;
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(buildSnippet(position, target, fov, centerOffsetPx, topDownMarginPx));
+      await navigator.clipboard.writeText(buildSnippet(position, designTarget, orbitPivot, fov, centerOffsetPx, topDownMarginPx));
       setCopied(true);
       setTimeout(() => setCopied(false), 1200);
     } catch {
@@ -44,12 +50,12 @@ export const CameraSettingsPanel: React.FC = observer(function CameraSettingsPan
   return (
     <div className={css.panel} data-testid="camera-settings-panel">
       <span className={css.value}>
-        cameraPos:&nbsp;[{fmt(position[0])}, {fmt(position[1])}, {fmt(position[2])}]
+        cameraPos:&nbsp;{fmtVec(position)}
       </span>
-      <span className={css.value}>
-        target:&nbsp;[{fmt(target[0])}, {fmt(target[1])}, {fmt(target[2])}]
+      <span className={css.value} title="The orbit pivot the controls target, not DESIGN_TARGET_POS; Copy includes both">
+        pivot:&nbsp;{fmtVec(orbitPivot)}
       </span>
-      <label className={css.fov}>
+      <label className={css.fov} title="Field of view in degrees. Changing it resets the view, so orbit again before copying">
         fov:
         <input
           type="range"

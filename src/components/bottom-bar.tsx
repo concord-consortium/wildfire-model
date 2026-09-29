@@ -142,7 +142,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
     const { simulation, ui } = this.stores;
     const { hazbotEngine } = this;
     return (
-      <div className={css.bottomBar}>
+      <div className={css.bottomBar} data-testid="bottom-bar">
         {simulation.config.bottomBarBaseline && <div className={css.bottomBarBaseline} />}
         <div className={css.leftContainer}>
           <CCLogo className={css.logo} />

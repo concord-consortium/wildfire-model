@@ -126,12 +126,15 @@ const CameraFitter = ({ targetPos, designPos, offsetPx, fovDeg }: {
   return null;
 };
 
-// Pushes the live camera position, OrbitControls target and polar angle into
+// Pushes the live camera position, OrbitControls target (the orbit pivot), polar angle and design target into
 // cameraDebugStore each frame so the top-bar camera-settings panel can display them. Also
 // exposes the camera + controls on window.debugCamera so a designer or test
 // harness can imperatively set a pose without dispatching pointer events.
-const CameraDebugTracker = () => {
+const CameraDebugTracker = ({ designTarget }: { designTarget: [number, number, number] }) => {
   const { camera, controls } = useThree();
+  useEffect(() => {
+    cameraDebugStore.setDesignTarget(designTarget);
+  }, [designTarget]);
   useEffect(() => {
     (window as unknown as { debugCamera?: unknown }).debugCamera = { camera, controls };
     return () => {
@@ -143,7 +146,7 @@ const CameraDebugTracker = () => {
     if (!t) return;
     const { x: px, y: py, z: pz } = camera.position;
     const sp = cameraDebugStore.position;
-    const st = cameraDebugStore.target;
+    const st = cameraDebugStore.orbitPivot;
     if (sp[0] !== px || sp[1] !== py || sp[2] !== pz || st[0] !== t.x || st[1] !== t.y || st[2] !== t.z) {
       cameraDebugStore.setPose([px, py, pz], [t.x, t.y, t.z]);
     }
@@ -198,7 +201,7 @@ export const View3d = observer(function View3d() {
         <PerspectiveCamera makeDefault={true} fov={fov} up={DEFAULT_UP}/>
         <CameraFitter targetPos={targetPos} designPos={cameraPos} offsetPx={centerOffsetPx} fovDeg={fov}/>
         <TopDownFraming targetPos={targetPos} designPos={cameraPos}/>
-        {cameraSettingsEnabled && <CameraDebugTracker/>}
+        {cameraSettingsEnabled && <CameraDebugTracker designTarget={targetPos}/>}
         {/* Target is intentionally NOT passed: CameraFitter owns it (otherwise
             drei would apply the prop to each new instance over the fit). */}
         <OrbitControls

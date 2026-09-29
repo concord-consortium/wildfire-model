@@ -6,7 +6,10 @@ import { TOP_DOWN_CENTER_OFFSET_PX, TOP_DOWN_MARGIN_PX } from "./orbit-pivot";
 // top-down framing values back into the 3D view.
 class CameraDebugStore {
   position: [number, number, number] = [0, 0, 0];
-  target: [number, number, number] = [0, 0, 0];
+  // The live OrbitControls target, which is the orbit pivot rather than the design target.
+  orbitPivot: [number, number, number] = [0, 0, 0];
+  // The target CameraFitter places the default pose from (DESIGN_TARGET_POS, scaled to the preset).
+  designTarget: [number, number, number] = [0, 0, 0];
   fov = 33;
   polarDeg = 0;
   centerOffsetPx = TOP_DOWN_CENTER_OFFSET_PX;
@@ -16,9 +19,13 @@ class CameraDebugStore {
     makeAutoObservable(this);
   }
 
-  setPose(position: [number, number, number], target: [number, number, number]) {
+  setPose(position: [number, number, number], orbitPivot: [number, number, number]) {
     this.position = position;
-    this.target = target;
+    this.orbitPivot = orbitPivot;
+  }
+
+  setDesignTarget(designTarget: [number, number, number]) {
+    this.designTarget = designTarget;
   }
 
   setFov(fov: number) {
