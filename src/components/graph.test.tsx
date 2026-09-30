@@ -43,7 +43,7 @@ const createSavedState = async (): Promise<ISavedRunState> => {
   ];
   chartStore.chart.addAnnotation(new Annotation({ type: "verticalLine", value: 2, eventKind: HELITACK_EVENT, actionOrder: 2 }));
   chartStore.chart.addAnnotation(new Annotation({ type: "verticalLine", value: 2, eventKind: FIRE_LINE_EVENT, actionOrder: 1 }));
-  return JSON.parse(JSON.stringify(buildSavedState(sim, chartStore, "ByItself")));
+  return JSON.parse(JSON.stringify(buildSavedState({ simulation: sim, chartStore, ui: new UIModel() }, "ByItself")));
 };
 
 const mountGraph = async () => {
@@ -62,7 +62,7 @@ describe("Graph", () => {
       const state = await createSavedState();
       const stores = await mountGraph();
       await act(async () => {
-        await applySavedState(stores.simulation, stores.chartStore, state);
+        await applySavedState(stores, state);
       });
       return { ...stores, state };
     };
@@ -103,6 +103,17 @@ describe("Graph", () => {
       expectSavedGraph(chartStore);
       expect(chartStore.rawBurnData[1][3]).toEqual({ time: 3, acres: 9.9 });
     });
+  });
+
+  it("shows all of a restored run's data when the student had switched to it", async () => {
+    const state = await createSavedState();
+    state.view = { vegetationKey: false, graphOpen: true, graphShowsAllData: true };
+    const stores = await mountGraph();
+    await act(async () => {
+      await applySavedState(stores, state);
+    });
+    expect(stores.chartStore.chart.dataSets.map(ds => ds.maxPoints)).toEqual([-1, -1]);
+    expect(stores.chartStore.chart.maxPoints).toBe(-1);
   });
 
   describe("during a live run", () => {

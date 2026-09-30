@@ -560,13 +560,15 @@ describe("model controls in read-only report mode", () => {
     expect(speedInput()).toBeDisabled();
   });
 
-  it("leaves the Vegetation Key switch usable", async () => {
+  it("disables the Vegetation Key switch", () => {
     seedState(stores, 5);
+    const { unmount } = render(<Provider stores={stores}><BottomBar /></Provider>);
+    expectButtonState("vegetation-key-switch", true);
+    unmount();
+
     stores.ui.readOnly = true;
     render(<Provider stores={stores}><BottomBar /></Provider>);
-    const before = stores.ui.showVegetationKey;
-    await userEvent.click(screen.getByTestId("vegetation-key-switch"));
-    expect(stores.ui.showVegetationKey).toBe(!before);
+    expectButtonState("vegetation-key-switch", false);
   });
 });
 

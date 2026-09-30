@@ -19,6 +19,7 @@ export class ChartStore {
   // Bumped by restoreBurnData so the graph rebuilds its datasets and markers from a saved run.
   @observable public restoreVersion = 0;
   public restoredAnnotations: ISavedAnnotation[] = [];
+  public restoredShowsAllData = false;
 
   constructor() {
     makeObservable(this);
@@ -34,9 +35,12 @@ export class ChartStore {
     this.clearDataAndAnnotations();
   };
 
-  @action.bound public restoreBurnData(samples: ISavedRunState["burnSamples"], annotations: ISavedAnnotation[]) {
+  @action.bound public restoreBurnData(
+    samples: ISavedRunState["burnSamples"], annotations: ISavedAnnotation[], showsAllData: boolean
+  ) {
     this.rawBurnData = samples.map(zone => zone.map(([time, acres]) => ({ time, acres })));
     this.restoredAnnotations = annotations.map(a => ({ ...a }));
+    this.restoredShowsAllData = showsAllData;
     this.restoreVersion++;
   }
 

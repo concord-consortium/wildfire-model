@@ -1,5 +1,5 @@
 import { SimulationModel, SPEEDS } from "./simulation";
-import { ChartStore } from "./chart-store";
+import type { IStores } from "./stores";
 import { Cell, FireState } from "./cell";
 import { Zone } from "./zone";
 import { DroughtLevel, TerrainType, Vegetation } from "../types";
@@ -24,6 +24,14 @@ export interface ISavedAnnotation {
   actionOrder: number;
 }
 
+export interface ISavedView {
+  vegetationKey: boolean;
+  graphOpen: boolean;
+  graphShowsAllData: boolean;
+}
+
+const VIEW_KEYS: Array<keyof ISavedView> = ["vegetationKey", "graphOpen", "graphShowsAllData"];
+
 export interface ISavedRunState {
   version: typeof SAVED_STATE_VERSION;
   identity: { preset: string; gridWidth: number; gridHeight: number; zonesCount: number; appVersion: string };
@@ -44,6 +52,8 @@ export interface ISavedRunState {
   // Per zone, [hour, thousands of acres].
   burnSamples: Array<Array<[number, number]>>;
   annotations: ISavedAnnotation[];
+  // The view selectors as the student left them when the run ended.
+  view?: ISavedView;
   // 2 bits per cell, four cells per byte, low bits first, base64.
   burnMap: string;
 }
@@ -85,9 +95,7 @@ export const decodeBurnMap = (base64: string, cellCount: number): number[] | und
 };
 
 // Copies everything it reads: the interactive API deep-freezes the state it is given.
-export const buildSavedState = (
-  simulation: SimulationModel, chartStore: ChartStore, endReason: string
-): ISavedRunState => {
+export const buildSavedState = ({ simulation, chartStore, ui }: IStores, endReason: string): ISavedRunState => {
   const wind = simulation.userDefinedWind ?? simulation.wind;
   return {
     version: SAVED_STATE_VERSION,
@@ -115,6 +123,11 @@ export const buildSavedState = (
     annotations: (chartStore.chart.annotations || [])
       .filter((a): a is Annotation & { eventKind: AnnotationEventKind } => isAnnotationEventKind(a.eventKind))
       .map(a => ({ hour: a.value ?? 0, kind: a.eventKind, actionOrder: a.actionOrder ?? 0 })),
+    view: {
+      vegetationKey: ui.showVegetationKey,
+      graphOpen: ui.showChart,
+      graphShowsAllData: chartStore.chart.maxPoints === -1
+    },
     burnMap: encodeBurnMap(simulation.cells)
   };
 };
@@ -182,6 +195,9 @@ export const validateSavedState = (value: unknown, simulation: SimulationModel):
   const annotationFits = (a: unknown) => isObject(a) && isNonNegative(a.hour) &&
     typeof a.kind === "string" && isAnnotationEventKind(a.kind) && isFiniteNumber(a.actionOrder);
   if (!isArrayOf(value.annotations, annotationFits)) return fail("invalid graph annotations");
+  const viewFits = (v: unknown) => isObject(v) &&
+    VIEW_KEYS.every(key => typeof v[key] === "boolean");
+  if (value.view !== undefined && !viewFits(value.view)) return fail("invalid view");
   if (typeof value.burnMap !== "string" || !decodeBurnMap(value.burnMap, simulation.gridWidth * simulation.gridHeight)) {
     return fail("invalid burn map");
   }
@@ -191,8 +207,8 @@ export const validateSavedState = (value: unknown, simulation: SimulationModel):
 
 // Draws a validated run as it ended. The ended flag goes first so the graph's live effects skip
 // every change below, and the burn map goes last because a helitack drop resets burning cells.
-export const applySavedState = async (simulation: SimulationModel, chartStore: ChartStore, state: ISavedRunState) => {
-  const { setup } = state;
+export const applySavedState = async ({ simulation, chartStore, ui }: IStores, state: ISavedRunState) => {
+  const { setup, view } = state;
   simulation.restoredRunEnded = true;
   simulation.updateZones(setup.zones.map(z => new Zone(z)));
   await simulation.dataReadyPromise;
@@ -224,5 +240,9 @@ export const applySavedState = async (simulation: SimulationModel, chartStore: C
   simulation.updateCellsStateFlag();
   simulation.updateCellsElevationFlag();
 
-  chartStore.restoreBurnData(state.burnSamples, state.annotations);
+  chartStore.restoreBurnData(state.burnSamples, state.annotations, view?.graphShowsAllData ?? false);
+  if (view) {
+    ui.showVegetationKey = view.vegetationKey;
+    ui.setShowChart(view.graphOpen);
+  }
 };

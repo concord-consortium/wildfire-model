@@ -49,12 +49,13 @@ const createTestStores = async (): Promise<IStores> => {
 };
 
 const createSavedState = async () => {
-  const { simulation, chartStore } = await createTestStores();
+  const stores = await createTestStores();
+  const { simulation } = stores;
   simulation.simulationStarted = true;
   simulation.time = 300;
   simulation.zones[0].vegetation = Vegetation.Forest;
   simulation.cells[100].fireState = FireState.Burnt;
-  return JSON.parse(JSON.stringify(buildSavedState(simulation, chartStore, "ByItself")));
+  return JSON.parse(JSON.stringify(buildSavedState(stores, "ByItself")));
 };
 
 const savedReasons = () => mockSetState.mock.calls.map(([state]) => state.endReason);

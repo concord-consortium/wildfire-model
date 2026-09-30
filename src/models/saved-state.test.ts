@@ -1,9 +1,12 @@
 import { flushStateUpdates, setInteractiveState } from "@concord-consortium/lara-interactive-api";
 import { SimulationModel } from "./simulation";
 import { ChartStore } from "./chart-store";
+import { UIModel } from "./ui";
+import { IStores } from "./stores";
 import { Cell, FireState } from "./cell";
 import { Zone } from "./zone";
 import { Annotation } from "../charts/models/chart-annotation";
+import { ChartDataSet } from "../charts/models/chart-data-set";
 import { FIRE_LINE_EVENT, HELITACK_EVENT } from "../charts/components/annotation-icons";
 import { DroughtLevel, TerrainType, Vegetation } from "../types";
 import { ISimulationConfig } from "../config";
@@ -57,6 +60,9 @@ const createEndedRun = async () => {
   return { sim, chartStore };
 };
 
+const storesOf = (simulation: SimulationModel, chartStore: ChartStore, ui = new UIModel()): IStores =>
+  ({ simulation, chartStore, ui });
+
 const copy = (state: ISavedRunState): any => JSON.parse(JSON.stringify(state));
 
 describe("burn map encoding", () => {
@@ -95,7 +101,7 @@ describe("burn map encoding", () => {
 describe("buildSavedState", () => {
   it("carries the setup, fire lines, drops, outcome, samples, markers and burn map of the run", async () => {
     const { sim, chartStore } = await createEndedRun();
-    const state = buildSavedState(sim, chartStore, "Restart");
+    const state = buildSavedState(storesOf(sim, chartStore), "Restart");
 
     expect(state.version).toBe(SAVED_STATE_VERSION);
     expect(state.identity).toEqual({
@@ -123,16 +129,31 @@ describe("buildSavedState", () => {
     expect(codes.slice(999, 1004)).toEqual([0, 2, 3, 1, 0]);
   });
 
+  it("saves the view selectors as the student left them", async () => {
+    const { sim, chartStore } = await createEndedRun();
+    expect(buildSavedState(storesOf(sim, chartStore), "ByItself").view).toEqual({
+      vegetationKey: false, graphOpen: false, graphShowsAllData: false
+    });
+
+    const ui = new UIModel();
+    ui.showVegetationKey = true;
+    ui.showChart = true;
+    chartStore.chart.dataSets.push(new ChartDataSet({ name: "Zone 1", dataPoints: [], display: true, maxPoints: -1 }));
+    expect(buildSavedState(storesOf(sim, chartStore, ui), "ByItself").view).toEqual({
+      vegetationKey: true, graphOpen: true, graphShowsAllData: true
+    });
+  });
+
   it("saves the student's wind rather than a scheduled wind change", async () => {
     const { sim, chartStore } = await createEndedRun();
     sim.userDefinedWind = { speed: 10, direction: 90 };
     sim.wind = { speed: 3, direction: 270 };
-    expect(buildSavedState(sim, chartStore, "ByItself").setup.wind).toEqual({ speed: 10, direction: 90 });
+    expect(buildSavedState(storesOf(sim, chartStore), "ByItself").setup.wind).toEqual({ speed: 10, direction: 90 });
   });
 
   it("leaves the model's lists writable after a save through the interactive API", async () => {
     const { sim, chartStore } = await createEndedRun();
-    const state = buildSavedState(sim, chartStore, "ByItself");
+    const state = buildSavedState(storesOf(sim, chartStore), "ByItself");
     jest.spyOn(console, "warn").mockImplementation(() => undefined);
     setInteractiveState(state);
     flushStateUpdates();
@@ -161,7 +182,7 @@ describe("buildSavedState", () => {
     chartStore.rawBurnData = [0, 1, 2].map(() =>
       Array.from({ length: 51 }, (_, hour) => ({ time: hour, acres: hour * 1.23456789 }))
     );
-    const state = buildSavedState(sim, chartStore, "ByItself");
+    const state = buildSavedState(storesOf(sim, chartStore), "ByItself");
     expect(sim.gridWidth * sim.gridHeight).toBe(38400);
     expect(JSON.stringify(state).length).toBeLessThan(20000);
   });
@@ -174,7 +195,7 @@ describe("validateSavedState", () => {
   beforeAll(async () => {
     const run = await createEndedRun();
     sim = run.sim;
-    baseState = buildSavedState(run.sim, run.chartStore, "ByItself");
+    baseState = buildSavedState(storesOf(run.sim, run.chartStore), "ByItself");
   });
 
   const rejectionOf = (state: unknown, model: SimulationModel) => {
@@ -222,7 +243,7 @@ describe("validateSavedState", () => {
 
     it("requires the fixed count when zonesCount is configured", async () => {
       const fixedSim = await createSim({ zonesCount: 2 });
-      const state = copy(buildSavedState(fixedSim, new ChartStore(), "ByItself"));
+      const state = copy(buildSavedState(storesOf(fixedSim, new ChartStore()), "ByItself"));
       expect(validateSavedState(state, fixedSim).ok).toBe(true);
       expect(rejectionOf(withZones(state, 3), fixedSim)).toMatch(/3 zones/);
     });
@@ -306,6 +327,16 @@ describe("validateSavedState", () => {
     expect(rejectionOf({ ...state, annotations: [{ hour: -1, kind: FIRE_LINE_EVENT, actionOrder: 1 }] }, sim)).toMatch(/annotations/);
   });
 
+  it("accepts a state without a view block and rejects a malformed one", () => {
+    const state = copy(baseState);
+    const { view, ...withoutView } = state;
+    expect(view).toBeDefined();
+    expect(validateSavedState(withoutView, sim).ok).toBe(true);
+    expect(rejectionOf({ ...state, view: { ...view, graphOpen: "yes" } }, sim)).toMatch(/view/);
+    expect(rejectionOf({ ...state, view: { vegetationKey: true, graphOpen: true } }, sim)).toMatch(/view/);
+    expect(rejectionOf({ ...state, view: [] }, sim)).toMatch(/view/);
+  });
+
   it("rejects a burn map of the wrong length", () => {
     const state = copy(baseState);
     expect(rejectionOf({ ...state, burnMap: state.burnMap.slice(0, -8) }, sim)).toMatch(/burn map/);
@@ -329,10 +360,10 @@ describe("applySavedState", () => {
 
   it("reproduces every cell's fire state, survivor flag, helitack count and fire-line flag", async () => {
     const { sim: source, chartStore: sourceChart } = await createRunToRestore();
-    const state = copy(buildSavedState(source, sourceChart, "Restart"));
+    const state = copy(buildSavedState(storesOf(source, sourceChart), "Restart"));
     const target = await createSim();
 
-    await applySavedState(target, new ChartStore(), state);
+    await applySavedState(storesOf(target, new ChartStore()), state);
 
     expect(source.cells[DROP_CELL].helitackDropCount).toBeGreaterThan(0);
     expect(source.cells.some(c => c.isFireLine)).toBe(true);
@@ -348,7 +379,7 @@ describe("applySavedState", () => {
     const { sim: source, chartStore: sourceChart } = await createRunToRestore();
     const target = await createSim({ sparks: [] });
 
-    await applySavedState(target, new ChartStore(), copy(buildSavedState(source, sourceChart, "Restart")));
+    await applySavedState(storesOf(target, new ChartStore()), copy(buildSavedState(storesOf(source, sourceChart), "Restart")));
 
     expect(target.zones.map(z => z.vegetation)).toEqual([Vegetation.Grass, Vegetation.Forest]);
     expect(target.zones.map(z => z.droughtLevel)).toEqual([DroughtLevel.MildDrought, DroughtLevel.SevereDrought]);
@@ -376,19 +407,49 @@ describe("applySavedState", () => {
       ]
     });
 
-    await applySavedState(target, new ChartStore(), copy(buildSavedState(source, sourceChart, "Restart")));
+    await applySavedState(storesOf(target, new ChartStore()), copy(buildSavedState(storesOf(source, sourceChart), "Restart")));
 
     expect(target.zonesCount).toBe(2);
     expect(new Set(target.cells.map(c => c.zoneIdx))).toEqual(new Set([0, 1]));
   });
 
+  it("restores the view selectors", async () => {
+    const { sim: source, chartStore: sourceChart } = await createRunToRestore();
+    const state = copy(buildSavedState(storesOf(source, sourceChart), "Restart"));
+    state.view = { vegetationKey: true, graphOpen: true, graphShowsAllData: true };
+    const ui = new UIModel();
+    const chartStore = new ChartStore();
+
+    await applySavedState(storesOf(await createSim(), chartStore, ui), state);
+
+    expect(ui.showVegetationKey).toBe(true);
+    expect(ui.showChart).toBe(true);
+    expect(chartStore.restoredShowsAllData).toBe(true);
+  });
+
+  it("leaves the view selectors as the page loaded them for a state without a view block", async () => {
+    const { sim: source, chartStore: sourceChart } = await createRunToRestore();
+    const { view, ...state } = copy(buildSavedState(storesOf(source, sourceChart), "Restart"));
+    expect(view).toEqual({ vegetationKey: false, graphOpen: false, graphShowsAllData: false });
+    const ui = new UIModel();
+    ui.showVegetationKey = true;
+    ui.showChart = true;
+    const chartStore = new ChartStore();
+
+    await applySavedState(storesOf(await createSim(), chartStore, ui), state);
+
+    expect(ui.showVegetationKey).toBe(true);
+    expect(ui.showChart).toBe(true);
+    expect(chartStore.restoredShowsAllData).toBe(false);
+  });
+
   it("hands the graph the saved samples and markers", async () => {
     const { sim: source, chartStore: sourceChart } = await createRunToRestore();
-    const state = copy(buildSavedState(source, sourceChart, "Restart"));
+    const state = copy(buildSavedState(storesOf(source, sourceChart), "Restart"));
     const chartStore = new ChartStore();
     const versionBefore = chartStore.restoreVersion;
 
-    await applySavedState(await createSim(), chartStore, state);
+    await applySavedState(storesOf(await createSim(), chartStore), state);
 
     expect(chartStore.rawBurnData).toEqual(
       state.burnSamples.map((zone: Array<[number, number]>) => zone.map(([time, acres]) => ({ time, acres })))
@@ -399,14 +460,14 @@ describe("applySavedState", () => {
 
   it("restores from a frozen state and leaves the graph's samples writable", async () => {
     const { sim: source, chartStore: sourceChart } = await createRunToRestore();
-    const state = buildSavedState(source, sourceChart, "Restart");
+    const state = buildSavedState(storesOf(source, sourceChart), "Restart");
     const deepFreeze = (o: any): any => {
       Object.values(o).forEach(v => v && typeof v === "object" && deepFreeze(v));
       return Object.freeze(o);
     };
     const chartStore = new ChartStore();
 
-    await applySavedState(await createSim(), chartStore, deepFreeze(state));
+    await applySavedState(storesOf(await createSim(), chartStore), deepFreeze(state));
 
     chartStore.rawBurnData[0][0].acres = 5;
     chartStore.rawBurnData[0].push({ time: 3, acres: 1 });

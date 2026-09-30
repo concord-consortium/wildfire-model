@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "mobx-react";
 import { createStores } from "../models/stores";
@@ -64,6 +64,19 @@ describe("VegetationKeySwitch", () => {
     expect(mockLog).toHaveBeenLastCalledWith("VegetationKeyHidden");
 
     expect(mockLog).toHaveBeenCalledTimes(2);
+  });
+
+  it("is disabled in read-only report mode, still showing the key's position", () => {
+    stores.ui.showVegetationKey = true;
+    stores.ui.readOnly = true;
+    renderSwitch();
+    const control = screen.getByTestId("vegetation-key-switch");
+    expect(control).toBeDisabled();
+    expect(control.classList.contains("on")).toBe(true);
+
+    fireEvent.click(control);
+    expect(stores.ui.showVegetationKey).toBe(true);
+    expect(mockLog).not.toHaveBeenCalled();
   });
 
   it("leaves simulation.config untouched, since config is not observable state", async () => {

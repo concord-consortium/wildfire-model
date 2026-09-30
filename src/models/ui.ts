@@ -1,5 +1,6 @@
 import { observable, makeObservable } from "mobx";
 import { CHART_TAB_INITIAL_OPEN } from "../hazbot/wildfire/constants";
+import { log } from "../log";
 
 export enum Interaction {
   PlaceSpark = "PlaceSpark",
@@ -49,6 +50,13 @@ export class UIModel {
 
   constructor() {
     makeObservable(this);
+  }
+
+  // The one way to change showChart: the Hazbot chartTabOpen temporal variable follows these events.
+  public setShowChart(open: boolean) {
+    if (open === this.showChart) return;
+    this.showChart = open;
+    log(open ? "ChartTabShown" : "ChartTabHidden");
   }
 
   // Clear All and window.test.resetHazbotFeedbackLevels() both come through here.

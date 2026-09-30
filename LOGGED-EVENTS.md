@@ -69,7 +69,7 @@ field reaches the payload.
 
 | Event | Parameters | When |
 |-------|-----------|------|
-| `ChartTabShown` | — | User opens the chart panel |
+| `ChartTabShown` | — | User opens the chart panel, or a report view restores a saved run whose graph was open (report views drop log messages) |
 | `ChartTabHidden` | — | User closes the chart panel |
 | `GraphDataRangeToggled` | `{ showAll }` | User toggles between Show All Data / Show Recent Data |
 

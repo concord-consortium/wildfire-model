@@ -7,7 +7,8 @@ import { log } from "./log";
 
 // Restores a saved run only in report mode, where the model is read-only. In runtime mode the
 // student's model loads fresh whatever state the Activity Player sends.
-export const initInteractiveState = async ({ simulation, chartStore, ui }: IStores) => {
+export const initInteractiveState = async (stores: IStores) => {
+  const { simulation, chartStore, ui } = stores;
   if (!inIframe()) return;
   const initMessage = await getInitInteractiveMessage<unknown>();
   if (initMessage?.mode !== "report") return;
@@ -21,7 +22,7 @@ export const initInteractiveState = async ({ simulation, chartStore, ui }: IStor
     return;
   }
   try {
-    await applySavedState(simulation, chartStore, result.state);
+    await applySavedState(stores, result.state);
   } catch (e) {
     console.warn("Wildfire could not draw the saved state", e);
     chartStore.reset();
@@ -30,9 +31,9 @@ export const initInteractiveState = async ({ simulation, chartStore, ui }: IStor
 };
 
 // Sent at once rather than after the API's debounce, so a reload or tab close cannot lose it.
-export const saveRun = ({ simulation, chartStore, ui }: IStores, endReason: string) => {
-  if (!inIframe() || ui.readOnly) return;
-  setInteractiveState(buildSavedState(simulation, chartStore, endReason));
+export const saveRun = (stores: IStores, endReason: string) => {
+  if (!inIframe() || stores.ui.readOnly) return;
+  setInteractiveState(buildSavedState(stores, endReason));
   flushStateUpdates();
 };
 

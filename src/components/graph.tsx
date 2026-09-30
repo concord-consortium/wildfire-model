@@ -117,6 +117,9 @@ export const Graph = observer(function WrappedComponent() {
     chart.dataSets = chartStore.rawBurnData.map((samples, zoneIdx) => createZoneDataSet(
       chart, zoneIdx, samples.map(({ time, acres }) => new DataPoint({ a1: time, a2: Math.ceil(acres), label: "" }))
     ));
+    if (chartStore.restoredShowsAllData) {
+      chart.dataSets.forEach(ds => ds.setMaxDataPoints(-1));
+    }
     chart.annotations = chartStore.restoredAnnotations.map(a => buildEventAnnotation(a.kind, a.hour, a.actionOrder));
   }, [chartStore, chartStore.restoreVersion, simulation.restoredRunEnded]);
 
