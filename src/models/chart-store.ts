@@ -1,6 +1,7 @@
 import { observable, action, makeObservable } from "mobx";
 import { ChartDataModel } from "../charts/models/chart-data";
 import type { ISavedAnnotation, ISavedRunState } from "./saved-state";
+import type { SimulationModel } from "./simulation";
 
 export interface IRawBurnDataPoint {
   time: number;       // simulated hours
@@ -34,6 +35,31 @@ export class ChartStore {
   @action.bound public clearData = () => {
     this.clearDataAndAnnotations();
   };
+
+  // Adds the hour's sample, or updates it in place when the hour already has one.
+  public recordBurnSample(zoneIdx: number, hour: number, acres: number) {
+    if (!this.rawBurnData[zoneIdx]) {
+      this.rawBurnData[zoneIdx] = [];
+    }
+    const samples = this.rawBurnData[zoneIdx];
+    if (samples.length === 0 || samples[samples.length - 1].time !== hour) {
+      samples.push({ time: hour, acres });
+    } else {
+      samples[samples.length - 1].acres = acres;
+    }
+  }
+
+  // The graph samples on render, after the tick that ends a run, so a run that ends on a new hour
+  // has no sample for it yet.
+  public recordCurrentHourIfMissing(simulation: SimulationModel) {
+    const hour = simulation.timeInHours;
+    simulation.zones.forEach((_, zoneIdx) => {
+      const samples = this.rawBurnData[zoneIdx];
+      if (!samples || samples.length === 0 || samples[samples.length - 1].time !== hour) {
+        this.recordBurnSample(zoneIdx, hour, simulation.getZoneBurnedThousandAcres(zoneIdx));
+      }
+    });
+  }
 
   @action.bound public restoreBurnData(
     samples: ISavedRunState["burnSamples"], annotations: ISavedAnnotation[], showsAllData: boolean

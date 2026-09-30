@@ -157,6 +157,7 @@ export const validateSavedState = (value: unknown, simulation: SimulationModel):
 
   const { identity, setup } = value;
   if (!isObject(identity)) return fail("identity is missing");
+  if (typeof identity.appVersion !== "string") return fail("invalid app version");
   if (identity.preset !== config.preset) {
     return fail(`saved for preset ${JSON.stringify(identity.preset)}, not ${JSON.stringify(config.preset)}`);
   }

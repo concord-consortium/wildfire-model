@@ -126,7 +126,7 @@ export const AppComponent = observer(function WrappedComponent() {
 
   // Mount the Hazbot sidebar as a third optional right column when ?hazbotSidebar=true
   // AND the engine constructed (per FE-4 / R9-2 — Provider mounts iff Sidebar mounts).
-  const showHazbotSidebar = hazbotSidebar && engine !== undefined;
+  const showHazbotSidebar = hazbotSidebar && engine !== undefined && !ui.readOnly;
   const showAnyRightSidebar = logMonitor || showHazbotSidebar;
   // The preset half is undefined without ?preset; the level half always has at least one
   // row, so it is spread directly and in production the section renders whenever the

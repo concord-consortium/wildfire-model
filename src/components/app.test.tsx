@@ -116,6 +116,15 @@ describe("AppComponent — Hazbot sidebar mount truth table", () => {
     expect(screen.queryByTestId("hazbot-sidebar-mock")).not.toBeInTheDocument();
   });
 
+  it("does NOT render the Hazbot sidebar in read-only report mode", () => {
+    mockUrlConfig.mockReturnValue({ logMonitor: false, hazbotSidebar: true });
+    mockGetEngine.mockReturnValue({ isActive: true, sessionId: "abc" });
+    const stores = createStores();
+    stores.ui.readOnly = true;
+    render(<Provider stores={stores}><AppComponent /></Provider>);
+    expect(screen.queryByTestId("hazbot-sidebar-mock")).not.toBeInTheDocument();
+  });
+
   it("does NOT render Hazbot sidebar when ?hazbotSidebar=true but engine is undefined", () => {
     mockUrlConfig.mockReturnValue({ logMonitor: false, hazbotSidebar: true });
     mockGetEngine.mockReturnValue(undefined);

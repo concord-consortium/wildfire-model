@@ -14,6 +14,14 @@ export const initInteractiveState = async (stores: IStores) => {
   if (initMessage?.mode !== "report") return;
 
   ui.readOnly = true;
+  // The model is interactive until the init message arrives, so undo anything started before it.
+  ui.showTerrainUI = false;
+  ui.interaction = null;
+  ui.fireLinePlacementInProgress = false;
+  if (simulation.simulationStarted) {
+    chartStore.reset();
+    simulation.restart();
+  }
   if (!initMessage.interactiveState) return;
   await simulation.dataReadyPromise;
   const result = validateSavedState(initMessage.interactiveState, simulation);
@@ -43,6 +51,9 @@ export const logSimulationEnded = (stores: IStores, reason: string) => {
   const { simulation, chartStore } = stores;
   const firstEnd = simulation.simulationStarted && !simulation.simulationEndedLogged;
   simulation.simulationEndedLogged = true;
+  if (simulation.simulationStarted) {
+    chartStore.recordCurrentHourIfMissing(simulation);
+  }
   log("SimulationEnded", { reason, outcome: simulation.getOutcomeData(chartStore) });
   if (firstEnd) {
     saveRun(stores, reason);

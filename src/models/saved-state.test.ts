@@ -220,6 +220,8 @@ describe("validateSavedState", () => {
     expect(rejectionOf({ ...state, identity: { ...state.identity, gridWidth: 240 } }, sim)).toMatch(/grid/);
     expect(rejectionOf({ ...state, identity: { ...state.identity, gridHeight: 160 } }, sim)).toMatch(/grid/);
     expect(rejectionOf({ ...state, identity: undefined }, sim)).toMatch(/identity/);
+    expect(rejectionOf({ ...state, identity: { ...state.identity, appVersion: undefined } }, sim)).toMatch(/app version/);
+    expect(rejectionOf({ ...state, identity: { ...state.identity, appVersion: 16 } }, sim)).toMatch(/app version/);
   });
 
   describe("zone count", () => {

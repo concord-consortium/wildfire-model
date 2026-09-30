@@ -9,7 +9,7 @@ import {
 import { initInteractiveState, logSimulationEnded } from "./interactive-state";
 import { SimulationModel } from "./models/simulation";
 import { ChartStore } from "./models/chart-store";
-import { UIModel } from "./models/ui";
+import { Interaction, UIModel } from "./models/ui";
 import { FireState } from "./models/cell";
 import { IStores, createStores } from "./models/stores";
 import { buildSavedState } from "./models/saved-state";
@@ -142,6 +142,23 @@ describe("initInteractiveState", () => {
     warn.mockRestore();
   });
 
+  it("undoes anything opened or started before a report-mode init message arrives", async () => {
+    const stores = await createTestStores();
+    stores.ui.showTerrainUI = true;
+    stores.ui.interaction = Interaction.PlaceSpark;
+    stores.simulation.start();
+    expect(stores.simulation.simulationStarted).toBe(true);
+    mockGetInit.mockResolvedValue({ mode: "report", interactiveState: undefined });
+
+    await initInteractiveState(stores);
+
+    expect(stores.ui.readOnly).toBe(true);
+    expect(stores.ui.showTerrainUI).toBe(false);
+    expect(stores.ui.interaction).toBeNull();
+    expect(stores.simulation.simulationStarted).toBe(false);
+    expect(stores.simulation.simulationRunning).toBe(false);
+  });
+
   it("never saves in report mode", async () => {
     const stores = await createTestStores();
     mockGetInit.mockResolvedValue({ mode: "report", interactiveState: await createSavedState() });
@@ -171,6 +188,37 @@ describe("logSimulationEnded", () => {
       expect(savedReasons()).toEqual(["ByItself"]);
     }
   );
+
+  describe("the graph's last hourly sample", () => {
+    const endedOnHour = async (samples: Array<Array<{ time: number; acres: number }>>) => {
+      const stores = await createTestStores();
+      const { simulation, chartStore } = stores;
+      simulation.simulationStarted = true;
+      simulation.time = 130;
+      (simulation as any).engine = { fireDidStop: true, burnedCellsInZone: { 0: 12, 1: 0 } };
+      chartStore.rawBurnData = samples;
+      return stores;
+    };
+    const savedSamples = () => mockSetState.mock.calls[0][0].burnSamples;
+
+    it("is recorded for an hour the run ended in before the graph sampled it", async () => {
+      const stores = await endedOnHour([[{ time: 0, acres: 0 }, { time: 1, acres: 0.5 }], [{ time: 0, acres: 0 }, { time: 1, acres: 0 }]]);
+      const acres = stores.simulation.getZoneBurnedThousandAcres(0);
+      expect(acres).toBeGreaterThan(0.5);
+
+      logSimulationEnded(stores, "ByItself");
+
+      expect(savedSamples()[0]).toEqual([[0, 0], [1, 0.5], [2, Math.round(acres * 10000) / 10000]]);
+      expect(savedSamples()[1]).toEqual([[0, 0], [1, 0], [2, 0]]);
+      expect(mockSetState.mock.calls[0][0].outcome.zones[0].burnRates).toHaveLength(2);
+    });
+
+    it("is left alone when the graph already sampled the hour", async () => {
+      const stores = await endedOnHour([[{ time: 0, acres: 0 }, { time: 2, acres: 0.25 }], [{ time: 0, acres: 0 }, { time: 2, acres: 0 }]]);
+      logSimulationEnded(stores, "ByItself");
+      expect(savedSamples()[0]).toEqual([[0, 0], [2, 0.25]]);
+    });
+  });
 
   it("saves nothing for a model that was never run", async () => {
     const stores = await createTestStores();

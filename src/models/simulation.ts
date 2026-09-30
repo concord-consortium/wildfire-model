@@ -235,6 +235,10 @@ export class SimulationModel {
     return burnedCells / this.totalCellCountByZone[zoneIdx];
   }
 
+  public getZoneBurnedThousandAcres(zoneIdx: number) {
+    return this.simulationAreaAcres * this.getZoneBurnPercentage(zoneIdx) / 1000;
+  }
+
   public cellAt(x: number, y: number) {
     const gridX = Math.floor(x / this.config.cellSize);
     const gridY = Math.floor(y / this.config.cellSize);
