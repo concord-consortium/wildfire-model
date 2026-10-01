@@ -637,24 +637,24 @@ describe("Hazbot feedback levels", () => {
   const shownLevels = (logSpy: jest.SpyInstance) =>
     payloads(logSpy, "HazbotFeedbackShown").map((p) => [p.feedbackLevel, p.source]);
 
-  it("walks level 1, 2, 3 and then repeats level 3", () => {
+  it("shows level 1 twice, then Round 2 and Round 3, then repeats Round 3", () => {
     const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
     mockGetEngine.mockReturnValue(fullLadder());
     mockSelection.mockReturnValue(selection(2));
     const { stores } = renderWithStores();
 
     const bodies: string[] = [];
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 5; i++) {
       openPanel();
       bodies.push(lastHighlightSpec().popover.description);
       dismiss();
     }
-    expect(bodies).toEqual(["Level one", "Level two", "Level three", "Level three"]);
+    expect(bodies).toEqual(["Level one", "Level one", "Level two", "Level three", "Level three"]);
     expect(shownLevels(logSpy)).toEqual([
-      [1, "level1"], [2, "round2"], [3, "round3"], [3, "round3"],
+      [1, "level1"], [2, "level1Repeat"], [3, "round2"], [4, "round3"], [4, "round3"],
     ]);
-    expect(stores.ui.hazbotFeedbackLevels.get(2)).toBe(3);
-    expect(stores.ui.hazbotLastFeedbackShown).toEqual({ level: 3, source: "round3" });
+    expect(stores.ui.hazbotFeedbackLevels.get(2)).toBe(4);
+    expect(stores.ui.hazbotLastFeedbackShown).toEqual({ level: 4, source: "round3" });
   });
 
   it("serves the top category's repeat click from the rule-set's repeat feedback", () => {
@@ -719,10 +719,13 @@ describe("Hazbot feedback levels", () => {
     dismiss();
     mockSelection.mockReturnValue(selection(2));
     openPanel();
+    expect(lastHighlightSpec().popover.description).toBe("Two one");
+    dismiss();
+    openPanel();
     expect(lastHighlightSpec().popover.description).toBe("Two two");
     dismiss();
 
-    expect(Array.from(stores.ui.hazbotFeedbackLevels.entries())).toEqual([[2, 2], [3, 1]]);
+    expect(Array.from(stores.ui.hazbotFeedbackLevels.entries())).toEqual([[2, 3], [3, 1]]);
   });
 
   it("does not spend a level for a second press while the popover is already open", () => {
@@ -738,7 +741,7 @@ describe("Hazbot feedback levels", () => {
     expect(stores.ui.hazbotFeedbackLevels.get(2)).toBe(1);
   });
 
-  it("never logs a level above the number of strings the category carries", () => {
+  it("never logs a level above the number of rungs the category carries", () => {
     const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
     mockGetEngine.mockReturnValue(engineWith([
       { id: 2, feedback: "Hazbot: One\n[Okay]", feedbackRound2: "Hazbot: Two\n[Okay]" },
@@ -749,7 +752,7 @@ describe("Hazbot feedback levels", () => {
 
     for (let i = 0; i < 5; i++) { openPanel(); dismiss(); }
     const levels = shownLevels(logSpy).map(([level]) => level);
-    expect(Math.max(...levels)).toBe(2);
+    expect(Math.max(...levels)).toBe(3);
   });
 
   it("cancels a deferred open when a reset lands before the popover appears", () => {
@@ -800,7 +803,27 @@ describe("Hazbot feedback levels", () => {
       mockSelection.mockReturnValue(selection(2));
     });
 
-    it("launches at level 1 and again at level 2, then not at level 3", () => {
+    const finish = () => act(() => { cmOpts.onDestroyed(); }); // Done on a driving tour
+
+    it("offers the walk-through on both level 1 showings and not on the [Okay] Rounds", () => {
+      const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
+      mockGetEngine.mockReturnValue(gateEngine(
+        "Hazbot: Level one\n[Show me]",
+        "Hazbot: Level two\n[Okay]",
+        "Hazbot: Level three\n[Okay]",
+      ));
+      renderWithStores();
+
+      openAndActivate(); finish();
+      openAndActivate(); finish();
+      openAndActivate();
+      openAndActivate();
+
+      const launches = payloads(logSpy, "HazbotShowMeClicked").map((p) => p.feedbackLevel);
+      expect(launches).toEqual([1, 2]);
+    });
+
+    it("follows the displayed string's token, so an authored [Show me] Round 2 also launches", () => {
       const logSpy = jest.spyOn(logModule, "log").mockImplementation(() => undefined);
       mockGetEngine.mockReturnValue(gateEngine(
         "Hazbot: Level one\n[Show me]",
@@ -809,14 +832,13 @@ describe("Hazbot feedback levels", () => {
       ));
       renderWithStores();
 
-      openAndActivate();
-      act(() => { cmOpts.onDestroyed(); });        // finish the tour
-      openAndActivate();
-      act(() => { cmOpts.onDestroyed(); });
-      openAndActivate();                            // level 3 is [Okay]: no tour
+      openAndActivate(); finish();
+      openAndActivate(); finish();
+      openAndActivate(); finish();
+      openAndActivate();                             // level 4 is [Okay]: no tour
 
       const launches = payloads(logSpy, "HazbotShowMeClicked").map((p) => p.feedbackLevel);
-      expect(launches).toEqual([1, 2]);
+      expect(launches).toEqual([1, 2, 3]);
     });
 
     it("matches the token case-insensitively and ignores surrounding whitespace", () => {

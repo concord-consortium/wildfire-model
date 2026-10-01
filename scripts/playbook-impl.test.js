@@ -118,7 +118,7 @@ describe("renderPlaybook — the feedback-level lines (WM-46)", () => {
     expect(md).toContain(
       "- **Feedback (repeat click after success)**: Hazbot: Keep going! [Got it!]" +
       " (from the sheet's category 100 row, which replaces any Round 2/3 content on this category)");
-    // On the top category's own section, after its level-3 line.
+    // On the top category's own section, after its Round 3 line.
     const topSection = md.slice(md.indexOf("### Category 4"));
     expect(topSection).toContain("Feedback (repeat click after success)");
   });
