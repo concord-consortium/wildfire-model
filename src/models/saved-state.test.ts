@@ -40,8 +40,11 @@ const createSim = async (overrides: Partial<ISimulationConfig> = {}) => {
   return sim;
 };
 
-const createEndedRun = async () => {
-  const sim = await createSim();
+// A preset-style zone map that the default split cannot produce: zone 1 takes three quadrants.
+const ZONE_MAP = { zoneIndex: [[0, 1], [1, 1]] };
+
+const createEndedRun = async (overrides: Partial<ISimulationConfig> = {}) => {
+  const sim = await createSim(overrides);
   const chartStore = new ChartStore();
   sim.simulationStarted = true;
   sim.time = 125.5;
@@ -154,9 +157,10 @@ describe("buildSavedState", () => {
   it("leaves the model's lists writable after a save through the interactive API", async () => {
     const { sim, chartStore } = await createEndedRun();
     const state = buildSavedState(storesOf(sim, chartStore), "ByItself");
-    jest.spyOn(console, "warn").mockImplementation(() => undefined);
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
     setInteractiveState(state);
     flushStateUpdates();
+    warn.mockRestore();
     expect(Object.isFrozen(state.setup.fireLineSegments)).toBe(true);
 
     sim.buildFireLine({ x: 50000, y: 20000 }, { x: 55000, y: 20000 });
@@ -339,6 +343,17 @@ describe("validateSavedState", () => {
     expect(rejectionOf({ ...state, view: [] }, sim)).toMatch(/view/);
   });
 
+  it("accepts a state without a zone-map flag and rejects a flag this model cannot honor", async () => {
+    const state = copy(baseState);
+    expect(state.setup.presetZoneMap).toBe(false);
+    const { presetZoneMap, ...setupWithoutFlag } = state.setup;
+    expect(validateSavedState({ ...state, setup: setupWithoutFlag }, sim).ok).toBe(true);
+    expect(rejectionOf({ ...state, setup: { ...state.setup, presetZoneMap: "yes" } }, sim)).toMatch(/zone map/);
+    expect(rejectionOf({ ...state, setup: { ...state.setup, presetZoneMap: true } }, sim)).toMatch(/zone map/);
+    expect(validateSavedState({ ...state, setup: { ...state.setup, presetZoneMap: true } }, await createSim(ZONE_MAP)).ok)
+      .toBe(true);
+  });
+
   it("rejects a burn map of the wrong length", () => {
     const state = copy(baseState);
     expect(rejectionOf({ ...state, burnMap: state.burnMap.slice(0, -8) }, sim)).toMatch(/burn map/);
@@ -350,8 +365,8 @@ describe("validateSavedState", () => {
 describe("applySavedState", () => {
   const DROP_CELL = 40 * 120 + 60;
 
-  const createRunToRestore = async () => {
-    const run = await createEndedRun();
+  const createRunToRestore = async (overrides: Partial<ISimulationConfig> = {}) => {
+    const run = await createEndedRun(overrides);
     run.sim.setSpeedIndex(2);
     run.sim.setWindSpeed(12);
     run.sim.setWindDirection(135);
@@ -360,21 +375,51 @@ describe("applySavedState", () => {
     return run;
   };
 
-  it("reproduces every cell's fire state, survivor flag, helitack count and fire-line flag", async () => {
+  const cellState = (c: Cell) => [c.zoneIdx, c.fireState, c.isFireSurvivor, c.helitackDropCount, c.isFireLine];
+  const differingCells = (target: SimulationModel, source: SimulationModel) => {
+    expect(target.cells).toHaveLength(source.cells.length);
+    return target.cells.filter((cell, i) => JSON.stringify(cellState(cell)) !== JSON.stringify(cellState(source.cells[i])));
+  };
+
+  it("reproduces every cell's zone, fire state, survivor flag, helitack count and fire-line flag", async () => {
+    const { sim: source, chartStore: sourceChart } = await createRunToRestore(ZONE_MAP);
+    const state = copy(buildSavedState(storesOf(source, sourceChart), "Restart"));
+    const target = await createSim(ZONE_MAP);
+
+    await applySavedState(storesOf(target, new ChartStore()), state);
+
+    expect(state.setup.presetZoneMap).toBe(true);
+    expect(source.cells[DROP_CELL].helitackDropCount).toBeGreaterThan(0);
+    expect(source.cells.some(c => c.isFireLine)).toBe(true);
+    // Zone 1 holds three quadrants of the preset's map, where the default split gives it half.
+    expect(source.cells.filter(c => c.zoneIdx === 1).length).toBeGreaterThan(source.cells.length * 0.7);
+    expect(differingCells(target, source)).toHaveLength(0);
+  });
+
+  it("restores the default split when Setup replaced the preset's zone map", async () => {
+    const { sim: source, chartStore: sourceChart } = await createRunToRestore(ZONE_MAP);
+    source.updateZones(source.zones);
+    await source.dataReadyPromise;
+    const state = copy(buildSavedState(storesOf(source, sourceChart), "Restart"));
+    const target = await createSim(ZONE_MAP);
+
+    await applySavedState(storesOf(target, new ChartStore()), state);
+
+    expect(state.setup.presetZoneMap).toBe(false);
+    expect(target.cells.map(c => c.zoneIdx)).toEqual(source.cells.map(c => c.zoneIdx));
+  });
+
+  it("restores a run with a helitack drop on the front edge of the map", async () => {
     const { sim: source, chartStore: sourceChart } = await createRunToRestore();
+    source.setHelitackPoint(60000, 0);
     const state = copy(buildSavedState(storesOf(source, sourceChart), "Restart"));
     const target = await createSim();
 
     await applySavedState(storesOf(target, new ChartStore()), state);
 
-    expect(source.cells[DROP_CELL].helitackDropCount).toBeGreaterThan(0);
-    expect(source.cells.some(c => c.isFireLine)).toBe(true);
-    const cellState = (c: Cell) => [c.fireState, c.isFireSurvivor, c.helitackDropCount, c.isFireLine];
-    const differing = target.cells.filter((cell, i) =>
-      JSON.stringify(cellState(cell)) !== JSON.stringify(cellState(source.cells[i]))
-    );
-    expect(target.cells).toHaveLength(source.cells.length);
-    expect(differing).toHaveLength(0);
+    expect(state.setup.helitackDrops.map(({ y }: { y: number }) => y)).toContain(0);
+    expect(source.cells.filter(c => c.y === 0 && c.helitackDropCount > 0).length).toBeGreaterThan(0);
+    expect(differingCells(target, source)).toHaveLength(0);
   });
 
   it("applies the setup and marks the run ended at its duration", async () => {

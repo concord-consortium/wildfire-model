@@ -142,6 +142,21 @@ describe("initInteractiveState", () => {
     warn.mockRestore();
   });
 
+  it("draws a run with a helitack drop on the front edge of the map", async () => {
+    const warn = jest.spyOn(console, "warn").mockImplementation(() => undefined);
+    const stores = await createTestStores();
+    const state = await createSavedState();
+    state.setup.helitackDrops = [{ x: 60000, y: 0, time: 10 }];
+    mockGetInit.mockResolvedValue({ mode: "report", interactiveState: state });
+
+    await initInteractiveState(stores);
+
+    expect(warn).not.toHaveBeenCalled();
+    expect(stores.simulation.restoredRunEnded).toBe(true);
+    expect(stores.simulation.cells[100].fireState).toBe(FireState.Burnt);
+    warn.mockRestore();
+  });
+
   it("undoes anything opened or started before a report-mode init message arrives", async () => {
     const stores = await createTestStores();
     stores.ui.showTerrainUI = true;

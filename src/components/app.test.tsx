@@ -154,7 +154,7 @@ describe("AppComponent — Hazbot sidebar mount truth table", () => {
 });
 
 describe("AppComponent: a run that burns out", () => {
-  it("saves the run once, as ended by itself", () => {
+  const startRunningApp = () => {
     mockGetEngine.mockReset().mockReturnValue(undefined);
     const stores = createStores();
     render(<Provider stores={stores}><AppComponent /></Provider>);
@@ -165,13 +165,41 @@ describe("AppComponent: a run that burns out", () => {
       simulation.simulationRunning = true;
       (simulation as any).engine = { fireDidStop: false, burnedCellsInZone: {} };
     });
+    return simulation;
+  };
+  const savedEndReasons = () => (setInteractiveState as jest.Mock).mock.calls.map(([state]) => state.endReason);
+
+  it("saves the run once, as ended by itself", () => {
+    const simulation = startRunningApp();
 
     act(() => {
       simulation.engine!.fireDidStop = true;
       simulation.simulationRunning = false;
     });
 
-    expect((setInteractiveState as jest.Mock).mock.calls.map(([state]) => state.endReason)).toEqual(["ByItself"]);
+    expect(savedEndReasons()).toEqual(["ByItself"]);
+    expect(simulation.simulationEndedLogged).toBe(true);
     expect(flushStateUpdates).toHaveBeenCalled();
+  });
+
+  it("does not end the run again when Restart has already ended it", () => {
+    const simulation = startRunningApp();
+
+    act(() => {
+      simulation.simulationEndedLogged = true;
+      simulation.engine!.fireDidStop = true;
+      simulation.simulationRunning = false;
+    });
+
+    expect(savedEndReasons()).toEqual([]);
+  });
+
+  it("does not end the run when the student stops it", () => {
+    const simulation = startRunningApp();
+
+    act(() => { simulation.simulationRunning = false; });
+
+    expect(savedEndReasons()).toEqual([]);
+    expect(simulation.simulationEndedLogged).toBe(false);
   });
 });

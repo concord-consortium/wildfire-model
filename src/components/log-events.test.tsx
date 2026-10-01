@@ -7,12 +7,10 @@ import { BottomBar } from "./bottom-bar";
 import { TopBar } from "./top-bar/top-bar";
 import { Vector2 } from "three";
 import { act } from "react-dom/test-utils";
-import { reaction } from "mobx";
 import { Interaction } from "../models/ui";
 import { SPEEDS, DEFAULT_SPEED_INDEX } from "../models/simulation";
 import { renderFireLineInteraction, terrainPointerEvent } from "./view-3d/fire-line-interaction-test-helpers";
 import { useFireLinePlacementCancel } from "./use-fire-line-placement-cancel";
-import { logSimulationEnded } from "../interactive-state";
 
 // Mock the log module
 const mockLog = jest.fn();
@@ -155,87 +153,6 @@ describe("Log events", () => {
     // against `<button disabled>`, and both assertions trivially hold. The
     // bottom-bar.test.tsx state-1 matrix already asserts Restart-disabled in
     // Default at the matrix level.)
-  });
-
-  describe("SimulationEnded - natural end (ByItself)", () => {
-    // These tests replicate the MobX reaction from app.tsx directly,
-    // since rendering AppComponent pulls in the full component tree.
-    const setupNaturalEndReaction = (simulation: typeof stores.simulation) => {
-      return reaction(
-        () => ({
-          running: simulation.simulationRunning,
-          fireDidStop: simulation.engine?.fireDidStop
-        }),
-        ({ running, fireDidStop }, prev) => {
-          if (prev.running && !running && fireDidStop && !simulation.simulationEndedLogged) {
-            logSimulationEnded(stores, "ByItself");
-          }
-        }
-      );
-    };
-
-    it("fires when fire burns out naturally", () => {
-      const { simulation } = stores;
-      simulation.simulationStarted = true;
-      simulation.simulationRunning = true;
-      (simulation as any).engine = { fireDidStop: false, burnedCellsInZone: {} };
-
-      const dispose = setupNaturalEndReaction(simulation);
-
-      // Simulate fire burning out
-      (simulation as any).engine.fireDidStop = true;
-      simulation.simulationRunning = false;
-
-      const endedCalls = mockLog.mock.calls.filter(
-        (call: unknown[]) => call[0] === "SimulationEnded"
-      );
-      expect(endedCalls).toHaveLength(1);
-      expect(endedCalls[0][1].reason).toBe("ByItself");
-      expect(endedCalls[0][1].outcome).toHaveProperty("durationMinutes");
-      expect(endedCalls[0][1].outcome).toHaveProperty("zones");
-      expect(simulation.simulationEndedLogged).toBe(true);
-
-      dispose();
-    });
-
-    it("does NOT double-fire when simulationEndedLogged guard is set", () => {
-      const { simulation } = stores;
-      simulation.simulationStarted = true;
-      simulation.simulationRunning = true;
-      (simulation as any).engine = { fireDidStop: true, burnedCellsInZone: {} };
-
-      const dispose = setupNaturalEndReaction(simulation);
-
-      // Simulate what handleRestart does: set guard before stopping
-      simulation.simulationEndedLogged = true;
-      simulation.simulationRunning = false;
-
-      const endedCalls = mockLog.mock.calls.filter(
-        (call: unknown[]) => call[0] === "SimulationEnded"
-      );
-      expect(endedCalls).toHaveLength(0);
-
-      dispose();
-    });
-
-    it("does NOT fire when simulation is stopped by user (fireDidStop is false)", () => {
-      const { simulation } = stores;
-      simulation.simulationStarted = true;
-      simulation.simulationRunning = true;
-      (simulation as any).engine = { fireDidStop: false, burnedCellsInZone: {} };
-
-      const dispose = setupNaturalEndReaction(simulation);
-
-      // User clicks Stop — simulationRunning goes false but fireDidStop stays false
-      simulation.simulationRunning = false;
-
-      const endedCalls = mockLog.mock.calls.filter(
-        (call: unknown[]) => call[0] === "SimulationEnded"
-      );
-      expect(endedCalls).toHaveLength(0);
-
-      dispose();
-    });
   });
 
   describe("SimulationStarted", () => {

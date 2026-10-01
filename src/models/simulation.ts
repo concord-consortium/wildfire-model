@@ -785,7 +785,7 @@ export class SimulationModel {
         if ((x - cell.x) * (x - cell.x) + (y - cell.y) * (y - cell.y) <= radius * radius) {
           const nextCellX = cell.x - (x - cell.x);
           const nextCellY = cell.y - (y - cell.y);
-          if (nextCellX < this.gridWidth && nextCellY < this.gridHeight) {
+          if (nextCellX >= 0 && nextCellY >= 0 && nextCellX < this.gridWidth && nextCellY < this.gridHeight) {
             const targetCell = this.cells[getGridIndexForLocation(nextCellX, nextCellY, this.gridWidth)];
             targetCell.helitackDropCount++;
             targetCell.ignitionTime = Infinity;
@@ -807,9 +807,9 @@ export class SimulationModel {
     this.wind.speed = speed;
   }
 
-  @action.bound public updateZones(zones: Zone[]) {
+  @action.bound public updateZones(zones: Zone[], zoneIndex?: number[][] | string) {
     this.zones = zones.map(z => z.clone());
-    this.zoneIndex = DEFAULT_ZONE_DIVISION[this.zones.length as (2 | 3)];
+    this.zoneIndex = zoneIndex ?? DEFAULT_ZONE_DIVISION[this.zones.length as (2 | 3)];
     if (this.sparks.length > this.zones.length) {
       this.sparks.length = this.zones.length;
     }

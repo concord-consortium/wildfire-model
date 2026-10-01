@@ -606,6 +606,26 @@ describe("SimulationModel", () => {
     return sim;
   };
 
+  describe("a helitack drop at the edge of the map", () => {
+    const wetCells = (sim: SimulationModel) => sim.cells.filter(c => c.helitackDropCount > 0);
+
+    it("wets the cells inside the map when dropped on the front edge", async () => {
+      const sim = await createInterventionSim();
+      expect(() => sim.setHelitackPoint(60000, 0)).not.toThrow();
+      const wet = wetCells(sim);
+      expect(wet.length).toBeGreaterThan(0);
+      expect(wet.every(c => c.y < 10 && Math.abs(c.x - 120) <= 5)).toBe(true);
+    });
+
+    it("does not wet the far side of the row above when dropped on the left edge", async () => {
+      const sim = await createInterventionSim();
+      sim.setHelitackPoint(0, 40000);
+      const wet = wetCells(sim);
+      expect(wet.length).toBeGreaterThan(0);
+      expect(wet.every(c => c.x <= 5)).toBe(true);
+    });
+  });
+
   describe("intervention action order", () => {
     it("records a fire line drawn before a helitack as the earlier action", async () => {
       const sim = await createInterventionSim();

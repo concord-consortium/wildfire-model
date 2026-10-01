@@ -43,6 +43,9 @@ export interface ISavedRunState {
     sparks: Array<[number, number]>;
     fireLineSegments: FireLineSegment[];
     helitackDrops: Array<{ x: number; y: number; time: number }>;
+    // True when the run used the preset's own zone map. Setup's OK replaces it with the default
+    // split, so the zones alone cannot tell which map the student saw.
+    presetZoneMap?: boolean;
   };
   // Minutes.
   time: number;
@@ -112,7 +115,8 @@ export const buildSavedState = ({ simulation, chartStore, ui }: IStores, endReas
       speedIndex: simulation.speedIndex,
       sparks: simulation.sparks.map(s => [s.x, s.y]),
       fireLineSegments: simulation.fireLineSegments.map(([x1, y1, x2, y2]): FireLineSegment => [x1, y1, x2, y2]),
-      helitackDrops: simulation.helitackDrops.map(({ x, y, time }) => ({ x, y, time }))
+      helitackDrops: simulation.helitackDrops.map(({ x, y, time }) => ({ x, y, time })),
+      presetZoneMap: simulation.config.zoneIndex !== undefined && simulation.zoneIndex === simulation.config.zoneIndex
     },
     time: simulation.time,
     endReason,
@@ -186,6 +190,8 @@ export const validateSavedState = (value: unknown, simulation: SimulationModel):
   if (!isArrayOf(setup.fireLineSegments, segmentFits)) return fail("invalid fire-line segments");
   const dropFits = (d: unknown) => isObject(d) && inModel(d.x, d.y) && isNonNegative(d.time);
   if (!isArrayOf(setup.helitackDrops, dropFits)) return fail("invalid helitack drops");
+  if (setup.presetZoneMap !== undefined && typeof setup.presetZoneMap !== "boolean") return fail("invalid zone map flag");
+  if (setup.presetZoneMap && config.zoneIndex === undefined) return fail("saved with a zone map this preset does not have");
 
   if (!isNonNegative(value.time)) return fail("invalid time");
   if (typeof value.endReason !== "string") return fail("invalid end reason");
@@ -211,7 +217,7 @@ export const validateSavedState = (value: unknown, simulation: SimulationModel):
 export const applySavedState = async ({ simulation, chartStore, ui }: IStores, state: ISavedRunState) => {
   const { setup, view } = state;
   simulation.restoredRunEnded = true;
-  simulation.updateZones(setup.zones.map(z => new Zone(z)));
+  simulation.updateZones(setup.zones.map(z => new Zone(z)), setup.presetZoneMap ? simulation.config.zoneIndex : undefined);
   await simulation.dataReadyPromise;
 
   simulation.setWindSpeed(setup.wind.speed);
