@@ -140,7 +140,7 @@ export const HazbotButton = observer(function HazbotButton() {
     const engine = getAnalysisEngine();
     const { used: matched } = readCategories(engine);
     const ruleSetId = engine?.ruleSet?.id ?? null;
-    // Which of the category's up-to-three strings this press shows. The level is READ
+    // Which rung of the category's feedback ladder this press shows. The level is READ
     // here (the string it names drives parseFeedback / buildTour / the tour's done label
     // below) but only COMMITTED when the popover actually opens: see openOnce.
     const shownLevel = matched != null ? (ui.hazbotFeedbackLevels.get(matched) ?? 0) : 0;

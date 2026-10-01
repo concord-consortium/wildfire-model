@@ -20,29 +20,31 @@ const FILLER = cat(9, "Hazbot: Top\n[Hooray!]");
 describe("selectFeedback", () => {
   const full = ruleSet([cat(2, "L1", "L2", "L3"), FILLER]);
 
-  it("walks level 1, 2, 3 as the shown level rises", () => {
+  it("shows level 1 twice, then Round 2 and Round 3", () => {
     expect(selectFeedback(full, 2, 0)).toEqual({ feedback: "L1", level: 1, source: "level1" });
-    expect(selectFeedback(full, 2, 1)).toEqual({ feedback: "L2", level: 2, source: "round2" });
-    expect(selectFeedback(full, 2, 2)).toEqual({ feedback: "L3", level: 3, source: "round3" });
+    expect(selectFeedback(full, 2, 1)).toEqual({ feedback: "L1", level: 2, source: "level1Repeat" });
+    expect(selectFeedback(full, 2, 2)).toEqual({ feedback: "L2", level: 3, source: "round2" });
+    expect(selectFeedback(full, 2, 3)).toEqual({ feedback: "L3", level: 4, source: "round3" });
   });
 
   it("caps at the last rung rather than running off the end", () => {
-    expect(selectFeedback(full, 2, 3)).toEqual({ feedback: "L3", level: 3, source: "round3" });
-    expect(selectFeedback(full, 2, 99)).toEqual({ feedback: "L3", level: 3, source: "round3" });
+    expect(selectFeedback(full, 2, 4)).toEqual({ feedback: "L3", level: 4, source: "round3" });
+    expect(selectFeedback(full, 2, 99)).toEqual({ feedback: "L3", level: 4, source: "round3" });
   });
 
-  it("stops at level 2 when only Round 2 is authored", () => {
+  it("repeats level 1 before Round 2 when only Round 2 is authored, and stops there", () => {
     const rs = ruleSet([cat(2, "L1", "L2"), FILLER]);
-    expect(selectFeedback(rs, 2, 1)).toEqual({ feedback: "L2", level: 2, source: "round2" });
-    expect(selectFeedback(rs, 2, 2)).toEqual({ feedback: "L2", level: 2, source: "round2" });
+    expect(selectFeedback(rs, 2, 1)).toEqual({ feedback: "L1", level: 2, source: "level1Repeat" });
+    expect(selectFeedback(rs, 2, 2)).toEqual({ feedback: "L2", level: 3, source: "round2" });
+    expect(selectFeedback(rs, 2, 3)).toEqual({ feedback: "L2", level: 3, source: "round2" });
   });
 
-  // Round 3 without Round 2 is not authored today, but the ladder must not leave a hole:
-  // the second rung is Round 3 and it is reported as level 2, so `level` and `source`
-  // keep naming the same string.
-  it("promotes Round 3 to level 2 when Round 2 is absent", () => {
+  // Round 3 without Round 2 is not authored today; it still gets the repeat, and Round 3
+  // follows it as level 3, so `level` and `source` keep naming the same string.
+  it("repeats level 1 before Round 3 when Round 2 is absent", () => {
     const rs = ruleSet([cat(2, "L1", undefined, "L3"), FILLER]);
-    expect(selectFeedback(rs, 2, 1)).toEqual({ feedback: "L3", level: 2, source: "round3" });
+    expect(selectFeedback(rs, 2, 1)).toEqual({ feedback: "L1", level: 2, source: "level1Repeat" });
+    expect(selectFeedback(rs, 2, 2)).toEqual({ feedback: "L3", level: 3, source: "round3" });
   });
 
   it("repeats level 1 for a category with no Round content", () => {

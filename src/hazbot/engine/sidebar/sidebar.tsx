@@ -276,13 +276,13 @@ const CategoryRow: React.FC<{
           <div><strong>Feedback:</strong> <span style={{ whiteSpace: "pre-wrap" }}>{cat.feedback}</span></div>
           {cat.feedbackRound2 && (
             <div>
-              <strong>Feedback (level 2{roundsSuperseded ? ", not shown" : ""}):</strong>{" "}
+              <strong>Feedback (Round 2{roundsSuperseded ? ", not shown" : ""}):</strong>{" "}
               <span style={{ whiteSpace: "pre-wrap" }}>{cat.feedbackRound2}</span>
             </div>
           )}
           {cat.feedbackRound3 && (
             <div>
-              <strong>Feedback (level 3{roundsSuperseded ? ", not shown" : ""}):</strong>{" "}
+              <strong>Feedback (Round 3{roundsSuperseded ? ", not shown" : ""}):</strong>{" "}
               <span style={{ whiteSpace: "pre-wrap" }}>{cat.feedbackRound3}</span>
             </div>
           )}
