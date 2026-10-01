@@ -86,3 +86,14 @@
     left: 22px;
   }
 }
+
+// The bar's rule for a disabled button (icon-button.scss): fade the content, not the
+// widget, and cancel MUI's own whole-button fade so the two do not compound.
+.disabled {
+  &:disabled, &:global(.Mui-disabled) {
+    opacity: 1 !important;
+  }
+  > span {
+    opacity: 0.35;
+  }
+}

@@ -1,4 +1,7 @@
 import { UIModel } from "./ui";
+import { log } from "../log";
+
+jest.mock("../log", () => ({ log: jest.fn() }));
 
 describe("UIModel Hazbot flags", () => {
   it("defaults both Hazbot flags to false", () => {
@@ -45,5 +48,24 @@ describe("resetHazbotFeedback", () => {
 
     expect(ui.showHazbotFeedback).toBe(true);
     expect(ui.hazbotFeedbackLevels.size).toBe(0);
+  });
+});
+
+describe("setShowChart", () => {
+  beforeEach(() => (log as jest.Mock).mockClear());
+
+  it("changes showChart and logs the matching chart tab event", () => {
+    const ui = new UIModel();
+    ui.setShowChart(true);
+    expect(ui.showChart).toBe(true);
+    ui.setShowChart(false);
+    expect(ui.showChart).toBe(false);
+    expect((log as jest.Mock).mock.calls).toEqual([["ChartTabShown"], ["ChartTabHidden"]]);
+  });
+
+  it("logs nothing when the value does not change", () => {
+    const ui = new UIModel();
+    ui.setShowChart(ui.showChart);
+    expect(log).not.toHaveBeenCalled();
   });
 });

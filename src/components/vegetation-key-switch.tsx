@@ -20,9 +20,10 @@ export const VegetationKeySwitch = observer(function WrappedComponent() {
 
   return (
     <Button
-      className={`${css.vegetationKeySwitch} ${ui.showVegetationKey ? css.on : ""}`}
+      className={`${css.vegetationKeySwitch} ${ui.showVegetationKey ? css.on : ""} ${ui.readOnly ? css.disabled : ""}`}
       data-testid="vegetation-key-switch"
       onClick={handleClick}
+      disabled={ui.readOnly}
       disableRipple={true}
       disableTouchRipple={true}
     >

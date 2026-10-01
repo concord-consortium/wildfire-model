@@ -45,7 +45,7 @@ export const useDrawFireLineInteraction: () => InteractionHandler = () => {
   };
 
   return {
-    active: ui.interaction === Interaction.DrawFireLine,
+    active: !ui.readOnly && ui.interaction === Interaction.DrawFireLine,
     onPointerDown: (e: Event) => {
       const { x, y } = modelCoords(e);
       if (placementInProgress()) {

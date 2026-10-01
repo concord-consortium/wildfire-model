@@ -1,6 +1,6 @@
 // Single source of truth for the chart-tab visibility at session start.
 // Imported by:
-// - the chart-tab UI (right-panel useState, ui.showChart MobX observable),
+// - the chart-tab UI (the ui.showChart MobX observable),
 // - the Hazbot temporal variable chartTabOpen (R14).
 // If the UI default ever flips, the temporal projection's initial value updates
 // in lockstep — TypeScript tracks the dependency.

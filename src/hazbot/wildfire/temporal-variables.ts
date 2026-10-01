@@ -8,11 +8,10 @@ import { CHART_TAB_INITIAL_OPEN } from "./constants";
 // don't rely on V from the map.
 //
 // Invariant: the host must emit `ChartTabShown` / `ChartTabHidden` whenever
-// `ui.showChart` changes. Today that's a single mutation site at
-// src/components/right-panel.tsx. If a second mutation site is ever added,
-// route it through a single setter that mutates the observable AND emits the
-// event atomically — otherwise the engine's chartTabOpen projection will
-// silently desync from the visual ground truth.
+// `ui.showChart` changes. `UIModel.setShowChart` is the single setter that
+// mutates the observable and emits the event together; any new mutation site
+// must go through it, or the engine's chartTabOpen projection will silently
+// desync from the visual ground truth.
 const chartTabOpen: TemporalVariableImpl<boolean> = {
   name: "chartTabOpen",
   initialValue: CHART_TAB_INITIAL_OPEN,

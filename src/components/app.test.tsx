@@ -1,5 +1,5 @@
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { act, render, screen } from "@testing-library/react";
 import { Provider } from "mobx-react";
 import { createStores } from "../models/stores";
 
@@ -26,6 +26,12 @@ jest.mock("../hazbot/engine/sidebar", () => ({
   },
 }));
 jest.mock("shutterbug", () => ({ enable: jest.fn(), disable: jest.fn() }));
+jest.mock("@concord-consortium/lara-interactive-api", () => ({
+  log: jest.fn(),
+  inIframe: () => true,
+  setInteractiveState: jest.fn(),
+  flushStateUpdates: jest.fn()
+}));
 jest.mock("./use-custom-cursors", () => ({ useCustomCursor: jest.fn() }));
 
 // getUrlConfig + getAnalysisEngine drive the layout decision; mock per case.
@@ -64,6 +70,7 @@ jest.mock("../hazbot/wildfire", () => ({
 // take effect on the next renderApp() call — no module-isolation gymnastics needed.
 import { AppComponent } from "./app";
 import { buildPresetDiagnostics, buildFeedbackLevelDiagnostics } from "../hazbot/wildfire";
+import { flushStateUpdates, setInteractiveState } from "@concord-consortium/lara-interactive-api";
 
 describe("AppComponent — Hazbot sidebar mount truth table", () => {
   beforeEach(() => {
@@ -109,6 +116,15 @@ describe("AppComponent — Hazbot sidebar mount truth table", () => {
     expect(screen.queryByTestId("hazbot-sidebar-mock")).not.toBeInTheDocument();
   });
 
+  it("does NOT render the Hazbot sidebar in read-only report mode", () => {
+    mockUrlConfig.mockReturnValue({ logMonitor: false, hazbotSidebar: true });
+    mockGetEngine.mockReturnValue({ isActive: true, sessionId: "abc" });
+    const stores = createStores();
+    stores.ui.readOnly = true;
+    render(<Provider stores={stores}><AppComponent /></Provider>);
+    expect(screen.queryByTestId("hazbot-sidebar-mock")).not.toBeInTheDocument();
+  });
+
   it("does NOT render Hazbot sidebar when ?hazbotSidebar=true but engine is undefined", () => {
     mockUrlConfig.mockReturnValue({ logMonitor: false, hazbotSidebar: true });
     mockGetEngine.mockReturnValue(undefined);
@@ -134,5 +150,56 @@ describe("AppComponent — Hazbot sidebar mount truth table", () => {
     (buildFeedbackLevelDiagnostics as jest.Mock).mockReturnValueOnce([]);
     renderApp();
     expect(sidebarDiagnostics).toHaveBeenCalledWith(undefined);
+  });
+});
+
+describe("AppComponent: a run that burns out", () => {
+  const startRunningApp = () => {
+    mockGetEngine.mockReset().mockReturnValue(undefined);
+    const stores = createStores();
+    render(<Provider stores={stores}><AppComponent /></Provider>);
+    const { simulation } = stores;
+    (setInteractiveState as jest.Mock).mockClear();
+    act(() => {
+      simulation.simulationStarted = true;
+      simulation.simulationRunning = true;
+      (simulation as any).engine = { fireDidStop: false, burnedCellsInZone: {} };
+    });
+    return simulation;
+  };
+  const savedEndReasons = () => (setInteractiveState as jest.Mock).mock.calls.map(([state]) => state.endReason);
+
+  it("saves the run once, as ended by itself", () => {
+    const simulation = startRunningApp();
+
+    act(() => {
+      simulation.engine!.fireDidStop = true;
+      simulation.simulationRunning = false;
+    });
+
+    expect(savedEndReasons()).toEqual(["ByItself"]);
+    expect(simulation.simulationEndedLogged).toBe(true);
+    expect(flushStateUpdates).toHaveBeenCalled();
+  });
+
+  it("does not end the run again when Restart has already ended it", () => {
+    const simulation = startRunningApp();
+
+    act(() => {
+      simulation.simulationEndedLogged = true;
+      simulation.engine!.fireDidStop = true;
+      simulation.simulationRunning = false;
+    });
+
+    expect(savedEndReasons()).toEqual([]);
+  });
+
+  it("does not end the run when the student stops it", () => {
+    const simulation = startRunningApp();
+
+    act(() => { simulation.simulationRunning = false; });
+
+    expect(savedEndReasons()).toEqual([]);
+    expect(simulation.simulationEndedLogged).toBe(false);
   });
 });
