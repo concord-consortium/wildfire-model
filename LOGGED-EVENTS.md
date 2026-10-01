@@ -114,10 +114,19 @@ category still logs 1, 2, 2 with `source` `level1`, `category100`, `category100`
 
 On `HazbotFeedbackShown` the two numberings can be told apart by `source` alone:
 `level1Repeat` never occurs before version 9, and `round2` moves from level 2 to level 3. The
-four coach-mark events carry no `source`, so a `feedbackLevel` of 2 there is Round 2 before
-version 9 and Round 1 from it; segment those on `appRulesVersion`. Because the repeated string
-carries Round 1's `[Show me]` token, a `HazbotShowMeClicked` with `feedbackLevel: 2` from
-version 9 is a student taking the walk-through on the second offer of the same advice.
+four coach-mark events carry no `source`, but on most of them the numbers never overlap. A
+walk-through starts only from a `[Show me]` popover, and in every released build before version
+9 only level 1 carried `[Show me]`, so `HazbotShowMeClicked`, `HazbotTourCompleted`,
+`HazbotTourDismissed` and `HazbotCoachMarkHiddenByRun` with `phase: "tour"` never logged a
+level above 1 before it. (Per-branch test builds made just after the version 8 bump could have,
+but those are not student data.) The overlap is `HazbotCoachMarkHiddenByRun` with
+`phase: "intro"` on a category that is not the tab's top one: levels 2 and 3 there are Rounds 2
+and 3 before version 9, and Round 1 shown again and Round 2 from it. Segment those on
+`appRulesVersion`, which is logged on the session's `AnalysisEngineActivated`, not on the
+coach-mark event itself. On a tab's top category level 2 is the category-100 message in both.
+Because the repeated string carries Round 1's `[Show me]` token, a `HazbotShowMeClicked` with
+`feedbackLevel: 2` from version 9 is a student taking the walk-through on the second offer of the
+same advice.
 
 ### Rule-set ids renumbered (`appRulesVersion` 8 onward)
 

@@ -794,9 +794,12 @@ describe("Hazbot feedback levels", () => {
       "23",
     );
 
-    const openAndActivate = () => {
+    // Returns the button label the popover offered before the activation.
+    const openAndActivate = (): string => {
       openPanel();
+      const label = cmOpts.doneBtnText;
       act(() => { cmOpts.onDestroyed(); }); // the [Show me] activation route
+      return label;
     };
 
     beforeEach(() => {
@@ -814,11 +817,13 @@ describe("Hazbot feedback levels", () => {
       ));
       renderWithStores();
 
-      openAndActivate(); finish();
-      openAndActivate(); finish();
-      openAndActivate();
-      openAndActivate();
+      const labels: string[] = [];
+      labels.push(openAndActivate()); finish();
+      labels.push(openAndActivate()); finish();
+      labels.push(openAndActivate());
+      labels.push(openAndActivate());
 
+      expect(labels).toEqual(["Show me", "Show me", "Okay", "Okay"]);
       const launches = payloads(logSpy, "HazbotShowMeClicked").map((p) => p.feedbackLevel);
       expect(launches).toEqual([1, 2]);
     });
