@@ -100,16 +100,16 @@ describe("renderPlaybook — the feedback-level lines (WM-46)", () => {
 
   it("labels a middle category's Round lines as reachable levels", () => {
     const md = renderPlaybook(withRounds(repeat), parse);
-    expect(md).toContain("- **Feedback (level 2)**: Hazbot: Middle two [Show me]");
-    expect(md).toContain("- **Feedback (level 3)**: Hazbot: Middle three [Okay]");
+    expect(md).toContain("- **Feedback (Round 2)**: Hazbot: Middle two [Show me]");
+    expect(md).toContain("- **Feedback (Round 3)**: Hazbot: Middle three [Okay]");
   });
 
   it("labels the top category's Round lines 'not shown' and says what supersedes them", () => {
     const md = renderPlaybook(withRounds(repeat), parse);
     expect(md).toContain(
-      "- **Feedback (level 2, not shown)**: Hazbot: Top two [Okay] (superseded by the repeat-click line below)");
+      "- **Feedback (Round 2, not shown)**: Hazbot: Top two [Okay] (superseded by the repeat-click line below)");
     expect(md).toContain(
-      "- **Feedback (level 3, not shown)**: Hazbot: Top three [Okay] (superseded by the repeat-click line below)");
+      "- **Feedback (Round 3, not shown)**: Hazbot: Top three [Okay] (superseded by the repeat-click line below)");
   });
 
   it("renders the repeat-click line once, on the top category", () => {
@@ -127,7 +127,7 @@ describe("renderPlaybook — the feedback-level lines (WM-46)", () => {
   // unconditional early return; only the explanation names the replacement.
   it("still labels the top category 'not shown' without a repeat-feedback row", () => {
     const md = renderPlaybook(withRounds(undefined), parse);
-    expect(md).toContain("- **Feedback (level 2, not shown)**: Hazbot: Top two [Okay]" +
+    expect(md).toContain("- **Feedback (Round 2, not shown)**: Hazbot: Top two [Okay]" +
       " (a repeat click on the top category never reaches these, and this rule-set carries" +
       " no repeat feedback, so it repeats level 1)");
     expect(md).not.toContain("Feedback (repeat click after success)");
@@ -137,8 +137,8 @@ describe("renderPlaybook — the feedback-level lines (WM-46)", () => {
     const rs = fixtureRuleSet();
     rs.repeatFeedback = repeat;
     const md = renderPlaybook(rs, parse);
-    expect(md).not.toContain("Feedback (level 2");
-    expect(md).not.toContain("Feedback (level 3");
+    expect(md).not.toContain("Feedback (Round 2");
+    expect(md).not.toContain("Feedback (Round 3");
     expect(md.match(/Feedback \(repeat click after success\)/g)).toHaveLength(1);
   });
 });

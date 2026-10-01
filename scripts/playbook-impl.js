@@ -29,13 +29,14 @@ function renderPlaybook(ruleSet, parse) {
   for (const cat of ruleSet.categories) {
     lines.push(`### Category ${cat.id}: ${oneLine(cat.studentAction)}\n`);
     if (cat.feedback) lines.push(`- **Feedback**: ${oneLine(cat.feedback)}`);
-    // The level 2 / level 3 strings a repeat click shows, omitted where the tab carries no
-    // Round columns. On the top category those columns are unreachable whatever the
-    // rule-set carries, matching the selection rule's unconditional early return, so the
+    // The Round 2 / Round 3 strings a repeat click shows, labeled by Round rather than by the
+    // level they appear at so the label survives a change to the ladder, and omitted where the
+    // tab carries no Round columns. On the top category those columns are unreachable whatever
+    // the rule-set carries, matching the selection rule's unconditional early return, so the
     // "not shown" label is gated on `top` ALONE; only the note naming the replacement is
     // gated on a repeat-feedback row existing.
     const top = cat.id === topCategoryId(ruleSet);
-    const roundLabel = (n) => (top ? `level ${n}, not shown` : `level ${n}`);
+    const roundLabel = (n) => (top ? `Round ${n}, not shown` : `Round ${n}`);
     const roundNote = !top ? ""
       : ruleSet.repeatFeedback ? " (superseded by the repeat-click line below)"
         : " (a repeat click on the top category never reaches these, and this rule-set carries" +
