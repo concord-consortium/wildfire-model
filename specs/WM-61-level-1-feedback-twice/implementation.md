@@ -27,7 +27,7 @@ Baseline on master `82619f9`: 88 suites, 1083 tests, all green; the playbook gen
 
 **`playbook-impl.js`**: `roundLabel` becomes `(n) => (top ? \`Round ${n}, not shown\` : \`Round ${n}\`)`, and the comment's first sentence "The level 2 / level 3 strings a repeat click shows, omitted where the tab carries no Round columns." becomes "The Round 2 / Round 3 strings a repeat click shows, labeled by Round rather than by the level they appear at so the label survives a change to the ladder, and omitted where the tab carries no Round columns."
 
-**Tests**: in `sidebar.test.tsx` and `playbook-impl.test.js`, every `(level 2` / `(level 3` in a label assertion becomes `(Round 2` / `(Round 3`, including the negative cases (`not.toContain` in the playbook test, and the two regex `queryByText(/Feedback \(level 2/)` cases in the sidebar test, which a plain-string search-and-replace misses); `sidebar.test.tsx`'s "renders a middle category's Round rows unlabeled" is renamed "labels a middle category's Round rows by Round". The negative cases alone could not catch a reverted label, but each file's positive cases do.
+**Tests**: in `sidebar.test.tsx` and `playbook-impl.test.js`, the comment "after its level-3 line" in the playbook test becomes "after its Round 3 line", and every `(level 2` / `(level 3` in a label assertion becomes `(Round 2` / `(Round 3`, including the negative cases (`not.toContain` in the playbook test, and the two regex `queryByText(/Feedback \(level 2/)` cases in the sidebar test, which a plain-string search-and-replace misses); `sidebar.test.tsx`'s "renders a middle category's Round rows unlabeled" is renamed "labels a middle category's Round rows by Round". The negative cases alone could not catch a reverted label, but each file's positive cases do.
 
 **Regenerate**: `node scripts/generate-hazbot-validation-playbook.js`; the diff must be exactly one label per Round line (64 lines, 6/6/8/8/8/6/10/2/4/6 across 23/24/25/32/33/34/35/41/44/46). Anything else means the generator was not idempotent against the tree and should be investigated rather than committed.
 
@@ -160,8 +160,8 @@ it.each(ROUND_2_LADDERS)("%s shows level 1 twice, then Round 2 and Round 3", (pa
   expect(new Set(selections.slice(1, 4).map((s) => s?.feedback)).size).toBe(3);
 });
 
-// Category 1 on every tab and every top category: no Round rung, so no repeat rung either.
-// The count comes first so an empty set cannot pass.
+// Category 1 on every tab and every top category. The length check keeps an empty walk
+// from passing.
 it("never repeats level 1 on a category without a Round 2 rung", () => {
   const others: string[] = [];
   for (const [id, ruleSet] of Object.entries(ruleSets)) {
@@ -224,6 +224,7 @@ it("follows the displayed string's token, so an authored [Show me] Round 2 also 
 
 - Silent-repeat note: "A fully populated category logs 1, 2, 3, 3, so the fourth click is a silent repeat." becomes "A fully populated category logs 1, 2, 3, 4, 4, so the fifth click is a silent repeat. Levels 1 and 2 show the same string but are not a silent repeat: the second showing is deliberate and carries its own `source`."
 - Token note: "as the content ships at `appRulesVersion` 8, levels 1 and 2 carry `[Show me]` and level 3 carries `[Okay]`." becomes "as the content ships at `appRulesVersion` 9, levels 1 and 2 (Round 1, shown twice) carry `[Show me]` and levels 3 and 4 carry `[Okay]`; at version 8 only level 1 carried `[Show me]`."
+- Dismissal-query note: "A query keyed on the category alone therefore counts every level-3 repeat as a dismissal" becomes "counts every pair that starts at level 3 or 4 as a dismissal", since both of those levels carry `[Okay]`.
 - Reset example: "a pair spanning a reset reads level 3 then level 1" becomes "level 4 then level 1".
 
 **Verify**: `npm test` (all green, 1085 tests with both steps applied), `npm run lint`, and `git diff --stat` shows only the files listed. Then re-grep the repo prose for the old ladder (R17):
