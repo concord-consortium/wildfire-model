@@ -1,9 +1,11 @@
 import * as React from "react";
+import { observer } from "mobx-react";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import { Dialog } from "./dialog";
 import css from "./top-bar.scss";
 import { log } from "../../log";
 import { useStores } from "../../use-stores";
+import { logSimulationEnded } from "../../interactive-state";
 
 interface IProps {
   projectName: string;
@@ -11,17 +13,13 @@ interface IProps {
   shareContent?: JSX.Element;
 }
 
-export const TopBar: React.FC<IProps> = ({ projectName, aboutContent, shareContent }: IProps) => {
-  const { simulation, chartStore } = useStores();
+export const TopBar: React.FC<IProps> = observer(function TopBar({ projectName, aboutContent, shareContent }: IProps) {
+  const stores = useStores();
   const [shareOpen, setShareOpen] = React.useState<boolean>(false);
   const [aboutOpen, setAboutOpen] = React.useState<boolean>(false);
 
   const handleReload = () => {
-    simulation.simulationEndedLogged = true;
-    log("SimulationEnded", {
-      reason: "TopBarReloadButtonClicked",
-      outcome: simulation.getOutcomeData(chartStore)
-    });
+    logSimulationEnded(stores, "TopBarReloadButtonClicked");
     log("TopBarReloadButtonClicked");
     // Give some time for the log message to be delivered. Note it goes only to the parent window using postMessage,
     // so we don't have to wait for network request.
@@ -40,7 +38,9 @@ export const TopBar: React.FC<IProps> = ({ projectName, aboutContent, shareConte
 
   return (
     <div className={css.topBar}>
-      <span className={css.textButton} data-testid="reload" onClick={handleReload}><RefreshIcon /></span>
+      {stores.ui.readOnly
+        ? <span />
+        : <span className={css.textButton} data-testid="reload" onClick={handleReload}><RefreshIcon /></span>}
       <span>
         <span data-testid="share" className={css.textButton} onClick={handleShareOpen}>Share</span>
         <span data-testid="about" className={css.textButton} onClick={handleAboutOpen}>About</span>
@@ -61,4 +61,4 @@ export const TopBar: React.FC<IProps> = ({ projectName, aboutContent, shareConte
       </Dialog>
     </div>
   );
-};
+});

@@ -15,6 +15,7 @@ import { CameraSettingsPanel } from "./camera-settings-panel/camera-settings-pan
 import { LogMonitor } from "@concord-consortium/log-monitor";
 import { getUrlConfig } from "../config";
 import { log } from "../log";
+import { logSimulationEnded } from "../interactive-state";
 import Shutterbug from "shutterbug";
 import { AnalysisEngineProvider } from "../hazbot/engine";
 import { Sidebar } from "../hazbot/engine/sidebar";
@@ -46,7 +47,8 @@ const handleMouseLeave = (e: React.MouseEvent) => {
 };
 
 export const AppComponent = observer(function WrappedComponent() {
-  const { simulation, ui, chartStore } = useStores();
+  const stores = useStores();
+  const { simulation, ui } = stores;
   const { logMonitor, hazbotSidebar } = getUrlConfig();
   // Construct (or retrieve cached) the Hazbot analysis engine. Returns undefined
   // when neither URL flag (?hazbotRules / ?hazbotSidebar) is set.
@@ -68,16 +70,12 @@ export const AppComponent = observer(function WrappedComponent() {
       }),
       ({ running, fireDidStop }, prev) => {
         if (prev.running && !running && fireDidStop && !simulation.simulationEndedLogged) {
-          simulation.simulationEndedLogged = true;
-          log("SimulationEnded", {
-            reason: "ByItself",
-            outcome: simulation.getOutcomeData(chartStore)
-          });
+          logSimulationEnded(stores, "ByItself");
         }
       }
     );
     return dispose;
-  }, [simulation, chartStore]);
+  }, [simulation, stores]);
 
   // This will setup document cursor based on various states of UI store (interactions).
   useCustomCursor();
@@ -128,7 +126,7 @@ export const AppComponent = observer(function WrappedComponent() {
 
   // Mount the Hazbot sidebar as a third optional right column when ?hazbotSidebar=true
   // AND the engine constructed (per FE-4 / R9-2 — Provider mounts iff Sidebar mounts).
-  const showHazbotSidebar = hazbotSidebar && engine !== undefined;
+  const showHazbotSidebar = hazbotSidebar && engine !== undefined && !ui.readOnly;
   const showAnyRightSidebar = logMonitor || showHazbotSidebar;
   // The preset half is undefined without ?preset; the level half always has at least one
   // row, so it is spread directly and in production the section renders whenever the

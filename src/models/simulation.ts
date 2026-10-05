@@ -2,7 +2,7 @@ import { action, computed, observable, makeObservable } from "mobx";
 import { IWindProps, Town } from "../types";
 import { Cell, CellOptions, FireState } from "./cell";
 import { ChartStore } from "./chart-store";
-import { ISimulationConfig, getResolvedConfig } from "../config";
+import { ISimulationConfig, IUrlConfig, getResolvedConfig } from "../config";
 import { Vector2 } from "three";
 import { getElevationData, getRiverData, getUnburntIslandsData, getZoneIndex } from "./utils/data-loaders";
 import { Zone } from "./zone";
@@ -77,7 +77,7 @@ export const computeTimeStep = (
 // on management and interactions handling. Core calculations are delegated to FireEngine.
 // Also, all the observable properties should be here, so the view code can observe them.
 export class SimulationModel {
-  public config: ISimulationConfig;
+  public config: IUrlConfig;
   public prevTickTime: number | null;
   public dataReadyPromise: Promise<void>;
   public engine: FireEngine | null = null;
@@ -115,8 +115,14 @@ export class SimulationModel {
   @observable public cellsElevationFlag = 0;
   @observable public simulationEndedLogged = false;
   @observable public setupChanged = false;
+  // A run restored from a saved state has no engine, so it is marked ended directly.
+  @observable public restoredRunEnded = false;
 
   @observable public speedIndex = DEFAULT_SPEED_INDEX;
+
+  // Kept because the markers are consumed when a line is built; a saved run replays these.
+  public fireLineSegments: Array<[number, number, number, number]> = [];
+  public helitackDrops: Array<{ x: number; y: number; time: number }> = [];
 
   constructor(presetConfig?: Partial<ISimulationConfig>) {
     makeObservable(this);
@@ -189,14 +195,15 @@ export class SimulationModel {
     }
   }
 
-  // True when simulationStarted && !simulationRunning && engine.fireDidStop.
-  // Reactivity contract: simulationRunning carries the edge — engine?.fireDidStop
+  // True when simulationStarted && !simulationRunning && (engine.fireDidStop || restoredRunEnded).
+  // Reactivity contract: simulationRunning carries the edge, and engine?.fireDidStop
   // is a discriminator read only. The supported tick() path sets
   // simulationRunning = false when engine.fireDidStop becomes true, so the
   // computed re-evaluates when expected. Future refactorers: do not rely on
-  // fireDidStop driving reactivity directly.
+  // fireDidStop driving reactivity directly. A restore sets restoredRunEnded
+  // before simulationStarted, so simulationStarted carries that edge.
   @computed public get simulationEnded() {
-    return this.simulationStarted && !this.simulationRunning && !!this.engine?.fireDidStop;
+    return this.simulationStarted && !this.simulationRunning && (!!this.engine?.fireDidStop || this.restoredRunEnded);
   }
 
   // True from the first Start until the fire stops burning, pauses included: a run the
@@ -226,6 +233,10 @@ export class SimulationModel {
   public getZoneBurnPercentage(zoneIdx: number) {
     const burnedCells = this.engine?.burnedCellsInZone[zoneIdx] || 0;
     return burnedCells / this.totalCellCountByZone[zoneIdx];
+  }
+
+  public getZoneBurnedThousandAcres(zoneIdx: number) {
+    return this.simulationAreaAcres * this.getZoneBurnPercentage(zoneIdx) / 1000;
   }
 
   public cellAt(x: number, y: number) {
@@ -473,8 +484,12 @@ export class SimulationModel {
   @action.bound public restart() {
     this.simulationRunning = false;
     this.simulationStarted = false;
+    this.restoredRunEnded = false;
     this.cells.forEach(cell => cell.reset());
     this.fireLineMarkers.length = 0;
+    // Fresh arrays rather than emptied ones: a saved interactive state may have frozen the old ones.
+    this.fireLineSegments = [];
+    this.helitackDrops = [];
     this.lastFireLineTimestamp = -Infinity;
     this.lastHelitackTimestamp = -Infinity;
     this.interventionCount = 0;
@@ -746,6 +761,7 @@ export class SimulationModel {
   }
 
   @action.bound public buildFireLine(start: ICoords, end: ICoords) {
+    this.fireLineSegments.push([start.x, start.y, end.x, end.y]);
     const startGridX = Math.floor(start.x / this.config.cellSize);
     const startGridY = Math.floor(start.y / this.config.cellSize);
     const endGridX = Math.floor(end.x / this.config.cellSize);
@@ -759,6 +775,7 @@ export class SimulationModel {
   }
 
   @action.bound public setHelitackPoint(px: number, py: number) {
+    this.helitackDrops.push({ x: px, y: py, time: this.time });
     const startGridX = Math.floor(px / this.config.cellSize);
     const startGridY = Math.floor(py / this.config.cellSize);
     const cell = this.cells[getGridIndexForLocation(startGridX, startGridY, this.gridWidth)];
@@ -768,7 +785,7 @@ export class SimulationModel {
         if ((x - cell.x) * (x - cell.x) + (y - cell.y) * (y - cell.y) <= radius * radius) {
           const nextCellX = cell.x - (x - cell.x);
           const nextCellY = cell.y - (y - cell.y);
-          if (nextCellX < this.gridWidth && nextCellY < this.gridHeight) {
+          if (nextCellX >= 0 && nextCellY >= 0 && nextCellX < this.gridWidth && nextCellY < this.gridHeight) {
             const targetCell = this.cells[getGridIndexForLocation(nextCellX, nextCellY, this.gridWidth)];
             targetCell.helitackDropCount++;
             targetCell.ignitionTime = Infinity;
@@ -790,9 +807,9 @@ export class SimulationModel {
     this.wind.speed = speed;
   }
 
-  @action.bound public updateZones(zones: Zone[]) {
+  @action.bound public updateZones(zones: Zone[], zoneIndex?: number[][] | string) {
     this.zones = zones.map(z => z.clone());
-    this.zoneIndex = DEFAULT_ZONE_DIVISION[this.zones.length as (2 | 3)];
+    this.zoneIndex = zoneIndex ?? DEFAULT_ZONE_DIVISION[this.zones.length as (2 | 3)];
     if (this.sparks.length > this.zones.length) {
       this.sparks.length = this.zones.length;
     }

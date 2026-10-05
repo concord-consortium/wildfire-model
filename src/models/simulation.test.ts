@@ -606,6 +606,26 @@ describe("SimulationModel", () => {
     return sim;
   };
 
+  describe("a helitack drop at the edge of the map", () => {
+    const wetCells = (sim: SimulationModel) => sim.cells.filter(c => c.helitackDropCount > 0);
+
+    it("wets the cells inside the map when dropped on the front edge", async () => {
+      const sim = await createInterventionSim();
+      expect(() => sim.setHelitackPoint(60000, 0)).not.toThrow();
+      const wet = wetCells(sim);
+      expect(wet.length).toBeGreaterThan(0);
+      expect(wet.every(c => c.y < 10 && Math.abs(c.x - 120) <= 5)).toBe(true);
+    });
+
+    it("does not wet the far side of the row above when dropped on the left edge", async () => {
+      const sim = await createInterventionSim();
+      sim.setHelitackPoint(0, 40000);
+      const wet = wetCells(sim);
+      expect(wet.length).toBeGreaterThan(0);
+      expect(wet.every(c => c.x <= 5)).toBe(true);
+    });
+  });
+
   describe("intervention action order", () => {
     it("records a fire line drawn before a helitack as the earlier action", async () => {
       const sim = await createInterventionSim();
@@ -637,6 +657,48 @@ describe("SimulationModel", () => {
       sim.restart();
       expect(sim.helitackActionOrder).toEqual(0);
       expect(sim.fireLineActionOrder).toEqual(0);
+    });
+  });
+
+  describe("recorded interventions", () => {
+    it("records a built fire line as one segment once its markers are consumed", async () => {
+      const sim = await createInterventionSim();
+      sim.addFireLineMarker(20000, 40000);
+      sim.addFireLineMarker(30000, 40000);
+      sim.applyFireLineMarkers();
+
+      expect(sim.fireLineMarkers).toHaveLength(0);
+      expect(sim.fireLineSegments).toEqual([[20000, 40000, 30000, 40000]]);
+    });
+
+    it("records each helitack drop with its time", async () => {
+      const sim = await createInterventionSim();
+      sim.time = 120;
+      sim.setHelitackPoint(60000, 40000);
+      sim.time = 300;
+      sim.setHelitackPoint(70000, 30000);
+
+      expect(sim.helitackDrops).toEqual([
+        { x: 60000, y: 40000, time: 120 },
+        { x: 70000, y: 30000, time: 300 }
+      ]);
+    });
+
+    it("clears both lists on restart, even when the old arrays were frozen", async () => {
+      const sim = await createInterventionSim();
+      sim.buildFireLine({ x: 20000, y: 40000 }, { x: 30000, y: 40000 });
+      sim.setHelitackPoint(60000, 40000);
+      Object.freeze(sim.fireLineSegments);
+      Object.freeze(sim.helitackDrops);
+
+      sim.restart();
+      expect(sim.fireLineSegments).toEqual([]);
+      expect(sim.helitackDrops).toEqual([]);
+
+      sim.buildFireLine({ x: 20000, y: 40000 }, { x: 30000, y: 40000 });
+      sim.setHelitackPoint(60000, 40000);
+      expect(sim.fireLineSegments).toHaveLength(1);
+      expect(sim.helitackDrops).toHaveLength(1);
     });
   });
 

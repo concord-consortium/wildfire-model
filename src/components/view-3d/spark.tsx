@@ -11,7 +11,7 @@ interface IProps {
 }
 
 export const SparksContainer: React.FC<IProps> = observer(function WrappedComponent({ dragPlane }) {
-  const { simulation } = useStores();
+  const { simulation, ui } = useStores();
   return <>
     {
       simulation.sparks.map((s, idx) => {
@@ -21,7 +21,7 @@ export const SparksContainer: React.FC<IProps> = observer(function WrappedCompon
           markerImg={sparkImg}
           markerHighlightImg={sparkHighlightImg}
           position={s}
-          onDrag={onDrag}
+          onDrag={ui.readOnly ? undefined : onDrag}
           dragPlane={dragPlane}
           lockOnSimStart={true}
         />;

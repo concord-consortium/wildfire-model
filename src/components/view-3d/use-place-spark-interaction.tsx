@@ -7,7 +7,7 @@ import { Event } from "three";
 export const usePlaceSparkInteraction = () => {
   const { simulation, ui } = useStores();
   return {
-    active: ui.interaction === Interaction.PlaceSpark,
+    active: !ui.readOnly && ui.interaction === Interaction.PlaceSpark,
     onPointerDown: (e: Event) => {
       const ratio = ftToViewUnit(simulation);
       const x = e.point.x / ratio;

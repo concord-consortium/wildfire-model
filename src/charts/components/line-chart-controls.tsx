@@ -26,7 +26,9 @@ export class LineChartControls extends BaseComponent<IChartControlProps, IChartC
     const { chartData, isPlaying } = nextProps;
     const nextState: IChartControlState = {} as any;
 
-    if (isPlaying) {
+    // A drag keeps scrubberMax equal to pointCount, so a mismatch while stopped means the data
+    // arrived without playing (a restored run) and the slider has not caught up with it.
+    if (isPlaying || prevState.scrubberMax !== chartData.pointCount) {
       nextState.scrubberPosition = chartData.pointCount;
       const maxPoints = chartData.maxPoints ? chartData.maxPoints : 100;
       if (chartData.subsetIdx !== -1) {
