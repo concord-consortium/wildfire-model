@@ -53,7 +53,7 @@ module.exports = {
     "eqeqeq": ["error", "smart"],
     "eslint-comments/no-unused-disable": "off",   // enabled in .eslintrc.build.js
     "import/no-cycle": "warn",
-    "import/no-extraneous-dependencies": "warn",
+    "import/no-extraneous-dependencies": ["warn", { packageDir: __dirname }],
     "import/no-useless-path-segments": "warn",
     "jsx-quotes": ["error", "prefer-double"],
     "max-len": ["warn", { code: 160, ignoreUrls: true }],
