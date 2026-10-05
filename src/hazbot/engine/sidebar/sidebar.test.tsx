@@ -657,18 +657,18 @@ describe("Sidebar — category feedback levels", () => {
     act(() => { screen.getByText(studentAction).click(); });
   };
 
-  it("renders a middle category's Round rows unlabeled", () => {
+  it("labels a middle category's Round rows by Round", () => {
     renderLevels(levelRuleSet({ topRounds: true, repeat: true }));
     expandRow("Middle");
-    expect(screen.getByText("Feedback (level 2):")).toBeInTheDocument();
-    expect(screen.getByText("Feedback (level 3):")).toBeInTheDocument();
+    expect(screen.getByText("Feedback (Round 2):")).toBeInTheDocument();
+    expect(screen.getByText("Feedback (Round 3):")).toBeInTheDocument();
   });
 
   it("labels the top category's Round rows 'not shown' and explains what replaces them", () => {
     renderLevels(levelRuleSet({ topRounds: true, repeat: true }));
     expandRow("Top");
-    expect(screen.getByText("Feedback (level 2, not shown):")).toBeInTheDocument();
-    expect(screen.getByText("Feedback (level 3, not shown):")).toBeInTheDocument();
+    expect(screen.getByText("Feedback (Round 2, not shown):")).toBeInTheDocument();
+    expect(screen.getByText("Feedback (Round 3, not shown):")).toBeInTheDocument();
     expect(screen.getByText(/uses the rule-set's repeat feedback/)).toBeInTheDocument();
   });
 
@@ -677,15 +677,15 @@ describe("Sidebar — category feedback levels", () => {
   it("still labels the top category 'not shown' without a repeat-feedback row", () => {
     renderLevels(levelRuleSet({ topRounds: true }));
     expandRow("Top");
-    expect(screen.getByText("Feedback (level 2, not shown):")).toBeInTheDocument();
+    expect(screen.getByText("Feedback (Round 2, not shown):")).toBeInTheDocument();
     expect(screen.getByText(/carries no repeat feedback/)).toBeInTheDocument();
   });
 
   it("omits the Round rows entirely for a category with no Round content", () => {
     renderLevels(levelRuleSet({ repeat: true }));
     expandRow("Top");
-    expect(screen.queryByText(/Feedback \(level 2/)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Feedback \(level 3/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Feedback \(Round 2/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Feedback \(Round 3/)).not.toBeInTheDocument();
   });
 
   it("renders the repeat feedback once per rule-set", () => {

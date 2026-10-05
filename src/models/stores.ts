@@ -66,7 +66,7 @@ const createTestHelpers = (simulation: SimulationModel, ui: UIModel) => {
   };
   return {
     // Reset Hazbot's per-category feedback levels without a page reload or a Clear All,
-    // so a validation walk can check level 3 on one category and then move to the next
+    // so a validation walk can check the last level on one category and then move to the next
     // without redoing Terrain Setup.
     resetHazbotFeedbackLevels() {
       ui.resetHazbotFeedback();

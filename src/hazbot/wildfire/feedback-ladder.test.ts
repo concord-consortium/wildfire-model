@@ -9,7 +9,8 @@ import { selectFeedback } from "./feedback-levels";
 // invisible to the suite: it raises no parse error, changes no expression and changes no
 // tour step count, so every other test stays green while a repeat click goes back to
 // showing level 1 again. A pair appearing here means a category gained a rung; a pair
-// disappearing means one lost it.
+// disappearing means one lost it. Each of these also shows its level 1 string twice before
+// Round 2.
 const ROUND_2_LADDERS = [
   "23/2", "23/3", "23/4",
   "24/2", "24/3", "24/4",
@@ -35,15 +36,34 @@ describe("feedback ladders across the shipped rule-sets", () => {
     expect(actual.sort()).toEqual([...ROUND_2_LADDERS].sort());
   });
 
-  // Walks the ladder the way three presses do. Runs over the pinned list rather than the
+  // Walks the ladder the way five presses do. Runs over the pinned list rather than the
   // derived one, so a dropped rung fails here as well as in the equality assertion above.
-  it.each(ROUND_2_LADDERS)("%s escalates through three distinct strings", (pair) => {
+  it.each(ROUND_2_LADDERS)("%s shows level 1 twice, then Round 2 and Round 3", (pair) => {
     const [ruleSetId, categoryId] = pair.split("/");
     const ruleSet = ruleSets[ruleSetId];
-    const selections = [0, 1, 2].map((shown) => selectFeedback(ruleSet, Number(categoryId), shown));
+    const selections = [0, 1, 2, 3, 4]
+      .map((shown) => selectFeedback(ruleSet, Number(categoryId), shown));
 
-    expect(selections.map((s) => s?.level)).toEqual([1, 2, 3]);
-    expect(selections.map((s) => s?.source)).toEqual(["level1", "round2", "round3"]);
-    expect(new Set(selections.map((s) => s?.feedback)).size).toBe(3);
+    expect(selections.map((s) => s?.level)).toEqual([1, 2, 3, 4, 4]);
+    expect(selections.map((s) => s?.source))
+      .toEqual(["level1", "level1Repeat", "round2", "round3", "round3"]);
+    expect(selections[1]?.feedback).toBe(selections[0]?.feedback);
+    expect(new Set(selections.slice(1, 4).map((s) => s?.feedback)).size).toBe(3);
+  });
+
+  // Category 1 on every tab and every top category. The length check keeps an empty walk
+  // from passing.
+  it("never repeats level 1 on a category without a Round 2 rung", () => {
+    const others: string[] = [];
+    for (const [id, ruleSet] of Object.entries(ruleSets)) {
+      for (const category of ruleSet.categories) {
+        const pair = `${id}/${category.id}`;
+        if (ROUND_2_LADDERS.includes(pair)) continue;
+        others.push(pair);
+        const sources = [0, 1, 2].map((shown) => selectFeedback(ruleSet, category.id, shown)?.source);
+        expect(sources).not.toContain("level1Repeat");
+      }
+    }
+    expect(others).toHaveLength(20);
   });
 });
