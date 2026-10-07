@@ -185,7 +185,7 @@ The authored setting (`question_gating`: none, rest of the page, rest of the sec
 - B) Patch the integration worktree to follow the protocol.
 - C) Hold WM-66 until AP-76 lands.
 
-**Decision**: A, written as the Verification section. In the event, the check was also run against a throwaway patch of the integration Activity Player that follows the protocol, and the banners behaved as expected.
+**Decision**: A. The patched-host run described under Technical Notes covered the banners as well.
 
 ---
 
