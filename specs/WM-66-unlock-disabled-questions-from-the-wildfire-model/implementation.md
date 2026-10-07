@@ -6,32 +6,22 @@
 
 ## Implementation Plan
 
-### Develop against the LARA-226 client
+### Depend on the LARA-226 client
 
-**Summary**: Wildfire needs `unlockQuestions` and the `questionGating` types, which exist only in the unpublished `1.15.0` client. Development links the local yalc build; the PR commit pins the npm release once Doug publishes it (R11).
+**Summary**: Wildfire needs `unlockQuestions` and the `questionGating` types, which first ship in the `1.15.0` client. Wildfire pins the pre-release `1.15.0-pre.0`, published under the `beta` tag, and moves to the final `1.15.0` once the LARA-226 and WM-66 reviews are done (R11).
 
 **Files affected**:
-- `package.json`, `package-lock.json`: `@concord-consortium/lara-interactive-api` to `^1.15.0` (final commit only).
+- `package.json`, `package-lock.json`: `@concord-consortium/lara-interactive-api` pinned to exactly `1.15.0-pre.0`.
 
 **Estimated diff size**: ~10 lines.
 
-During development, in the worktree:
-
 ```bash
-npx yalc add @concord-consortium/lara-interactive-api
-npm install --legacy-peer-deps
+npm install --legacy-peer-deps @concord-consortium/lara-interactive-api@1.15.0-pre.0
 ```
 
-`yalc add` rewrites the dependency to `file:.yalc/@concord-consortium/lara-interactive-api`; `.yalc` and `yalc.lock` are already in `.gitignore`. That `package.json` change is never committed. After the publish:
-
-```bash
-npx yalc remove @concord-consortium/lara-interactive-api
-npm install --legacy-peer-deps @concord-consortium/lara-interactive-api@^1.15.0
-```
+The pin is exact because a `^` range never matches a prerelease. If review changes the protocol, LARA publishes `1.15.0-pre.1` and the pin moves to it; the final `1.15.0` is the same code once both reviews are done.
 
 Every install needs `--legacy-peer-deps`, as CI's `npm ci --legacy-peer-deps` does: `react-chartjs-2@2.11.2` has a peer range that excludes React 18, so a plain `npm install` or `npm ci` stops with `ERESOLVE`.
-
-Do not push the branch for a PR while `package.json` points at yalc: CI's `npm ci` cannot resolve it.
 
 ---
 
@@ -234,7 +224,7 @@ Tests (`hazbot-button.test.tsx`):
 
 The end-to-end check reads the messages Wildfire sends, not the Activity Player's banners. No host yet applies the protocol: the `LARA-226-integration` worktree still unlocks a gate as soon as its saved state exists and never reads the declaration, so a banner check there passes with the rule broken. The banners and return visits are checked when the later AP-76 pull request lands, against a Wildfire build that carries this story.
 
-Setup: an Activity Player page whose Wildfire item URL points at the yalc dev server or the branch build, with `hazbotRules=<id>` (the `sample-disabled-questions` items carry none, so edit a local copy or use a staging activity). Record the Wildfire iframe's posts from the parent page, filtered on `event.source` (checked against the deployed demo, where it captured `hello`, `supportedFeatures` and a full `interactiveState` from a Start then Restart):
+Setup: an Activity Player page whose Wildfire item URL points at a dev server running this branch or the branch build, with `hazbotRules=<id>` (the `sample-disabled-questions` items carry none, so edit a local copy or use a staging activity). Record the Wildfire iframe's posts from the parent page, filtered on `event.source` (checked against the deployed demo, where it captured `hello`, `supportedFeatures` and a full `interactiveState` from a Start then Restart):
 
 ```js
 window.__wf = [];
