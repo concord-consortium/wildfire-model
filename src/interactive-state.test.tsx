@@ -335,6 +335,12 @@ describe("question gating", () => {
     await initInteractiveState(stores);
   };
 
+  const declareGating = async (stores: IStores) => {
+    withRuleSetOnce();
+    await initRuntime(stores, undefined);
+    expect(stores.ui.questionGatingDeclared).toBe(true);
+  };
+
   const endRun = (stores: IStores, reason = "ByItself") => {
     stores.simulation.simulationStarted = true;
     stores.simulation.simulationEndedLogged = false;
@@ -398,14 +404,41 @@ describe("question gating", () => {
 
   it("sends and saves nothing before a run ended in the visit", async () => {
     const stores = await createTestStores();
+    await declareGating(stores);
     unlockQuestionsIfEarned(stores.ui);
     expect(mockUnlock).not.toHaveBeenCalled();
     expect(mockSetState).not.toHaveBeenCalled();
     expect(stores.ui.questionsUnlocked).toBe(false);
   });
 
+  it("sends nothing for a click before runtime init declares gating, then unlocks on a click after it", async () => {
+    const stores = await createTestStores();
+    endRun(stores);
+    unlockQuestionsIfEarned(stores.ui);
+    expect(mockUnlock).not.toHaveBeenCalled();
+    expect(mockSetState).toHaveBeenCalledTimes(1);
+    expect(stores.ui.questionsUnlocked).toBe(false);
+
+    await declareGating(stores);
+    unlockQuestionsIfEarned(stores.ui);
+    expect(mockUnlock).toHaveBeenCalledTimes(1);
+    expect(mockSetState).toHaveBeenCalledTimes(2);
+  });
+
+  it("sends nothing for a run that ended before a report-mode init", async () => {
+    const stores = await createTestStores();
+    endRun(stores);
+    withRuleSetOnce();
+    mockGetInit.mockResolvedValue({ mode: "report", interactiveState: undefined });
+    await initInteractiveState(stores);
+    unlockQuestionsIfEarned(stores.ui);
+    expect(mockUnlock).not.toHaveBeenCalled();
+    expect(mockSetState).toHaveBeenCalledTimes(1);
+  });
+
   it("unlocks once after a run and a Restart, re-saving the run with the flag", async () => {
     const stores = mountWithStores(<BottomBar />);
+    await declareGating(stores);
     stores.simulation.simulationStarted = true;
     stores.simulation.time = 300;
     await userEvent.click(screen.getByTestId("restart-button"));
@@ -438,6 +471,7 @@ describe("question gating", () => {
 
   it("keeps the unlock through Clear All and the next run", async () => {
     const stores = mountWithStores(<BottomBar />);
+    await declareGating(stores);
     stores.simulation.simulationStarted = true;
     await userEvent.click(screen.getByTestId("restart-button"));
     unlockQuestionsIfEarned(stores.ui);

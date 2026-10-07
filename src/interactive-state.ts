@@ -14,6 +14,7 @@ import { log } from "./log";
 const initQuestionGating = (ui: UIModel, interactiveState: unknown) => {
   if (!hazbotAvailable(getAnalysisEngine(), ui.readOnly)) return;
   setSupportedFeatures({ questionGating: true });
+  ui.questionGatingDeclared = true;
   if (savedStateUnlocked(interactiveState)) {
     ui.questionsUnlocked = true;
     unlockQuestions({ restored: true });
@@ -88,7 +89,7 @@ export const logSimulationEnded = (stores: IStores, reason: string) => {
 // Hazbot button can be clicked again, so a run this visit is exactly a saved state in hand, and
 // the unlock re-saves that run with the flag set so a later visit can restore it.
 export const unlockQuestionsIfEarned = (ui: UIModel) => {
-  if (ui.questionsUnlocked || !ui.lastSavedState) return;
+  if (!ui.questionGatingDeclared || ui.questionsUnlocked || !ui.lastSavedState) return;
   ui.questionsUnlocked = true;
   unlockQuestions();
   sendState(ui, { ...ui.lastSavedState, questionsUnlocked: true });

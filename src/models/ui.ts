@@ -21,6 +21,8 @@ export class UIModel {
   @observable public readOnly = false;
   // True once the student met the question-unlock rule, in this visit or a saved one. Never cleared.
   public questionsUnlocked = false;
+  // True once runtime init declared question gating to the host; no unlock is sent before it.
+  public questionGatingDeclared = false;
   // The state last sent to the host: set only when a run ended and was saved in this visit.
   public lastSavedState: ISavedRunState | undefined = undefined;
   @observable public maxSparks: number;
