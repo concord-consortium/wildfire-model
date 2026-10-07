@@ -364,6 +364,7 @@ describe("question gating", () => {
     expect(mockUnlock).toHaveBeenCalledTimes(1);
     expect(mockUnlock).toHaveBeenCalledWith({ restored: true });
     expect(stores.ui.questionsUnlocked).toBe(true);
+    expect(mockSetState).not.toHaveBeenCalled();
 
     endRun(stores);
     expect(mockSetState).toHaveBeenCalledTimes(1);
@@ -372,6 +373,21 @@ describe("question gating", () => {
     unlockQuestionsIfEarned(stores.ui);
     expect(mockUnlock).toHaveBeenCalledTimes(1);
     expect(mockSetState).toHaveBeenCalledTimes(1);
+  });
+
+  it("re-saves a run that ended before init with the restored flag", async () => {
+    const stores = await createTestStores();
+    endRun(stores);
+    expect(mockSetState).toHaveBeenCalledTimes(1);
+    const runState = mockSetState.mock.calls[0][0];
+    expect(runState).not.toHaveProperty("questionsUnlocked");
+
+    withRuleSetOnce();
+    await initRuntime(stores, { ...await createSavedState(), questionsUnlocked: true });
+    expect(mockUnlock).toHaveBeenCalledWith({ restored: true });
+    expect(mockSetState).toHaveBeenCalledTimes(2);
+    expect(mockSetState.mock.calls[1][0]).toEqual({ ...runState, questionsUnlocked: true });
+    expectFlushedAfterEachSave();
   });
 
   it("restores the unlock from a saved run that fails the identity check", async () => {

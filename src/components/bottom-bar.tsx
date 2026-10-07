@@ -257,7 +257,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               useAnalysisEngine() here without re-plumbing the mount. NOT a
               `.widgetGroup`: the button is a self-contained #c1daff pill, no white
               bubble. */}
-          {hazbotEngine && hazbotAvailable(hazbotEngine, ui.readOnly) && (
+          {hazbotAvailable(hazbotEngine, ui.readOnly) && (
             <div className={css.hazbotButton}>
               <AnalysisEngineProvider engine={hazbotEngine} appRulesVersion={APP_RULES_VERSION}>
                 <HazbotButton />

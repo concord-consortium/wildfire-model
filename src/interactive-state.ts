@@ -10,6 +10,13 @@ import { getAnalysisEngine } from "./hazbot/wildfire";
 import { hazbotAvailable } from "./hazbot/wildfire/hazbot-available";
 import { log } from "./log";
 
+// Sent at once rather than after the API's debounce, so a reload or tab close cannot lose it.
+const sendState = (ui: UIModel, state: ISavedRunState) => {
+  ui.lastSavedState = state;
+  setInteractiveState(state);
+  flushStateUpdates();
+};
+
 // Without the Hazbot button nothing can unlock, so the host must not be told Wildfire gates.
 const initQuestionGating = (ui: UIModel, interactiveState: unknown) => {
   if (!hazbotAvailable(getAnalysisEngine(), ui.readOnly)) return;
@@ -18,6 +25,8 @@ const initQuestionGating = (ui: UIModel, interactiveState: unknown) => {
   if (savedStateUnlocked(interactiveState)) {
     ui.questionsUnlocked = true;
     unlockQuestions({ restored: true });
+    // A run that ended before init has already saved over the flagged state without the flag.
+    if (ui.lastSavedState) sendState(ui, { ...ui.lastSavedState, questionsUnlocked: true });
   }
 };
 
@@ -56,13 +65,6 @@ export const initInteractiveState = async (stores: IStores) => {
     chartStore.reset();
     simulation.reload();
   }
-};
-
-// Sent at once rather than after the API's debounce, so a reload or tab close cannot lose it.
-const sendState = (ui: UIModel, state: ISavedRunState) => {
-  ui.lastSavedState = state;
-  setInteractiveState(state);
-  flushStateUpdates();
 };
 
 export const saveRun = (stores: IStores, endReason: string) => {
