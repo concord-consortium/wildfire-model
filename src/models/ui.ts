@@ -1,6 +1,7 @@
 import { observable, makeObservable } from "mobx";
 import { CHART_TAB_INITIAL_OPEN } from "../hazbot/wildfire/constants";
 import { log } from "../log";
+import type { ISavedRunState } from "./saved-state";
 
 export enum Interaction {
   PlaceSpark = "PlaceSpark",
@@ -18,6 +19,10 @@ export class UIModel {
   @observable public showTerrainUI = false;
   // True in report mode, where a saved run is only looked at.
   @observable public readOnly = false;
+  // True once the student met the question-unlock rule, in this visit or a saved one. Never cleared.
+  public questionsUnlocked = false;
+  // The state last sent to the host: set only when a run ended and was saved in this visit.
+  public lastSavedState: ISavedRunState | undefined = undefined;
   @observable public maxSparks: number;
 
   @observable public interaction: Interaction | null = null;

@@ -57,6 +57,8 @@ export interface ISavedRunState {
   annotations: ISavedAnnotation[];
   // The view selectors as the student left them when the run ended.
   view?: ISavedView;
+  // True once the student met the question-unlock rule. Absent means not unlocked.
+  questionsUnlocked?: boolean;
   // 2 bits per cell, four cells per byte, low bits first, base64.
   burnMap: string;
 }
@@ -132,6 +134,7 @@ export const buildSavedState = ({ simulation, chartStore, ui }: IStores, endReas
       graphOpen: ui.showChart,
       graphShowsAllData: chartStore.chart.maxPoints === -1
     },
+    ...(ui.questionsUnlocked ? { questionsUnlocked: true } : {}),
     burnMap: encodeBurnMap(simulation.cells)
   };
 };
@@ -147,6 +150,9 @@ const isEnumValue = (enumObject: object, value: unknown) =>
   typeof value === "number" && Object.values(enumObject).includes(value);
 
 const isArrayOf = (value: unknown, check: (item: any) => boolean) => Array.isArray(value) && value.every(check);
+
+// Reads only the unlock flag, so a saved run from another preset or grid still counts.
+export const savedStateUnlocked = (value: unknown) => isObject(value) && value.questionsUnlocked === true;
 
 // Validates a state from the parent window, which is untrusted, against the model it would be drawn in.
 export const validateSavedState = (value: unknown, simulation: SimulationModel): SavedStateValidation => {
@@ -205,6 +211,9 @@ export const validateSavedState = (value: unknown, simulation: SimulationModel):
   const viewFits = (v: unknown) => isObject(v) &&
     VIEW_KEYS.every(key => typeof v[key] === "boolean");
   if (value.view !== undefined && !viewFits(value.view)) return fail("invalid view");
+  if (value.questionsUnlocked !== undefined && typeof value.questionsUnlocked !== "boolean") {
+    return fail("invalid unlock flag");
+  }
   if (typeof value.burnMap !== "string" || !decodeBurnMap(value.burnMap, simulation.gridWidth * simulation.gridHeight)) {
     return fail("invalid burn map");
   }

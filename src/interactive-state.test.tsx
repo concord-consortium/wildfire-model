@@ -182,6 +182,7 @@ describe("initInteractiveState", () => {
     stores.simulation.simulationEndedLogged = false;
     logSimulationEnded(stores, "SimulationRestarted");
     expect(mockSetState).not.toHaveBeenCalled();
+    expect(stores.ui.lastSavedState).toBeUndefined();
   });
 });
 
@@ -247,6 +248,15 @@ describe("logSimulationEnded", () => {
     stores.simulation.simulationStarted = true;
     logSimulationEnded(stores, "ByItself");
     expect(mockSetState).not.toHaveBeenCalled();
+    expect(stores.ui.lastSavedState).toBeUndefined();
+  });
+
+  it("keeps the state it sent", async () => {
+    const stores = await createTestStores();
+    stores.simulation.simulationStarted = true;
+    logSimulationEnded(stores, "ByItself");
+    expect(mockSetState).toHaveBeenCalledTimes(1);
+    expect(stores.ui.lastSavedState).toBe(mockSetState.mock.calls[0][0]);
   });
 
   it("saves the next run again after a Restart", async () => {

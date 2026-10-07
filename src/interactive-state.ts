@@ -2,7 +2,8 @@ import {
   flushStateUpdates, getInitInteractiveMessage, inIframe, setInteractiveState
 } from "@concord-consortium/lara-interactive-api";
 import type { IStores } from "./models/stores";
-import { applySavedState, buildSavedState, validateSavedState } from "./models/saved-state";
+import type { UIModel } from "./models/ui";
+import { applySavedState, buildSavedState, ISavedRunState, validateSavedState } from "./models/saved-state";
 import { log } from "./log";
 
 // Restores a saved run only in report mode, where the model is read-only. In runtime mode the
@@ -39,10 +40,15 @@ export const initInteractiveState = async (stores: IStores) => {
 };
 
 // Sent at once rather than after the API's debounce, so a reload or tab close cannot lose it.
+const sendState = (ui: UIModel, state: ISavedRunState) => {
+  ui.lastSavedState = state;
+  setInteractiveState(state);
+  flushStateUpdates();
+};
+
 export const saveRun = (stores: IStores, endReason: string) => {
   if (!inIframe() || stores.ui.readOnly) return;
-  setInteractiveState(buildSavedState(stores, endReason));
-  flushStateUpdates();
+  sendState(stores.ui, buildSavedState(stores, endReason));
 };
 
 // Must run before the caller resets the model. Only a run's first end is saved: the Restart,
