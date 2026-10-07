@@ -1,10 +1,24 @@
 import {
-  flushStateUpdates, getInitInteractiveMessage, inIframe, setInteractiveState
+  flushStateUpdates, getInitInteractiveMessage, inIframe, setInteractiveState, setSupportedFeatures, unlockQuestions
 } from "@concord-consortium/lara-interactive-api";
 import type { IStores } from "./models/stores";
 import type { UIModel } from "./models/ui";
-import { applySavedState, buildSavedState, ISavedRunState, validateSavedState } from "./models/saved-state";
+import {
+  applySavedState, buildSavedState, ISavedRunState, savedStateUnlocked, validateSavedState
+} from "./models/saved-state";
+import { getAnalysisEngine } from "./hazbot/wildfire";
+import { hazbotAvailable } from "./hazbot/wildfire/hazbot-available";
 import { log } from "./log";
+
+// Without the Hazbot button nothing can unlock, so the host must not be told Wildfire gates.
+const initQuestionGating = (ui: UIModel, interactiveState: unknown) => {
+  if (!hazbotAvailable(getAnalysisEngine(), ui.readOnly)) return;
+  setSupportedFeatures({ questionGating: true });
+  if (savedStateUnlocked(interactiveState)) {
+    ui.questionsUnlocked = true;
+    unlockQuestions({ restored: true });
+  }
+};
 
 // Restores a saved run only in report mode, where the model is read-only. In runtime mode the
 // student's model loads fresh whatever state the Activity Player sends.
@@ -12,6 +26,10 @@ export const initInteractiveState = async (stores: IStores) => {
   const { simulation, chartStore, ui } = stores;
   if (!inIframe()) return;
   const initMessage = await getInitInteractiveMessage<unknown>();
+  if (initMessage?.mode === "runtime") {
+    initQuestionGating(ui, initMessage.interactiveState);
+    return;
+  }
   if (initMessage?.mode !== "report") return;
 
   ui.readOnly = true;
@@ -64,4 +82,14 @@ export const logSimulationEnded = (stores: IStores, reason: string) => {
   if (firstEnd) {
     saveRun(stores, reason);
   }
+};
+
+// The rule: a Hazbot click after a run ended in this visit. Every ended run is saved before the
+// Hazbot button can be clicked again, so a run this visit is exactly a saved state in hand, and
+// the unlock re-saves that run with the flag set so a later visit can restore it.
+export const unlockQuestionsIfEarned = (ui: UIModel) => {
+  if (ui.questionsUnlocked || !ui.lastSavedState) return;
+  ui.questionsUnlocked = true;
+  unlockQuestions();
+  sendState(ui, { ...ui.lastSavedState, questionsUnlocked: true });
 };
