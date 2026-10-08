@@ -3,6 +3,7 @@ import { observer } from "mobx-react";
 import Button from "@mui/material/Button";
 import { useStores } from "../use-stores";
 import { log } from "../log";
+import { unlockQuestionsIfEarned } from "../interactive-state";
 import { getAnalysisEngine, selectFeedback, WildfireDefaults, WildfireReading } from "../hazbot/wildfire";
 import { buildTour } from "../hazbot/wildfire/build-tour";
 import { tourData } from "../hazbot/wildfire/tour-data.generated";
@@ -331,6 +332,7 @@ export const HazbotButton = observer(function HazbotButton() {
     // matchedCategory keeps meaning `best`, so the longitudinal series is unbroken;
     // categoryUsed is the category the student was actually shown.
     log("HazbotButtonClicked", { matchedCategory: best, categoryUsed: used, categoryCurrent: current });
+    unlockQuestionsIfEarned(ui);
   };
 
   // Wrapper state classes: `ready` (pulse halo), `coached` (intro enlarged-robot, intro

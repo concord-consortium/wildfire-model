@@ -7,6 +7,7 @@ import { BottomBar } from "./bottom-bar";
 import { Vector2 } from "three";
 import { createStores } from "../models/stores";
 import * as logModule from "../log";
+import * as interactiveStateModule from "../interactive-state";
 import { getAnalysisEngine } from "../hazbot/wildfire";
 import { computeCategorySelectionForEngine } from "../hazbot/engine";
 import { createCoachmarksEngine } from "@concord-consortium/coachmarks";
@@ -159,6 +160,14 @@ it("click clears the pulse and logs HazbotButtonClicked (no engine → panel no-
   expect(stores.ui.hazbotPulseArmed).toBe(false);
   expect(logSpy).toHaveBeenCalledWith("HazbotButtonClicked",
     { matchedCategory: null, categoryUsed: null, categoryCurrent: null });
+});
+
+it("click offers the store's ui to the question unlock", () => {
+  const unlockSpy = jest.spyOn(interactiveStateModule, "unlockQuestionsIfEarned");
+  const { stores } = renderWithStores();
+  fireEvent.click(screen.getByTestId("hazbot-button"));
+  expect(unlockSpy).toHaveBeenCalledTimes(1);
+  expect(unlockSpy).toHaveBeenCalledWith(stores.ui);
 });
 
 it("blinks on the AP-79 schedule (fake timers + fixed random)", () => {

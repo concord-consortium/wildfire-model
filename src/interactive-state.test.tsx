@@ -4,31 +4,43 @@ import userEvent from "@testing-library/user-event";
 import { Provider } from "mobx-react";
 import { Vector2 } from "three";
 import {
-  flushStateUpdates, getInitInteractiveMessage, inIframe, setInteractiveState
+  flushStateUpdates, getInitInteractiveMessage, inIframe, setInteractiveState, setSupportedFeatures, unlockQuestions
 } from "@concord-consortium/lara-interactive-api";
-import { initInteractiveState, logSimulationEnded } from "./interactive-state";
+import { initInteractiveState, logSimulationEnded, unlockQuestionsIfEarned } from "./interactive-state";
 import { SimulationModel } from "./models/simulation";
 import { ChartStore } from "./models/chart-store";
 import { Interaction, UIModel } from "./models/ui";
 import { FireState } from "./models/cell";
 import { IStores, createStores } from "./models/stores";
-import { buildSavedState } from "./models/saved-state";
+import { buildSavedState, validateSavedState } from "./models/saved-state";
 import { BottomBar } from "./components/bottom-bar";
 import { TopBar } from "./components/top-bar/top-bar";
 import { DroughtLevel, TerrainType, Vegetation } from "./types";
+import { getAnalysisEngine } from "./hazbot/wildfire";
 
 jest.mock("@concord-consortium/lara-interactive-api", () => ({
   log: jest.fn(),
   inIframe: jest.fn(),
   getInitInteractiveMessage: jest.fn(),
   setInteractiveState: jest.fn(),
-  flushStateUpdates: jest.fn()
+  flushStateUpdates: jest.fn(),
+  setSupportedFeatures: jest.fn(),
+  unlockQuestions: jest.fn()
+}));
+// Undefined by default, since log.ts hands every event to the engine; rule-set cases use withRuleSetOnce.
+jest.mock("./hazbot/wildfire", () => ({
+  ...jest.requireActual("./hazbot/wildfire"),
+  getAnalysisEngine: jest.fn()
 }));
 
 const mockInIframe = inIframe as jest.Mock;
 const mockGetInit = getInitInteractiveMessage as jest.Mock;
 const mockSetState = setInteractiveState as jest.Mock;
 const mockFlush = flushStateUpdates as jest.Mock;
+const mockSetFeatures = setSupportedFeatures as jest.Mock;
+const mockUnlock = unlockQuestions as jest.Mock;
+const mockGetEngine = getAnalysisEngine as jest.Mock;
+const withRuleSetOnce = () => mockGetEngine.mockReturnValueOnce({ ruleSet: {} });
 
 const createTestStores = async (): Promise<IStores> => {
   const simulation = new SimulationModel({
@@ -69,6 +81,7 @@ const expectFlushedAfterEachSave = () => {
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockGetEngine.mockReset();
   mockInIframe.mockReturnValue(true);
   mockGetInit.mockReturnValue(new Promise(() => undefined));
 });
@@ -182,6 +195,7 @@ describe("initInteractiveState", () => {
     stores.simulation.simulationEndedLogged = false;
     logSimulationEnded(stores, "SimulationRestarted");
     expect(mockSetState).not.toHaveBeenCalled();
+    expect(stores.ui.lastSavedState).toBeUndefined();
   });
 });
 
@@ -247,6 +261,15 @@ describe("logSimulationEnded", () => {
     stores.simulation.simulationStarted = true;
     logSimulationEnded(stores, "ByItself");
     expect(mockSetState).not.toHaveBeenCalled();
+    expect(stores.ui.lastSavedState).toBeUndefined();
+  });
+
+  it("keeps the state it sent", async () => {
+    const stores = await createTestStores();
+    stores.simulation.simulationStarted = true;
+    logSimulationEnded(stores, "ByItself");
+    expect(mockSetState).toHaveBeenCalledTimes(1);
+    expect(stores.ui.lastSavedState).toBe(mockSetState.mock.calls[0][0]);
   });
 
   it("saves the next run again after a Restart", async () => {
@@ -297,5 +320,186 @@ describe("the run-end controls", () => {
     await userEvent.click(screen.getByTestId("reload"));
     await new Promise(resolve => setTimeout(resolve, 150));
     expect(reload).toHaveBeenCalled();
+  });
+});
+
+describe("question gating", () => {
+  const mountWithStores = (ui: React.ReactElement) => {
+    const stores = createStores();
+    render(<Provider stores={stores}>{ui}</Provider>);
+    return stores;
+  };
+
+  const initRuntime = async (stores: IStores, interactiveState: unknown) => {
+    mockGetInit.mockResolvedValue({ mode: "runtime", interactiveState });
+    await initInteractiveState(stores);
+  };
+
+  const declareGating = async (stores: IStores) => {
+    withRuleSetOnce();
+    await initRuntime(stores, undefined);
+    expect(stores.ui.questionGatingDeclared).toBe(true);
+  };
+
+  const endRun = (stores: IStores, reason = "ByItself") => {
+    stores.simulation.simulationStarted = true;
+    stores.simulation.simulationEndedLogged = false;
+    logSimulationEnded(stores, reason);
+  };
+
+  it("declares only questionGating in runtime mode with a rule set, and sends no unlock for an unflagged state", async () => {
+    const stores = await createTestStores();
+    withRuleSetOnce();
+    await initRuntime(stores, await createSavedState());
+    expect(mockSetFeatures).toHaveBeenCalledTimes(1);
+    expect(mockSetFeatures).toHaveBeenCalledWith({ questionGating: true });
+    expect(mockUnlock).not.toHaveBeenCalled();
+    expect(stores.ui.questionsUnlocked).toBe(false);
+  });
+
+  it("restores a saved unlock once and keeps it in every later save", async () => {
+    const stores = await createTestStores();
+    withRuleSetOnce();
+    await initRuntime(stores, { ...await createSavedState(), questionsUnlocked: true });
+    expect(mockUnlock).toHaveBeenCalledTimes(1);
+    expect(mockUnlock).toHaveBeenCalledWith({ restored: true });
+    expect(stores.ui.questionsUnlocked).toBe(true);
+    expect(mockSetState).not.toHaveBeenCalled();
+
+    endRun(stores);
+    expect(mockSetState).toHaveBeenCalledTimes(1);
+    expect(mockSetState.mock.calls[0][0].questionsUnlocked).toBe(true);
+
+    unlockQuestionsIfEarned(stores.ui);
+    expect(mockUnlock).toHaveBeenCalledTimes(1);
+    expect(mockSetState).toHaveBeenCalledTimes(1);
+  });
+
+  it("re-saves a run that ended before init with the restored flag", async () => {
+    const stores = await createTestStores();
+    endRun(stores);
+    expect(mockSetState).toHaveBeenCalledTimes(1);
+    const runState = mockSetState.mock.calls[0][0];
+    expect(runState).not.toHaveProperty("questionsUnlocked");
+
+    withRuleSetOnce();
+    await initRuntime(stores, { ...await createSavedState(), questionsUnlocked: true });
+    expect(mockUnlock).toHaveBeenCalledWith({ restored: true });
+    expect(mockSetState).toHaveBeenCalledTimes(2);
+    expect(mockSetState.mock.calls[1][0]).toEqual({ ...runState, questionsUnlocked: true });
+    expectFlushedAfterEachSave();
+  });
+
+  it("restores the unlock from a saved run that fails the identity check", async () => {
+    const stores = await createTestStores();
+    const state = await createSavedState();
+    const flagged = { ...state, identity: { ...state.identity, preset: "other" }, questionsUnlocked: true };
+    expect(validateSavedState(flagged, stores.simulation).ok).toBe(false);
+    withRuleSetOnce();
+    await initRuntime(stores, flagged);
+    expect(mockUnlock).toHaveBeenCalledWith({ restored: true });
+  });
+
+  it("declares nothing and restores nothing without a rule set", async () => {
+    const stores = await createTestStores();
+    await initRuntime(stores, { ...await createSavedState(), questionsUnlocked: true });
+    expect(mockSetFeatures).not.toHaveBeenCalled();
+    expect(mockUnlock).not.toHaveBeenCalled();
+    expect(stores.ui.questionsUnlocked).toBe(false);
+  });
+
+  it("declares nothing and restores nothing in report mode", async () => {
+    const stores = await createTestStores();
+    withRuleSetOnce();
+    mockGetInit.mockResolvedValue({ mode: "report", interactiveState: { ...await createSavedState(), questionsUnlocked: true } });
+    await initInteractiveState(stores);
+    expect(stores.ui.readOnly).toBe(true);
+    expect(mockSetFeatures).not.toHaveBeenCalled();
+    expect(mockUnlock).not.toHaveBeenCalled();
+  });
+
+  it("sends and saves nothing before a run ended in the visit", async () => {
+    const stores = await createTestStores();
+    await declareGating(stores);
+    unlockQuestionsIfEarned(stores.ui);
+    expect(mockUnlock).not.toHaveBeenCalled();
+    expect(mockSetState).not.toHaveBeenCalled();
+    expect(stores.ui.questionsUnlocked).toBe(false);
+  });
+
+  it("sends nothing for a click before runtime init declares gating, then unlocks on a click after it", async () => {
+    const stores = await createTestStores();
+    endRun(stores);
+    unlockQuestionsIfEarned(stores.ui);
+    expect(mockUnlock).not.toHaveBeenCalled();
+    expect(mockSetState).toHaveBeenCalledTimes(1);
+    expect(stores.ui.questionsUnlocked).toBe(false);
+
+    await declareGating(stores);
+    unlockQuestionsIfEarned(stores.ui);
+    expect(mockUnlock).toHaveBeenCalledTimes(1);
+    expect(mockSetState).toHaveBeenCalledTimes(2);
+  });
+
+  it("sends nothing for a run that ended before a report-mode init", async () => {
+    const stores = await createTestStores();
+    endRun(stores);
+    withRuleSetOnce();
+    mockGetInit.mockResolvedValue({ mode: "report", interactiveState: undefined });
+    await initInteractiveState(stores);
+    unlockQuestionsIfEarned(stores.ui);
+    expect(mockUnlock).not.toHaveBeenCalled();
+    expect(mockSetState).toHaveBeenCalledTimes(1);
+  });
+
+  it("unlocks once after a run and a Restart, re-saving the run with the flag", async () => {
+    const stores = mountWithStores(<BottomBar />);
+    await declareGating(stores);
+    stores.simulation.simulationStarted = true;
+    stores.simulation.time = 300;
+    await userEvent.click(screen.getByTestId("restart-button"));
+    expect(mockSetState).toHaveBeenCalledTimes(1);
+    const runState = mockSetState.mock.calls[0][0];
+    expect(stores.simulation.time).toBe(0);
+
+    unlockQuestionsIfEarned(stores.ui);
+    expect(mockUnlock).toHaveBeenCalledTimes(1);
+    expect(mockUnlock).toHaveBeenCalledWith();
+    expect(mockSetState).toHaveBeenCalledTimes(2);
+    const unlockState = mockSetState.mock.calls[1][0];
+    expect(unlockState).toEqual({ ...runState, questionsUnlocked: true });
+    expect(unlockState.time).toBe(300);
+    expectFlushedAfterEachSave();
+
+    unlockQuestionsIfEarned(stores.ui);
+    expect(mockUnlock).toHaveBeenCalledTimes(1);
+    expect(mockSetState).toHaveBeenCalledTimes(2);
+  });
+
+  it("sends nothing standalone", async () => {
+    mockInIframe.mockReturnValue(false);
+    const stores = await createTestStores();
+    endRun(stores);
+    unlockQuestionsIfEarned(stores.ui);
+    expect(mockUnlock).not.toHaveBeenCalled();
+    expect(mockSetState).not.toHaveBeenCalled();
+  });
+
+  it("keeps the unlock through Clear All and the next run", async () => {
+    const stores = mountWithStores(<BottomBar />);
+    await declareGating(stores);
+    stores.simulation.simulationStarted = true;
+    await userEvent.click(screen.getByTestId("restart-button"));
+    unlockQuestionsIfEarned(stores.ui);
+    expect(mockUnlock).toHaveBeenCalledTimes(1);
+
+    stores.simulation.sparks.push(new Vector2(50000, 50000));
+    await userEvent.click(screen.getByTestId("clear-all-button"));
+    endRun(stores);
+    expect(mockSetState).toHaveBeenCalledTimes(3);
+    expect(mockSetState.mock.calls[2][0].questionsUnlocked).toBe(true);
+
+    unlockQuestionsIfEarned(stores.ui);
+    expect(mockUnlock).toHaveBeenCalledTimes(1);
   });
 });

@@ -12,7 +12,7 @@ import { DroughtLevel, TerrainType, Vegetation } from "../types";
 import { ISimulationConfig } from "../config";
 import {
   ISavedRunState, SAVED_STATE_VERSION, applySavedState, buildSavedState, decodeBurnMap, encodeBurnMap,
-  validateSavedState
+  savedStateUnlocked, validateSavedState
 } from "./saved-state";
 import packageJson from "../../package.json";
 
@@ -145,6 +145,15 @@ describe("buildSavedState", () => {
     expect(buildSavedState(storesOf(sim, chartStore, ui), "ByItself").view).toEqual({
       vegetationKey: true, graphOpen: true, graphShowsAllData: true
     });
+  });
+
+  it("records the question unlock only once the student has met the rule", async () => {
+    const { sim, chartStore } = await createEndedRun();
+    const ui = new UIModel();
+    expect(buildSavedState(storesOf(sim, chartStore, ui), "ByItself")).not.toHaveProperty("questionsUnlocked");
+
+    ui.questionsUnlocked = true;
+    expect(buildSavedState(storesOf(sim, chartStore, ui), "ByItself").questionsUnlocked).toBe(true);
   });
 
   it("saves the student's wind rather than a scheduled wind change", async () => {
@@ -343,6 +352,14 @@ describe("validateSavedState", () => {
     expect(rejectionOf({ ...state, view: [] }, sim)).toMatch(/view/);
   });
 
+  it("accepts a state with or without the unlock flag and rejects a malformed one", () => {
+    const state = copy(baseState);
+    expect(state).not.toHaveProperty("questionsUnlocked");
+    expect(validateSavedState(state, sim).ok).toBe(true);
+    expect(validateSavedState({ ...state, questionsUnlocked: true }, sim).ok).toBe(true);
+    expect(rejectionOf({ ...state, questionsUnlocked: "yes" }, sim)).toBe("invalid unlock flag");
+  });
+
   it("accepts a state without a zone-map flag and rejects a flag this model cannot honor", async () => {
     const state = copy(baseState);
     expect(state.setup.presetZoneMap).toBe(false);
@@ -360,6 +377,18 @@ describe("validateSavedState", () => {
     expect(rejectionOf({ ...state, burnMap: state.burnMap + "AAAA" }, sim)).toMatch(/burn map/);
     expect(rejectionOf({ ...state, burnMap: 42 }, sim)).toMatch(/burn map/);
   });
+});
+
+describe("savedStateUnlocked", () => {
+  it("reads the unlock flag alone, without validating the run", () => {
+    expect(savedStateUnlocked({ questionsUnlocked: true })).toBe(true);
+  });
+
+  it.each([undefined, null, "questionsUnlocked", {}, { questionsUnlocked: "true" }])(
+    "is false for %p", (value) => {
+      expect(savedStateUnlocked(value)).toBe(false);
+    }
+  );
 });
 
 describe("applySavedState", () => {

@@ -28,6 +28,7 @@ import { log } from "../log";
 import { logSimulationEnded } from "../interactive-state";
 import { AnalysisEngineProvider } from "../hazbot/engine";
 import { APP_RULES_VERSION, getAnalysisEngine } from "../hazbot/wildfire";
+import { hazbotAvailable } from "../hazbot/wildfire/hazbot-available";
 import { HazbotButton } from "./hazbot-button";
 import { cancelFireLinePlacement } from "../models/fire-line-placement";
 import { SpeedControl } from "./speed-control";
@@ -256,7 +257,7 @@ export class BottomBar extends BaseComponent<IProps, IState> {
               useAnalysisEngine() here without re-plumbing the mount. NOT a
               `.widgetGroup`: the button is a self-contained #c1daff pill, no white
               bubble. */}
-          {hazbotEngine?.ruleSet && !ui.readOnly && (
+          {hazbotAvailable(hazbotEngine, ui.readOnly) && (
             <div className={css.hazbotButton}>
               <AnalysisEngineProvider engine={hazbotEngine} appRulesVersion={APP_RULES_VERSION}>
                 <HazbotButton />
