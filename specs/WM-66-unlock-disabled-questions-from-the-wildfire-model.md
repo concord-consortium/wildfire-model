@@ -30,7 +30,7 @@ The authored setting (`question_gating`: none, rest of the page, rest of the sec
 - **R8 (format).** `questionsUnlocked` is an optional boolean on the saved state. States saved before this story have no field and mean "not unlocked". WM-64's report-mode validation accepts the field and treats a present non-boolean value as malformed, the way it treats `view`. `SAVED_STATE_VERSION` stays 1.
 - **R9 (report mode).** Report mode is unchanged: it draws the saved run as before and ignores `questionsUnlocked`.
 - **R10 (logging).** No new log events. An in-visit unlock is derivable from the existing `SimulationStarted` and `HazbotButtonClicked` events; the restored unlock is a pure consequence of the saved state.
-- **R11 (dependency).** Wildfire depends on `@concord-consortium/lara-interactive-api` from npm, pinned exactly to `1.15.0-pre.0` (`beta` tag) during review and to the final `1.15.0` once the LARA-226 and WM-66 reviews are done. A protocol change in review ships as a new pre-release, and the pin moves to it. *(Partial: pinned to `1.15.0-pre.0`; the move to `1.15.0` follows approval.)*
+- **R11 (dependency).** Wildfire depends on `@concord-consortium/lara-interactive-api` `1.15.0` from npm. Review ran against the pre-release `1.15.0-pre.0`, published from the same package sources.
 
 ## Technical Notes
 
@@ -40,7 +40,7 @@ The authored setting (`question_gating`: none, rest of the page, rest of the sec
 - **Re-saving after Restart or Clear All.** Both reset the model in the handler that saves, so the unlock save reuses the last state actually sent rather than rebuilding it from the model, and keeps the run's `time`. `setInteractiveState` deep-freezes its argument; the spread makes a new top-level object, and the frozen nested objects are never written.
 - **History.** Each `setInteractiveState` that lands is a full history entry, so the unlock adds one entry repeating the latest run with `questionsUnlocked: true`. It also marks, for an analyst, when the student unlocked the questions. It is not a new run: its `outcome`, `burnSamples` and `burnMap` equal the entry before it, so anyone counting runs from history entries must skip the entry where `questionsUnlocked` first turns true (the `SimulationEnded` log events count runs directly).
 - **The top bar's reload and AP-145.** The reload saves, then reloads the page inside the iframe, and the Activity Player answers the new `hello` with a fresh `initInteractive`. Activity Player releases before 2.19.0 send the state from when the runtime mounted, so the reloaded Wildfire gets no flag, its next save drops it, and on a page change the Activity Player stores the stale state the client reports back. AP-145 (activity-player #592, in 2.19.0) makes every re-init carry the latest state, so R6 covers the reload with no reload-specific Wildfire code.
-- **Installs.** Every install needs `--legacy-peer-deps`, as CI's `npm ci --legacy-peer-deps` does: `react-chartjs-2@2.11.2` has a peer range that excludes React 18. The pin is exact because a `^` range never matches a prerelease.
+- **Installs.** Every install needs `--legacy-peer-deps`, as CI's `npm ci --legacy-peer-deps` does: `react-chartjs-2@2.11.2` has a peer range that excludes React 18.
 - **Tests.** `interactive-state.test.tsx` mocks `getAnalysisEngine` to return `undefined` by default and gives rule-set cases `mockReturnValueOnce({ ruleSet: {} })`: a persistent stand-in would reach `log.ts`, which calls `engine?.consume(...)` on every log. `beforeEach` resets the mock, so a value a case leaves unconsumed (report mode) cannot leak.
 - **Deployment.** The activity's item URL has to point at the release (fix version 1.7.0) or a branch build that carries this story, and must carry `hazbotRules=<id>` with a rule set that exists (not `hazbotSidebar=true` alone, which constructs an engine with no rule set), or Wildfire declares nothing and the host locks nothing.
 - **End-to-end check.** No host applied the protocol when this shipped, so the check read Wildfire's messages from the Activity Player page (`window.addEventListener("message", ...)` filtered on the Wildfire frame's `event.source`), driving Wildfire through `window.test` and `data-testid` clicks. It was run against a local Activity Player patched to follow the protocol, and every runtime case passed, including the restored unlock on a reload with the same `runKey` and the top bar's reload with AP-145 applied. The message cases, the top bar's reload included, were repeated on staging's Activity Player master after AP-145 merged, with the released 2.18.0 as the control that loses the unlock. Report mode was left to the unit tests.
@@ -53,10 +53,6 @@ The authored setting (`question_gating`: none, rest of the page, rest of the sec
 - Detecting whether the host supports gating: the message is sent regardless and hosts without support ignore it.
 - Re-locking questions.
 - The Activity Player's stale re-init after an interactive reloads itself (AP-145, fixed in Activity Player 2.19.0).
-
-## Not Yet Implemented
-
-- The pin to the final `lara-interactive-api` `1.15.0`: the branch pins `1.15.0-pre.0`, and the final version is published from the same code once the LARA-226 and WM-66 reviews are done.
 
 ## Decisions
 
