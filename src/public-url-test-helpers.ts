@@ -1,6 +1,4 @@
-// Sets webpack's runtime public path for the tests in the enclosing describe, the way
-// the bundle sees it in a release deploy, and removes it afterward so the rest of the
-// suite sees Jest's default of none.
+// Sets webpack's runtime public path for the enclosing describe and clears it after each test.
 export const usePublicPath = (base: string) => {
   beforeEach(() => {
     (globalThis as Record<string, unknown>).__webpack_public_path__ = base;

@@ -26,6 +26,7 @@ describe("publicUrl", () => {
     it("leaves absolute inputs pointing where they already did", () => {
       expect(publicUrl("https://other.example/a.png")).toBe("https://other.example/a.png");
       expect(publicUrl("/abs.png")).toBe("https://wildfire.concord.org/abs.png");
+      expect(publicUrl("//cdn.example/x.png")).toBe("https://cdn.example/x.png");
       expect(publicUrl("data:image/png;base64,AAA")).toBe("data:image/png;base64,AAA");
       expect(publicUrl("blob:https://wildfire.concord.org/1234")).toBe("blob:https://wildfire.concord.org/1234");
     });
