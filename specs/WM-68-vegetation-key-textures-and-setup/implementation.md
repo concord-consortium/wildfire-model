@@ -24,10 +24,8 @@ The approach was built and run before this plan was written (see the end-to-end 
 `src/public-url.ts`:
 
 ```ts
-// Webpack's runtime public path: the build's root folder, derived from the bundle
-// script's own URL (its folder plus "../", since the bundle sits in assets/) because
-// output.publicPath is left at "auto". Declared here because the project does not
-// depend on @types/webpack-env.
+// Webpack's runtime public path: with output.publicPath "auto", the bundle's folder plus "../",
+// which is the build's root folder. Declared here because the project lacks @types/webpack-env.
 declare let __webpack_public_path__: string | undefined;
 
 // The typeof guard keeps this callable under Jest, where the identifier is not
