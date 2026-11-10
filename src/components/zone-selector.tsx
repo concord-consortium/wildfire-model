@@ -2,6 +2,7 @@ import React from "react";
 import { Zone } from "../models/zone";
 import css from "./zone-selector.scss";
 import { TerrainType } from "../types";
+import { publicUrl } from "../public-url";
 import { vegetationIcons } from "./vertical-selectors";
 import { vegetationTileUrl } from "./view-3d/terrain-textures";
 import { droughtGlyphInkHex, droughtTerrainHex } from "./view-3d/terrain-colors";
@@ -24,14 +25,14 @@ export const getBackgroundImage = (zoneCount: number, terrainType: TerrainType, 
   const twoZonePosition = ["-left", "-right"];
   const threeZonePosition = ["-left", "-mid", "-right"];
   const panelPosition = zoneCount === 2 ? twoZonePosition[currentZone] : threeZonePosition[currentZone];
-  return prefix + terrainStyle + panelPosition + ".png";
+  return publicUrl(prefix + terrainStyle + panelPosition + ".png");
 };
 export const getRiverOverlay = (zoneCount: number, currentZone: number) => {
   const prefix = `./terrain/`;
   const twoZonePosition = ["2-zone-river-left", "2-zone-river-right"];
   const threeZonePosition = ["3-zone-river-left", "3-zone-river-mid", "3-zone-river-right"];
   const panelPosition = zoneCount === 2 ? twoZonePosition[currentZone] : threeZonePosition[currentZone];
-  return prefix + panelPosition + ".png";
+  return publicUrl(prefix + panelPosition + ".png");
 };
 
 interface IRenderZonesOptions {

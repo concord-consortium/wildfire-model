@@ -6,6 +6,7 @@ const { existsSync } = require("fs") as { existsSync: (path: string) => boolean 
 const { resolve } = require("path") as { resolve: (...paths: string[]) => string };
 import { getBackgroundImage, getRiverOverlay } from "./zone-selector";
 import { TerrainType } from "../types";
+import { RELEASE_PUBLIC_PATH, usePublicPath } from "../public-url-test-helpers";
 
 // The Setup thumbnails are named for the UI's terrain labels while the heightmap
 // data files under src/public/data/ are named off the TerrainType enum, so the
@@ -43,5 +44,16 @@ describe("Setup panel terrain art", () => {
   it("spells Foothills as the UI does, not as the enum does", () => {
     expect(getBackgroundImage(2, TerrainType.Foothills, 0)).toBe("./terrain/2-zone-hills-left.png");
     expect(existsSync(asFile("./data/foothills-foothills-heightmap.png"))).toBe(true);
+  });
+
+  describe("with a release public path", () => {
+    usePublicPath(RELEASE_PUBLIC_PATH);
+
+    it("resolves the thumbnail and river overlay against the build's root folder", () => {
+      expect(getBackgroundImage(2, TerrainType.Foothills, 0))
+        .toBe("https://wildfire.concord.org/version/v9.9.9/terrain/2-zone-hills-left.png");
+      expect(getRiverOverlay(3, 1))
+        .toBe("https://wildfire.concord.org/version/v9.9.9/terrain/3-zone-river-mid.png");
+    });
   });
 });
