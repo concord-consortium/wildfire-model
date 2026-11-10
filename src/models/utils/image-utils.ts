@@ -1,3 +1,5 @@
+import { publicUrl } from "../../public-url";
+
 /**
  * Accepts height and width of the expected grid array, as well as the image with any dimensions.
  * Returns 1D grid array populated with data from image 2D array.
@@ -92,7 +94,7 @@ export const getImageData = (
 
   // Load image first.
   const imgage = document.createElement("img");
-  imgage.src = imgSrc;
+  imgage.src = publicUrl(imgSrc);
   if (imgage.complete) {
     imageLoaded({target: imgage});
   } else {
