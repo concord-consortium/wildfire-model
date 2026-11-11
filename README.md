@@ -66,6 +66,8 @@ See [LOGGED-EVENTS.md](LOGGED-EVENTS.md) for a complete reference of all logged 
 If you want to build a local version run `npm build`, it will create the files in the `dist` folder.
 You *do not* need to build to deploy the code, that is automatic.  See more info in the Deployment section below.
 
+To test the layout a release uses, where the top-level `index.html` is a copy of the build's `index-top.html` placed above `version/<tag>/`, run `npm run build:top-test` and then `npm run serve:top-test`, and open `index-top.html` from the server it starts.
+
 ## Deployment
 
 S3 deployment is handled by GitHub Actions using OIDC for AWS authentication. The `s3-deploy` job in

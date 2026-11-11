@@ -1,5 +1,6 @@
 coverage
 dist
+top-test
 node_modules
 .yalc
 yalc.lock

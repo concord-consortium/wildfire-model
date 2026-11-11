@@ -2,15 +2,16 @@ import { useEffect, useState } from "react";
 import { useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { Vegetation } from "../../types";
+import { publicUrl } from "../../public-url";
 
-// The tiles live in src/public, which CopyWebpackPlugin copies to the build root
-// verbatim. They are fetched by URL at runtime rather than imported, for two
-// reasons: the webpack `.svg` rule pipes every SVG imported from a .tsx through
-// SVGR (which yields a React component, not a URL), and — more importantly —
-// serving them as static files means an artist can edit a tile and reload the
-// page, with no rebuild and no import to update. The path is relative so it
-// resolves correctly under a branch deploy path.
-export const TILE_DIR = "terrain-textures/";
+// The tiles live in src/public, which CopyWebpackPlugin copies to the build's root
+// folder verbatim. They are fetched by URL at runtime rather than imported, for two reasons:
+// the webpack `.svg` rule pipes every SVG imported from a .tsx through SVGR (which
+// yields a React component, not a URL), and, more importantly, serving them as static
+// files means an artist can edit a tile and reload the page, with no rebuild and no
+// import to update. vegetationTileUrl resolves them against that folder, which is not
+// the page's folder on the released index.html.
+const TILE_DIR = "terrain-textures/";
 
 // Rasterization size per tile. A tile covers a fixed 18,000 ft of ground, so it
 // repeats 6.7x across the default 120,000 ft model; on a 1200px-wide viewport
@@ -29,12 +30,15 @@ const TILE_FIELD = "#808080";
 // that varies per fragment, so the alternative to packing would be sampling all
 // four tiles and discarding three. Packing makes it a single fetch plus a dot
 // product, which matters on the Chromebooks this sim targets.
-export const VEGETATION_TILE_FILES: Record<Vegetation, string> = {
+const VEGETATION_TILE_FILES: Record<Vegetation, string> = {
   [Vegetation.Grass]: "grass.svg",
   [Vegetation.Shrub]: "shrub.svg",
   [Vegetation.Forest]: "forest.svg",
   [Vegetation.ForestWithSuppression]: "forest-with-suppression.svg"
 };
+
+export const vegetationTileUrl = (vegetation: Vegetation) =>
+  publicUrl(TILE_DIR + VEGETATION_TILE_FILES[vegetation]);
 
 export interface TerrainTextures {
   // RGBA, one vegetation tile's luminance per channel, in Vegetation enum order.
@@ -84,13 +88,13 @@ const configureTiling = (texture: THREE.Texture, maxAnisotropy: number) => {
   texture.anisotropy = maxAnisotropy;
 };
 
-const loadTerrainTextures = async (maxAnisotropy: number): Promise<TerrainTextures> => {
+export const loadTerrainTextures = async (maxAnisotropy: number): Promise<TerrainTextures> => {
   const vegetationOrder = [
     Vegetation.Grass, Vegetation.Shrub, Vegetation.Forest, Vegetation.ForestWithSuppression
   ];
 
   const vegetationPixels = await Promise.all(
-    vegetationOrder.map(v => rasterizeSvg(TILE_DIR + VEGETATION_TILE_FILES[v], RASTER_SIZE))
+    vegetationOrder.map(v => rasterizeSvg(vegetationTileUrl(v), RASTER_SIZE))
   );
 
   const texelCount = RASTER_SIZE * RASTER_SIZE;

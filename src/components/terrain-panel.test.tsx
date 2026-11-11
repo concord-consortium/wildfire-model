@@ -6,6 +6,7 @@ import { Provider } from "mobx-react";
 import { TerrainPanel } from "./terrain-panel";
 import { Vegetation, TerrainType, DroughtLevel } from "../types";
 import { Zone } from "../models/zone";
+import { RELEASE_PUBLIC_PATH, usePublicPath } from "../public-url-test-helpers";
 
 const mockLog = jest.fn();
 jest.mock("../log", () => ({
@@ -265,6 +266,20 @@ describe("zone vegetation texture", () => {
     const { container } = await renderPanelOnWindScreen();
     expect(textures(container)).toHaveLength(2);
     expect(badges(container)).toHaveLength(0);
+  });
+
+  describe("with a release public path", () => {
+    usePublicPath(RELEASE_PUBLIC_PATH);
+
+    it("masks each zone with its tile from the build's root folder", () => {
+      stores.ui.showVegetationKey = true;
+      const { container } = renderPanelOnZonesScreen(defaultThreeZones);
+      expect(textures(container).map(t => t.style.maskImage)).toEqual([
+        "url(https://wildfire.concord.org/version/v9.9.9/terrain-textures/forest.svg)",
+        "url(https://wildfire.concord.org/version/v9.9.9/terrain-textures/shrub.svg)",
+        "url(https://wildfire.concord.org/version/v9.9.9/terrain-textures/forest-with-suppression.svg)"
+      ]);
+    });
   });
 });
 
