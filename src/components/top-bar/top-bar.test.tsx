@@ -27,6 +27,23 @@ describe("TopBar component", () => {
       await new Promise((resolve) => setTimeout(resolve, 150));
       expect(reloadMock).toHaveBeenCalled();
     });
+
+    it("is the first Tab stop, is named Reload with a matching tooltip, and reloads on Enter", async () => {
+      const reloadMock = jest.fn();
+      Object.defineProperty(window, "location", {
+        writable: true,
+        value: { reload: reloadMock },
+      });
+      const user = userEvent.setup();
+      renderTopBar();
+      await user.tab();
+      const reload = screen.getByRole("button", { name: "Reload" });
+      expect(reload).toHaveFocus();
+      expect(reload).toHaveAttribute("aria-label", "Reload");
+      expect(reload).toHaveAttribute("title", "Reload");
+      await user.keyboard("{Enter}");
+      await waitFor(() => expect(reloadMock).toHaveBeenCalled());
+    });
   });
 
   describe("in read-only report mode", () => {
@@ -66,8 +83,8 @@ describe("TopBar component", () => {
   });
 
   describe.each([
-    { name: "Share", tabs: 1 },
-    { name: "About", tabs: 2 }
+    { name: "Share", tabs: 2 },
+    { name: "About", tabs: 3 }
   ])("$name button keyboard access", ({ name, tabs }) => {
     it("is reachable by Tab, opens with Enter, and gets focus back when the dialog closes", async () => {
       const user = userEvent.setup();

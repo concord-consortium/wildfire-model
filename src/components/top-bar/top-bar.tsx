@@ -43,7 +43,16 @@ export const TopBar: React.FC<IProps> = observer(function TopBar({ projectName, 
     <div className={css.topBar}>
       {stores.ui.readOnly
         ? <span />
-        : <span className={css.textButton} data-testid="reload" onClick={handleReload}><RefreshIcon /></span>}
+        : <button
+            type="button"
+            className={`${css.textButton} ${css.iconButton}`}
+            data-testid="reload"
+            aria-label="Reload"
+            title="Reload"
+            onClick={handleReload}
+          >
+            <RefreshIcon />
+          </button>}
       <span>
         <button type="button" data-testid="share" className={css.textButton} onClick={handleShareOpen}>
           Share
