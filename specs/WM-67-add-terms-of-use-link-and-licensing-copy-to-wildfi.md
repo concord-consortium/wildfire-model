@@ -46,7 +46,7 @@ WM-67 is one of five matching Geo stories (HURR-70, SE-4, TE-10, WM-67, FM-5). T
 ### Dialog behavior
 
 - **R11. Both dialogs** (decision 7):
-  - keep MUI's `role="dialog"`, `aria-modal`, focus trap, Esc close and backdrop-click close;
+  - keep MUI's `role="dialog"`, focus trap, Esc close and backdrop-click close, and set `aria-modal="true"` on the dialog, which MUI 5.13 does not;
   - are named by their visible title ("About: Wildfire Explorer", "Share: Wildfire Explorer"), which is a level-2 heading;
   - have a real `<button type="button" aria-label="Close">` in place of the bare icon, with a visible focus indicator;
   - put focus on that Close button every time they open, including a reopen during the close animation;
@@ -60,7 +60,7 @@ WM-67 is one of five matching Geo stories (HURR-70, SE-4, TE-10, WM-67, FM-5). T
 ### Tests
 
 - **R14.** Unit tests render the real About and Share content and cover, for each: the four hrefs as literal URLs; `target` and `rel` on the three web links and their absence on the mailto link; each link's accessible name; the R2 copy word for word and in order, including the curly apostrophe and the bold lead-ins; that the copy is the last block; the copyright year under two pinned clocks; and that the R5 text is absent.
-- **R15.** Dialog tests cover the name from the heading, focus on Close when it opens, closing from Close, and closing on Esc. Top-bar tests cover, for About and Share: Tab and Enter, focus return by Esc, focus return after a click that did not focus the button (by Esc and by Close), a reopen during the close animation, the dialog's z-index derived from the coach mark's, and the dialog-opened logs. For Reload: the first Tab stop, named Reload, with an `aria-label` and a `title` of Reload, reloading on Enter, with Share and About the second and third stops. A Cypress spec checks that the three buttons' left edges increase in DOM (Tab) order and that the copyright line is 12px in both dialogs. Each test fails under a mutation of the code it guards.
+- **R15.** Dialog tests cover the name from the heading, `aria-modal`, focus on Close when it opens, closing from Close, and closing on Esc. Top-bar tests cover, for About and Share: Tab and Enter, focus return by Esc, focus return after a click that did not focus the button (by Esc and by Close), a reopen during the close animation, the dialog's z-index derived from the coach mark's, and the dialog-opened logs. For Reload: the first Tab stop, named Reload, with an `aria-label` and a `title` of Reload, reloading on Enter, with Share and About the second and third stops. A Cypress spec checks that the three buttons' left edges increase in DOM (Tab) order and that the copyright line is 12px in both dialogs. Each test fails under a mutation of the code it guards.
 
 ### Review
 

@@ -20,6 +20,7 @@ export const Dialog: React.FC<IProps> = ({ onClose, open, title, children }) => 
       open={open}
       maxWidth="lg"
       aria-labelledby={titleId}
+      PaperProps={{ "aria-modal": true }}
       TransitionProps={{ onEnter: focusClose }}
       sx={{ zIndex: "calc(var(--coachmarks-z-index) + 1)" }}
     >
