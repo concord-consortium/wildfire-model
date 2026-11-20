@@ -492,4 +492,16 @@ describe("Log events", () => {
       expect(stores.ui.showTerrainUI).toBe(true);
     });
   });
+
+  describe("dialog opened", () => {
+    it.each(["Share", "About"])("fires %sDialogOpened from its top-bar button", async (name) => {
+      render(
+        <Provider stores={stores}>
+          <TopBar projectName="Test" />
+        </Provider>
+      );
+      await userEvent.click(screen.getByRole("button", { name }));
+      expect(mockLog).toHaveBeenCalledWith(`${name}DialogOpened`);
+    });
+  });
 });
