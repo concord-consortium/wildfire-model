@@ -1,5 +1,5 @@
 import * as React from "react";
-import {Copyright} from "./copyright";
+import { LicenseCopy } from "../license/license-copy";
 
 export const AboutDialogContent = () => (
   <div>
@@ -32,6 +32,6 @@ export const AboutDialogContent = () => (
       was developed under <a href="https://nsf.gov/" target="_blank" rel="noreferrer">National Science Foundation</a> grant
       DRL-1812362.
     </p>
-    <Copyright />
+    <LicenseCopy />
   </div>
 );

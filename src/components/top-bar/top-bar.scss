@@ -1,5 +1,12 @@
 @import "../common.scss";
 
+$focusOutlineOffset: 1px;
+// Sized so the whole focus outline stays inside the top bar instead of spilling onto the canvas below it.
+// The extra 1px absorbs the half pixel the text buttons sit below the bar's center on the wrapper's text baseline.
+$buttonHeight: $topBarHeight - 2 * ($focusOutlineWidth + $focusOutlineOffset) - 1px;
+// MUI's default icon size; its glyph leaves blank space around it inside that box.
+$iconSize: 24px;
+
 .topBar {
   height: $topBarHeight;
   background: #fff;
@@ -18,9 +25,26 @@
     &:hover {
       color: $controlLabel;
     }
+  }
 
+  button.textButton {
+    padding: 0;
+    border: none;
+    background: none;
+    font: inherit;
+    color: inherit;
+    line-height: $buttonHeight;
+    &:focus-visible {
+      outline: $focusOutlineWidth solid $controlLabel;
+      outline-offset: $focusOutlineOffset;
+    }
+  }
+
+  button.iconButton {
+    height: $buttonHeight;
     svg {
-      margin-top: 4px;
+      display: block;
+      margin: ($buttonHeight - $iconSize) * 0.5 0;
     }
   }
 }

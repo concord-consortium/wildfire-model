@@ -1,5 +1,5 @@
 import * as React from "react";
-import { act, render, screen } from "@testing-library/react";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { Provider } from "mobx-react";
 import { createStores } from "../../models/stores";
@@ -26,6 +26,23 @@ describe("TopBar component", () => {
       await userEvent.click(screen.getByTestId("reload"));
       await new Promise((resolve) => setTimeout(resolve, 150));
       expect(reloadMock).toHaveBeenCalled();
+    });
+
+    it("is the first Tab stop, is named Reload with a matching tooltip, and reloads on Enter", async () => {
+      const reloadMock = jest.fn();
+      Object.defineProperty(window, "location", {
+        writable: true,
+        value: { reload: reloadMock },
+      });
+      const user = userEvent.setup();
+      renderTopBar();
+      await user.tab();
+      const reload = screen.getByRole("button", { name: "Reload" });
+      expect(reload).toHaveFocus();
+      expect(reload).toHaveAttribute("aria-label", "Reload");
+      expect(reload).toHaveAttribute("title", "Reload");
+      await user.keyboard("{Enter}");
+      await waitFor(() => expect(reloadMock).toHaveBeenCalled());
     });
   });
 
@@ -62,6 +79,67 @@ describe("TopBar component", () => {
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
       await userEvent.click(screen.getByTestId("about"));
       expect(screen.getByRole("dialog")).toBeInTheDocument();
+    });
+  });
+
+  describe.each([
+    { name: "Share", tabs: 2 },
+    { name: "About", tabs: 3 }
+  ])("$name button keyboard access", ({ name, tabs }) => {
+    it("is reachable by Tab, opens with Enter, and gets focus back when the dialog closes", async () => {
+      const user = userEvent.setup();
+      renderTopBar();
+      const button = screen.getByRole("button", { name });
+      for (let i = 0; i < tabs; i++) {
+        await user.tab();
+      }
+      expect(button).toHaveFocus();
+      await user.keyboard("{Enter}");
+      expect(await screen.findByRole("dialog")).toHaveAccessibleName(`${name}: Test`);
+      expect(screen.getByRole("button", { name: "Close" })).toHaveFocus();
+      await user.keyboard("{Escape}");
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      expect(button).toHaveFocus();
+    });
+
+    it.each(["{Escape}", "Close"])("gets focus back after a click that does not focus it, as in Safari, closed by %s", async (closeBy) => {
+      const user = userEvent.setup();
+      renderTopBar();
+      const button = screen.getByRole("button", { name });
+      expect(document.body).toHaveFocus();
+      fireEvent.click(button);
+      expect(await screen.findByRole("dialog")).toHaveAccessibleName(`${name}: Test`);
+      if (closeBy === "Close") {
+        await user.click(screen.getByRole("button", { name: "Close" }));
+      } else {
+        await user.keyboard(closeBy);
+      }
+      await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+      expect(button).toHaveFocus();
+    });
+
+    it("focuses Close when reopened during the close animation", async () => {
+      const user = userEvent.setup();
+      renderTopBar();
+      const button = screen.getByRole("button", { name });
+      button.focus();
+      await user.keyboard("{Enter}");
+      await screen.findByRole("dialog");
+      await user.keyboard("{Escape}");
+      expect(button).toHaveFocus();
+      expect(screen.getByRole("dialog", { hidden: true })).toBeInTheDocument();
+      await user.keyboard("{Enter}");
+      expect(screen.getByRole("button", { name: "Close" })).toHaveFocus();
+    });
+
+    it("draws its dialog above the Hazbot coach mark", async () => {
+      const user = userEvent.setup();
+      renderTopBar();
+      await user.click(screen.getByRole("button", { name }));
+      await screen.findByRole("dialog");
+      const [root] = screen.getAllByRole("presentation");
+      expect(root).toHaveClass("MuiDialog-root");
+      expect(root).toHaveStyle({ zIndex: "calc(var(--coachmarks-z-index) + 1)" });
     });
   });
 });

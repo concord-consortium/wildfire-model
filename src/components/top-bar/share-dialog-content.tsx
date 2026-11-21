@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Copyright } from "./copyright";
+import { LicenseCopy } from "../license/license-copy";
 
 const getURL = () => {
   return window.location.href;
@@ -23,6 +23,6 @@ export const ShareDialogContent = () => (
     <p>
       Suggested citation: Wildfire Explorer [Computer software]. (2020). Concord, MA: The Concord Consortium.
     </p>
-    <Copyright/>
+    <LicenseCopy />
   </div>
 );
